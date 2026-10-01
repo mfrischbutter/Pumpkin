@@ -1346,7 +1346,7 @@ impl Player {
         let mut damage_multiplier = 1.0;
         let mut add_speed = 0.0;
         let mut extra_ench_damage = 0.0;
-        let mut knockback_level = 0u32;
+        let mut enchantment_knockback = 0.0f64;
 
         {
             let stack = &item_stack;
@@ -1374,7 +1374,7 @@ impl Player {
                     );
                     let mut kb = 0.0f32;
                     enchantment.modify_knockback(*level, &mut kb);
-                    knockback_level += kb as u32;
+                    enchantment_knockback += f64::from(kb);
                 }
             }
         }
@@ -1531,11 +1531,15 @@ impl Player {
         );
 
         if victim.get_living_entity().is_some() {
-            // Vanilla `Player.attack` adds `LivingEntity.getKnockback()` - the Knockback
-            // enchantment bonus, halved - plus 0.5 for a sprint attack, on top of the base
-            // knockback the victim's damage handling applies. A plain hit adds nothing.
-            // `handle_knockback` halves `strength`, so these are twice the vanilla amount.
-            let mut knockback_strength = f64::from(knockback_level);
+            // Vanilla `LivingEntity.getKnockback` starts from the ATTACK_KNOCKBACK
+            // attribute and applies the weapon's enchantments, then halves:
+            // `(attribute + enchantment) / 2`. A sprint attack adds 0.5.
+            // `handle_knockback` halves its `strength`, so these are twice the
+            // vanilla amount.
+            let mut knockback_strength = self
+                .living_entity
+                .get_attribute_value(&Attributes::ATTACK_KNOCKBACK)
+                + enchantment_knockback;
             match attack_type {
                 AttackType::Knockback => knockback_strength += 1.0,
                 AttackType::Sweeping => {
@@ -1579,6 +1583,8 @@ impl Player {
             // would still slow the victim down.
             if config.knockback && knockback_strength > 0.0 {
                 combat::handle_knockback(attacker_entity, victim.as_ref(), knockback_strength);
+                // Vanilla `Player.causeExtraKnockback` ends the sprint.
+                self.living_entity.set_sprinting(false);
             }
         }
 
