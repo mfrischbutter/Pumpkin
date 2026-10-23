@@ -327,6 +327,7 @@ pub fn cleanup_event(event: &Event, state: &mut PluginHostState) {
         Event::WorldSaveEvent(_) => {}
         Event::InventoryOpenEvent(data) => {
             cleanup_player(state, &data.player);
+            cleanup_world(state, &data.target_world);
         }
         Event::InventoryDragEvent(data) => {
             cleanup_player(state, &data.player);
