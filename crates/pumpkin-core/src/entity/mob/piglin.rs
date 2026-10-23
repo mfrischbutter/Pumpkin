@@ -774,23 +774,24 @@ impl PiglinEntity {
 
     fn pick_up_item(&self, item: &ItemEntity) {
         self.stop_walking();
-        let count = {
+        let (count, picked_up) = {
             let stack = item
                 .get_item_stack()
                 .lock()
                 .unwrap_or_else(std::sync::PoisonError::into_inner);
             // Nuggets are taken whole, everything else one at a time.
-            if stack.item.id == Item::GOLD_NUGGET.id {
+            let count = if stack.item.id == Item::GOLD_NUGGET.id {
                 stack.item_count
             } else {
                 stack.item_count.min(1)
-            }
+            };
+            (count, stack.copy_with_count(count))
         };
         if count == 0
             || !self
                 .mob_entity
                 .living_entity
-                .pickup(item.get_entity(), u32::from(count))
+                .pickup(item.get_entity(), Some(&picked_up), u32::from(count))
         {
             return;
         }

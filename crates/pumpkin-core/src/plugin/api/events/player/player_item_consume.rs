@@ -1,4 +1,5 @@
 use crate::entity::player::Player;
+use pumpkin_data::item_stack::ItemStack;
 use pumpkin_macros::{Event, cancellable};
 use std::sync::Arc;
 
@@ -11,14 +12,18 @@ pub struct PlayerItemConsumeEvent {
 
     /// The registry name of the item being consumed.
     pub item_name: String,
+
+    /// The stack in the hand that is used.
+    pub item: ItemStack,
 }
 
 impl PlayerItemConsumeEvent {
     #[must_use]
-    pub const fn new(player: Arc<Player>, item_name: String) -> Self {
+    pub const fn new(player: Arc<Player>, item_name: String, item: ItemStack) -> Self {
         Self {
             player,
             item_name,
+            item,
             cancelled: false,
         }
     }

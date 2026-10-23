@@ -5256,6 +5256,7 @@ impl Player {
                     player_arc,
                     dropped_stack.item.registry_key.to_string(),
                     dropped_stack.item_count,
+                    dropped_stack.clone(),
                 );
             server.plugin_manager.fire_blocking(&server, &mut event);
             if event.cancelled {

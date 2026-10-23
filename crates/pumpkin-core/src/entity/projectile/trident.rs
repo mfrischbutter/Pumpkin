@@ -413,7 +413,14 @@ impl EntityBase for TridentEntity {
                 stack.item.id as i32,
                 1,
             );
-            player.living_entity.pickup(&self.entity, 1);
+            let picked_up = self
+                .item_stack
+                .lock()
+                .unwrap_or_else(std::sync::PoisonError::into_inner)
+                .clone();
+            player
+                .living_entity
+                .pickup(&self.entity, Some(&picked_up), 1);
             self.get_entity().remove();
         }
     }

@@ -946,20 +946,30 @@ impl ToFromWasmEvent
             .add(self.player.clone())
             .expect("failed to add player resource");
 
+        let item = state
+            .add(Arc::new(Mutex::new(self.item.clone())))
+            .expect("failed to add item stack resource");
+
         Event::PlayerItemConsumeEvent(PlayerItemConsumeEventData {
             player,
             item_name: self.item_name.clone(),
+            item,
             cancelled: self.cancelled,
         })
     }
 
-    fn from_wasm_event(event: Event, state: &mut PluginHostState) -> Self {
+    fn apply_wasm_event(&mut self, event: Event, state: &mut PluginHostState) {
+        cleanup_event(&event, state);
+        if let Event::PlayerItemConsumeEvent(data) = event {
+            self.cancelled = data.cancelled;
+        }
+    }
+
+    fn from_wasm_event(event: Event, _state: &mut PluginHostState) -> Self {
         match event {
-            Event::PlayerItemConsumeEvent(data) => Self {
-                player: consume_player(state, &data.player),
-                item_name: data.item_name,
-                cancelled: data.cancelled,
-            },
+            Event::PlayerItemConsumeEvent(_) => {
+                panic!("Cannot construct PlayerItemConsumeEvent from WASM")
+            }
             _ => panic!("unexpected event type"),
         }
     }
@@ -1002,22 +1012,31 @@ impl ToFromWasmEvent
             .add(self.player.clone())
             .expect("failed to add player resource");
 
+        let item = state
+            .add(Arc::new(Mutex::new(self.item.clone())))
+            .expect("failed to add item stack resource");
+
         Event::PlayerDropItemEvent(PlayerDropItemEventData {
             player,
             item_name: self.item_name.clone(),
             count: self.count,
+            item,
             cancelled: self.cancelled,
         })
     }
 
-    fn from_wasm_event(event: Event, state: &mut PluginHostState) -> Self {
+    fn apply_wasm_event(&mut self, event: Event, state: &mut PluginHostState) {
+        cleanup_event(&event, state);
+        if let Event::PlayerDropItemEvent(data) = event {
+            self.cancelled = data.cancelled;
+        }
+    }
+
+    fn from_wasm_event(event: Event, _state: &mut PluginHostState) -> Self {
         match event {
-            Event::PlayerDropItemEvent(data) => Self {
-                player: consume_player(state, &data.player),
-                item_name: data.item_name,
-                count: data.count,
-                cancelled: data.cancelled,
-            },
+            Event::PlayerDropItemEvent(_) => {
+                panic!("Cannot construct PlayerDropItemEvent from WASM")
+            }
             _ => panic!("unexpected event type"),
         }
     }
