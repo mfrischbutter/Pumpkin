@@ -492,6 +492,7 @@ interface event {
         entity-id: s32,
         item-name: string,
         count: u8,
+        item: option<item-stack>,
         cancelled: bool
     }
 
@@ -915,6 +916,7 @@ interface event {
     record player-item-consume-event-data {
         player: player,
         item-name: string,
+        item: item-stack,
         cancelled: bool
     }
 
@@ -929,6 +931,7 @@ interface event {
         player: player,
         item-name: string,
         count: u8,
+        item: item-stack,
         cancelled: bool
     }
 

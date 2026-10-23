@@ -636,22 +636,43 @@ impl LivingEntity {
     }
 
     /// Picks up an Item entity or XP Orb
-    pub fn pickup(&self, item: &Entity, stack_amount: u32) -> bool {
+    pub fn pickup(&self, item: &Entity, stack: Option<&ItemStack>, stack_amount: u32) -> bool {
+        if !self.fire_pickup_event(item, stack, stack_amount) {
+            return false;
+        }
+        self.send_pickup_animation(item, stack_amount);
+        true
+    }
+
+    /// Fires an `EntityPickupItemEvent` and returns `false` if a plugin cancelled the pickup.
+    #[must_use]
+    pub fn fire_pickup_event(
+        &self,
+        item: &Entity,
+        stack: Option<&ItemStack>,
+        stack_amount: u32,
+    ) -> bool {
+        let Some(server) = self.entity.world.load().server.upgrade() else {
+            return true;
+        };
         let mut pickup_event =
             crate::plugin::api::events::entity::entity_pickup_item::EntityPickupItemEvent::new(
                 self.entity.entity_id,
-                item.entity_type.id.to_string(),
+                stack.map_or_else(
+                    || item.entity_type.id.to_string(),
+                    |stack| stack.item.registry_key.to_string(),
+                ),
                 stack_amount as u8,
+                stack.cloned(),
             );
-        if let Some(server) = self.entity.world.load().server.upgrade() {
-            server
-                .plugin_manager
-                .fire_blocking(&server, &mut pickup_event);
-            if pickup_event.cancelled {
-                return false;
-            }
-        }
+        server
+            .plugin_manager
+            .fire_blocking(&server, &mut pickup_event);
+        !pickup_event.cancelled
+    }
 
+    /// Plays the animation of this entity taking an Item entity or XP Orb.
+    pub fn send_pickup_animation(&self, item: &Entity, stack_amount: u32) {
         let chunk_pos = self.entity.chunk_pos.load();
         self.entity.world.load().broadcast_to_chunk_editioned(
             chunk_pos,
@@ -665,7 +686,6 @@ impl LivingEntity {
                 actor_runtime_id: VarULong(self.entity.entity_id as u64),
             },
         );
-        true
     }
 
     /// Sends the Hand animation to all others, used when Eating for example
