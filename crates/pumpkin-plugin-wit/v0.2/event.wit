@@ -475,10 +475,15 @@ interface event {
         cancelled: bool
     }
 
+    /// Fired once per explosion that has a source entity, after the affected blocks are known.
+    /// Only the blocks left in `blocks` are destroyed; `yield-rate` is the share of them that
+    /// drop loot. Cancelling cancels the whole explosion.
     record entity-explode-event-data {
         entity-id: s32,
         position: position,
         yield-rate: f32,
+        target-world: %world,
+        blocks: list<block-pos>,
         cancelled: bool
     }
 
@@ -1304,9 +1309,15 @@ interface event {
         cancelled: bool
     }
 
+    /// Fired once per explosion without a source entity (beds, respawn anchors, plugin
+    /// explosions), after the affected blocks are known. Only the blocks left in `blocks` are
+    /// destroyed; `yield-rate` is the share of them that drop loot. Cancelling cancels the
+    /// whole explosion.
     record block-explode-event-data {
         block-pos: block-pos,
         yield-rate: f32,
+        target-world: %world,
+        blocks: list<block-pos>,
         cancelled: bool
     }
 

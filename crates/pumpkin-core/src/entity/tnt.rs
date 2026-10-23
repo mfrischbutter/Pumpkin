@@ -133,6 +133,7 @@ impl EntityBase for TNTEntity {
                 let pos = entity.pos.load();
                 let y = f64::from(entity.entity_type.dimension[1]).mul_add(0.0625, pos.y);
                 world.explode(
+                    Some(entity),
                     Vector3::new(pos.x, y, pos.z),
                     self.power.load(),
                     crate::world::ExplosionInteraction::Tnt,
