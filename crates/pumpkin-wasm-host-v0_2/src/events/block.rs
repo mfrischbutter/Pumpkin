@@ -4,8 +4,9 @@ use tokio::sync::Mutex;
 
 use crate::{
     events::{
-        ToFromWasmEvent, cleanup_event, consume_player, consume_world, from_wasm_block_name,
-        from_wasm_block_position, to_wasm_block_name, to_wasm_block_position,
+        ToFromWasmEvent, cleanup_event, consume_item_stack, consume_player, consume_world,
+        from_wasm_block_name, from_wasm_block_position, from_wasm_hand, to_wasm_block_name,
+        to_wasm_block_position, to_wasm_hand,
     },
     pumpkin::plugin::event::{
         BellResonateEventData, BellRingEventData, BlockBreakEventData, BlockBrushEventData,
@@ -248,6 +249,13 @@ impl ToFromWasmEvent for BlockPlaceEvent {
             block_pos: to_wasm_block_position(self.block_position),
             can_build: self.can_build,
             target_world,
+            placed_state: self.placed_state.as_u16(),
+            hand: self.hand.map(to_wasm_hand),
+            item: self.item.as_ref().map(|stack| {
+                state
+                    .add(Arc::new(Mutex::new(stack.clone())))
+                    .expect("failed to add item stack resource")
+            }),
             cancelled: self.cancelled,
         })
     }
@@ -261,6 +269,9 @@ impl ToFromWasmEvent for BlockPlaceEvent {
                 block_placed_against: from_wasm_block_name(&data.block_placed_against),
                 block_position: from_wasm_block_position(data.block_pos),
                 can_build: data.can_build,
+                placed_state: BlockStateId::new_or_air(data.placed_state),
+                hand: data.hand.map(from_wasm_hand),
+                item: data.item.map(|item| consume_item_stack(state, &item)),
                 cancelled: data.cancelled,
             },
             _ => panic!("unexpected event type"),

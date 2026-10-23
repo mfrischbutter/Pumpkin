@@ -708,9 +708,8 @@ impl BlockRegistry {
         face: BlockDirection,
     ) -> Result<Option<(BlockPos, BlockStateId)>, BlockPlacingError> {
         let entity = &player.get_entity();
-        let held_stack = pumpkin_util::Hand::from_packet_id(use_item_on.hand.0)
-            .ok()
-            .map(|hand| player.inventory().get_stack_in_hand(hand));
+        let hand = pumpkin_util::Hand::from_packet_id(use_item_on.hand.0).ok();
+        let held_stack = hand.map(|hand| player.inventory().get_stack_in_hand(hand));
         let clicked_block_pos = BlockPos(location.0);
         let world = entity.world.load_full();
         let clicked_block = world.get_block(&clicked_block_pos);
@@ -856,7 +855,13 @@ impl BlockRegistry {
             clicked_block,
             final_block_pos,
             true,
+            new_state,
         );
+        if let Some(hand) = hand
+            && let Some(ref stack) = held_stack
+        {
+            event = event.with_hand(hand, stack);
+        }
         server.plugin_manager.fire_blocking(server, &mut event);
         if event.cancelled {
             return Ok(None);

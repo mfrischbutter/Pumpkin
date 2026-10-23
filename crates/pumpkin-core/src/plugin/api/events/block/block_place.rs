@@ -1,5 +1,7 @@
-use pumpkin_data::Block;
+use pumpkin_data::item_stack::ItemStack;
+use pumpkin_data::{Block, BlockStateId};
 use pumpkin_macros::{Event, cancellable};
+use pumpkin_util::Hand;
 use pumpkin_util::math::position::BlockPos;
 use std::sync::Arc;
 
@@ -32,6 +34,15 @@ pub struct BlockPlaceEvent {
 
     /// A boolean indicating whether the player can build.
     pub can_build: bool,
+
+    /// The state the block is placed with.
+    pub placed_state: BlockStateId,
+
+    /// The hand the block is placed from, if known.
+    pub hand: Option<Hand>,
+
+    /// A copy of the stack the block is placed from, before it is used up.
+    pub item: Option<ItemStack>,
 }
 
 impl BlockPlaceEvent {
@@ -43,6 +54,7 @@ impl BlockPlaceEvent {
         block_placed_against: &'static Block,
         block_position: BlockPos,
         can_build: bool,
+        placed_state: BlockStateId,
     ) -> Self {
         Self {
             world,
@@ -51,8 +63,19 @@ impl BlockPlaceEvent {
             block_placed_against,
             block_position,
             can_build,
+            placed_state,
+            hand: None,
+            item: None,
             cancelled: false,
         }
+    }
+
+    /// Sets the hand the block is placed from and the stack it holds.
+    #[must_use]
+    pub fn with_hand(mut self, hand: Hand, item: &ItemStack) -> Self {
+        self.hand = Some(hand);
+        self.item = (!item.is_empty()).then(|| item.clone());
+        self
     }
 }
 

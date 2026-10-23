@@ -1,9 +1,11 @@
 use std::sync::Arc;
 
 use crate::entity::player::Player;
-use pumpkin_data::Block;
+use pumpkin_data::item_stack::ItemStack;
+use pumpkin_data::{Block, BlockDirection};
 use pumpkin_macros::{Event, cancellable};
-use pumpkin_util::math::position::BlockPos;
+use pumpkin_util::Hand;
+use pumpkin_util::math::{position::BlockPos, vector3::Vector3};
 
 use super::PlayerEvent;
 
@@ -26,6 +28,18 @@ pub struct PlayerInteractEvent {
 
     /// The block that was interacted with.
     pub block: &'static Block,
+
+    /// The hand the player interacted with, if known.
+    pub hand: Option<Hand>,
+
+    /// A copy of the stack in that hand, or `None` if the hand is empty or unknown.
+    pub item: Option<ItemStack>,
+
+    /// The clicked block face, if the client sent one.
+    pub face: Option<BlockDirection>,
+
+    /// The clicked point relative to the block's minimum corner, if the client sent one.
+    pub cursor: Option<Vector3<f64>>,
 }
 
 impl PlayerInteractEvent {
@@ -52,8 +66,28 @@ impl PlayerInteractEvent {
             action,
             block,
             clicked_pos,
+            hand: None,
+            item: None,
+            face: None,
+            cursor: None,
             cancelled: false,
         }
+    }
+
+    /// Sets the hand the player interacted with and the stack it holds.
+    #[must_use]
+    pub fn with_hand(mut self, hand: Hand, item: &ItemStack) -> Self {
+        self.hand = Some(hand);
+        self.item = (!item.is_empty()).then(|| item.clone());
+        self
+    }
+
+    /// Sets the clicked block face and, if the client sent it, the clicked point on it.
+    #[must_use]
+    pub const fn with_face(mut self, face: BlockDirection, cursor: Option<Vector3<f64>>) -> Self {
+        self.face = Some(face);
+        self.cursor = cursor;
+        self
     }
 }
 

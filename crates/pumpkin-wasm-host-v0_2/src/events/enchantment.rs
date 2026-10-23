@@ -1,10 +1,8 @@
-use pumpkin_data::item_stack::ItemStack;
 use std::sync::Arc;
 use tokio::sync::Mutex;
-use wasmtime::component::Resource;
 
 use crate::{
-    events::{ToFromWasmEvent, consume_player},
+    events::{ToFromWasmEvent, consume_item_stack, consume_player},
     item_stack::{from_wit_enchantment, to_wit_enchantment},
     pumpkin::plugin::event::{
         EnchantItemEventData, EnchantmentOffer, EnchantmentValue as WitEnchantmentValue, Event,
@@ -15,17 +13,6 @@ use pumpkin_core::plugin::enchantment::{
     enchant_item::EnchantItemEvent, prepare_item_enchant::PrepareItemEnchantEvent,
 };
 use pumpkin_wasm_host_common::state::PluginHostState;
-
-fn consume_item_stack(
-    state: &mut PluginHostState,
-    item: &Resource<crate::pumpkin::plugin::item_stack::ItemStack>,
-) -> ItemStack {
-    let mutex = state
-        .resource_table
-        .delete::<Arc<Mutex<ItemStack>>>(Resource::new_own(item.rep()))
-        .expect("invalid item stack resource handle");
-    mutex.try_lock().expect("lock item stack").clone()
-}
 
 impl ToFromWasmEvent for PrepareItemEnchantEvent {
     fn to_wasm_event(&self, state: &mut PluginHostState) -> Event {

@@ -35,7 +35,11 @@ impl JavaClient {
                             InteractAction::LeftClickBlock,
                             block,
                             Some(position),
-                        );
+                        )
+                        .with_hand(Hand::Right, &player.inventory().held_item());
+                        if let Ok(face) = BlockDirection::try_from(i32::from(player_action.face)) {
+                            interact_event = interact_event.with_face(face, None);
+                        }
                         server_arc
                             .plugin_manager
                             .fire_blocking(&server_arc, &mut interact_event);

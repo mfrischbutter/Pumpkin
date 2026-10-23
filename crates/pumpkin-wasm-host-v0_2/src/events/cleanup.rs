@@ -101,6 +101,9 @@ pub fn cleanup_event(event: &Event, state: &mut PluginHostState) {
         }
         Event::PlayerInteractEvent(data) => {
             cleanup_player(state, &data.player);
+            if let Some(res) = &data.item {
+                cleanup_item_stack(state, res);
+            }
         }
         Event::PlayerToggleSneakEvent(data) => {
             cleanup_player(state, &data.player);
@@ -144,6 +147,9 @@ pub fn cleanup_event(event: &Event, state: &mut PluginHostState) {
         Event::BlockPlaceEvent(data) => {
             cleanup_player(state, &data.player);
             cleanup_world(state, &data.target_world);
+            if let Some(res) = &data.item {
+                cleanup_item_stack(state, res);
+            }
         }
         Event::BedrockFormResponseEvent(data) => {
             cleanup_player(state, &data.player);

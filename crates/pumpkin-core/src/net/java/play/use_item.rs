@@ -59,7 +59,8 @@ impl JavaClient {
                 player.world().get_block(&hit_pos),
                 Some(hit_pos),
             )
-        };
+        }
+        .with_hand(hand, &item_in_hand);
         let (item_for_use, stack_for_use) = (item_in_hand.item, item_in_hand.clone());
         let (use_yaw, use_pitch) = if self.version.load() >= JavaMinecraftVersion::V_1_21 {
             (use_item.yaw, use_item.pitch)
