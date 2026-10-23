@@ -613,6 +613,7 @@ interface event {
     record entity-interact-event-data {
         entity-id: s32,
         block-pos: block-pos,
+        target-world: %world,
         cancelled: bool
     }
 
