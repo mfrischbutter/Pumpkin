@@ -22,6 +22,8 @@ pub mod item_held;
 pub mod player_advancement_done;
 /// Player animation event.
 pub mod player_animation;
+/// Player armor change event.
+pub mod player_armor_change;
 /// Player armor stand manipulate event.
 pub mod player_armor_stand_manipulate;
 /// Player bed enter and leave events.
@@ -165,6 +167,7 @@ pub use inventory_close::*;
 pub use item_held::*;
 pub use player_advancement_done::*;
 pub use player_animation::*;
+pub use player_armor_change::*;
 pub use player_armor_stand_manipulate::*;
 pub use player_bed::*;
 pub use player_bucket::*;
