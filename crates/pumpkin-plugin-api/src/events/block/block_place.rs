@@ -5,7 +5,8 @@ use super::super::FromIntoEvent;
 /// An event that occurs when a player places a block.
 ///
 /// The associated [`BlockPlaceEventData`] contains the player, the block being placed,
-/// the block it is placed against, the position, and a `can-build` flag. This event
+/// the block it is placed against, the position, a `can-build` flag, the world, the
+/// state the block is placed with, and the hand and item it is placed from. This event
 /// is cancellable.
 pub struct BlockPlaceEvent;
 impl FromIntoEvent for BlockPlaceEvent {

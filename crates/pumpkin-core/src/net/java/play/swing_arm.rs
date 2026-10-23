@@ -38,7 +38,8 @@ impl JavaClient {
 
         if hit.is_miss {
             let event =
-                PlayerInteractEvent::new(player, InteractAction::LeftClickAir, &Block::AIR, None);
+                PlayerInteractEvent::new(player, InteractAction::LeftClickAir, &Block::AIR, None)
+                    .with_hand(hand, &player.inventory().get_stack_in_hand(hand));
             send_cancellable_blocking! {{
                 &server;
                 event;

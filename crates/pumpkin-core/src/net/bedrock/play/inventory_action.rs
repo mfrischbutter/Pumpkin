@@ -332,7 +332,8 @@ impl BedrockClient {
                         InteractAction::RightClickAir,
                         &pumpkin_data::Block::AIR,
                         None,
-                    );
+                    )
+                    .with_hand(hand, &held);
 
                     let stack_for_use = held.clone();
 
