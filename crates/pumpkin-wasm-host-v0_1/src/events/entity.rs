@@ -746,11 +746,15 @@ impl ToFromWasmEvent for EntityBreakDoorEvent {
 }
 
 impl ToFromWasmEvent for EntityChangeBlockEvent {
-    fn to_wasm_event(&self, _state: &mut PluginHostState) -> Event {
+    fn to_wasm_event(&self, state: &mut PluginHostState) -> Event {
+        let target_world = state
+            .add(self.world.clone())
+            .expect("failed to add world resource");
         Event::EntityChangeBlockEvent(EntityChangeBlockEventData {
             entity_id: self.entity_id,
             block_pos: to_wasm_block_position(self.block_pos),
             new_block: self.new_block.clone(),
+            target_world,
             cancelled: self.cancelled,
         })
     }
@@ -763,9 +767,10 @@ impl ToFromWasmEvent for EntityChangeBlockEvent {
         }
     }
 
-    fn from_wasm_event(event: Event, _state: &mut PluginHostState) -> Self {
+    fn from_wasm_event(event: Event, state: &mut PluginHostState) -> Self {
         match event {
             Event::EntityChangeBlockEvent(data) => Self {
+                world: consume_world(state, &data.target_world),
                 entity_id: data.entity_id,
                 block_pos: from_wasm_block_position(data.block_pos),
                 new_block: data.new_block,
