@@ -593,10 +593,10 @@ impl World {
                     let _ = previous.await;
                 }
                 if forced {
-                    level.mark_chunks_as_newly_watched(&watched).await;
+                    level.mark_chunks_as_newly_watched(&watched);
                     world.spawn_forced_entity_chunks(watched);
                 } else {
-                    let chunks_to_clean = level.mark_chunks_as_not_watched(watched).await;
+                    let chunks_to_clean = level.mark_chunks_as_not_watched(watched);
                     if !chunks_to_clean.is_empty() {
                         world.remove_entities_in_chunks(&chunks_to_clean).await;
                         world.level.clean_entity_chunks(&chunks_to_clean);
