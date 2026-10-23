@@ -73,6 +73,7 @@ impl TNTBlock {
             return None;
         }
         let mut event = crate::plugin::api::events::block::tnt_prime::TNTPrimeEvent::new(
+            world.clone(),
             *location,
             "REDSTONE".to_string(),
         );
