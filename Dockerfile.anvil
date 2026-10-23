@@ -23,6 +23,10 @@ RUN case "${TARGETARCH}" in \
 
 FROM alpine:3.24
 
+# Marks an image built from source by this file. Images from upstream's
+# Dockerfile lack it, and the Anvil pin script refuses those.
+LABEL dev.anvil.build=source
+
 COPY --from=builder /pumpkin.release /usr/local/bin/pumpkin
 
 RUN addgroup -g 2613 pumpkin && \
