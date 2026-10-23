@@ -44,7 +44,9 @@ impl JavaClient {
                 InteractAction::RightClickBlock,
                 block,
                 Some(position),
-            );
+            )
+            .with_hand(hand, &player.inventory().get_stack_in_hand(hand))
+            .with_face(face, Some(cursor_pos.to_f64()));
 
             send_cancellable_blocking! {{
                 server;
@@ -87,7 +89,9 @@ impl JavaClient {
             InteractAction::RightClickBlock,
             block,
             Some(position),
-        );
+        )
+        .with_hand(hand, &item)
+        .with_face(face, Some(cursor_pos.to_f64()));
 
         send_cancellable_blocking! {{
             server;
