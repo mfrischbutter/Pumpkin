@@ -409,9 +409,12 @@ interface event {
         cancelled: bool
     }
 
+    /// Fired once when an entity dies, after its loot is generated. Only the stacks left in
+    /// `drops` (loot table and equipment) are dropped, and `dropped-exp` experience is spawned.
     record entity-death-event-data {
         entity-id: s32,
-        dropped-exp: s32
+        dropped-exp: s32,
+        drops: list<item-stack>
     }
 
     record player-death-event-data {

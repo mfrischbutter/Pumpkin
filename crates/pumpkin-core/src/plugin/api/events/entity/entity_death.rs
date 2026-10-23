@@ -1,9 +1,10 @@
 use crate::entity::player::Player;
+use pumpkin_data::item_stack::ItemStack;
 use pumpkin_macros::{Event, cancellable};
 use pumpkin_util::text::TextComponent;
 use std::sync::Arc;
 
-/// An event that occurs when an entity dies.
+/// An event that occurs when an entity dies, after its loot is generated and before it drops.
 #[derive(Event, Clone)]
 pub struct EntityDeathEvent {
     /// The ID of the entity that died.
@@ -11,14 +12,18 @@ pub struct EntityDeathEvent {
 
     /// The amount of experience dropped by the entity.
     pub dropped_exp: i32,
+
+    /// The loot table and equipment drops. Only the stacks left in this list are dropped.
+    pub drops: Vec<ItemStack>,
 }
 
 impl EntityDeathEvent {
     #[must_use]
-    pub const fn new(entity_id: i32, dropped_exp: i32) -> Self {
+    pub const fn new(entity_id: i32, dropped_exp: i32, drops: Vec<ItemStack>) -> Self {
         Self {
             entity_id,
             dropped_exp,
+            drops,
         }
     }
 }
