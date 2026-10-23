@@ -100,6 +100,10 @@ pub mod player_name_entity;
 pub mod player_open_sign;
 /// Player permission check event.
 pub mod player_permission_check;
+/// Player pick block event.
+pub mod player_pick_block;
+/// Player pick entity event.
+pub mod player_pick_entity;
 /// Player pickup arrow event.
 pub mod player_pickup_arrow;
 /// Player portal event.
@@ -200,6 +204,8 @@ pub use player_move::*;
 pub use player_name_entity::*;
 pub use player_open_sign::*;
 pub use player_permission_check::*;
+pub use player_pick_block::*;
+pub use player_pick_entity::*;
 pub use player_pickup_arrow::*;
 pub use player_portal::*;
 pub use player_pre_login::*;

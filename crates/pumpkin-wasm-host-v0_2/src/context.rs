@@ -358,6 +358,16 @@ fn register_player_event(
                 pumpkin_core::plugin::api::events::player::player_links_send::PlayerLinksSendEvent,
             >(ctx, handler, priority, blocking);
         }
+        EventType::PlayerPickBlockEvent => {
+            register_typed_event::<
+                pumpkin_core::plugin::api::events::player::player_pick_block::PlayerPickBlockEvent,
+            >(ctx, handler, priority, blocking);
+        }
+        EventType::PlayerPickEntityEvent => {
+            register_typed_event::<
+                pumpkin_core::plugin::api::events::player::player_pick_entity::PlayerPickEntityEvent,
+            >(ctx, handler, priority, blocking);
+        }
         EventType::PlayerPickupArrowEvent => {
             register_typed_event::<
                 pumpkin_core::plugin::api::events::player::player_pickup_arrow::PlayerPickupArrowEvent,
