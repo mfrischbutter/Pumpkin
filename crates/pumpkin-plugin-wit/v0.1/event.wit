@@ -947,6 +947,9 @@ interface event {
         player: player,
         block-pos: block-pos,
         bucket: string,
+        hand: hand,
+        item: item-stack,
+        %result: option<item-stack>,
         cancelled: bool
     }
 
@@ -954,6 +957,9 @@ interface event {
         player: player,
         block-pos: block-pos,
         bucket: string,
+        hand: hand,
+        item: item-stack,
+        %result: option<item-stack>,
         cancelled: bool
     }
 

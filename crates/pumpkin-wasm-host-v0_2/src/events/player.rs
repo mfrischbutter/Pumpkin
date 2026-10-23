@@ -3,8 +3,8 @@ use tokio::sync::Mutex;
 
 use crate::{
     events::{
-        ToFromWasmEvent, cleanup_event, consume_player, consume_text_component, consume_world,
-        from_wasm_block_name, from_wasm_block_position, from_wasm_click_type,
+        ToFromWasmEvent, cleanup_event, consume_item_stack, consume_player, consume_text_component,
+        consume_world, from_wasm_block_name, from_wasm_block_position, from_wasm_click_type,
         from_wasm_entity_interaction_action, from_wasm_entity_type, from_wasm_game_mode,
         from_wasm_hand, from_wasm_position, to_wasm_block_position, to_wasm_click_type,
         to_wasm_entity_interaction_action, to_wasm_entity_type, to_wasm_game_mode, to_wasm_hand,
@@ -1067,10 +1067,22 @@ impl ToFromWasmEvent
             .add(self.player.clone())
             .expect("failed to add player resource");
 
+        let item = state
+            .add(Arc::new(Mutex::new(self.item.clone())))
+            .expect("failed to add item stack resource");
+        let result = self.result.as_ref().map(|stack| {
+            state
+                .add(Arc::new(Mutex::new(stack.clone())))
+                .expect("failed to add item stack resource")
+        });
+
         Event::PlayerBucketEmptyEvent(PlayerBucketEmptyEventData {
             player,
             block_pos: to_wasm_block_position(self.block_pos),
             bucket: self.bucket.clone(),
+            hand: to_wasm_hand(self.hand),
+            item,
+            result,
             cancelled: self.cancelled,
         })
     }
@@ -1081,6 +1093,9 @@ impl ToFromWasmEvent
                 player: consume_player(state, &data.player),
                 block_pos: from_wasm_block_position(data.block_pos),
                 bucket: data.bucket,
+                hand: from_wasm_hand(data.hand),
+                item: consume_item_stack(state, &data.item),
+                result: data.result.map(|stack| consume_item_stack(state, &stack)),
                 cancelled: data.cancelled,
             },
             _ => panic!("unexpected event type"),
@@ -1096,10 +1111,22 @@ impl ToFromWasmEvent
             .add(self.player.clone())
             .expect("failed to add player resource");
 
+        let item = state
+            .add(Arc::new(Mutex::new(self.item.clone())))
+            .expect("failed to add item stack resource");
+        let result = self.result.as_ref().map(|stack| {
+            state
+                .add(Arc::new(Mutex::new(stack.clone())))
+                .expect("failed to add item stack resource")
+        });
+
         Event::PlayerBucketFillEvent(PlayerBucketFillEventData {
             player,
             block_pos: to_wasm_block_position(self.block_pos),
             bucket: self.bucket.clone(),
+            hand: to_wasm_hand(self.hand),
+            item,
+            result,
             cancelled: self.cancelled,
         })
     }
@@ -1110,6 +1137,9 @@ impl ToFromWasmEvent
                 player: consume_player(state, &data.player),
                 block_pos: from_wasm_block_position(data.block_pos),
                 bucket: data.bucket,
+                hand: from_wasm_hand(data.hand),
+                item: consume_item_stack(state, &data.item),
+                result: data.result.map(|stack| consume_item_stack(state, &stack)),
                 cancelled: data.cancelled,
             },
             _ => panic!("unexpected event type"),
