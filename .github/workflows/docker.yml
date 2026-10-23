@@ -66,6 +66,7 @@ jobs:
         uses: docker/build-push-action@v7
         with:
           context: .
+          file: ${{ startsWith(github.ref, 'refs/tags/anvil-') && 'Dockerfile.anvil' || 'Dockerfile' }}
           platforms: ${{ matrix.platform }}
           labels: ${{ steps.meta.outputs.labels }}
           tags: ${{ env.REGISTRY }}/${{ env.REGISTRY_IMAGE }}

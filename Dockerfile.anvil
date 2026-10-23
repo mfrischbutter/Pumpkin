@@ -1,0 +1,41 @@
+# Image for the fork's anvil-* tags. Upstream's Dockerfile downloads the
+# prebuilt nightly binary, which has none of our patches, so this one builds
+# the checked-out source the same way upstream builds its musl release.
+FROM rust:1-bookworm AS builder
+
+ARG TARGETARCH
+
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends musl-tools && \
+    rm -rf /var/lib/apt/lists/*
+
+WORKDIR /pumpkin
+COPY . /pumpkin
+
+RUN case "${TARGETARCH}" in \
+        "amd64") TARGET="x86_64-unknown-linux-musl" ;; \
+        "arm64") TARGET="aarch64-unknown-linux-musl" ;; \
+        *) echo "Unsupported architecture: ${TARGETARCH}" && exit 1 ;; \
+    esac && \
+    rustup target add "${TARGET}" && \
+    cargo build --release --locked --target "${TARGET}" -p pumpkin && \
+    cp "target/${TARGET}/release/pumpkin" /pumpkin.release
+
+FROM alpine:3.24
+
+COPY --from=builder /pumpkin.release /usr/local/bin/pumpkin
+
+RUN addgroup -g 2613 pumpkin && \
+    adduser -u 2613 -G pumpkin -D -h /pumpkin pumpkin && \
+    chown -R pumpkin:pumpkin /pumpkin
+
+WORKDIR /pumpkin
+USER pumpkin:pumpkin
+
+ENV RUST_BACKTRACE=1
+EXPOSE 25565
+
+ENTRYPOINT [ "pumpkin" ]
+
+HEALTHCHECK --interval=30s --timeout=3s --retries=3 \
+    CMD nc -z 127.0.0.1 25565 || exit 1
