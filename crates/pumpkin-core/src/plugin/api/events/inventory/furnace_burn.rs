@@ -1,3 +1,4 @@
+use pumpkin_data::item_stack::ItemStack;
 use pumpkin_macros::{Event, cancellable};
 use pumpkin_util::math::position::BlockPos;
 
@@ -13,15 +14,24 @@ pub struct FurnaceBurnEvent {
 
     /// The burn time in ticks.
     pub burn_time: u32,
+
+    /// The fuel stack in the furnace.
+    pub fuel: ItemStack,
 }
 
 impl FurnaceBurnEvent {
     #[must_use]
-    pub const fn new(block_pos: BlockPos, fuel_item: String, burn_time: u32) -> Self {
+    pub const fn new(
+        block_pos: BlockPos,
+        fuel_item: String,
+        burn_time: u32,
+        fuel: ItemStack,
+    ) -> Self {
         Self {
             block_pos,
             fuel_item,
             burn_time,
+            fuel,
             cancelled: false,
         }
     }

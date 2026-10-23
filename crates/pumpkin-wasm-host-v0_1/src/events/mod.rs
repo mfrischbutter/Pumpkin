@@ -1,12 +1,13 @@
 use std::{any::Any, sync::Arc};
 
-use pumpkin_data::{Block, entity::EntityType};
+use pumpkin_data::{Block, entity::EntityType, item_stack::ItemStack};
 use pumpkin_inventory::screen_handler::ClickType;
 use pumpkin_protocol::java::server::play::ActionType;
 use pumpkin_util::{
     GameMode, Hand,
     math::{position::BlockPos, vector3::Vector3},
 };
+use tokio::sync::Mutex;
 use wasmtime::component::Resource;
 
 use crate::pumpkin;
@@ -217,6 +218,17 @@ pub(super) fn consume_world(
         .resource_table
         .delete::<Arc<World>>(Resource::new_own(world.rep()))
         .expect("invalid world resource handle")
+}
+
+pub(super) fn consume_item_stack(
+    state: &mut PluginHostState,
+    item: &Resource<pumpkin::plugin::item_stack::ItemStack>,
+) -> ItemStack {
+    let mutex = state
+        .resource_table
+        .delete::<Arc<Mutex<ItemStack>>>(Resource::new_own(item.rep()))
+        .expect("invalid item stack resource handle");
+    mutex.try_lock().expect("lock item stack").clone()
 }
 
 type WasmEvent = crate::pumpkin::plugin::event::Event;

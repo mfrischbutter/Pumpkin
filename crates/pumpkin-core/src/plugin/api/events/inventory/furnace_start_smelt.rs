@@ -1,3 +1,4 @@
+use pumpkin_data::item_stack::ItemStack;
 use pumpkin_macros::{Event, cancellable};
 use pumpkin_util::math::position::BlockPos;
 
@@ -13,15 +14,24 @@ pub struct FurnaceStartSmeltEvent {
 
     /// Total cooking time required in ticks.
     pub cooking_time: u32,
+
+    /// The stack in the input slot.
+    pub source: ItemStack,
 }
 
 impl FurnaceStartSmeltEvent {
     #[must_use]
-    pub const fn new(block_pos: BlockPos, source_item: String, cooking_time: u32) -> Self {
+    pub const fn new(
+        block_pos: BlockPos,
+        source_item: String,
+        cooking_time: u32,
+        source: ItemStack,
+    ) -> Self {
         Self {
             block_pos,
             source_item,
             cooking_time,
+            source,
             cancelled: false,
         }
     }
