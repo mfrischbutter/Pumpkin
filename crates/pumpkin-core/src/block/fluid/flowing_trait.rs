@@ -493,7 +493,10 @@ fn fire_level_change(
     let Some(server) = world.server.upgrade() else {
         return Some(new_state_id);
     };
-    if !server.plugin_manager.has_handlers::<FluidLevelChangeEvent>() {
+    if !server
+        .plugin_manager
+        .has_handlers::<FluidLevelChangeEvent>()
+    {
         return Some(new_state_id);
     }
     let mut event = FluidLevelChangeEvent::new(*pos, world.clone(), new_state_id);
