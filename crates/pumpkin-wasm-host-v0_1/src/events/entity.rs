@@ -166,12 +166,32 @@ impl ToFromWasmEvent for PlayerDeathEvent {
         let death_message = state
             .add(self.death_message.clone())
             .expect("failed to add text component resource");
+        let drops = self
+            .drops
+            .iter()
+            .map(|stack| {
+                state
+                    .add(Arc::new(Mutex::new(stack.clone())))
+                    .expect("failed to add item stack resource")
+            })
+            .collect();
+        let items_to_keep = self
+            .items_to_keep
+            .iter()
+            .map(|stack| {
+                state
+                    .add(Arc::new(Mutex::new(stack.clone())))
+                    .expect("failed to add item stack resource")
+            })
+            .collect();
 
         Event::PlayerDeathEvent(PlayerDeathEventData {
             player,
             death_message,
             dropped_exp: self.dropped_exp,
             keep_inventory: self.keep_inventory,
+            drops,
+            items_to_keep,
             cancelled: self.cancelled,
         })
     }
@@ -183,6 +203,16 @@ impl ToFromWasmEvent for PlayerDeathEvent {
                 death_message: consume_text_component(state, &data.death_message),
                 dropped_exp: data.dropped_exp,
                 keep_inventory: data.keep_inventory,
+                drops: data
+                    .drops
+                    .iter()
+                    .map(|stack| consume_item_stack(state, stack))
+                    .collect(),
+                items_to_keep: data
+                    .items_to_keep
+                    .iter()
+                    .map(|stack| consume_item_stack(state, stack))
+                    .collect(),
                 cancelled: data.cancelled,
             },
             _ => panic!("unexpected event type"),

@@ -2362,6 +2362,21 @@ impl LivingEntity {
             let death_message = Self::get_death_message(dyn_self, damage_type, source, cause);
             let mut final_death_message = death_message;
             if let Some(player) = dyn_self.get_player() {
+                let mut keep_inventory = world.level_info.load().game_rules.keep_inventory;
+                let mut items_to_keep = Vec::new();
+                let mut drops = if keep_inventory {
+                    Vec::new()
+                } else {
+                    player
+                        .inventory()
+                        .main_inventory
+                        .read()
+                        .unwrap_or_else(std::sync::PoisonError::into_inner)
+                        .iter()
+                        .filter(|stack| !stack.is_empty())
+                        .cloned()
+                        .collect()
+                };
                 if let Some(player_arc) = world.get_player_by_uuid(player.gameprofile.id)
                     && let Some(server) = world.server.upgrade()
                 {
@@ -2370,15 +2385,20 @@ impl LivingEntity {
                             player_arc,
                             final_death_message.clone(),
                             0,
+                            keep_inventory,
+                            drops,
                         );
                     server.plugin_manager.fire_blocking(&server, &mut event);
                     if event.cancelled {
                         return;
                     }
                     final_death_message = event.death_message;
+                    keep_inventory = event.keep_inventory;
+                    drops = event.drops;
+                    items_to_keep = event.items_to_keep;
                 }
 
-                player.handle_killed(&final_death_message);
+                player.handle_killed(&final_death_message, keep_inventory, drops, items_to_keep);
             }
 
             if show_death_messages && let Some(server) = world.server.upgrade() {

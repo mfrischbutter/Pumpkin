@@ -426,11 +426,16 @@ interface event {
         drops: list<item-stack>
     }
 
+    /// `keep-inventory` starts from the `keepInventory` game rule. `drops` are the main
+    /// inventory stacks that drop (empty when the inventory is kept); when the inventory is not
+    /// kept it is cleared and `items-to-keep` are put back into it.
     record player-death-event-data {
         player: player,
         death-message: text-component,
         dropped-exp: s32,
         keep-inventory: bool,
+        drops: list<item-stack>,
+        items-to-keep: list<item-stack>,
         cancelled: bool
     }
 
