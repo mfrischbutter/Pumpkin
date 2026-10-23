@@ -374,15 +374,18 @@ impl GlobalStructureCache {
             return self.get_stronghold_chunks();
         }
         // A panic here leaves the cell empty, so the next caller retries instead of waiting.
+        // Sequential: the caller is usually a chunk generation worker, and a parallel search
+        // would let it steal another generation job that re-enters this `get_or_init` and
+        // waits on itself, stopping every worker of the pool.
         self.stronghold_chunks.get_or_init(|| {
             Some(multi_noise.map_or_else(
                 || {
                     let random_config = crate::GlobalRandomConfig::new(seed as u64, false);
                     let base = pumpkin_data::noise_router::BaseNoiseRouters::from_dimension(&pumpkin_data::dimension::Dimension::OVERWORLD);
                     let base_router = crate::generation::noise::router::proto_noise_router::ProtoNoiseRouters::generate(base, &random_config);
-                    Self::calculate_strongholds(seed, placement, &base_router.multi_noise)
+                    Self::calculate_strongholds_sequential(seed, placement, &base_router.multi_noise)
                 },
-                |multi_noise| Self::calculate_strongholds(seed, placement, multi_noise),
+                |multi_noise| Self::calculate_strongholds_sequential(seed, placement, multi_noise),
             ))
         }).as_deref().unwrap_or_default()
     }
@@ -627,5 +630,41 @@ mod tests {
             excluded.1,
             &cache,
         ));
+    }
+    /// A chunk generation worker that computes the rings must not pick up another generation
+    /// job meanwhile: that job waits for the rings this worker is still computing.
+    #[test]
+    fn lazy_strongholds_do_not_deadlock_the_generation_pool() {
+        use pumpkin_data::structures::StructurePlacementType;
+        use std::sync::{Arc, mpsc};
+        use std::time::Duration;
+
+        let StructurePlacementType::ConcentricRings(rings) =
+            &StructureSet::STRONGHOLDS.placement.placement_type
+        else {
+            unreachable!()
+        };
+        let cache = Arc::new(GlobalStructureCache::new());
+        let pool = rayon::ThreadPoolBuilder::new()
+            .num_threads(2)
+            .build()
+            .expect("test pool");
+        let (done, finished) = mpsc::channel();
+        for delay in [0, 50] {
+            // The second job arrives while the first computes the rings; the idle worker is
+            // busy helping with them, so it waits in the pool's queue.
+            std::thread::sleep(Duration::from_millis(delay));
+            let (cache, done) = (cache.clone(), done.clone());
+            pool.spawn(move || {
+                let count = cache.get_or_calculate_strongholds(0, rings, None).len();
+                let _ = done.send(count);
+            });
+        }
+        for _ in 0..2 {
+            let count = finished
+                .recv_timeout(Duration::from_secs(300))
+                .expect("stronghold rings never finished: the generation pool deadlocked");
+            assert_eq!(Ok(count), usize::try_from(rings.count));
+        }
     }
 }
