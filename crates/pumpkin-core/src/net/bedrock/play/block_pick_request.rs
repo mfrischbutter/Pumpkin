@@ -11,14 +11,30 @@ impl BedrockClient {
         let world = player.world();
         let block = world.get_block(&packet.position);
 
-        if block.item_id == 0 {
-            return;
+        let mut stack = if block.item_id == 0 {
+            None
+        } else {
+            pumpkin_data::item::Item::from_id(block.item_id).map(|item| ItemStack::new(1, item))
+        };
+
+        if let Some(server) = world.server.upgrade() {
+            let mut event = crate::plugin::player::player_pick_block::PlayerPickBlockEvent::new(
+                player.clone(),
+                world,
+                packet.position,
+                packet.with_data,
+                stack,
+            );
+            server.plugin_manager.fire_blocking(&server, &mut event);
+            if event.cancelled {
+                return;
+            }
+            stack = event.item;
         }
 
-        let Some(item) = pumpkin_data::item::Item::from_id(block.item_id) else {
+        let Some(stack) = stack.filter(|stack| !stack.is_empty()) else {
             return;
         };
-        let stack = ItemStack::new(1, item);
 
         let target_hotbar_slot = packet.max_slots as usize;
         if target_hotbar_slot >= 9 {
