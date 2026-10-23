@@ -367,14 +367,21 @@ pub fn cleanup_event(event: &Event, state: &mut PluginHostState) {
         Event::CraftItemEvent(data) => {
             cleanup_player(state, &data.player);
         }
-        Event::FurnaceSmeltEvent(_) => {}
+        Event::FurnaceSmeltEvent(data) => {
+            cleanup_item_stack(state, &data.source);
+            cleanup_item_stack(state, &data.result);
+        }
         Event::BrewEvent(_) => {}
         Event::BrewingStandFuelEvent(_) => {}
-        Event::FurnaceBurnEvent(_) => {}
+        Event::FurnaceBurnEvent(data) => {
+            cleanup_item_stack(state, &data.fuel);
+        }
         Event::FurnaceExtractEvent(data) => {
             cleanup_player(state, &data.player);
         }
-        Event::FurnaceStartSmeltEvent(_) => {}
+        Event::FurnaceStartSmeltEvent(data) => {
+            cleanup_item_stack(state, &data.source);
+        }
         Event::HopperInventorySearchEvent(_) => {}
         Event::InventoryCreativeEvent(data) => {
             cleanup_player(state, &data.player);
