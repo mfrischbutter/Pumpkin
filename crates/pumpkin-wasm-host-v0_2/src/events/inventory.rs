@@ -1,5 +1,8 @@
 use crate::{
-    events::{ToFromWasmEvent, consume_player, from_wasm_block_position, to_wasm_block_position},
+    events::{
+        ToFromWasmEvent, consume_player, consume_world, from_wasm_block_position,
+        to_wasm_block_position,
+    },
     pumpkin::plugin::event::{
         BrewEventData, BrewingStandFuelEventData, CraftItemEventData, Event, FurnaceBurnEventData,
         FurnaceExtractEventData, FurnaceSmeltEventData, FurnaceStartSmeltEventData,
@@ -31,8 +34,14 @@ impl ToFromWasmEvent for InventoryOpenEvent {
             .add(self.player.clone())
             .expect("failed to add player resource");
 
+        let target_world = state
+            .add(self.world.clone())
+            .expect("failed to add world resource");
+
         Event::InventoryOpenEvent(InventoryOpenEventData {
             player,
+            target_world,
+            block_pos: self.block_pos.map(to_wasm_block_position),
             cancelled: self.cancelled,
         })
     }
@@ -41,6 +50,8 @@ impl ToFromWasmEvent for InventoryOpenEvent {
         match event {
             Event::InventoryOpenEvent(data) => Self {
                 player: consume_player(state, &data.player),
+                world: consume_world(state, &data.target_world),
+                block_pos: data.block_pos.map(from_wasm_block_position),
                 cancelled: data.cancelled,
             },
             _ => panic!("unexpected event type"),
