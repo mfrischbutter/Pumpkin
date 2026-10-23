@@ -210,6 +210,17 @@ pub(super) fn consume_text_component(
         .expect("invalid text-component resource handle")
 }
 
+pub(super) fn consume_item_stack(
+    state: &mut PluginHostState,
+    item: &Resource<pumpkin::plugin::item_stack::ItemStack>,
+) -> ItemStack {
+    let mutex = state
+        .resource_table
+        .delete::<Arc<Mutex<ItemStack>>>(Resource::new_own(item.rep()))
+        .expect("invalid item stack resource handle");
+    mutex.try_lock().expect("lock item stack").clone()
+}
+
 pub(super) fn consume_world(
     state: &mut PluginHostState,
     world: &Resource<pumpkin::plugin::world::World>,

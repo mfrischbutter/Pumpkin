@@ -897,10 +897,15 @@ impl ToFromWasmEvent for BlockDropItemEvent {
     }
 
     fn apply_wasm_event(&mut self, event: Event, state: &mut PluginHostState) {
-        cleanup_event(&event, state);
-        if let Event::BlockDropItemEvent(data) = event {
+        if let Event::BlockDropItemEvent(data) = &event {
+            self.items = data
+                .items
+                .iter()
+                .map(|item| consume_item_stack(state, item))
+                .collect();
             self.cancelled = data.cancelled;
         }
+        cleanup_event(&event, state);
     }
 
     fn from_wasm_event(event: Event, _state: &mut PluginHostState) -> Self {
