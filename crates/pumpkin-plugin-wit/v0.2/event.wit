@@ -1323,6 +1323,8 @@ interface event {
         block-pos: block-pos,
         direction: string,
         target-world: %world,
+        blocks: list<block-pos>,
+        broken: list<block-pos>,
         cancelled: bool
     }
 
@@ -1330,6 +1332,8 @@ interface event {
         block-pos: block-pos,
         direction: string,
         target-world: %world,
+        blocks: list<block-pos>,
+        broken: list<block-pos>,
         cancelled: bool
     }
 
