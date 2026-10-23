@@ -4,16 +4,20 @@ use pumpkin_util::math::position::BlockPos;
 use std::sync::Arc;
 
 use crate::entity::player::Player;
+use crate::world::World;
 
 use super::BlockEvent;
 
 /// An event that occurs when a block is broken.
 ///
-/// This event contains information about the player breaking the block, the block itself,
+/// This event contains information about the world, the player breaking the block, the block itself,
 /// the experience gained, and whether the block should drop items.
 #[cancellable]
 #[derive(Event, Clone)]
 pub struct BlockBreakEvent {
+    /// The world the block is broken in.
+    pub world: Arc<World>,
+
     /// The player who is breaking the block, if applicable.
     pub player: Option<Arc<Player>>,
 
@@ -34,6 +38,7 @@ impl BlockBreakEvent {
     /// Creates a new instance of `BlockBreakEvent`.
     ///
     /// # Arguments
+    /// - `world`: The world the block is broken in.
     /// - `player`: An optional reference to the player breaking the block.
     /// - `block`: The block that is being broken.
     /// - `block_position`: The position of the block that is being broken.
@@ -44,6 +49,7 @@ impl BlockBreakEvent {
     /// A new instance of `BlockBreakEvent`.
     #[must_use]
     pub const fn new(
+        world: Arc<World>,
         player: Option<Arc<Player>>,
         block: &'static Block,
         block_position: BlockPos,
@@ -51,6 +57,7 @@ impl BlockBreakEvent {
         drop: bool,
     ) -> Self {
         Self {
+            world,
             player,
             block,
             block_position,

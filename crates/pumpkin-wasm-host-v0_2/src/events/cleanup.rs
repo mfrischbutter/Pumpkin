@@ -130,6 +130,7 @@ pub fn cleanup_event(event: &Event, state: &mut PluginHostState) {
             if let Some(res) = &data.player {
                 cleanup_player(state, res);
             }
+            cleanup_world(state, &data.target_world);
         }
         Event::BlockBurnEvent(data) => {
             cleanup_world(state, &data.target_world);
@@ -142,6 +143,7 @@ pub fn cleanup_event(event: &Event, state: &mut PluginHostState) {
         }
         Event::BlockPlaceEvent(data) => {
             cleanup_player(state, &data.player);
+            cleanup_world(state, &data.target_world);
         }
         Event::BedrockFormResponseEvent(data) => {
             cleanup_player(state, &data.player);
@@ -289,9 +291,15 @@ pub fn cleanup_event(event: &Event, state: &mut PluginHostState) {
         Event::BlockFadeEvent(_) => {}
         Event::BlockDispenseEvent(_) => {}
         Event::BlockExplodeEvent(_) => {}
-        Event::BlockPhysicsEvent(_) => {}
-        Event::BlockPistonExtendEvent(_) => {}
-        Event::BlockPistonRetractEvent(_) => {}
+        Event::BlockPhysicsEvent(data) => {
+            cleanup_world(state, &data.target_world);
+        }
+        Event::BlockPistonExtendEvent(data) => {
+            cleanup_world(state, &data.target_world);
+        }
+        Event::BlockPistonRetractEvent(data) => {
+            cleanup_world(state, &data.target_world);
+        }
         Event::NotePlayEvent(_) => {}
         Event::SignChangeEvent(data) => {
             cleanup_player(state, &data.player);

@@ -5674,6 +5674,7 @@ impl World {
         }
 
         let mut event = BlockBreakEvent::new(
+            self.clone(),
             cause.cloned(),
             broken_block,
             *position,
@@ -6414,6 +6415,7 @@ impl World {
         };
 
         let mut event = crate::plugin::api::events::block::block_physics::BlockPhysicsEvent::new(
+            self.clone(),
             *position,
             *source_position,
         );

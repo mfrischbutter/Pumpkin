@@ -110,12 +110,17 @@ impl ToFromWasmEvent for BlockBreakEvent {
                 .expect("failed to add player resource")
         });
 
+        let target_world = state
+            .add(self.world.clone())
+            .expect("failed to add world resource");
+
         Event::BlockBreakEvent(BlockBreakEventData {
             player,
             block: to_wasm_block_name(self.block),
             block_pos: to_wasm_block_position(self.block_position),
             exp: self.exp,
             should_drop: self.drop,
+            target_world,
             cancelled: self.cancelled,
         })
     }
@@ -123,6 +128,7 @@ impl ToFromWasmEvent for BlockBreakEvent {
     fn from_wasm_event(event: Event, state: &mut PluginHostState) -> Self {
         match event {
             Event::BlockBreakEvent(data) => Self {
+                world: consume_world(state, &data.target_world),
                 player: data.player.map(|player| consume_player(state, &player)),
                 block: from_wasm_block_name(&data.block),
                 block_position: from_wasm_block_position(data.block_pos),
@@ -231,12 +237,17 @@ impl ToFromWasmEvent for BlockPlaceEvent {
             .add(self.player.clone())
             .expect("failed to add player resource");
 
+        let target_world = state
+            .add(self.world.clone())
+            .expect("failed to add world resource");
+
         Event::BlockPlaceEvent(BlockPlaceEventData {
             player,
             block_placed: to_wasm_block_name(self.block_placed),
             block_placed_against: to_wasm_block_name(self.block_placed_against),
             block_pos: to_wasm_block_position(self.block_position),
             can_build: self.can_build,
+            target_world,
             cancelled: self.cancelled,
         })
     }
@@ -244,6 +255,7 @@ impl ToFromWasmEvent for BlockPlaceEvent {
     fn from_wasm_event(event: Event, state: &mut PluginHostState) -> Self {
         match event {
             Event::BlockPlaceEvent(data) => Self {
+                world: consume_world(state, &data.target_world),
                 player: consume_player(state, &data.player),
                 block_placed: from_wasm_block_name(&data.block_placed),
                 block_placed_against: from_wasm_block_name(&data.block_placed_against),
@@ -410,17 +422,22 @@ impl ToFromWasmEvent for BlockExplodeEvent {
 }
 
 impl ToFromWasmEvent for BlockPhysicsEvent {
-    fn to_wasm_event(&self, _state: &mut PluginHostState) -> Event {
+    fn to_wasm_event(&self, state: &mut PluginHostState) -> Event {
+        let target_world = state
+            .add(self.world.clone())
+            .expect("failed to add world resource");
         Event::BlockPhysicsEvent(BlockPhysicsEventData {
             block_pos: to_wasm_block_position(self.block_pos),
             changed_pos: to_wasm_block_position(self.changed_pos),
+            target_world,
             cancelled: self.cancelled,
         })
     }
 
-    fn from_wasm_event(event: Event, _state: &mut PluginHostState) -> Self {
+    fn from_wasm_event(event: Event, state: &mut PluginHostState) -> Self {
         match event {
             Event::BlockPhysicsEvent(data) => Self {
+                world: consume_world(state, &data.target_world),
                 block_pos: from_wasm_block_position(data.block_pos),
                 changed_pos: from_wasm_block_position(data.changed_pos),
                 cancelled: data.cancelled,
@@ -431,17 +448,22 @@ impl ToFromWasmEvent for BlockPhysicsEvent {
 }
 
 impl ToFromWasmEvent for BlockPistonExtendEvent {
-    fn to_wasm_event(&self, _state: &mut PluginHostState) -> Event {
+    fn to_wasm_event(&self, state: &mut PluginHostState) -> Event {
+        let target_world = state
+            .add(self.world.clone())
+            .expect("failed to add world resource");
         Event::BlockPistonExtendEvent(BlockPistonExtendEventData {
             block_pos: to_wasm_block_position(self.block_pos),
             direction: self.direction.clone(),
+            target_world,
             cancelled: self.cancelled,
         })
     }
 
-    fn from_wasm_event(event: Event, _state: &mut PluginHostState) -> Self {
+    fn from_wasm_event(event: Event, state: &mut PluginHostState) -> Self {
         match event {
             Event::BlockPistonExtendEvent(data) => Self {
+                world: consume_world(state, &data.target_world),
                 block_pos: from_wasm_block_position(data.block_pos),
                 direction: data.direction,
                 cancelled: data.cancelled,
@@ -452,17 +474,22 @@ impl ToFromWasmEvent for BlockPistonExtendEvent {
 }
 
 impl ToFromWasmEvent for BlockPistonRetractEvent {
-    fn to_wasm_event(&self, _state: &mut PluginHostState) -> Event {
+    fn to_wasm_event(&self, state: &mut PluginHostState) -> Event {
+        let target_world = state
+            .add(self.world.clone())
+            .expect("failed to add world resource");
         Event::BlockPistonRetractEvent(BlockPistonRetractEventData {
             block_pos: to_wasm_block_position(self.block_pos),
             direction: self.direction.clone(),
+            target_world,
             cancelled: self.cancelled,
         })
     }
 
-    fn from_wasm_event(event: Event, _state: &mut PluginHostState) -> Self {
+    fn from_wasm_event(event: Event, state: &mut PluginHostState) -> Self {
         match event {
             Event::BlockPistonRetractEvent(data) => Self {
+                world: consume_world(state, &data.target_world),
                 block_pos: from_wasm_block_position(data.block_pos),
                 direction: data.direction,
                 cancelled: data.cancelled,
