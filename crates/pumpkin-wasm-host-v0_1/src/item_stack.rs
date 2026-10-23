@@ -22,7 +22,7 @@ use pumpkin_data::attributes::Attributes;
 use pumpkin_data::data_component::DataComponent;
 use pumpkin_data::data_component_impl::combat::{Modifier, Operation};
 use pumpkin_data::data_component_impl::{
-    AttributeModifiersImpl, CustomNameImpl, EnchantmentsImpl, LoreImpl,
+    AttributeModifiersImpl, CustomNameImpl, DataComponentImpl, EnchantmentsImpl, LoreImpl,
 };
 use pumpkin_nbt::tag::NbtTag;
 use pumpkin_protocol::codec::data_component::{deserialize, serialize};
@@ -36,6 +36,18 @@ pub(crate) fn to_wit_data_component(id: DataComponent) -> WitDataComponent {
 pub(crate) fn from_wit_data_component(id: WitDataComponent) -> DataComponent {
     // SAFETY: WIT enum is generated in the same order as the internal enum
     unsafe { std::mem::transmute(id as u8) }
+}
+
+fn set_patch_component(
+    stack: &mut pumpkin_data::item_stack::ItemStack,
+    id: DataComponent,
+    component_impl: Box<dyn DataComponentImpl>,
+) {
+    if let Some((_, data)) = stack.patch.iter_mut().find(|(pid, _)| *pid == id) {
+        *data = Some(component_impl);
+    } else {
+        stack.patch.push((id, Some(component_impl)));
+    }
 }
 
 pub(crate) fn to_wit_enchantment(id: &Enchantment) -> WitEnchantment {
@@ -662,11 +674,7 @@ impl HostItemStack for PluginHostState {
         let mut cursor = std::io::Cursor::new(value);
 
         if let Ok(component_impl) = deserialize(id, &mut cursor) {
-            if let Some((_, data)) = stack.patch.iter_mut().find(|(pid, _)| *pid == id) {
-                *data = Some(component_impl);
-            } else {
-                stack.patch.push((id, Some(component_impl)));
-            }
+            set_patch_component(&mut stack, id, component_impl);
         }
         Ok(())
     }
@@ -681,6 +689,66 @@ impl HostItemStack for PluginHostState {
         let id = from_wit_data_component(component);
         stack.patch.retain(|(pid, _)| *pid != id);
         Ok(())
+    }
+
+    async fn get_component(
+        &mut self,
+        res: Resource<ItemStackHandle>,
+        component: WitDataComponent,
+    ) -> wasmtime::Result<Option<Vec<u8>>> {
+        let stack = self.get(&res)?;
+        let stack = stack.lock().await;
+        let id = from_wit_data_component(component);
+        let Some(data) = stack.get_data_component_by_id(id) else {
+            return Ok(None);
+        };
+        let mut buf = Vec::new();
+        if let Err(err) = serialize(id, data, &mut buf) {
+            tracing::warn!("failed to serialize item component {}: {err}", id.to_name());
+            return Ok(None);
+        }
+        Ok(Some(buf))
+    }
+
+    async fn try_set_component(
+        &mut self,
+        res: Resource<ItemStackHandle>,
+        component: WitDataComponent,
+        value: Vec<u8>,
+    ) -> wasmtime::Result<Result<(), String>> {
+        let id = from_wit_data_component(component);
+        let mut reader = value.as_slice();
+        let component_impl = match deserialize(id, &mut reader) {
+            Ok(component_impl) => component_impl,
+            Err(err) => return Ok(Err(format!("invalid {} value: {err}", id.to_name()))),
+        };
+        if !reader.is_empty() {
+            return Ok(Err(format!(
+                "{} bytes left over after the {} value",
+                reader.len(),
+                id.to_name()
+            )));
+        }
+
+        let stack = self.get(&res)?;
+        let mut stack = stack.lock().await;
+        set_patch_component(&mut stack, id, component_impl);
+        Ok(Ok(()))
+    }
+
+    async fn get_max_damage(
+        &mut self,
+        res: Resource<ItemStackHandle>,
+    ) -> wasmtime::Result<Option<i32>> {
+        let stack = self.get(&res)?;
+        let stack = stack.lock().await;
+        Ok(stack.get_max_damage())
+    }
+
+    async fn get_damage(&mut self, res: Resource<ItemStackHandle>) -> wasmtime::Result<i32> {
+        let stack = self.get(&res)?;
+        let stack = stack.lock().await;
+        Ok(stack.get_damage())
     }
 
     fn drop(&mut self, rep: Resource<ItemStackHandle>) -> wasmtime::Result<()> {
