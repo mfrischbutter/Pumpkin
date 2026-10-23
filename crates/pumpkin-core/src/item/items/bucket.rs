@@ -16,9 +16,10 @@ use pumpkin_data::{
     item_stack::ItemStack,
     sound::{Sound, SoundCategory},
 };
+use pumpkin_inventory::player::player_inventory::PlayerInventory;
 use pumpkin_nbt::compound::NbtCompound;
 use pumpkin_util::{
-    GameMode,
+    GameMode, Hand,
     math::{position::BlockPos, vector3::Vector3},
 };
 use pumpkin_world::{tick::TickPriority, world::BlockFlags};
@@ -245,10 +246,19 @@ fn apply_mob_bucket_components(bucket_stack: &ItemStack, mob: &dyn EntityBase, p
     }
 }
 
-fn give_player_bucket_item(player: &Player, item: &'static Item) {
-    let mut held_stack = player.inventory.held_item();
-    fill_bucket_stack(&mut held_stack, player, item);
-    player.inventory.set_held_item(held_stack);
+fn give_player_bucket_item(player: &Player, hand: Hand, filled: ItemStack) {
+    let mut hand_stack = player.inventory.get_stack_in_hand(hand);
+    give_filled_bucket_stack(&mut hand_stack, player, filled);
+    player.inventory.set_stack_in_hand(hand, hand_stack);
+}
+
+/// Resends the stack in `hand`, which the client changed in its own prediction of the bucket use.
+fn sync_bucket_hand(player: &Player, hand: Hand) {
+    let slot = match hand {
+        Hand::Right => player.inventory.get_selected_slot() as usize,
+        Hand::Left => PlayerInventory::OFF_HAND_SLOT,
+    };
+    player.sync_hand_slot(slot, player.inventory.get_stack_in_hand(hand));
 }
 
 /// `can_pickup` is asked with the position and the filled bucket right before
@@ -443,7 +453,18 @@ impl ItemBehaviour for EmptyBucketItem {
         self.normal_use_with_rotation(item, player, yaw, pitch);
     }
 
-    fn normal_use_with_rotation(&self, _block: &Item, player: &Player, yaw: f32, pitch: f32) {
+    fn normal_use_with_rotation(&self, item: &Item, player: &Player, yaw: f32, pitch: f32) {
+        self.normal_use_with_hand(item, player, yaw, pitch, Hand::Right);
+    }
+
+    fn normal_use_with_hand(
+        &self,
+        _item: &Item,
+        player: &Player,
+        yaw: f32,
+        pitch: f32,
+        hand: Hand,
+    ) {
         let world = player.world();
         let (start_pos, end_pos) = get_start_and_end_pos(player, yaw, pitch);
 
@@ -460,7 +481,10 @@ impl ItemBehaviour for EmptyBucketItem {
         let block_pos = hit.block_pos;
         let direction = hit.direction;
 
+        let used_stack = player.inventory.get_stack_in_hand(hand);
+        let mut result = None;
         let Some(item) = try_pickup_bucket_item(&world, block_pos, direction, |pos, item| {
+            result = Some(ItemStack::new(1, item));
             if let Some(server) = world.server.upgrade()
                 && let Some(player_arc) = world.get_player_by_uuid(player.gameprofile.id)
             {
@@ -469,16 +493,17 @@ impl ItemBehaviour for EmptyBucketItem {
                         player_arc,
                         pos,
                         item.registry_key.to_string(),
+                        hand,
+                        used_stack.clone(),
+                        result.take(),
                     );
                 server.plugin_manager.fire_blocking(&server, &mut event);
                 if event.cancelled {
                     // The client already shows the filled bucket.
-                    player.sync_hand_slot(
-                        player.inventory.get_selected_slot() as usize,
-                        player.inventory.held_item(),
-                    );
+                    sync_bucket_hand(player, hand);
                     return false;
                 }
+                result = event.result;
             }
             true
         }) else {
@@ -491,7 +516,12 @@ impl ItemBehaviour for EmptyBucketItem {
             &block_pos.to_f64(),
         );
 
-        give_player_bucket_item(player, item);
+        let Some(filled) = result else {
+            // A plugin left the hand as it is; the client already shows the filled bucket.
+            sync_bucket_hand(player, hand);
+            return;
+        };
+        give_player_bucket_item(player, hand, filled);
     }
 
     fn use_on_entity(&self, item: &mut ItemStack, player: &Player, entity: Arc<dyn EntityBase>) {
@@ -540,6 +570,10 @@ impl ItemBehaviour for FilledBucketItem {
     }
 
     fn normal_use_with_rotation(&self, item: &Item, player: &Player, yaw: f32, pitch: f32) {
+        self.normal_use_with_hand(item, player, yaw, pitch, Hand::Right);
+    }
+
+    fn normal_use_with_hand(&self, item: &Item, player: &Player, yaw: f32, pitch: f32, hand: Hand) {
         let world = player.world();
         let (start_pos, end_pos) = get_start_and_end_pos(player, yaw, pitch);
         let hit = world.clip(&pumpkin_world::clip::ClipContext::new(
@@ -559,6 +593,10 @@ impl ItemBehaviour for FilledBucketItem {
             play_bucket_evaporation(&world, &player.position());
             return;
         }
+        let used_stack = player.inventory.get_stack_in_hand(hand);
+        // Players with infinite materials keep the filled bucket.
+        let infinite_materials = player.gamemode.load() == GameMode::Creative;
+        let mut result = (!infinite_materials).then(|| ItemStack::new(1, &Item::BUCKET));
         if !try_place_filled_bucket(&world, item, pos, direction, |place_pos| {
             if let Some(server) = world.server.upgrade()
                 && let Some(player_arc) = world.get_player_by_uuid(player.gameprofile.id)
@@ -568,16 +606,17 @@ impl ItemBehaviour for FilledBucketItem {
                         player_arc,
                         place_pos,
                         item.registry_key.to_string(),
+                        hand,
+                        used_stack.clone(),
+                        result.take(),
                     );
                 server.plugin_manager.fire_blocking(&server, &mut event);
                 if event.cancelled {
                     // The client already shows the empty bucket.
-                    player.sync_hand_slot(
-                        player.inventory.get_selected_slot() as usize,
-                        player.inventory.held_item(),
-                    );
+                    sync_bucket_hand(player, hand);
                     return false;
                 }
+                result = event.result;
             }
             true
         }) {
@@ -604,12 +643,6 @@ impl ItemBehaviour for FilledBucketItem {
         world.play_sound(get_empty_sound(item), sound_category, &place_pos.to_f64());
 
         if let Some((entity_type, _)) = get_mob_for_bucket(item) {
-            let held = player.inventory.held_item();
-            let bucket_stack = if !held.is_empty() && held.item.id == item.id {
-                held
-            } else {
-                player.inventory.off_hand_item()
-            };
             let spawn_coord = Vector3::new(
                 f64::from(place_pos.0.x) + 0.5,
                 f64::from(place_pos.0.y),
@@ -618,7 +651,7 @@ impl ItemBehaviour for FilledBucketItem {
             let mob = from_type(entity_type, spawn_coord, &world, Uuid::new_v4());
             if mob.get_mob().and_then(|mob| mob.as_bucketable()).is_some() {
                 crate::entity::mob::spawn::finalize_spawn(&mob, &world, None);
-                apply_mob_bucket_components(&bucket_stack, mob.as_ref(), player);
+                apply_mob_bucket_components(&used_stack, mob.as_ref(), player);
                 if world.spawn_creature(
                     mob.clone(),
                     crate::plugin::api::events::entity::creature_spawn::CreatureSpawnReason::Bucket,
@@ -628,17 +661,19 @@ impl ItemBehaviour for FilledBucketItem {
                     fish.play_ambient_sound();
                 }
             } else {
-                apply_mob_bucket_components(&bucket_stack, mob.as_ref(), player);
+                apply_mob_bucket_components(&used_stack, mob.as_ref(), player);
                 world.spawn_entity(mob);
             }
         }
 
-        if player.gamemode.load() != GameMode::Creative {
-            let item_stack = ItemStack::new(1, &Item::BUCKET);
-            player
-                .inventory
-                .set_slot(player.inventory.get_selected_slot() as usize, item_stack);
-        }
+        let Some(result) = result else {
+            if !infinite_materials {
+                // A plugin kept the filled bucket; the client already shows it emptied.
+                sync_bucket_hand(player, hand);
+            }
+            return;
+        };
+        player.inventory.set_stack_in_hand(hand, result);
     }
 
     fn use_on_entity(&self, item: &mut ItemStack, player: &Player, entity: Arc<dyn EntityBase>) {
