@@ -693,6 +693,20 @@ pub fn cleanup_event(event: &Event, state: &mut PluginHostState) {
         Event::PlayerLinksSendEvent(data) => {
             cleanup_player(state, &data.player);
         }
+        Event::PlayerPickBlockEvent(data) => {
+            cleanup_player(state, &data.player);
+            cleanup_world(state, &data.target_world);
+            if let Some(res) = &data.item {
+                cleanup_item_stack(state, res);
+            }
+        }
+        Event::PlayerPickEntityEvent(data) => {
+            cleanup_player(state, &data.player);
+            cleanup_world(state, &data.target_world);
+            if let Some(res) = &data.item {
+                cleanup_item_stack(state, res);
+            }
+        }
         Event::PlayerPickupArrowEvent(data) => {
             cleanup_player(state, &data.player);
         }
