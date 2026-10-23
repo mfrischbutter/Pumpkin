@@ -41,18 +41,33 @@ pub struct PlayerDeathEvent {
     /// The amount of experience dropped by the player.
     pub dropped_exp: i32,
 
-    /// Whether the player keeps their inventory upon death.
+    /// Whether the player keeps their inventory upon death. Starts from the `keepInventory`
+    /// game rule.
     pub keep_inventory: bool,
+
+    /// The main inventory stacks that drop. Empty when the inventory is kept.
+    pub drops: Vec<ItemStack>,
+
+    /// Stacks put back into the cleared inventory. Ignored when the inventory is kept.
+    pub items_to_keep: Vec<ItemStack>,
 }
 
 impl PlayerDeathEvent {
     #[must_use]
-    pub const fn new(player: Arc<Player>, death_message: TextComponent, dropped_exp: i32) -> Self {
+    pub const fn new(
+        player: Arc<Player>,
+        death_message: TextComponent,
+        dropped_exp: i32,
+        keep_inventory: bool,
+        drops: Vec<ItemStack>,
+    ) -> Self {
         Self {
             player,
             death_message,
             dropped_exp,
-            keep_inventory: false,
+            keep_inventory,
+            drops,
+            items_to_keep: Vec::new(),
             cancelled: false,
         }
     }

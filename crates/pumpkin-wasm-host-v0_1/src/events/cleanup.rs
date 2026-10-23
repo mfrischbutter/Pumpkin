@@ -235,6 +235,9 @@ pub fn cleanup_event(event: &Event, state: &mut PluginHostState) {
         Event::PlayerDeathEvent(data) => {
             cleanup_player(state, &data.player);
             cleanup_text_component(state, &data.death_message);
+            for res in data.drops.iter().chain(&data.items_to_keep) {
+                cleanup_item_stack(state, res);
+            }
         }
         Event::EntitySpawnEvent(data) => {
             cleanup_world(state, &data.target_world);
