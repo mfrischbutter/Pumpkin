@@ -6,7 +6,7 @@ interface event {
     use screens.{screen};
     use player.{player};
     use text.{text-component};
-    use %world.{%world};
+    use %world.{%world, entity};
     use java-packets.{serverbound-packet as java-serverbound-packet, clientbound-packet as java-clientbound-packet};
     use bedrock-packets.{serverbound-packet as bedrock-serverbound-packet, clientbound-packet as bedrock-clientbound-packet};
     use uuid.{uuid};
@@ -832,9 +832,11 @@ interface event {
         cancelled: bool
     }
 
+    /// Fired after the entity was removed; `cancelled` is ignored.
     record entity-remove-event-data {
         entity-id: s32,
         cause: string,
+        entity: entity,
         cancelled: bool
     }
 
@@ -1609,17 +1611,23 @@ interface event {
         cancelled: bool
     }
 
+    /// Fired after the chunk's entities went live; `cancelled` is ignored.
     record entities-load-event-data {
         chunk-x: s32,
         chunk-z: s32,
         entity-count: u32,
+        target-world: %world,
+        entities: list<entity>,
         cancelled: bool
     }
 
+    /// Fired before the chunk's entities are saved and dropped; `cancelled` is ignored.
     record entities-unload-event-data {
         chunk-x: s32,
         chunk-z: s32,
         entity-count: u32,
+        target-world: %world,
+        entities: list<entity>,
         cancelled: bool
     }
 

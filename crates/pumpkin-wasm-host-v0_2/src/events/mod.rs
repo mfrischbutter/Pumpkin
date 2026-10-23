@@ -11,7 +11,7 @@ use wasmtime::component::Resource;
 
 use crate::pumpkin;
 use pumpkin_core::{
-    entity::player::Player,
+    entity::{EntityBase, player::Player},
     plugin::{BoxFuture, EventHandler, Payload},
     server::Server,
     world::World,
@@ -197,6 +197,16 @@ pub(super) fn consume_player(
         .resource_table
         .delete::<Arc<Player>>(Resource::new_own(player.rep()))
         .expect("invalid player resource handle")
+}
+
+pub(super) fn consume_entity(
+    state: &mut PluginHostState,
+    entity: &Resource<pumpkin::plugin::world::Entity>,
+) -> Arc<dyn EntityBase> {
+    state
+        .resource_table
+        .delete::<Arc<dyn EntityBase>>(Resource::new_own(entity.rep()))
+        .expect("invalid entity resource handle")
 }
 
 pub(super) fn consume_text_component(

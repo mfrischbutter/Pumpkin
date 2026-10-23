@@ -476,6 +476,7 @@ interface %world {
         get-eye-height: func() -> f32;
         get-eye-position: func() -> position;
 
+        /// Returns entities and players within x, y and z blocks of this entity, excluding itself.
         get-nearby-entities: func(x: f64, y: f64, z: f64) -> list<entity>;
 
         get-vehicle: func() -> option<entity>;
@@ -902,6 +903,12 @@ interface %world {
 
         /// Returns a list of all entities in this world.
         get-entities: func() -> list<entity>;
+
+        /// Returns the entity or player with the given entity id in this world, if any.
+        get-entity-by-id: func(id: s32) -> option<entity>;
+
+        /// Returns the entity or player with the given UUID in this world, if any.
+        get-entity-by-uuid: func(id: uuid) -> option<entity>;
 
         /// Spawns a lightning bolt at the specified position.
         strike-lightning: func(pos: position, effect-only: bool);

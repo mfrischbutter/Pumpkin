@@ -4473,7 +4473,7 @@ impl World {
                 }
 
                 if first_load {
-                    world.make_chunk_entities_live(&chunk, Some(&player));
+                    world.make_chunk_entities_live(&chunk, Some(&player)).await;
                 } else {
                     // Already live for other watchers: pair this player now so
                     // spawn packets and vehicle restore do not wait on a tracker tick.
@@ -4518,7 +4518,7 @@ impl World {
                 }
 
                 if first_load {
-                    world.make_chunk_entities_live(&chunk, None);
+                    world.make_chunk_entities_live(&chunk, None).await;
                 }
             }
         });
@@ -4529,11 +4529,18 @@ impl World {
     /// (cleared) to avoid keeping a duplicate copy that would be re-appended on the
     /// next unload and doubled on every reload. `player`, when present, gets vehicle
     /// restore for the entities it just loaded.
-    fn make_chunk_entities_live(
+    async fn make_chunk_entities_live(
         self: &Arc<Self>,
         chunk: &Arc<ChunkEntityData>,
         player: Option<&Arc<Player>>,
     ) {
+        use crate::plugin::api::events::world::entities_load::EntitiesLoadEvent;
+
+        let collect_loaded = self
+            .server
+            .upgrade()
+            .is_some_and(|server| server.plugin_manager.has_handlers::<EntitiesLoadEvent>());
+        let mut loaded = Vec::new();
         let entity_nbts = std::mem::take(
             &mut *chunk
                 .data
@@ -4564,10 +4571,17 @@ impl World {
 
             // UUID-dedupes if another watcher already loaded this entity.
             // Tracker owns pairing (spawn packets + vehicle restore).
-            self.add_entity_silent(entity.clone());
+            let added = self.add_entity_silent(entity.clone());
             if let Some(player) = player {
                 player.try_restore_vehicle(&entity);
             }
+            if added && collect_loaded {
+                loaded.push(entity);
+            }
+        }
+
+        if collect_loaded {
+            self.load_entities(Vector2::new(chunk.x, chunk.z), loaded).await;
         }
     }
 
@@ -5208,8 +5222,9 @@ impl World {
         self.spawn_entity(entity)
     }
 
+    /// Returns `false` without adding it when an entity with the same UUID is already live.
     #[expect(clippy::needless_pass_by_value)]
-    pub fn add_entity_silent(&self, entity: Arc<dyn EntityBase>) {
+    pub fn add_entity_silent(&self, entity: Arc<dyn EntityBase>) -> bool {
         let base_entity = entity.get_entity();
 
         // Guard against duplicate entities with the same UUID.
@@ -5221,7 +5236,7 @@ impl World {
             .iter()
             .any(|e| e.get_entity().entity_uuid == base_entity.entity_uuid);
         if already_exists {
-            return;
+            return false;
         }
 
         // The entity stays live-only: it is written to its chunk's saved data on
@@ -5237,9 +5252,15 @@ impl World {
         });
         self.record_tick_spawn(entity.get_entity().entity_id);
         self.add_pending_riders(&entity);
+        true
     }
 
+    /// Fires [`EntityRemoveEvent`] once the entity is gone; its cancel cannot be honoured.
+    ///
+    /// [`EntityRemoveEvent`]: crate::plugin::api::events::entity::entity_remove::EntityRemoveEvent
     pub fn remove_entity(&self, entity: &dyn EntityBase) {
+        use crate::plugin::api::events::entity::entity_remove::EntityRemoveEvent;
+
         // Entity::remove passes its base projection; retain the registered living owner.
         let registered = self.get_entity_by_id(entity.get_entity().entity_id);
         let entity = registered.as_deref().unwrap_or(entity);
@@ -5263,12 +5284,22 @@ impl World {
         if let Some(mob) = entity.get_mob() {
             mob.get_mob_entity().finish_removal(mob);
         }
+
+        if let Some(registered) = registered
+            && let Some(server) = self.server.upgrade()
+            && server.plugin_manager.has_handlers::<EntityRemoveEvent>()
+        {
+            let mut event = EntityRemoveEvent::new(registered, "discarded".to_string());
+            server.plugin_manager.fire_blocking(&server, &mut event);
+        }
     }
 
     pub async fn remove_entities_in_chunks(
-        &self,
+        self: &Arc<Self>,
         chunks: impl IntoIterator<Item = impl std::borrow::Borrow<Vector2<i32>>>,
     ) {
+        use crate::plugin::api::events::world::entities_unload::EntitiesUnloadEvent;
+
         let chunks_set: FxHashSet<_> = chunks.into_iter().map(|c| *c.borrow()).collect();
         if chunks_set.is_empty() {
             return;
@@ -5290,6 +5321,25 @@ impl World {
             });
             new_entities
         });
+
+        if self
+            .server
+            .upgrade()
+            .is_some_and(|server| server.plugin_manager.has_handlers::<EntitiesUnloadEvent>())
+        {
+            let mut by_chunk: FxHashMap<Vector2<i32>, Vec<Arc<dyn EntityBase>>> =
+                chunks_set.iter().map(|pos| (*pos, Vec::new())).collect();
+            for entity in &entities_to_remove {
+                if let Some(chunk_entities) =
+                    by_chunk.get_mut(&entity.get_entity().chunk_pos.load())
+                {
+                    chunk_entities.push(entity.clone());
+                }
+            }
+            for (chunk_pos, entities) in by_chunk {
+                self.unload_entities(chunk_pos, entities).await;
+            }
+        }
 
         self.save_entities_by_chunk(&entities_to_remove, chunks_set.iter().copied())
             .await;
@@ -7394,29 +7444,35 @@ impl World {
         }
     }
 
-    pub fn load_entities(&self, chunk_pos: Vector2<i32>, entity_count: usize) {
+    pub async fn load_entities(
+        self: &Arc<Self>,
+        chunk_pos: Vector2<i32>,
+        entities: Vec<Arc<dyn EntityBase>>,
+    ) {
         let mut load_event =
             crate::plugin::api::events::world::entities_load::EntitiesLoadEvent::new(
                 chunk_pos,
-                entity_count,
+                self.clone(),
+                entities,
             );
         if let Some(server) = self.server.upgrade() {
-            server
-                .plugin_manager
-                .fire_blocking(&server, &mut load_event);
+            server.plugin_manager.fire(&server, &mut load_event).await;
         }
     }
 
-    pub fn unload_entities(&self, chunk_pos: Vector2<i32>, entity_count: usize) {
+    pub async fn unload_entities(
+        self: &Arc<Self>,
+        chunk_pos: Vector2<i32>,
+        entities: Vec<Arc<dyn EntityBase>>,
+    ) {
         let mut unload_event =
             crate::plugin::api::events::world::entities_unload::EntitiesUnloadEvent::new(
                 chunk_pos,
-                entity_count,
+                self.clone(),
+                entities,
             );
         if let Some(server) = self.server.upgrade() {
-            server
-                .plugin_manager
-                .fire_blocking(&server, &mut unload_event);
+            server.plugin_manager.fire(&server, &mut unload_event).await;
         }
     }
 

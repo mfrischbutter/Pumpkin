@@ -48,6 +48,7 @@ bindgen!({
         "pumpkin:plugin/server@0.1.0.[method]whitelist-manager.set-enabled": async | store | trappable,
         "pumpkin:plugin/world@0.1.0.[method]entity.add-passenger": async | store | trappable,
         "pumpkin:plugin/world@0.1.0.[method]entity.eject-passengers": async | store | trappable,
+        "pumpkin:plugin/world@0.1.0.[method]entity.remove": async | store | trappable,
         "pumpkin:plugin/world@0.1.0.[method]entity.remove-passenger": async | store | trappable,
         "pumpkin:plugin/world@0.1.0.[method]entity.set-swimming": async | store | trappable,
         "pumpkin:plugin/world@0.1.0.[method]entity.set-vehicle": async | store | trappable,

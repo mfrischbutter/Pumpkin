@@ -383,7 +383,7 @@ impl HostEntity for PluginHostState {
             Vector3::new(pos.x + x, pos.y + y, pos.z + z),
         );
         let world = entity.get_entity().world.load_full();
-        let entities = world.get_entities_at_box(&box_range);
+        let entities = world.get_all_at_box(&box_range);
 
         let mut result = Vec::new();
         for e in entities {
@@ -555,12 +555,6 @@ impl HostEntity for PluginHostState {
 
     fn get_max_air(&mut self, _entity: Resource<Entity>) -> wasmtime::Result<i32> {
         Ok(pumpkin_core::entity::breath::MAX_AIR)
-    }
-
-    fn remove(&mut self, entity: Resource<Entity>) -> wasmtime::Result<()> {
-        let entity = self.get(&entity)?;
-        entity.get_entity().remove();
-        Ok(())
     }
 
     fn raycast(
@@ -736,6 +730,14 @@ impl HostEntity for PluginHostState {
 }
 
 impl HostEntityWithStore<PluginHostState> for HasSelf<PluginHostState> {
+    async fn remove(
+        accessor: &Accessor<PluginHostState, Self>,
+        entity: Resource<Entity>,
+    ) -> wasmtime::Result<()> {
+        let entity = accessor.get_res(&entity)?;
+        run_blocking(accessor, move || entity.get_entity().remove()).await
+    }
+
     async fn teleport(
         accessor: &Accessor<PluginHostState, Self>,
         entity: Resource<Entity>,
