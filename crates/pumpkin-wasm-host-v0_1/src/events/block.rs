@@ -417,19 +417,35 @@ impl ToFromWasmEvent for BlockDispenseEvent {
 }
 
 impl ToFromWasmEvent for BlockExplodeEvent {
-    fn to_wasm_event(&self, _state: &mut PluginHostState) -> Event {
+    fn to_wasm_event(&self, state: &mut PluginHostState) -> Event {
+        let target_world = state
+            .add(self.world.clone())
+            .expect("failed to add world resource");
         Event::BlockExplodeEvent(BlockExplodeEventData {
             block_pos: to_wasm_block_position(self.block_pos),
             yield_rate: self.yield_rate,
+            target_world,
+            blocks: self
+                .blocks
+                .iter()
+                .copied()
+                .map(to_wasm_block_position)
+                .collect(),
             cancelled: self.cancelled,
         })
     }
 
-    fn from_wasm_event(event: Event, _state: &mut PluginHostState) -> Self {
+    fn from_wasm_event(event: Event, state: &mut PluginHostState) -> Self {
         match event {
             Event::BlockExplodeEvent(data) => Self {
                 block_pos: from_wasm_block_position(data.block_pos),
                 yield_rate: data.yield_rate,
+                world: consume_world(state, &data.target_world),
+                blocks: data
+                    .blocks
+                    .into_iter()
+                    .map(from_wasm_block_position)
+                    .collect(),
                 cancelled: data.cancelled,
             },
             _ => panic!("unexpected event type"),
