@@ -1194,7 +1194,9 @@ impl pumpkin::plugin::world::HostWorldWithStore<PluginHostState> for HasSelf<Plu
         let pos = pumpkin_util::math::vector3::Vector3::new(pos.0, pos.1, pos.2);
         plugin
             .store
-            .pump_blocking(&mut host, move || world.explode(pos, power, interaction))
+            .pump_blocking(&mut host, move || {
+                world.explode(None, pos, power, interaction)
+            })
             .await
     }
 

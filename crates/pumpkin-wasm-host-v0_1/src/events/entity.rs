@@ -373,16 +373,26 @@ impl ToFromWasmEvent
 impl ToFromWasmEvent
     for pumpkin_core::plugin::api::events::entity::entity_explode::EntityExplodeEvent
 {
-    fn to_wasm_event(&self, _state: &mut PluginHostState) -> Event {
+    fn to_wasm_event(&self, state: &mut PluginHostState) -> Event {
+        let target_world = state
+            .add(self.world.clone())
+            .expect("failed to add world resource");
         Event::EntityExplodeEvent(EntityExplodeEventData {
             entity_id: self.entity_id,
             position: to_wasm_position(self.position),
             yield_rate: self.yield_rate,
+            target_world,
+            blocks: self
+                .blocks
+                .iter()
+                .copied()
+                .map(to_wasm_block_position)
+                .collect(),
             cancelled: self.cancelled,
         })
     }
 
-    fn from_wasm_event(event: Event, _state: &mut PluginHostState) -> Self {
+    fn from_wasm_event(event: Event, state: &mut PluginHostState) -> Self {
         match event {
             Event::EntityExplodeEvent(data) => Self {
                 entity_id: data.entity_id,
@@ -392,6 +402,12 @@ impl ToFromWasmEvent
                     data.position.2,
                 ),
                 yield_rate: data.yield_rate,
+                world: consume_world(state, &data.target_world),
+                blocks: data
+                    .blocks
+                    .into_iter()
+                    .map(from_wasm_block_position)
+                    .collect(),
                 cancelled: data.cancelled,
             },
             _ => panic!("unexpected event type"),

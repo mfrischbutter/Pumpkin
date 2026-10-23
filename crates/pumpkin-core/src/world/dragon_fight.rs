@@ -746,6 +746,7 @@ impl DragonFight {
                                 }
                             }
                             world.explode(
+                                None,
                                 Vector3::new(
                                     spike.center_x as f64 + 0.5,
                                     spike.height as f64,
@@ -769,7 +770,12 @@ impl DragonFight {
                     for crystal in &live_crystals {
                         crystal.set_beam_target(None);
                         let pos = crystal.get_entity().pos.load();
-                        world.explode(pos, 6.0, crate::world::ExplosionInteraction::None);
+                        world.explode(
+                            Some(crystal.get_entity()),
+                            pos,
+                            6.0,
+                            crate::world::ExplosionInteraction::None,
+                        );
                         crystal.get_entity().remove();
                     }
                 } else if time >= 80 {
