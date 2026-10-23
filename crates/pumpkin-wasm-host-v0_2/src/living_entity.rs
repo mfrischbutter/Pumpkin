@@ -115,6 +115,23 @@ pub const fn from_wit_equipment_slot(
 }
 
 #[must_use]
+pub const fn to_wit_equipment_slot(
+    slot: &pumpkin_data::data_component_impl::EquipmentSlot,
+) -> WitEquipmentSlot {
+    use pumpkin_data::data_component_impl::EquipmentSlot;
+    match slot {
+        EquipmentSlot::MainHand(_) => WitEquipmentSlot::MainHand,
+        EquipmentSlot::OffHand(_) => WitEquipmentSlot::OffHand,
+        EquipmentSlot::Feet(_) => WitEquipmentSlot::Feet,
+        EquipmentSlot::Legs(_) => WitEquipmentSlot::Legs,
+        EquipmentSlot::Chest(_) => WitEquipmentSlot::Chest,
+        EquipmentSlot::Head(_) => WitEquipmentSlot::Head,
+        EquipmentSlot::Body(_) => WitEquipmentSlot::Body,
+        EquipmentSlot::Saddle(_) => WitEquipmentSlot::Saddle,
+    }
+}
+
+#[must_use]
 pub const fn to_wit_damage_type(damage_type: &pumpkin_data::damage::DamageType) -> WitDamageType {
     // SAFETY: WIT enum is generated in the same order as the internal enum / id
     unsafe { std::mem::transmute(damage_type.id) }
