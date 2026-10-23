@@ -6,7 +6,7 @@ interface event {
     use screens.{screen};
     use player.{player};
     use text.{text-component};
-    use %world.{%world};
+    use %world.{%world, equipment-slot};
     use java-packets.{serverbound-packet as java-serverbound-packet, clientbound-packet as java-clientbound-packet};
     use bedrock-packets.{serverbound-packet as bedrock-serverbound-packet, clientbound-packet as bedrock-clientbound-packet};
     use uuid.{uuid};
@@ -1884,6 +1884,13 @@ interface event {
         cancelled: bool
     }
 
+    record player-armor-change-event-data {
+        player: player,
+        slot: equipment-slot,
+        old-item: option<item-stack>,
+        new-item: option<item-stack>
+    }
+
     enum event-type {
         player-join-event,
         player-leave-event,
@@ -2158,6 +2165,7 @@ interface event {
         raid-stop-event,
         raid-trigger-event,
         lightning-strike-event,
+        player-armor-change-event,
     }
 
     variant event {
@@ -2434,5 +2442,6 @@ interface event {
         raid-stop-event(raid-stop-event-data),
         raid-trigger-event(raid-trigger-event-data),
         lightning-strike-event(lightning-strike-event-data),
+        player-armor-change-event(player-armor-change-event-data),
     }
 }

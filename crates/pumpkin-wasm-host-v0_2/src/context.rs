@@ -404,6 +404,11 @@ fn register_player_event(
             >(ctx, handler, priority, blocking)
             ;
         }
+        EventType::PlayerArmorChangeEvent => {
+            register_typed_event::<
+                pumpkin_core::plugin::api::events::player::player_armor_change::PlayerArmorChangeEvent,
+            >(ctx, handler, priority, blocking);
+        }
         _ => {
             tracing::error!("non-player event should not be routed to register_player_event");
         }

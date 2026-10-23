@@ -11,16 +11,17 @@ use crate::{
         to_wasm_position,
     },
     gui::{from_wit_screen, to_wit_screen},
+    living_entity::to_wit_equipment_slot,
     pumpkin::plugin::{
         event::{
             AsyncPlayerChatEventData, AsyncPlayerPreLoginEventData, BedrockFormResponseEventData,
             Event, InteractAction as WasmInteractAction, InventoryClickEventData,
             InventoryCloseEventData, PlayerAdvancementDoneEventData, PlayerAnimationEventData,
-            PlayerArmorStandManipulateEventData, PlayerBedEnterEventData, PlayerBedLeaveEventData,
-            PlayerBucketEmptyEventData, PlayerBucketEntityEventData, PlayerBucketFillEventData,
-            PlayerChangeWorldEventData, PlayerChangedMainHandEventData,
-            PlayerChangedWorldEventData, PlayerChannelEventData, PlayerChatEventData,
-            PlayerCommandPreprocessEventData, PlayerCommandSendEventData,
+            PlayerArmorChangeEventData, PlayerArmorStandManipulateEventData,
+            PlayerBedEnterEventData, PlayerBedLeaveEventData, PlayerBucketEmptyEventData,
+            PlayerBucketEntityEventData, PlayerBucketFillEventData, PlayerChangeWorldEventData,
+            PlayerChangedMainHandEventData, PlayerChangedWorldEventData, PlayerChannelEventData,
+            PlayerChatEventData, PlayerCommandPreprocessEventData, PlayerCommandSendEventData,
             PlayerCustomPayloadEventData, PlayerDropItemEventData, PlayerEditBookEventData,
             PlayerEggThrowEventData, PlayerElytraBoostEventData, PlayerExpChangeEventData,
             PlayerExpCooldownChangeEventData, PlayerFishEventData,
@@ -62,6 +63,7 @@ use pumpkin_core::plugin::player::{
     item_held::PlayerItemHeldEvent,
     player_advancement_done::PlayerAdvancementDoneEvent,
     player_animation::{PlayerAnimationEvent, PlayerAnimationType},
+    player_armor_change::PlayerArmorChangeEvent,
     player_armor_stand_manipulate::PlayerArmorStandManipulateEvent,
     player_bucket_entity::PlayerBucketEntityEvent,
     player_change_world::PlayerChangeWorldEvent,
@@ -1228,6 +1230,43 @@ impl ToFromWasmEvent for PlayerAdvancementDoneEvent {
                 advancement_id: data.advancement_id,
                 cancelled: data.cancelled,
             },
+            _ => panic!("unexpected event type"),
+        }
+    }
+}
+
+impl ToFromWasmEvent for PlayerArmorChangeEvent {
+    fn to_wasm_event(&self, state: &mut PluginHostState) -> Event {
+        let player = state
+            .add(self.player.clone())
+            .expect("failed to add player resource");
+        let old_item = (!self.old_item.is_empty()).then(|| {
+            state
+                .add(Arc::new(Mutex::new(self.old_item.clone())))
+                .expect("failed to add item stack resource")
+        });
+        let new_item = (!self.new_item.is_empty()).then(|| {
+            state
+                .add(Arc::new(Mutex::new(self.new_item.clone())))
+                .expect("failed to add item stack resource")
+        });
+        Event::PlayerArmorChangeEvent(PlayerArmorChangeEventData {
+            player,
+            slot: to_wit_equipment_slot(&self.slot),
+            old_item,
+            new_item,
+        })
+    }
+
+    fn apply_wasm_event(&mut self, event: Event, state: &mut PluginHostState) {
+        cleanup_event(&event, state);
+    }
+
+    fn from_wasm_event(event: Event, _state: &mut PluginHostState) -> Self {
+        match event {
+            Event::PlayerArmorChangeEvent(_) => {
+                panic!("Cannot construct PlayerArmorChangeEvent from WASM")
+            }
             _ => panic!("unexpected event type"),
         }
     }
