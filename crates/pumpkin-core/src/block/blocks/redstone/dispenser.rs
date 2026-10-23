@@ -598,13 +598,14 @@ impl DispenserBlock {
     }
 
     fn dispense_snowball(ctx: &DispenseContext<'_>, item: &mut ItemStack) {
-        let _ = item.split(1);
+        let projectile = item.split(1);
         let entity = Entity::new(
             ctx.world.clone(),
             Self::projectile_spawn_position(ctx),
             &EntityType::SNOWBALL,
         );
         let snowball = SnowballEntity::new(entity);
+        snowball.set_item_stack(projectile);
         Self::launch_thrown(
             ctx,
             &snowball.thrown,

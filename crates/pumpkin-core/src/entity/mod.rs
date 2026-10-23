@@ -754,6 +754,11 @@ pub trait EntityBase: Send + Sync + std::any::Any {
 
     fn on_hit(&self, _hit: crate::entity::projectile::ProjectileHit) {}
 
+    /// Returns the item stack a projectile carries, like vanilla's `ItemSupplier::getItem`.
+    fn get_projectile_item(&self) -> Option<ItemStack> {
+        None
+    }
+
     fn set_paddle_state(&self, _left: bool, _right: bool) {}
 
     fn is_in_love(&self) -> bool {

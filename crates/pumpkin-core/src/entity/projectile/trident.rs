@@ -16,7 +16,7 @@ use pumpkin_util::math::position::BlockPos;
 use pumpkin_util::math::vector3::Vector3;
 
 use super::arrow::ArrowPickup;
-use super::{ProjectileHit, calculate_ray_intersection};
+use super::{ProjectileHit, calculate_ray_intersection, fire_projectile_hit_event};
 
 pub struct TridentEntity {
     pub entity: Entity,
@@ -163,6 +163,15 @@ impl EntityBase for TridentEntity {
         self.owner_id
     }
 
+    fn get_projectile_item(&self) -> Option<ItemStack> {
+        Some(
+            self.item_stack
+                .lock()
+                .unwrap_or_else(std::sync::PoisonError::into_inner)
+                .clone(),
+        )
+    }
+
     fn tick(&self, caller: &dyn EntityBase, _server: &Server) {
         let entity = self.get_entity();
         let world = entity.world.load();
@@ -287,7 +296,11 @@ impl EntityBase for TridentEntity {
         if let Some(h) = hit
             && !self.has_hit.swap(true, Ordering::SeqCst)
         {
-            caller.on_hit(h);
+            if fire_projectile_hit_event(caller, &h) {
+                caller.on_hit(h);
+            } else {
+                self.has_hit.store(false, Ordering::SeqCst);
+            }
         }
     }
 
