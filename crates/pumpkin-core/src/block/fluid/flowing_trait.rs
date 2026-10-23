@@ -93,26 +93,35 @@ pub trait FlowingFluid: Send + Sync {
         if !is_source && !waterlogged {
             let new_fluid_state = self.get_new_liquid(world, fluid, block_pos);
 
-            if let Some(new_state) = new_fluid_state {
+            if let Some(mut new_state) = new_fluid_state {
                 let new_state_id = new_state.to_state_id(fluid);
 
                 if new_state_id != current_block_state_id {
-                    world.set_block_state(block_pos, new_state_id, BlockFlags::NOTIFY_ALL);
+                    let Some(state_id) = fire_level_change(world, block_pos, new_state_id) else {
+                        return;
+                    };
+                    world.set_block_state(block_pos, state_id, BlockFlags::NOTIFY_ALL);
 
                     // Schedule next tick for this position
                     let tick_delay = self.get_flow_speed(world);
                     world.schedule_fluid_tick(fluid, *block_pos, tick_delay, TickPriority::Normal);
+
+                    // A plugin replaced the new level: spread from what is there now.
+                    if state_id != new_state_id {
+                        let Some(set_state) = self.get_effective_props(fluid, state_id) else {
+                            return;
+                        };
+                        new_state = set_state;
+                    }
                 }
 
                 // Use the new state for spreading
                 state_for_spreading = new_state;
             } else {
-                if !waterlogged {
-                    world.set_block_state(
-                        block_pos,
-                        Block::AIR.default_state.id,
-                        BlockFlags::NOTIFY_ALL,
-                    );
+                if let Some(state_id) =
+                    fire_level_change(world, block_pos, Block::AIR.default_state.id)
+                {
+                    world.set_block_state(block_pos, state_id, BlockFlags::NOTIFY_ALL);
                 }
                 return; // Don't spread if fluid is gone
             }
@@ -469,4 +478,25 @@ pub trait FlowingFluid: Send + Sync {
             self.spread_to(world, fluid, &side_pos, state_id);
         }
     }
+}
+
+/// Fires `FluidLevelChangeEvent` for a flowing fluid that changes its level or dries out.
+/// Returns the state to set, or `None` when a plugin cancelled the change.
+fn fire_level_change(
+    world: &Arc<World>,
+    pos: &BlockPos,
+    new_state_id: BlockStateId,
+) -> Option<BlockStateId> {
+    use crate::plugin::api::events::block::fluid_level_change::FluidLevelChangeEvent;
+
+    // Fluid ticks are hot: only build the event when a plugin listens.
+    let Some(server) = world.server.upgrade() else {
+        return Some(new_state_id);
+    };
+    if !server.plugin_manager.has_handlers::<FluidLevelChangeEvent>() {
+        return Some(new_state_id);
+    }
+    let mut event = FluidLevelChangeEvent::new(*pos, world.clone(), new_state_id);
+    server.plugin_manager.fire_blocking(&server, &mut event);
+    (!event.cancelled).then_some(event.new_state_id)
 }
