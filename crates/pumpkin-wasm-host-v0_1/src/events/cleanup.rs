@@ -278,9 +278,17 @@ pub fn cleanup_event(event: &Event, state: &mut PluginHostState) {
         }
         Event::PlayerBucketEmptyEvent(data) => {
             cleanup_player(state, &data.player);
+            cleanup_item_stack(state, &data.item);
+            if let Some(res) = &data.result {
+                cleanup_item_stack(state, res);
+            }
         }
         Event::PlayerBucketFillEvent(data) => {
             cleanup_player(state, &data.player);
+            cleanup_item_stack(state, &data.item);
+            if let Some(res) = &data.result {
+                cleanup_item_stack(state, res);
+            }
         }
         Event::BlockDamageEvent(data) => {
             cleanup_player(state, &data.player);
