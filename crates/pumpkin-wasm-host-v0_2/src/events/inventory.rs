@@ -1,5 +1,11 @@
+use std::sync::Arc;
+use tokio::sync::Mutex;
+
 use crate::{
-    events::{ToFromWasmEvent, consume_player, from_wasm_block_position, to_wasm_block_position},
+    events::{
+        ToFromWasmEvent, consume_item_stack, consume_player, from_wasm_block_position,
+        to_wasm_block_position,
+    },
     pumpkin::plugin::event::{
         BrewEventData, BrewingStandFuelEventData, CraftItemEventData, Event, FurnaceBurnEventData,
         FurnaceExtractEventData, FurnaceSmeltEventData, FurnaceStartSmeltEventData,
@@ -97,21 +103,32 @@ impl ToFromWasmEvent for CraftItemEvent {
 }
 
 impl ToFromWasmEvent for FurnaceSmeltEvent {
-    fn to_wasm_event(&self, _state: &mut PluginHostState) -> Event {
+    fn to_wasm_event(&self, state: &mut PluginHostState) -> Event {
+        let source = state
+            .add(Arc::new(Mutex::new(self.source.clone())))
+            .expect("failed to add item stack resource");
+        let result = state
+            .add(Arc::new(Mutex::new(self.result.clone())))
+            .expect("failed to add item stack resource");
+
         Event::FurnaceSmeltEvent(FurnaceSmeltEventData {
             block_pos: to_wasm_block_position(self.block_pos),
             source_item: self.source_item.clone(),
             result_item: self.result_item.clone(),
+            source,
+            result,
             cancelled: self.cancelled,
         })
     }
 
-    fn from_wasm_event(event: Event, _state: &mut PluginHostState) -> Self {
+    fn from_wasm_event(event: Event, state: &mut PluginHostState) -> Self {
         match event {
             Event::FurnaceSmeltEvent(data) => Self {
                 block_pos: from_wasm_block_position(data.block_pos),
                 source_item: data.source_item,
                 result_item: data.result_item,
+                source: consume_item_stack(state, &data.source),
+                result: consume_item_stack(state, &data.result),
                 cancelled: data.cancelled,
             },
             _ => panic!("unexpected event type"),
@@ -162,21 +179,27 @@ impl ToFromWasmEvent for BrewingStandFuelEvent {
 }
 
 impl ToFromWasmEvent for FurnaceBurnEvent {
-    fn to_wasm_event(&self, _state: &mut PluginHostState) -> Event {
+    fn to_wasm_event(&self, state: &mut PluginHostState) -> Event {
+        let fuel = state
+            .add(Arc::new(Mutex::new(self.fuel.clone())))
+            .expect("failed to add item stack resource");
+
         Event::FurnaceBurnEvent(FurnaceBurnEventData {
             block_pos: to_wasm_block_position(self.block_pos),
             fuel_item: self.fuel_item.clone(),
             burn_time: self.burn_time,
+            fuel,
             cancelled: self.cancelled,
         })
     }
 
-    fn from_wasm_event(event: Event, _state: &mut PluginHostState) -> Self {
+    fn from_wasm_event(event: Event, state: &mut PluginHostState) -> Self {
         match event {
             Event::FurnaceBurnEvent(data) => Self {
                 block_pos: from_wasm_block_position(data.block_pos),
                 fuel_item: data.fuel_item,
                 burn_time: data.burn_time,
+                fuel: consume_item_stack(state, &data.fuel),
                 cancelled: data.cancelled,
             },
             _ => panic!("unexpected event type"),
@@ -214,21 +237,27 @@ impl ToFromWasmEvent for FurnaceExtractEvent {
 }
 
 impl ToFromWasmEvent for FurnaceStartSmeltEvent {
-    fn to_wasm_event(&self, _state: &mut PluginHostState) -> Event {
+    fn to_wasm_event(&self, state: &mut PluginHostState) -> Event {
+        let source = state
+            .add(Arc::new(Mutex::new(self.source.clone())))
+            .expect("failed to add item stack resource");
+
         Event::FurnaceStartSmeltEvent(FurnaceStartSmeltEventData {
             block_pos: to_wasm_block_position(self.block_pos),
             source_item: self.source_item.clone(),
             cooking_time: self.cooking_time,
+            source,
             cancelled: self.cancelled,
         })
     }
 
-    fn from_wasm_event(event: Event, _state: &mut PluginHostState) -> Self {
+    fn from_wasm_event(event: Event, state: &mut PluginHostState) -> Self {
         match event {
             Event::FurnaceStartSmeltEvent(data) => Self {
                 block_pos: from_wasm_block_position(data.block_pos),
                 source_item: data.source_item,
                 cooking_time: data.cooking_time,
+                source: consume_item_stack(state, &data.source),
                 cancelled: data.cancelled,
             },
             _ => panic!("unexpected event type"),
