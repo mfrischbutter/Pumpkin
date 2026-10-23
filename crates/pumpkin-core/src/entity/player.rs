@@ -4871,35 +4871,44 @@ impl Player {
         );
     }
 
-    pub fn handle_killed(&self, death_msg: &TextComponent) {
+    /// Drops `drops` at the death position. Unless `keep_inventory` is set, the main inventory
+    /// is cleared first and `items_to_keep` are put back into it.
+    pub fn handle_killed(
+        &self,
+        death_msg: &TextComponent,
+        keep_inventory: bool,
+        drops: Vec<ItemStack>,
+        items_to_keep: Vec<ItemStack>,
+    ) {
         self.trigger_advancement(
             crate::entity::player::advancement::trigger::AdvancementTrigger::PlayerKilled,
         );
         crate::entity::mob::neutral::tell_neutral_mobs_player_died(self, &self.world());
         let block_pos = self.position().to_block_pos();
 
-        let keep_inventory = { self.world().level_info.load().game_rules.keep_inventory };
-
         if !keep_inventory {
-            let mut main_inv = self
-                .inventory()
+            self.inventory()
                 .main_inventory
                 .write()
-                .unwrap_or_else(std::sync::PoisonError::into_inner);
-            for item in main_inv.iter_mut() {
-                if !item.is_empty() {
-                    let stack = std::mem::replace(item, ItemStack::EMPTY.clone());
-                    self.increment_stat(
-                        statistics::StatisticCategory::Dropped,
-                        stack.item.id as i32,
-                        stack.item_count as i32,
-                    );
-                    self.increment_custom_stat(
-                        statistics::CustomStatistic::Drop,
-                        stack.item_count as i32,
-                    );
-                    self.world().drop_stack(&block_pos, stack);
-                }
+                .unwrap_or_else(std::sync::PoisonError::into_inner)
+                .fill(ItemStack::EMPTY.clone());
+        }
+        for stack in drops {
+            if stack.is_empty() {
+                continue;
+            }
+            self.increment_stat(
+                statistics::StatisticCategory::Dropped,
+                stack.item.id as i32,
+                stack.item_count as i32,
+            );
+            self.increment_custom_stat(statistics::CustomStatistic::Drop, stack.item_count as i32);
+            self.world().drop_stack(&block_pos, stack);
+        }
+        if !keep_inventory {
+            for mut stack in items_to_keep {
+                self.inventory().insert_stack_anywhere(&mut stack);
+                self.world().drop_stack(&block_pos, stack);
             }
         }
 
