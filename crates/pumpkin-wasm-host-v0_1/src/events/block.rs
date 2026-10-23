@@ -297,16 +297,21 @@ impl ToFromWasmEvent for BlockDamageEvent {
 }
 
 impl ToFromWasmEvent for BlockIgniteEvent {
-    fn to_wasm_event(&self, _state: &mut PluginHostState) -> Event {
+    fn to_wasm_event(&self, state: &mut PluginHostState) -> Event {
+        let target_world = state
+            .add(self.world.clone())
+            .expect("failed to add world resource");
         Event::BlockIgniteEvent(BlockIgniteEventData {
             block_pos: to_wasm_block_position(self.block_pos),
+            target_world,
             cancelled: self.cancelled,
         })
     }
 
-    fn from_wasm_event(event: Event, _state: &mut PluginHostState) -> Self {
+    fn from_wasm_event(event: Event, state: &mut PluginHostState) -> Self {
         match event {
             Event::BlockIgniteEvent(data) => Self {
+                world: consume_world(state, &data.target_world),
                 block_pos: from_wasm_block_position(data.block_pos),
                 igniting_block: &pumpkin_data::Block::FIRE,
                 player: None,
@@ -568,17 +573,22 @@ impl ToFromWasmEvent for SpongeAbsorbEvent {
 }
 
 impl ToFromWasmEvent for TNTPrimeEvent {
-    fn to_wasm_event(&self, _state: &mut PluginHostState) -> Event {
+    fn to_wasm_event(&self, state: &mut PluginHostState) -> Event {
+        let target_world = state
+            .add(self.world.clone())
+            .expect("failed to add world resource");
         Event::TntPrimeEvent(TntPrimeEventData {
             block_pos: to_wasm_block_position(self.block_pos),
             prime_reason: self.prime_reason.clone(),
+            target_world,
             cancelled: self.cancelled,
         })
     }
 
-    fn from_wasm_event(event: Event, _state: &mut PluginHostState) -> Self {
+    fn from_wasm_event(event: Event, state: &mut PluginHostState) -> Self {
         match event {
             Event::TntPrimeEvent(data) => Self {
+                world: consume_world(state, &data.target_world),
                 block_pos: from_wasm_block_position(data.block_pos),
                 prime_reason: data.prime_reason,
                 cancelled: data.cancelled,

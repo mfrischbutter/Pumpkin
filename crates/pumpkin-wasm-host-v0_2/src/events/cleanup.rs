@@ -285,7 +285,9 @@ pub fn cleanup_event(event: &Event, state: &mut PluginHostState) {
         Event::BlockDamageEvent(data) => {
             cleanup_player(state, &data.player);
         }
-        Event::BlockIgniteEvent(_) => {}
+        Event::BlockIgniteEvent(data) => {
+            cleanup_world(state, &data.target_world);
+        }
         Event::BlockFromToEvent(_) => {}
         Event::BlockFormEvent(_) => {}
         Event::BlockFadeEvent(_) => {}
@@ -305,7 +307,9 @@ pub fn cleanup_event(event: &Event, state: &mut PluginHostState) {
             cleanup_player(state, &data.player);
         }
         Event::SpongeAbsorbEvent(_) => {}
-        Event::TntPrimeEvent(_) => {}
+        Event::TntPrimeEvent(data) => {
+            cleanup_world(state, &data.target_world);
+        }
         Event::WeatherChangeEvent(data) => {
             cleanup_world(state, &data.target_world);
         }
@@ -513,7 +517,9 @@ pub fn cleanup_event(event: &Event, state: &mut PluginHostState) {
         }
         Event::EnderDragonChangePhaseEvent(_) => {}
         Event::EntityBreakDoorEvent(_) => {}
-        Event::EntityChangeBlockEvent(_) => {}
+        Event::EntityChangeBlockEvent(data) => {
+            cleanup_world(state, &data.target_world);
+        }
         Event::EntityDamageByBlockEvent(_) => {}
         Event::EntityDamageByEntityEvent(_) => {}
         Event::EntityDropItemEvent(_) => {}
