@@ -4,8 +4,8 @@ use tokio::sync::Mutex;
 
 use crate::{
     events::{
-        ToFromWasmEvent, cleanup_event, consume_player, consume_world, from_wasm_block_name,
-        from_wasm_block_position, to_wasm_block_name, to_wasm_block_position,
+        ToFromWasmEvent, cleanup_event, consume_item_stack, consume_player, consume_world,
+        from_wasm_block_name, from_wasm_block_position, to_wasm_block_name, to_wasm_block_position,
     },
     pumpkin::plugin::event::{
         BellResonateEventData, BellRingEventData, BlockBreakEventData, BlockBrushEventData,
@@ -825,10 +825,15 @@ impl ToFromWasmEvent for BlockDropItemEvent {
     }
 
     fn apply_wasm_event(&mut self, event: Event, state: &mut PluginHostState) {
-        cleanup_event(&event, state);
-        if let Event::BlockDropItemEvent(data) = event {
+        if let Event::BlockDropItemEvent(data) = &event {
+            self.items = data
+                .items
+                .iter()
+                .map(|item| consume_item_stack(state, item))
+                .collect();
             self.cancelled = data.cancelled;
         }
+        cleanup_event(&event, state);
     }
 
     fn from_wasm_event(event: Event, _state: &mut PluginHostState) -> Self {
