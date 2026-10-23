@@ -531,8 +531,18 @@ pub fn cleanup_event(event: &Event, state: &mut PluginHostState) {
                 cleanup_item_stack(state, res);
             }
         }
-        Event::ProjectileHitEvent(_) => {}
-        Event::ProjectileLaunchEvent(_) => {}
+        Event::ProjectileHitEvent(data) => {
+            if let Some(res) = &data.item {
+                cleanup_item_stack(state, res);
+            }
+            cleanup_world(state, &data.target_world);
+        }
+        Event::ProjectileLaunchEvent(data) => {
+            if let Some(res) = &data.item {
+                cleanup_item_stack(state, res);
+            }
+            cleanup_world(state, &data.target_world);
+        }
         Event::SheepDyeWoolEvent(_) => {}
         Event::SheepRegrowWoolEvent(_) => {}
         Event::SlimeSplitEvent(_) => {}

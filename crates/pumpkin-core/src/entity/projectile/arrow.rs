@@ -2,7 +2,9 @@ use std::sync::Arc;
 use std::sync::RwLock;
 use std::sync::atomic::{AtomicBool, AtomicU8, AtomicU32, AtomicU64, Ordering};
 
-use crate::entity::projectile::{ProjectileHit, calculate_ray_intersection};
+use crate::entity::projectile::{
+    ProjectileHit, calculate_ray_intersection, fire_projectile_hit_event,
+};
 use crate::{
     entity::{Entity, EntityBase, living::LivingEntity, player::Player},
     server::Server,
@@ -120,16 +122,6 @@ impl ArrowEntity {
         let mut owner_pos = shooter.pos.load();
         owner_pos.y = owner_pos.y + f64::from(shooter.entity_dimension.load().eye_height) - 0.1;
         entity.pos.store(owner_pos);
-        let mut launch_event =
-            crate::plugin::api::events::entity::projectile_launch::ProjectileLaunchEvent::new(
-                entity.entity_id,
-                Some(shooter.entity_id),
-            );
-        if let Some(server) = entity.world.load().server.upgrade() {
-            server
-                .plugin_manager
-                .fire_blocking(&server, &mut launch_event);
-        }
 
         Self {
             entity,
@@ -402,6 +394,15 @@ impl ArrowEntity {
 impl EntityBase for ArrowEntity {
     fn get_owner_id(&self) -> Option<i32> {
         self.owner_id
+    }
+
+    fn get_projectile_item(&self) -> Option<ItemStack> {
+        Some(
+            self.item_stack
+                .read()
+                .unwrap_or_else(std::sync::PoisonError::into_inner)
+                .clone(),
+        )
     }
 
     fn write_custom_nbt(&self, nbt: &mut pumpkin_nbt::compound::NbtCompound) {
@@ -776,6 +777,10 @@ impl EntityBase for ArrowEntity {
                     if self.has_hit.swap(true, Ordering::SeqCst) {
                         return;
                     }
+                    if !fire_projectile_hit_event(caller, &h) {
+                        self.has_hit.store(false, Ordering::SeqCst);
+                        return;
+                    }
                     caller.on_hit(h);
                 }
                 ProjectileHit::Entity { .. } => {
@@ -785,7 +790,14 @@ impl EntityBase for ArrowEntity {
                         .read()
                         .unwrap_or_else(std::sync::PoisonError::into_inner)
                         .len();
-                    if pierced_len >= pierce as usize && self.has_hit.swap(true, Ordering::SeqCst) {
+                    let last_pierce = pierced_len >= pierce as usize;
+                    if last_pierce && self.has_hit.swap(true, Ordering::SeqCst) {
+                        return;
+                    }
+                    if !fire_projectile_hit_event(caller, &h) {
+                        if last_pierce {
+                            self.has_hit.store(false, Ordering::SeqCst);
+                        }
                         return;
                     }
                     caller.on_hit(h);
@@ -796,24 +808,6 @@ impl EntityBase for ArrowEntity {
 
     #[allow(clippy::too_many_lines)]
     fn on_hit(&self, hit: ProjectileHit) {
-        let (hit_pos, hit_entity) = match hit {
-            ProjectileHit::Block { hit_pos, .. } => (hit_pos, None),
-            ProjectileHit::Entity {
-                ref entity,
-                hit_pos,
-                ..
-            } => (hit_pos, Some(entity.get_entity().entity_id)),
-        };
-        let mut hit_event =
-            crate::plugin::api::events::entity::projectile_hit::ProjectileHitEvent::new(
-                self.entity.entity_id,
-                hit_pos,
-                hit_entity,
-            );
-        if let Some(server) = self.entity.world.load().server.upgrade() {
-            server.plugin_manager.fire_blocking(&server, &mut hit_event);
-        }
-
         let entity = self.get_entity();
         let world = entity.world.load();
 

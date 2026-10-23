@@ -116,7 +116,11 @@ impl ItemBehaviour for TridentItem {
         );
         trident.set_velocity_from_rotation(pitch, yaw, 0.0, 2.5, 1.0);
         trident.apply_on_projectile_spawned(&stack_guard);
-        world.spawn_entity(Arc::new(trident));
+        // A cancelled launch keeps the trident in the player's hand.
+        if !world.spawn_entity(Arc::new(trident)) {
+            player.living_entity.clear_active_hand();
+            return;
+        }
 
         world.play_sound(
             Sound::ItemTridentThrow,
