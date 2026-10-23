@@ -224,10 +224,11 @@ impl AllayEntity {
                 })
             };
             if count == 0
-                || !self
-                    .mob_entity
-                    .living_entity
-                    .pickup(item.get_entity(), u32::from(count))
+                || !self.mob_entity.living_entity.pickup(
+                    item.get_entity(),
+                    Some(&stack.copy_with_count(count)),
+                    u32::from(count),
+                )
             {
                 continue;
             }

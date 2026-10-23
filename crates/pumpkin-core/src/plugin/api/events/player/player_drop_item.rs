@@ -1,4 +1,5 @@
 use crate::entity::player::Player;
+use pumpkin_data::item_stack::ItemStack;
 use pumpkin_macros::{Event, cancellable};
 use std::sync::Arc;
 
@@ -14,15 +15,19 @@ pub struct PlayerDropItemEvent {
 
     /// The stack count of dropped items.
     pub count: u8,
+
+    /// The stack that is dropped.
+    pub item: ItemStack,
 }
 
 impl PlayerDropItemEvent {
     #[must_use]
-    pub const fn new(player: Arc<Player>, item_name: String, count: u8) -> Self {
+    pub const fn new(player: Arc<Player>, item_name: String, count: u8, item: ItemStack) -> Self {
         Self {
             player,
             item_name,
             count,
+            item,
             cancelled: false,
         }
     }
