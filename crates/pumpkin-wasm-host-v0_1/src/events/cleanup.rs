@@ -227,7 +227,11 @@ pub fn cleanup_event(event: &Event, state: &mut PluginHostState) {
             cleanup_world(state, &data.target_world);
         }
         Event::EntityDamageEvent(_) => {}
-        Event::EntityDeathEvent(_) => {}
+        Event::EntityDeathEvent(data) => {
+            for res in &data.drops {
+                cleanup_item_stack(state, res);
+            }
+        }
         Event::PlayerDeathEvent(data) => {
             cleanup_player(state, &data.player);
             cleanup_text_component(state, &data.death_message);
