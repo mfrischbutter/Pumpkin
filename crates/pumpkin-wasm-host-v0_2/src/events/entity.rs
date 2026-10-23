@@ -3,7 +3,8 @@ use tokio::sync::Mutex;
 
 use crate::{
     events::{
-        ToFromWasmEvent, cleanup_event, consume_item_stack, consume_player, consume_text_component,
+        ToFromWasmEvent, cleanup_event, consume_entity, consume_item_stack, consume_player,
+        consume_text_component,
         consume_world, from_wasm_block_position, from_wasm_position, to_wasm_block_position,
         to_wasm_position,
     },
@@ -2056,10 +2057,15 @@ impl ToFromWasmEvent for EntityPortalExitEvent {
 }
 
 impl ToFromWasmEvent for EntityRemoveEvent {
-    fn to_wasm_event(&self, _state: &mut PluginHostState) -> Event {
+    fn to_wasm_event(&self, state: &mut PluginHostState) -> Event {
+        let entity = state
+            .add(self.entity.clone())
+            .expect("failed to add entity resource");
+
         Event::EntityRemoveEvent(EntityRemoveEventData {
             entity_id: self.entity_id,
             cause: self.cause.clone(),
+            entity,
             cancelled: self.cancelled,
         })
     }
@@ -2072,11 +2078,12 @@ impl ToFromWasmEvent for EntityRemoveEvent {
         }
     }
 
-    fn from_wasm_event(event: Event, _state: &mut PluginHostState) -> Self {
+    fn from_wasm_event(event: Event, state: &mut PluginHostState) -> Self {
         match event {
             Event::EntityRemoveEvent(data) => Self {
                 entity_id: data.entity_id,
                 cause: data.cause,
+                entity: consume_entity(state, &data.entity),
                 cancelled: data.cancelled,
             },
             _ => panic!("unexpected event type"),
