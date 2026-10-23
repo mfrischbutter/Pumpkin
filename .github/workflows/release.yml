@@ -8,6 +8,7 @@ on:
       - "!nightly*"
       - "!canary"
       - "!canary*"
+      - "!anvil-*"
   workflow_dispatch:
     inputs:
       tag_name:
@@ -22,6 +23,7 @@ env:
 jobs:
   build_release:
     name: Build & Sign Release
+    if: github.repository == 'Pumpkin-MC/Pumpkin'
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
@@ -97,6 +99,7 @@ jobs:
 
   sign_windows_release:
     name: Sign Windows release
+    if: github.repository == 'Pumpkin-MC/Pumpkin'
     permissions:
       actions: read
     needs: build_release
@@ -140,6 +143,7 @@ jobs:
 
   build_android_release:
     name: Build project in release for Android (AArch64)
+    if: github.repository == 'Pumpkin-MC/Pumpkin'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
@@ -172,6 +176,7 @@ jobs:
 
   publish_release:
     name: Publish GitHub Release
+    if: github.repository == 'Pumpkin-MC/Pumpkin'
     permissions:
       contents: write
     needs: [build_release, sign_windows_release, build_android_release]

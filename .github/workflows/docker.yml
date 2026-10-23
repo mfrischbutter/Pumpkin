@@ -9,11 +9,13 @@ on:
   push:
     branches:
       - "master"
+    tags:
+      - "anvil-*"
   workflow_dispatch:
 
 jobs:
   docker-build-deploy:
-    if: github.repository == 'Pumpkin-MC/Pumpkin'
+    if: github.repository == 'Pumpkin-MC/Pumpkin' || startsWith(github.ref, 'refs/tags/anvil-')
     permissions:
       contents: read
       packages: write
@@ -23,8 +25,6 @@ jobs:
     strategy:
       matrix:
         include:
-          - os: ubuntu-26.04-arm
-            platform: linux/arm64
           - os: ubuntu-latest
             platform: linux/amd64
 
@@ -66,6 +66,7 @@ jobs:
         uses: docker/build-push-action@v7
         with:
           context: .
+          file: ${{ startsWith(github.ref, 'refs/tags/anvil-') && 'Dockerfile.anvil' || 'Dockerfile' }}
           platforms: ${{ matrix.platform }}
           labels: ${{ steps.meta.outputs.labels }}
           tags: ${{ env.REGISTRY }}/${{ env.REGISTRY_IMAGE }}
@@ -86,7 +87,7 @@ jobs:
           retention-days: 1
 
   merge:
-    if: github.repository == 'Pumpkin-MC/Pumpkin'
+    if: github.repository == 'Pumpkin-MC/Pumpkin' || startsWith(github.ref, 'refs/tags/anvil-')
     permissions:
       contents: read
       packages: write
@@ -134,13 +135,15 @@ jobs:
         uses: docker/metadata-action@v6
         with:
           images: ${{ env.REGISTRY }}/${{ env.REGISTRY_IMAGE }}
+          flavor: latest=false
           tags: |
-            type=ref,event=branch
-            type=raw,value=latest
-            type=sha
-            type=raw,value=mc${{ env.MC_VERSION }}
-            type=raw,value=${{ env.PUMPKIN_VERSION }}
-            type=raw,value=mc${{ env.MC_VERSION }}-${{ env.PUMPKIN_VERSION }}
+            type=ref,event=tag
+            type=ref,event=branch,enable=${{ !startsWith(github.ref, 'refs/tags/anvil-') }}
+            type=raw,value=latest,enable=${{ !startsWith(github.ref, 'refs/tags/anvil-') }}
+            type=sha,enable=${{ !startsWith(github.ref, 'refs/tags/anvil-') }}
+            type=raw,value=mc${{ env.MC_VERSION }},enable=${{ !startsWith(github.ref, 'refs/tags/anvil-') }}
+            type=raw,value=${{ env.PUMPKIN_VERSION }},enable=${{ !startsWith(github.ref, 'refs/tags/anvil-') }}
+            type=raw,value=mc${{ env.MC_VERSION }}-${{ env.PUMPKIN_VERSION }},enable=${{ !startsWith(github.ref, 'refs/tags/anvil-') }}
 
       - name: Create manifest list and push
         working-directory: ${{ runner.temp }}/digests
