@@ -706,16 +706,22 @@ interface event {
         cancelled: bool
     }
 
+    /// Cancelling skips the hit; the projectile keeps flying.
     record projectile-hit-event-data {
         entity-id: s32,
         hit-position: position,
         hit-entity-id: option<s32>,
+        item: option<item-stack>,
+        target-world: %world,
         cancelled: bool
     }
 
+    /// Fired before a projectile is spawned; cancelling keeps it from being spawned.
     record projectile-launch-event-data {
         entity-id: s32,
         shooter-id: option<s32>,
+        item: option<item-stack>,
+        target-world: %world,
         cancelled: bool
     }
 

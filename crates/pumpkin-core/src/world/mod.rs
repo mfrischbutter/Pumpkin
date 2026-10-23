@@ -5005,9 +5005,11 @@ impl World {
         }
     }
 
-    /// Returns `false` when a plugin cancels the [`EntitySpawnEvent`].
+    /// Returns `false` when a plugin cancels the [`EntitySpawnEvent`] or, for a projectile, the
+    /// [`ProjectileLaunchEvent`].
     ///
     /// [`EntitySpawnEvent`]: crate::plugin::api::events::entity::entity_spawn::EntitySpawnEvent
+    /// [`ProjectileLaunchEvent`]: crate::plugin::api::events::entity::projectile_launch::ProjectileLaunchEvent
     pub fn spawn_entity(self: &Arc<Self>, entity: Arc<dyn EntityBase>) -> bool {
         let mut event = crate::plugin::api::events::entity::entity_spawn::EntitySpawnEvent::new(
             entity.get_entity().entity_id,
@@ -5018,13 +5020,42 @@ impl World {
         if let Some(server) = self.server.upgrade() {
             server.plugin_manager.fire_blocking(&server, &mut event);
         }
-        if event.cancelled {
+        if event.cancelled || !self.fire_projectile_launch(entity.as_ref()) {
             return false;
         }
 
         entity.init_data_tracker();
         self.add_entity_silent(entity);
         true
+    }
+
+    /// Fires [`ProjectileLaunchEvent`] if `entity` is a projectile; `false` if it was cancelled.
+    ///
+    /// [`ProjectileLaunchEvent`]: crate::plugin::api::events::entity::projectile_launch::ProjectileLaunchEvent
+    fn fire_projectile_launch(self: &Arc<Self>, entity: &dyn EntityBase) -> bool {
+        use crate::plugin::api::events::entity::projectile_launch::ProjectileLaunchEvent;
+
+        let base = entity.get_entity();
+        if !crate::entity::projectile::is_projectile(base.entity_type)
+            && *base.entity_type != EntityType::SPECTRAL_ARROW
+        {
+            return true;
+        }
+        let Some(server) = self.server.upgrade() else {
+            return true;
+        };
+        if !server.plugin_manager.has_handlers::<ProjectileLaunchEvent>() {
+            return true;
+        }
+
+        let mut event = ProjectileLaunchEvent::new(
+            base.entity_id,
+            entity.get_owner_id(),
+            entity.get_projectile_item(),
+            self.clone(),
+        );
+        server.plugin_manager.fire_blocking(&server, &mut event);
+        !event.cancelled
     }
 
     /// Fires [`CreatureSpawnEvent`], then spawns the entity; `false` if either event is cancelled.

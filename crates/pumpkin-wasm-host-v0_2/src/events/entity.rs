@@ -3,8 +3,9 @@ use tokio::sync::Mutex;
 
 use crate::{
     events::{
-        ToFromWasmEvent, cleanup_event, consume_player, consume_text_component, consume_world,
-        from_wasm_block_position, from_wasm_position, to_wasm_block_position, to_wasm_position,
+        ToFromWasmEvent, cleanup_event, consume_item_stack, consume_player, consume_text_component,
+        consume_world, from_wasm_block_position, from_wasm_position, to_wasm_block_position,
+        to_wasm_position,
     },
     living_entity::{from_wit_damage_type, to_wit_damage_type},
     pumpkin::plugin::event::{
@@ -1379,11 +1380,22 @@ impl ToFromWasmEvent for PiglinBarterEvent {
 }
 
 impl ToFromWasmEvent for ProjectileHitEvent {
-    fn to_wasm_event(&self, _state: &mut PluginHostState) -> Event {
+    fn to_wasm_event(&self, state: &mut PluginHostState) -> Event {
+        let item = self.item.as_ref().map(|stack| {
+            state
+                .add(Arc::new(Mutex::new(stack.clone())))
+                .expect("failed to add item stack resource")
+        });
+        let target_world = state
+            .add(self.world.clone())
+            .expect("failed to add world resource");
+
         Event::ProjectileHitEvent(ProjectileHitEventData {
             entity_id: self.entity_id,
             hit_position: to_wasm_position(self.hit_position),
             hit_entity_id: self.hit_entity_id,
+            item,
+            target_world,
             cancelled: self.cancelled,
         })
     }
@@ -1395,12 +1407,14 @@ impl ToFromWasmEvent for ProjectileHitEvent {
         }
     }
 
-    fn from_wasm_event(event: Event, _state: &mut PluginHostState) -> Self {
+    fn from_wasm_event(event: Event, state: &mut PluginHostState) -> Self {
         match event {
             Event::ProjectileHitEvent(data) => Self {
                 entity_id: data.entity_id,
                 hit_position: from_wasm_position(data.hit_position),
                 hit_entity_id: data.hit_entity_id,
+                item: data.item.map(|item| consume_item_stack(state, &item)),
+                world: consume_world(state, &data.target_world),
                 cancelled: data.cancelled,
             },
             _ => panic!("unexpected event type"),
@@ -1409,10 +1423,21 @@ impl ToFromWasmEvent for ProjectileHitEvent {
 }
 
 impl ToFromWasmEvent for ProjectileLaunchEvent {
-    fn to_wasm_event(&self, _state: &mut PluginHostState) -> Event {
+    fn to_wasm_event(&self, state: &mut PluginHostState) -> Event {
+        let item = self.item.as_ref().map(|stack| {
+            state
+                .add(Arc::new(Mutex::new(stack.clone())))
+                .expect("failed to add item stack resource")
+        });
+        let target_world = state
+            .add(self.world.clone())
+            .expect("failed to add world resource");
+
         Event::ProjectileLaunchEvent(ProjectileLaunchEventData {
             entity_id: self.entity_id,
             shooter_id: self.shooter_id,
+            item,
+            target_world,
             cancelled: self.cancelled,
         })
     }
@@ -1424,11 +1449,13 @@ impl ToFromWasmEvent for ProjectileLaunchEvent {
         }
     }
 
-    fn from_wasm_event(event: Event, _state: &mut PluginHostState) -> Self {
+    fn from_wasm_event(event: Event, state: &mut PluginHostState) -> Self {
         match event {
             Event::ProjectileLaunchEvent(data) => Self {
                 entity_id: data.entity_id,
                 shooter_id: data.shooter_id,
+                item: data.item.map(|item| consume_item_stack(state, &item)),
+                world: consume_world(state, &data.target_world),
                 cancelled: data.cancelled,
             },
             _ => panic!("unexpected event type"),

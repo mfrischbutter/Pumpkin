@@ -66,6 +66,15 @@ impl EntityBase for EggEntity {
         self.thrown.owner_id
     }
 
+    fn get_projectile_item(&self) -> Option<ItemStack> {
+        Some(
+            self.item_stack
+                .read()
+                .unwrap_or_else(std::sync::PoisonError::into_inner)
+                .clone(),
+        )
+    }
+
     fn init_data_tracker(&self) {
         let entity = self.get_entity();
         let stack = self
