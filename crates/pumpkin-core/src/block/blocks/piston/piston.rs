@@ -157,20 +157,21 @@ impl PistonBlock {
 
         // Extend Piston
         if r#type == 0 {
-            let mut event =
-                crate::plugin::api::events::block::block_piston::BlockPistonExtendEvent::new(
-                    world.clone(),
-                    *pos,
-                    format!("{dir:?}"),
-                );
-            if let Some(server) = world.server.upgrade() {
-                server.plugin_manager.fire_blocking(&server, &mut event);
-            }
-            if event.cancelled {
-                return false;
-            }
-
-            if !move_piston(world, dir, pos, true, sticky) {
+            let moved = move_piston(world, dir, pos, true, sticky, |blocks, broken| {
+                let mut event =
+                    crate::plugin::api::events::block::block_piston::BlockPistonExtendEvent::new(
+                        world.clone(),
+                        *pos,
+                        format!("{dir:?}"),
+                        blocks.to_vec(),
+                        broken.to_vec(),
+                    );
+                if let Some(server) = world.server.upgrade() {
+                    server.plugin_manager.fire_blocking(&server, &mut event);
+                }
+                !event.cancelled
+            });
+            if !moved {
                 return false;
             }
             props.extended = true;
@@ -192,11 +193,21 @@ impl PistonBlock {
         }
         // Reduce Piston
 
+        // The pull below runs after the retract has started, so its blocks are found up front.
+        let mut pull = PistonHandler::new(world, *pos, dir, false);
+        let pulls = sticky && data != 2 && can_pull(world, pos, dir) && pull.calculate_push();
+        let (blocks, broken) = if pulls {
+            (pull.moved_blocks, pull.broken_blocks)
+        } else {
+            (Vec::new(), Vec::new())
+        };
         let mut event =
             crate::plugin::api::events::block::block_piston::BlockPistonRetractEvent::new(
                 world.clone(),
                 *pos,
                 format!("{dir:?}"),
+                blocks,
+                broken,
             );
         if let Some(server) = world.server.upgrade() {
             server.plugin_manager.fire_blocking(&server, &mut event);
@@ -250,32 +261,21 @@ impl PistonBlock {
 
         world.update_neighbors(pos, None);
         if sticky {
-            let pull_pos = pos.offset_dir(dir.to_offset(), 2);
-            let (block, state) = world.get_block_and_state(&pull_pos);
             if data == 2 {
                 world.set_block_state(
                     &extended_pos,
                     Block::AIR.default_state.id,
                     BlockFlags::NOTIFY_ALL,
                 );
+            } else if can_pull(world, pos, dir) {
+                move_piston(world, dir, pos, false, sticky, |_, _| true);
             } else {
-                let is_air = state.is_air();
-                if !is_air
-                    && (Self::is_movable(block, state, dir, false, dir.opposite())
-                        || Self::is_movable(block, state, dir, false, dir))
-                    && (state.piston_behavior == PistonBehavior::Normal
-                        || block == &Block::PISTON
-                        || block == &Block::STICKY_PISTON)
-                {
-                    move_piston(world, dir, pos, false, sticky);
-                } else {
-                    // remove
-                    world.set_block_state(
-                        &extended_pos,
-                        Block::AIR.default_state.id,
-                        BlockFlags::NOTIFY_ALL,
-                    );
-                }
+                // remove
+                world.set_block_state(
+                    &extended_pos,
+                    Block::AIR.default_state.id,
+                    BlockFlags::NOTIFY_ALL,
+                );
             }
         } else {
             // remove
@@ -296,6 +296,18 @@ impl PistonBlock {
         );
         true
     }
+}
+
+/// Whether a retracting sticky piston pulls the block two blocks in front of it.
+fn can_pull(world: &World, block_pos: &BlockPos, dir: BlockDirection) -> bool {
+    let pull_pos = block_pos.offset_dir(dir.to_offset(), 2);
+    let (block, state) = world.get_block_and_state(&pull_pos);
+    !state.is_air()
+        && (PistonBlock::is_movable(block, state, dir, false, dir.opposite())
+            || PistonBlock::is_movable(block, state, dir, false, dir))
+        && (state.piston_behavior == PistonBehavior::Normal
+            || block == &Block::PISTON
+            || block == &Block::STICKY_PISTON)
 }
 
 fn should_extend(world: &World, block_pos: &BlockPos, piston_dir: BlockDirection) -> bool {
@@ -362,6 +374,8 @@ pub fn try_move(world: &Arc<World>, _block: &Block, block_pos: &BlockPos) {
     }
 }
 
+/// `can_move` is asked with the blocks that move and break once the push is known, before any of
+/// them change; returning false stops the move.
 #[expect(clippy::too_many_lines)]
 fn move_piston(
     world: &Arc<World>,
@@ -369,6 +383,7 @@ fn move_piston(
     block_pos: &BlockPos,
     extend: bool,
     sticky: bool,
+    can_move: impl FnOnce(&[BlockPos], &[BlockPos]) -> bool,
 ) -> bool {
     let extended_pos = block_pos.offset(dir.to_offset());
     if !extend && world.get_block(&extended_pos) == &Block::PISTON_HEAD {
@@ -379,7 +394,7 @@ fn move_piston(
         );
     }
     let mut handler = PistonHandler::new(world, *block_pos, dir, extend);
-    if !handler.calculate_push() {
+    if !handler.calculate_push() || !can_move(&handler.moved_blocks, &handler.broken_blocks) {
         return false;
     }
 
