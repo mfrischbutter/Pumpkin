@@ -9,6 +9,8 @@ use crate::{
     world::World,
 };
 
+use super::fire_entity_interact;
+
 pub mod plate;
 pub mod weighted;
 
@@ -28,7 +30,7 @@ fn detection_box_at(pos: &BlockPos) -> BoundingBox {
 pub(crate) trait PressurePlate {
     fn on_entity_collision_pp(&self, args: OnEntityCollisionArgs<'_>) {
         let output = self.get_redstone_output(args.block, args.state.id);
-        if output == 0 {
+        if output == 0 && fire_entity_interact(&args) {
             self.update_plate_state(args.world, args.position, args.block, args.state, output);
         }
     }
