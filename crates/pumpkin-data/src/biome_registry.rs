@@ -50,7 +50,9 @@ pub fn biome_network_id(id: &str) -> Option<u8> {
     if !biomes.contains(id) {
         return None;
     }
-    let index = biomes.range::<str, _>(..id).count();
+    let index = biomes
+        .range::<str, _>((std::ops::Bound::Unbounded, std::ops::Bound::Excluded(id)))
+        .count();
     u8::try_from(Biome::ALL.len() + index).ok()
 }
 
@@ -64,8 +66,14 @@ mod tests {
         register_dynamic_biome("test_a:biome".to_string());
 
         let vanilla_count = Biome::ALL.len();
-        assert_eq!(biome_network_id("test_a:biome").map(usize::from), Some(vanilla_count));
-        assert_eq!(biome_network_id("test_b:biome").map(usize::from), Some(vanilla_count + 1));
+        assert_eq!(
+            biome_network_id("test_a:biome").map(usize::from),
+            Some(vanilla_count)
+        );
+        assert_eq!(
+            biome_network_id("test_b:biome").map(usize::from),
+            Some(vanilla_count + 1)
+        );
         assert_eq!(biome_network_id("minecraft:swamp"), Some(Biome::SWAMP.id));
 
         unregister_dynamic_biome("test_a:biome");
