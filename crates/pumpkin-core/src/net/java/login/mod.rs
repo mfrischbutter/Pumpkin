@@ -16,7 +16,6 @@ use pumpkin_protocol::{
 use pumpkin_util::text::TextComponent;
 use std::sync::Arc;
 use tracing::debug;
-use uuid::Uuid;
 
 use crate::{
     net::{

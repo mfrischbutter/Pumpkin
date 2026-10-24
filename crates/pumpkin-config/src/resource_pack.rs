@@ -27,6 +27,14 @@ pub struct JavaResourcePackConfig {
     pub force: bool,
 }
 
+impl JavaResourcePackConfig {
+    /// The UUID the pack is sent with, derived from its URL.
+    #[must_use]
+    pub fn uuid(&self) -> Uuid {
+        Uuid::new_v3(&Uuid::NAMESPACE_DNS, self.url.as_bytes())
+    }
+}
+
 /// Bedrock-specific configuration (Supports multiple local/remote packs)
 #[derive(Deserialize, Serialize, Default)]
 #[serde(default)]

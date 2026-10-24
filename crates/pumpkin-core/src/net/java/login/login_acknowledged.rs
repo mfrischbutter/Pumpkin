@@ -1,5 +1,6 @@
 #[allow(clippy::wildcard_imports)]
 use super::*;
+use crate::net::java::pending::PendingResourcePack;
 
 impl PendingConnection {
     pub async fn handle_login_acknowledged(
@@ -81,7 +82,7 @@ impl PendingConnection {
 
         let resource_config = &server.advanced_config.resource_pack.java;
         if resource_config.enabled {
-            let uuid = Uuid::new_v3(&uuid::Uuid::NAMESPACE_DNS, resource_config.url.as_bytes());
+            let uuid = resource_config.uuid();
             let resource_pack = CConfigAddResourcePack::new(
                 &uuid,
                 &resource_config.url,
@@ -95,6 +96,11 @@ impl PendingConnection {
             );
 
             self.send_packet_now(&resource_pack).await;
+            self.pending_resource_packs.push(PendingResourcePack {
+                uuid,
+                forced: resource_config.force,
+                from_config: true,
+            });
         } else {
             self.send_known_packs(server).await;
         }
