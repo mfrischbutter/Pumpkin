@@ -1770,7 +1770,9 @@ interface event {
 
     record prepare-item-craft-event-data {
         player: player,
-        recipe-id: string,
+        recipe-id: option<string>,
+        matrix: list<option<item-stack>>,
+        %result: option<item-stack>,
         cancelled: bool
     }
 

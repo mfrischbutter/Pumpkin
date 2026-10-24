@@ -16,7 +16,7 @@ use pumpkin_core::plugin::enchantment::{
 };
 use pumpkin_wasm_host_common::state::PluginHostState;
 
-fn consume_item_stack(
+pub(super) fn consume_item_stack(
     state: &mut PluginHostState,
     item: &Resource<crate::pumpkin::plugin::item_stack::ItemStack>,
 ) -> ItemStack {
