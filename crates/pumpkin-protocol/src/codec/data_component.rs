@@ -2101,57 +2101,118 @@ impl DataComponentCodec<Self> for DeathProtectionImpl {
 
 impl DataComponentCodec<Self> for BlocksAttacksImpl {
     fn serialize(&self, seq: &mut impl NetworkWriteExt) -> Result<(), WritingError> {
-        seq.write_f32(0.0)?;
-        seq.write_f32(1.0)?;
-        seq.write_var_int(&VarInt(0))?;
-        seq.write_var_int(&VarInt(0))?;
-        seq.write_bool(false)?;
-        seq.write_bool(false)?;
-        seq.write_bool(false)
+        seq.write_f32(self.block_delay_seconds)?;
+        seq.write_f32(self.disable_cooldown_scale)?;
+        seq.write_list(&self.damage_reductions, |w, reduction| {
+            w.write_f32(reduction.horizontal_blocking_angle)?;
+            w.write_option(&reduction.r#type, |w, set| serialize_damage_type_set(set, w))?;
+            w.write_f32(reduction.base)?;
+            w.write_f32(reduction.factor)
+        })?;
+        seq.write_f32(self.item_damage.threshold)?;
+        seq.write_f32(self.item_damage.base)?;
+        seq.write_f32(self.item_damage.factor)?;
+        seq.write_option(&self.bypassed_by, |w, set| serialize_damage_type_set(set, w))?;
+        serialize_optional_sound(self.block_sound.as_ref(), seq)?;
+        serialize_optional_sound(self.disabled_sound.as_ref(), seq)
     }
 
     fn deserialize(seq: &mut impl NetworkReadExt) -> Result<Self, ReadingError> {
-        let _block_delay = seq.get_f32()?;
-        let _disable_scale = seq.get_f32()?;
-        let red_len = seq.get_var_int()?.0 as usize;
-        for _ in 0..red_len {
-            let _ = seq.get_f32()?;
-            if seq.get_bool()? {
-                let id_type = seq.get_var_int()?.0;
-                if id_type == 0 {
-                    let _ = seq.get_str()?;
-                } else if id_type > 0 {
-                    for _ in 0..(id_type - 1) {
-                        let _ = seq.get_var_int()?;
-                    }
-                }
-            }
-            let _ = seq.get_f32()?;
-            let _ = seq.get_f32()?;
-        }
-        let item_damage_type = seq.get_var_int()?.0;
-        if item_damage_type == 1 {
-            let _ = seq.get_f32()?;
-            let _ = seq.get_f32()?;
-        }
-        if seq.get_bool()? {
-            let id_type = seq.get_var_int()?.0;
-            if id_type == 0 {
-                let _ = seq.get_str()?;
-            } else if id_type > 0 {
-                for _ in 0..(id_type - 1) {
-                    let _ = seq.get_var_int()?;
-                }
-            }
-        }
-        if seq.get_bool()? {
-            let _ = seq.get_var_int()?;
-        }
-        if seq.get_bool()? {
-            let _ = seq.get_var_int()?;
-        }
-        Ok(Self)
+        let block_delay_seconds = seq.get_f32()?;
+        let disable_cooldown_scale = seq.get_f32()?;
+        let damage_reductions = seq.get_list(|r| {
+            Ok(DamageReduction {
+                horizontal_blocking_angle: r.get_f32()?,
+                r#type: r.get_option(deserialize_damage_type_set)?,
+                base: r.get_f32()?,
+                factor: r.get_f32()?,
+            })
+        })?;
+        let item_damage = ItemDamageFunction {
+            threshold: seq.get_f32()?,
+            base: seq.get_f32()?,
+            factor: seq.get_f32()?,
+        };
+        Ok(Self {
+            block_delay_seconds,
+            disable_cooldown_scale,
+            damage_reductions: Cow::Owned(damage_reductions),
+            item_damage,
+            bypassed_by: seq.get_option(deserialize_damage_type_set)?,
+            block_sound: deserialize_optional_sound(seq)?,
+            disabled_sound: deserialize_optional_sound(seq)?,
+        })
     }
+}
+
+/// Writes a damage type `HolderSet`: `0` and a tag name, or the count plus one and registry ids.
+fn serialize_damage_type_set(
+    set: &DamageTypeSet,
+    seq: &mut impl NetworkWriteExt,
+) -> Result<(), WritingError> {
+    match set {
+        DamageTypeSet::Tag(tag) => {
+            seq.write_var_int(&VarInt(0))?;
+            seq.write_string(tag)
+        }
+        DamageTypeSet::Direct(damage_types) => {
+            seq.write_var_int(&VarInt(damage_types.len() as i32 + 1))?;
+            for damage_type in damage_types.iter() {
+                seq.write_var_int(&VarInt(i32::from(damage_type.id)))?;
+            }
+            Ok(())
+        }
+    }
+}
+
+fn deserialize_damage_type_set(
+    seq: &mut impl NetworkReadExt,
+) -> Result<DamageTypeSet, ReadingError> {
+    let id_type = usize::try_from(seq.get_var_int()?.0)
+        .map_err(|_| ReadingError::Message("Negative damage type count".into()))?;
+    if id_type == 0 {
+        return Ok(DamageTypeSet::Tag(Cow::Owned(seq.get_str()?.into())));
+    }
+    // Each id is at least one byte, so the vector only grows with the data actually sent.
+    let mut damage_types = Vec::new();
+    for _ in 1..id_type {
+        let id = seq.get_var_int()?.0;
+        let damage_type = u8::try_from(id)
+            .ok()
+            .and_then(pumpkin_data::damage::DamageType::from_id)
+            .ok_or_else(|| ReadingError::Message("Invalid damage type id".into()))?;
+        damage_types.push(damage_type);
+    }
+    Ok(DamageTypeSet::Direct(Cow::Owned(damage_types)))
+}
+
+fn serialize_optional_sound(
+    sound: Option<&IdOr<SoundEvent>>,
+    seq: &mut impl NetworkWriteExt,
+) -> Result<(), WritingError> {
+    let Some(sound) = sound else {
+        return seq.write_bool(false);
+    };
+    seq.write_bool(true)?;
+    data_to_proto_sound(sound).write(seq, |w, e| {
+        w.write_string(&e.sound_name)?;
+        w.write_option(&e.range, |w, range| w.write_f32(*range))
+    })
+}
+
+/// Reads an optional sound holder; an unknown registry id reads as no sound.
+fn deserialize_optional_sound(
+    seq: &mut impl NetworkReadExt,
+) -> Result<Option<IdOr<SoundEvent>>, ReadingError> {
+    if !seq.get_bool()? {
+        return Ok(None);
+    }
+    let proto = crate::IdOr::<crate::SoundEvent>::read(seq, |r| {
+        let sound_name = r.get_str()?.to_string();
+        let range = r.get_option(NetworkReadExt::get_f32)?;
+        Ok(crate::SoundEvent { sound_name, range })
+    })?;
+    Ok(proto_to_data_sound(&proto))
 }
 
 impl DataComponentCodec<Self> for PiercingWeaponImpl {
@@ -3526,6 +3587,21 @@ mod tests {
 
         let min_holder = [0x80, 0x80, 0x80, 0x80, 0x08];
         assert!(PaintingVariantImpl::deserialize(&mut min_holder.as_slice()).is_err());
+    }
+
+    #[test]
+    fn shield_blocks_attacks_round_trips() {
+        let shield = pumpkin_data::item::Item::SHIELD
+            .components
+            .iter()
+            .find(|(id, _)| *id == DataComponent::BlocksAttacks)
+            .map(|(_, value)| get::<BlocksAttacksImpl>(*value))
+            .unwrap();
+        let mut encoded = Vec::new();
+        shield.serialize(&mut encoded).unwrap();
+        let mut slice = encoded.as_slice();
+        assert_eq!(&BlocksAttacksImpl::deserialize(&mut slice).unwrap(), shield);
+        assert!(slice.is_empty());
     }
 
     #[test]

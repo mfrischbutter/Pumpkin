@@ -955,6 +955,36 @@ mod tests {
     }
 
     #[test]
+    fn blocks_attacks_round_trip() {
+        assert_round_trip(
+            BlocksAttacksImpl {
+                block_delay_seconds: 0.25,
+                disable_cooldown_scale: 2.0,
+                damage_reductions: Cow::Owned(vec![DamageReduction {
+                    horizontal_blocking_angle: 45.0,
+                    r#type: Some(DamageTypeSet::Direct(Cow::Owned(vec![
+                        crate::damage::DamageType::ARROW,
+                        crate::damage::DamageType::TRIDENT,
+                    ]))),
+                    base: 1.0,
+                    factor: 0.5,
+                }]),
+                item_damage: ItemDamageFunction {
+                    threshold: 3.0,
+                    base: 1.0,
+                    factor: 1.0,
+                },
+                bypassed_by: Some(DamageTypeSet::Tag(Cow::Borrowed(
+                    "minecraft:bypasses_shield",
+                ))),
+                block_sound: Some(IdOr::Id(Sound::ItemShieldBlock)),
+                disabled_sound: None,
+            },
+            BlocksAttacksImpl::read_data,
+        );
+    }
+
+    #[test]
     fn equal_with_different_types_returns_false() {
         let enc = EnchantmentsImpl {
             enchantment: Cow::Borrowed(&[(&crate::Enchantment::SHARPNESS, 2)]),
