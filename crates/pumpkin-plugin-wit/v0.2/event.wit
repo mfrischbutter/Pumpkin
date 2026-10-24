@@ -385,7 +385,8 @@ interface event {
         target-world: %world,
         chunk-x: s32,
         chunk-z: s32,
-        cancelled: bool
+        /// Whether the chunk was generated instead of read from disk.
+        is-new: bool
     }
 
     record chunk-save-event-data {
@@ -1597,16 +1598,19 @@ interface event {
         cancelled: bool
     }
 
+    /// Fired once for every newly generated chunk, after its load event. The chunk is loaded, so
+    /// handlers can change its blocks through the world.
     record chunk-populate-event-data {
+        target-world: %world,
         chunk-x: s32,
-        chunk-z: s32,
-        cancelled: bool
+        chunk-z: s32
     }
 
+    /// Fired after a chunk was unloaded.
     record chunk-unload-event-data {
+        target-world: %world,
         chunk-x: s32,
-        chunk-z: s32,
-        cancelled: bool
+        chunk-z: s32
     }
 
     record entities-load-event-data {

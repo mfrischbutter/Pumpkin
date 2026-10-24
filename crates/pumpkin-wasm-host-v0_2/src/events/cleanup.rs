@@ -312,8 +312,12 @@ pub fn cleanup_event(event: &Event, state: &mut PluginHostState) {
         }
         Event::AsyncStructureGenerateEvent(_) => {}
         Event::AsyncStructureSpawnEvent(_) => {}
-        Event::ChunkPopulateEvent(_) => {}
-        Event::ChunkUnloadEvent(_) => {}
+        Event::ChunkPopulateEvent(data) => {
+            cleanup_world(state, &data.target_world);
+        }
+        Event::ChunkUnloadEvent(data) => {
+            cleanup_world(state, &data.target_world);
+        }
         Event::EntitiesLoadEvent(_) => {}
         Event::EntitiesUnloadEvent(_) => {}
         Event::GenericGameEvent(_) => {}
