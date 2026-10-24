@@ -11,7 +11,7 @@ pub mod trade_loader;
 use std::collections::HashMap;
 use std::fs;
 use std::path::{Path, PathBuf};
-use std::sync::{Arc, RwLock};
+use std::sync::{Arc, LazyLock, RwLock};
 use tracing::{info, warn};
 
 use pumpkin_data::damage::DamageType;
@@ -19,6 +19,7 @@ use pumpkin_data::registry::RegistryEntryData;
 use pumpkin_nbt::tag::NbtTag;
 use pumpkin_nbt::{NbtCompound, nbt_compress::read_gzip_compound_tag};
 use pumpkin_protocol::codec::recipe::DynamicRecipe;
+use pumpkin_util::identifier::{Identifier, VANILLA_NAMESPACE};
 use pumpkin_util::loot_table::DynamicLootTable;
 
 use crate::command::context::command_source::CommandSource;
@@ -71,6 +72,38 @@ pub enum DatapackEnablePosition {
     After(String),
 }
 
+pub(crate) const BIOME_REGISTRY: &str = "minecraft:worldgen/biome";
+pub(crate) const DAMAGE_TYPE_REGISTRY: &str = "minecraft:damage_type";
+pub(crate) const ENCHANTMENT_REGISTRY: &str = "minecraft:enchantment";
+pub(crate) const JUKEBOX_SONG_REGISTRY: &str = "minecraft:jukebox_song";
+
+/// Synced registries whose entries the server simulates itself. Plugins add entries to them
+/// through typed calls, so the server's model and the data clients receive stay the same.
+const SERVER_MODELED_REGISTRIES: &[&str] = &[
+    BIOME_REGISTRY,
+    DAMAGE_TYPE_REGISTRY,
+    ENCHANTMENT_REGISTRY,
+    JUKEBOX_SONG_REGISTRY,
+];
+
+/// The ids of the registries sent to clients during configuration.
+static SYNCED_REGISTRY_IDS: LazyLock<Box<[String]>> = LazyLock::new(|| {
+    pumpkin_data::registry::Registry::get_synced(pumpkin_data::packet::CURRENT_MC_VERSION)
+        .into_iter()
+        .map(|registry| registry.registry_id)
+        .collect()
+});
+
+/// Registry entries added by plugins. They are kept apart from the datapack entries, so
+/// `/reload` keeps them, and they are removed when their plugin unloads.
+#[derive(Default)]
+struct PluginRegistryEntries {
+    /// Entries per registry id, in the form the configuration sync sends them.
+    entries: HashMap<String, HashMap<String, RegistryEntryData>>,
+    /// The plugin that added each entry, keyed by registry id and entry id.
+    owners: HashMap<(String, String), String>,
+}
+
 pub struct DatapackManager {
     loaded_packs: RwLock<Vec<LoadedDatapack>>,
     functions: RwLock<HashMap<String, Arc<[String]>>>,
@@ -84,6 +117,7 @@ pub struct DatapackManager {
     /// Kept apart from `loot_tables` so they survive a datapack reload.
     plugin_loot_tables: RwLock<HashMap<String, (String, Arc<DynamicLootTable>)>>,
     dynamic_registries: RwLock<HashMap<String, HashMap<String, RegistryEntryData>>>,
+    plugin_registry_entries: RwLock<PluginRegistryEntries>,
     trade_registry: RwLock<TradeRegistry>,
 }
 
@@ -116,6 +150,7 @@ impl DatapackManager {
             loot_tables: RwLock::new(HashMap::new()),
             plugin_loot_tables: RwLock::new(HashMap::new()),
             dynamic_registries: RwLock::new(HashMap::new()),
+            plugin_registry_entries: RwLock::new(PluginRegistryEntries::default()),
             trade_registry: RwLock::new(TradeRegistry::new()),
         }
     }
@@ -462,24 +497,119 @@ impl DatapackManager {
         registry_id: &str,
         vanilla_entries: &[RegistryEntryData],
     ) -> Vec<RegistryEntryData> {
-        let guard = self
-            .dynamic_registries
+        let merged = {
+            let guard = self
+                .dynamic_registries
+                .read()
+                .unwrap_or_else(std::sync::PoisonError::into_inner);
+            let custom = guard
+                .get(registry_id)
+                .or_else(|| guard.get(&format!("minecraft:{registry_id}")))
+                .or_else(|| {
+                    registry_id
+                        .strip_prefix("minecraft:")
+                        .and_then(|r| guard.get(r))
+                });
+            custom.map_or_else(
+                || vanilla_entries.iter().map(clone_registry_entry).collect(),
+                |custom| {
+                    dynamic_registry_loader::merge_dynamic_registry_entries(vanilla_entries, custom)
+                },
+            )
+        };
+        // Plugin entries go after the datapack ones, so adding one keeps every earlier id.
+        let plugin_entries = self
+            .plugin_registry_entries
             .read()
             .unwrap_or_else(std::sync::PoisonError::into_inner);
-        let custom = guard
-            .get(registry_id)
-            .or_else(|| guard.get(&format!("minecraft:{registry_id}")))
-            .or_else(|| {
-                registry_id
-                    .strip_prefix("minecraft:")
-                    .and_then(|r| guard.get(r))
-            });
-        custom.map_or_else(
-            || vanilla_entries.iter().map(clone_registry_entry).collect(),
-            |custom| {
-                dynamic_registry_loader::merge_dynamic_registry_entries(vanilla_entries, custom)
-            },
-        )
+        let Some(entries) = plugin_entries.entries.get(registry_id) else {
+            return merged;
+        };
+        dynamic_registry_loader::merge_dynamic_registry_entries(&merged, entries)
+    }
+
+    /// Adds a plugin's entry to a synced registry. Players receive it from their next
+    /// configuration on, and `/reload` keeps it.
+    ///
+    /// # Errors
+    /// Returns a message when the registry is not synced or is simulated by the server, when the
+    /// entry id is invalid or in the `minecraft` namespace, or when another plugin added it.
+    pub fn register_plugin_registry_entry(
+        &self,
+        plugin: &str,
+        registry_id: &str,
+        entry_id: &str,
+        data: NbtCompound,
+    ) -> Result<(), String> {
+        let registry_id = synced_registry_id(registry_id)?;
+        if SERVER_MODELED_REGISTRIES.contains(&registry_id.as_str()) {
+            return Err(format!(
+                "Registry {registry_id} is simulated by the server and takes no raw entries"
+            ));
+        }
+        self.insert_plugin_registry_entry(plugin, registry_id, entry_id, data)?;
+        Ok(())
+    }
+
+    /// Adds a plugin's entry without the check for registries the server simulates, for the
+    /// typed registration calls that keep the server's model in step. Returns the entry id in
+    /// its namespaced form.
+    pub(crate) fn insert_plugin_registry_entry(
+        &self,
+        plugin: &str,
+        registry_id: String,
+        entry_id: &str,
+        data: NbtCompound,
+    ) -> Result<String, String> {
+        let entry_id = plugin_entry_id(entry_id)?;
+        let mut guard = self
+            .plugin_registry_entries
+            .write()
+            .unwrap_or_else(std::sync::PoisonError::into_inner);
+        let key = (registry_id, entry_id);
+        if let Some(owner) = guard.owners.get(&key)
+            && owner.as_str() != plugin
+        {
+            return Err(format!("{} is already registered in {} by {owner}", key.1, key.0));
+        }
+        let entry = RegistryEntryData {
+            entry_id: key.1.clone(),
+            data: Some(dynamic_registry_loader::compound_to_registry_nbt_bytes(data)),
+        };
+        guard
+            .entries
+            .entry(key.0.clone())
+            .or_default()
+            .insert(key.1.clone(), entry);
+        let entry_id = key.1.clone();
+        guard.owners.insert(key, plugin.to_string());
+        Ok(entry_id)
+    }
+
+    /// Removes every registry entry a plugin added and returns their registry and entry ids.
+    #[must_use]
+    pub fn remove_plugin_registry_entries(&self, plugin: &str) -> Vec<(String, String)> {
+        let mut guard = self
+            .plugin_registry_entries
+            .write()
+            .unwrap_or_else(std::sync::PoisonError::into_inner);
+        let PluginRegistryEntries { entries, owners } = &mut *guard;
+        let mut removed = Vec::new();
+        owners.retain(|key, owner| {
+            if owner.as_str() == plugin {
+                removed.push(key.clone());
+                false
+            } else {
+                true
+            }
+        });
+        for (registry_id, entry_id) in &removed {
+            if let Some(registry) = entries.get_mut(registry_id) {
+                registry.remove(entry_id);
+            }
+        }
+        entries.retain(|_, registry| !registry.is_empty());
+        removed
     }
 
     #[must_use]
@@ -1555,6 +1685,29 @@ fn load_pack_contents(
     counts
 }
 
+/// Resolves a registry id, `minecraft:` optional, to the form the configuration sync uses.
+fn synced_registry_id(registry_id: &str) -> Result<String, String> {
+    let registry_id = Identifier::parse(registry_id)
+        .map_err(|error| error.to_string())?
+        .to_string();
+    if SYNCED_REGISTRY_IDS.contains(&registry_id) {
+        Ok(registry_id)
+    } else {
+        Err(format!("Registry {registry_id} is not synced to clients"))
+    }
+}
+
+/// Checks a plugin's registry entry id. Plugins add entries; they do not replace vanilla ones.
+fn plugin_entry_id(entry_id: &str) -> Result<String, String> {
+    let entry_id = Identifier::parse(entry_id).map_err(|error| error.to_string())?;
+    if entry_id.namespace() == VANILLA_NAMESPACE {
+        return Err(format!(
+            "Registry entry {entry_id} needs a namespace other than {VANILLA_NAMESPACE}"
+        ));
+    }
+    Ok(entry_id.to_string())
+}
+
 #[must_use]
 pub fn clone_registry_entry(entry: &RegistryEntryData) -> RegistryEntryData {
     RegistryEntryData {
@@ -1719,6 +1872,49 @@ fn load_recipes_from_dir(
 #[cfg(test)]
 mod tests {
     use super::DatapackManager;
+    use pumpkin_data::registry::RegistryEntryData;
+    use pumpkin_nbt::NbtCompound;
+
+    #[test]
+    fn plugin_registry_entries_follow_vanilla_until_their_plugin_unloads() {
+        let manager = DatapackManager::new();
+        let vanilla = [RegistryEntryData {
+            entry_id: "minecraft:pale".to_string(),
+            data: Some(vec![1].into_boxed_slice()),
+        }];
+        manager
+            .register_plugin_registry_entry("a", "wolf_variant", "a:spotted", NbtCompound::new())
+            .unwrap();
+        assert!(
+            manager
+                .register_plugin_registry_entry(
+                    "b",
+                    "minecraft:wolf_variant",
+                    "a:spotted",
+                    NbtCompound::new(),
+                )
+                .is_err()
+        );
+        assert!(
+            manager
+                .register_plugin_registry_entry("a", "wolf_variant", "pale", NbtCompound::new())
+                .is_err()
+        );
+        assert!(
+            manager
+                .register_plugin_registry_entry("a", "jukebox_song", "a:x", NbtCompound::new())
+                .is_err()
+        );
+
+        let merged = manager.merge_registry_entries("minecraft:wolf_variant", &vanilla);
+        let ids: Vec<_> = merged.iter().map(|e| e.entry_id.as_str()).collect();
+        assert_eq!(ids, ["minecraft:pale", "a:spotted"]);
+
+        let removed = manager.remove_plugin_registry_entries("a");
+        assert_eq!(removed, [("minecraft:wolf_variant".to_string(), "a:spotted".to_string())]);
+        let merged = manager.merge_registry_entries("minecraft:wolf_variant", &vanilla);
+        assert_eq!(merged.len(), 1);
+    }
 
     #[test]
     fn function_dispatch_releases_the_functions_lock() {

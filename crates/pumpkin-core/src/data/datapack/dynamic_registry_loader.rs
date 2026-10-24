@@ -97,15 +97,21 @@ pub fn json_to_nbt_tag(v: &Value) -> NbtTag {
     }
 }
 
+/// Encodes a registry entry definition into binary unnamed NBT bytes.
+#[must_use]
+pub fn compound_to_registry_nbt_bytes(compound: NbtCompound) -> Box<[u8]> {
+    Nbt::from(compound)
+        .write_unnamed()
+        .to_vec()
+        .into_boxed_slice()
+}
+
 /// Encodes a JSON definition into binary unnamed NBT bytes.
 #[must_use]
 pub fn json_to_registry_nbt_bytes(val: &Value) -> Box<[u8]> {
     let nbt_tag = json_to_nbt_tag(val);
     match nbt_tag {
-        NbtTag::Compound(compound) => Nbt::from(compound)
-            .write_unnamed()
-            .to_vec()
-            .into_boxed_slice(),
+        NbtTag::Compound(compound) => compound_to_registry_nbt_bytes(compound),
         other => {
             let mut bytes = Vec::new();
             let mut writer = pumpkin_nbt::serializer::NbtWriteHelperJava::new(&mut bytes);
