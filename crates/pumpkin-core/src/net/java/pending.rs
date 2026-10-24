@@ -62,6 +62,15 @@ const BRAND_CHANNEL_PREFIX: &str = "minecraft:brand";
 /// on every packet, so a slow but progressing login is never cut off.
 const HANDSHAKE_IDLE_TIMEOUT: std::time::Duration = std::time::Duration::from_secs(30);
 
+/// [`HANDSHAKE_IDLE_TIMEOUT`] while a resource pack sent in the configuration phase has no
+/// final status yet.
+///
+/// The client sends nothing while it shows the pack prompt, downloads the pack and reloads its
+/// resources, which can take minutes for a large pack on a slow machine. Vanilla has no idle
+/// limit there because it keeps the connection alive with configuration keep-alives; Pumpkin
+/// sends none before play, so this only bounds how long a dead peer can hold the socket.
+const RESOURCE_PACK_IDLE_TIMEOUT: std::time::Duration = std::time::Duration::from_secs(600);
+
 /// A resource pack sent in the configuration phase that has no final status yet.
 pub struct PendingResourcePack {
     pub uuid: Uuid,
@@ -175,16 +184,21 @@ impl PendingConnection {
 
     pub async fn get_packet(&mut self) -> Option<RawPacket> {
         let close_token = self.close_token.clone();
+        let idle_timeout = if self.pending_resource_packs.is_empty() {
+            HANDSHAKE_IDLE_TIMEOUT
+        } else {
+            RESOURCE_PACK_IDLE_TIMEOUT
+        };
         let packet_result = tokio::select! {
             () = close_token.cancelled() => {
                 debug!("Canceling pending connection packet processing");
                 return None;
             },
-            () = tokio::time::sleep(HANDSHAKE_IDLE_TIMEOUT) => {
+            () = tokio::time::sleep(idle_timeout) => {
                 debug!(
                     "Client {} sent nothing for {}s before finishing login, dropping it",
                     self.id,
-                    HANDSHAKE_IDLE_TIMEOUT.as_secs()
+                    idle_timeout.as_secs()
                 );
                 return None;
             },
