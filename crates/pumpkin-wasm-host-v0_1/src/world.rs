@@ -870,13 +870,13 @@ impl pumpkin::plugin::world::HostWorld for PluginHostState {
         Self::get_wit_biome(biome)
     }
 
-    async fn set_biome(
+    fn set_biome(
         &mut self,
         world: Resource<World>,
         pos: WitBlockPos,
         biome: pumpkin::plugin::biomes::Biome,
     ) -> wasmtime::Result<()> {
-        let world_ref = self.get_world_res(&world)?.provider.clone();
+        let world_ref = self.get(&world)?;
         let Some(data) = pumpkin_data::biome::Biome::ALL.get(biome as usize) else {
             return Err(wasmtime::Error::msg("Unknown biome"));
         };
@@ -899,12 +899,12 @@ impl pumpkin::plugin::world::HostWorld for PluginHostState {
         Ok(())
     }
 
-    async fn refresh_biomes(
+    fn refresh_biomes(
         &mut self,
         world: Resource<World>,
         chunks: Vec<(i32, i32)>,
     ) -> wasmtime::Result<()> {
-        let world = self.get_world_res(&world)?.provider.clone();
+        let world = self.get(&world)?;
         for (x, z) in chunks {
             let pos = pumpkin_util::math::vector2::Vector2::new(x, z);
             let Some(chunk) = world
@@ -917,7 +917,7 @@ impl pumpkin::plugin::world::HostWorld for PluginHostState {
             };
             world.broadcast_to_chunk(
                 pos,
-                &crate::net::java::chunk_data::CChunksBiomes(&[&*chunk]),
+                &pumpkin_core::net::java::chunk_data::CChunksBiomes(&[&*chunk]),
             );
         }
         Ok(())
@@ -1392,15 +1392,15 @@ impl pumpkin::plugin::world::HostChunk for PluginHostState {
             .as_u16())
     }
 
-    async fn read_section(
+    fn read_section(
         &mut self,
         chunk: Resource<WitChunk>,
         section_y: i32,
     ) -> wasmtime::Result<Option<Vec<u16>>> {
         const SECTION_SIZE: usize = 16;
 
-        let chunk_res = self.get_chunk_res(&chunk)?;
-        let (_, chunk_data) = &chunk_res.provider;
+        let chunk_res = self.get(&chunk)?;
+        let (_, chunk_data) = &chunk_res;
         let Some(chunk_data) = chunk_data.upgrade() else {
             return Err(wasmtime::Error::msg("Chunk unloaded"));
         };
