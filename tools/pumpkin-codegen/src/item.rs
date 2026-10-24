@@ -291,7 +291,7 @@ impl ToTokens for ItemComponents {
         let item_name = LitStr::new(&text, Span::call_site());
         tokens.extend(quote! {
             (ItemName, &ItemNameImpl {
-                name: Cow::Borrowed(#item_name),
+                name: ItemNameText::key(#item_name),
             }),
         });
 
@@ -2300,7 +2300,7 @@ pub fn build() -> TokenStream {
                         if id == &ItemName {
                             data.as_any()
                                 .downcast_ref::<ItemNameImpl>()
-                                .map(|name| name.name.as_ref())
+                                .and_then(|name| name.name.translation_key())
                         } else {
                             None
                         }

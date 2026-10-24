@@ -5,7 +5,7 @@ use crate::data_component_impl::{
 use crate::sound::Sound;
 use pumpkin_nbt::compound::NbtCompound;
 use pumpkin_nbt::tag::NbtTag;
-use pumpkin_util::text::TextComponent;
+use pumpkin_util::text::{TextComponent, TextContent};
 use pumpkin_util::version::JavaMinecraftVersion;
 use std::borrow::Cow;
 
@@ -142,33 +142,75 @@ impl DataComponentImpl for CustomNameImpl {
     default_impl!(CustomName);
 }
 
+/// The text of an `item_name`.
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
+pub enum ItemNameText {
+    /// A bare translation key, the form every vanilla item uses.
+    Key(Cow<'static, str>),
+    /// Any other text component.
+    Text(TextComponent),
+}
+impl ItemNameText {
+    #[must_use]
+    pub const fn key(key: &'static str) -> Self {
+        Self::Key(Cow::Borrowed(key))
+    }
+
+    /// Stores a component that is nothing but a translation key as `Key`.
+    #[must_use]
+    pub fn from_component(text: TextComponent) -> Self {
+        if text.0.style.is_empty()
+            && text.0.extra.is_empty()
+            && let TextContent::Translate {
+                translate,
+                bedrock_translate: None,
+                with,
+            } = &*text.0.content
+            && with.is_empty()
+        {
+            return Self::Key(translate.clone());
+        }
+        Self::Text(text)
+    }
+
+    /// The translation key, if the name is a bare key.
+    #[must_use]
+    pub fn translation_key(&self) -> Option<&str> {
+        match self {
+            Self::Key(key) => Some(key),
+            Self::Text(_) => None,
+        }
+    }
+
+    #[must_use]
+    pub fn to_text_component(&self) -> TextComponent {
+        match self {
+            Self::Key(key) => TextComponent::translate(key.clone(), Vec::new()),
+            Self::Text(text) => text.clone(),
+        }
+    }
+}
+
 #[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub struct ItemNameImpl {
-    pub name: Cow<'static, str>,
+    pub name: ItemNameText,
 }
 impl ItemNameImpl {
     pub fn read_data(data: &NbtTag) -> Option<Self> {
-        let name = match data {
-            NbtTag::String(name) => name.to_string(),
-            NbtTag::Compound(component) => component
-                .get_string("translate")
-                .or_else(|| component.get_string("text"))?
-                .to_owned(),
-            _ => return None,
-        };
-        Some(Self {
-            name: Cow::Owned(name),
+        read_text_component(data).map(|text| Self {
+            name: ItemNameText::from_component(text),
         })
     }
 }
 impl DataComponentImpl for ItemNameImpl {
     fn write_data(&self) -> NbtTag {
-        let mut component = NbtCompound::new();
-        component.put_string("translate", self.name.to_string());
-        NbtTag::Compound(component)
+        write_text_component(&self.name.to_text_component())
     }
     fn get_hash(&self) -> i32 {
-        get_str_hash(&self.name) as i32
+        match &self.name {
+            ItemNameText::Key(key) => get_str_hash(key) as i32,
+            ItemNameText::Text(text) => get_str_hash(&text.clone().get_text()) as i32,
+        }
     }
     default_impl!(ItemName);
 }
