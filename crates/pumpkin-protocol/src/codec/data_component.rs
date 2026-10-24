@@ -1610,47 +1610,74 @@ impl DataComponentCodec<Self> for CanBreakImpl {
 
 impl DataComponentCodec<Self> for AttributeModifiersImpl {
     fn serialize(&self, seq: &mut impl NetworkWriteExt) -> Result<(), WritingError> {
-        seq.write_var_int(&VarInt::from(self.attribute_modifiers.len() as i32))?;
-        for modifier in self.attribute_modifiers.iter() {
-            seq.write_var_int(&VarInt::from(modifier.r#type.id as i32))?;
-            seq.write_string(modifier.id)?;
-            seq.write_f64(modifier.amount)?;
-            seq.write_var_int(&VarInt::from(modifier.operation as i32))?;
-            let slot_id = match modifier.slot {
-                pumpkin_data::enchantment::AttributeModifierSlot::Any => 0,
-                pumpkin_data::enchantment::AttributeModifierSlot::MainHand => 1,
-                pumpkin_data::enchantment::AttributeModifierSlot::OffHand => 2,
-                pumpkin_data::enchantment::AttributeModifierSlot::Hand => 3,
-                pumpkin_data::enchantment::AttributeModifierSlot::Feet => 4,
-                pumpkin_data::enchantment::AttributeModifierSlot::Legs => 5,
-                pumpkin_data::enchantment::AttributeModifierSlot::Chest => 6,
-                pumpkin_data::enchantment::AttributeModifierSlot::Head => 7,
-                pumpkin_data::enchantment::AttributeModifierSlot::Armor => 8,
-                pumpkin_data::enchantment::AttributeModifierSlot::Body => 9,
-                pumpkin_data::enchantment::AttributeModifierSlot::Saddle => 10,
-            };
-            seq.write_var_int(&VarInt(slot_id))?;
-            seq.write_var_int(&VarInt(0))?;
-        }
-        Ok(())
+        seq.write_list(&self.attribute_modifiers, |w, modifier| {
+            w.write_var_int(&VarInt::from(i32::from(modifier.r#type.id)))?;
+            w.write_string(&modifier.id)?;
+            w.write_f64(modifier.amount)?;
+            w.write_var_int(&VarInt::from(modifier.operation as i32))?;
+            w.write_var_int(&VarInt(modifier.slot.to_id()))?;
+            serialize_modifier_display(&modifier.display, w)
+        })
     }
 
     fn deserialize(seq: &mut impl NetworkReadExt) -> Result<Self, ReadingError> {
-        let len = seq.get_var_int()?.0 as usize;
-        for _ in 0..len {
-            let _attr_id = seq.get_var_int()?;
-            let _id = seq.get_str()?;
-            let _amount = seq.get_f64()?;
-            let _operation = seq.get_var_int()?;
-            let _slot = seq.get_var_int()?;
-            let display_type = seq.get_var_int()?.0;
-            if display_type == 2 {
-                let _ = seq.get_nbt_with_version(&JavaMinecraftVersion::V_26_2)?;
-            }
-        }
+        let modifiers = seq.get_list(|r| {
+            let attribute_id = r.get_var_int()?.0;
+            let r#type = pumpkin_data::attributes::Attributes::ALL
+                .iter()
+                .find(|attribute| i32::from(attribute.id) == attribute_id)
+                .ok_or_else(|| ReadingError::Message("Invalid attribute id".into()))?;
+            let id = r.get_str()?;
+            let amount = r.get_f64()?;
+            // Vanilla's `ByIdMap` reads an out-of-range id as the first value.
+            let operation = Operation::from_id(r.get_var_int()?.0).unwrap_or(Operation::AddValue);
+            let slot = pumpkin_data::AttributeModifierSlot::from_id(r.get_var_int()?.0)
+                .unwrap_or(pumpkin_data::AttributeModifierSlot::Any);
+            Ok(Modifier {
+                r#type,
+                id: Cow::Owned(id.into()),
+                amount,
+                operation,
+                slot,
+                display: deserialize_modifier_display(r)?,
+            })
+        })?;
         Ok(Self {
-            attribute_modifiers: Cow::Borrowed(&[]),
+            attribute_modifiers: Cow::Owned(modifiers),
         })
+    }
+}
+
+/// Writes `ItemAttributeModifiers.Display`: its type id, then the text for an override.
+fn serialize_modifier_display(
+    display: &ModifierDisplay,
+    seq: &mut impl NetworkWriteExt,
+) -> Result<(), WritingError> {
+    match display {
+        ModifierDisplay::Default => seq.write_var_int(&VarInt(0)),
+        ModifierDisplay::Hidden => seq.write_var_int(&VarInt(1)),
+        ModifierDisplay::OverrideText(text) => {
+            seq.write_var_int(&VarInt(2))?;
+            seq.write_slice(&text.encode_for_version(&JavaMinecraftVersion::V_26_2))
+        }
+    }
+}
+
+/// Reads `ItemAttributeModifiers.Display`; like vanilla, an unknown type id reads as the default.
+fn deserialize_modifier_display(
+    seq: &mut impl NetworkReadExt,
+) -> Result<ModifierDisplay, ReadingError> {
+    match seq.get_var_int()?.0 {
+        1 => Ok(ModifierDisplay::Hidden),
+        2 => {
+            let tag = seq.get_nbt_with_version(&JavaMinecraftVersion::V_26_2)?;
+            let text = tag.as_ref().map_or_else(
+                pumpkin_util::text::TextComponent::empty,
+                pumpkin_util::text::TextComponent::from_nbt,
+            );
+            Ok(ModifierDisplay::OverrideText(text))
+        }
+        _ => Ok(ModifierDisplay::Default),
     }
 }
 
@@ -3431,6 +3458,42 @@ mod tests {
         let decoded = ProfileImpl::deserialize(&mut encoded.as_slice()).unwrap();
         assert_eq!(decoded.name.as_deref(), Some("Notch"));
         assert_eq!(decoded.id, Some([1, 2, 3, 4]));
+    }
+
+    #[test]
+    fn attribute_modifiers_round_trip_with_display() {
+        let sturdy = pumpkin_util::text::TextComponent::text("Sturdy");
+        let modifiers = AttributeModifiersImpl {
+            attribute_modifiers: Cow::Owned(vec![
+                Modifier {
+                    r#type: &pumpkin_data::attributes::Attributes::ATTACK_DAMAGE,
+                    id: Cow::Borrowed("minecraft:base_attack_damage"),
+                    amount: 7.0,
+                    operation: Operation::AddValue,
+                    slot: pumpkin_data::AttributeModifierSlot::MainHand,
+                    display: ModifierDisplay::Hidden,
+                },
+                Modifier {
+                    r#type: &pumpkin_data::attributes::Attributes::ARMOR,
+                    id: Cow::Owned("example:armor".to_string()),
+                    amount: 2.5,
+                    operation: Operation::AddMultipliedBase,
+                    slot: pumpkin_data::AttributeModifierSlot::Armor,
+                    display: ModifierDisplay::OverrideText(sturdy),
+                },
+            ]),
+        };
+        let mut encoded = Vec::new();
+        modifiers.serialize(&mut encoded).unwrap();
+        let mut slice = encoded.as_slice();
+        let decoded = AttributeModifiersImpl::deserialize(&mut slice).unwrap();
+        assert!(slice.is_empty());
+        assert_eq!(decoded.attribute_modifiers[0], modifiers.attribute_modifiers[0]);
+        assert_eq!(decoded.attribute_modifiers[1].id, "example:armor");
+        assert!(matches!(
+            &decoded.attribute_modifiers[1].display,
+            ModifierDisplay::OverrideText(text) if text.clone().get_text() == "Sturdy"
+        ));
     }
 
     #[test]
