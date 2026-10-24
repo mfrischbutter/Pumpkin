@@ -2,6 +2,7 @@ use std::any::Any;
 use std::sync::Arc;
 
 use crate::{
+    crafting::recipe_provider::RecipeProvider,
     inventory::Inventory,
     window_property::{ExperienceContainer, PropertyDelegate},
 };
@@ -9,6 +10,7 @@ use pumpkin_data::data_component_impl::CookingFuelImpl;
 use pumpkin_data::item_stack::ItemStack;
 use pumpkin_data::recipes::{CookingRecipeKind, CookingRecipeType};
 use pumpkin_data::screen::WindowType;
+use pumpkin_protocol::codec::recipe::DynamicRecipe;
 
 use crate::{
     player::player_inventory::PlayerInventory,
@@ -20,13 +22,19 @@ use crate::{
 
 use super::furnace_like_slot::{FurnaceLikeSlot, FurnaceLikeSlotType, FurnaceOutputSlot};
 
+const fn cooking_kind(window_type: WindowType) -> Option<CookingRecipeKind> {
+    match window_type {
+        WindowType::Furnace => Some(CookingRecipeKind::Smelting),
+        WindowType::BlastFurnace => Some(CookingRecipeKind::Blasting),
+        WindowType::Smoker => Some(CookingRecipeKind::Smoking),
+        _ => None,
+    }
+}
+
 #[must_use]
 pub fn can_smelt_item(item: &pumpkin_data::item::Item, window_type: WindowType) -> bool {
-    let kind = match window_type {
-        WindowType::Furnace => CookingRecipeKind::Smelting,
-        WindowType::BlastFurnace => CookingRecipeKind::Blasting,
-        WindowType::Smoker => CookingRecipeKind::Smoking,
-        _ => return false,
+    let Some(kind) = cooking_kind(window_type) else {
+        return false;
     };
 
     pumpkin_data::recipes::RECIPES_COOKING
@@ -41,12 +49,32 @@ pub fn can_smelt_item(item: &pumpkin_data::item::Item, window_type: WindowType) 
         })
 }
 
+/// Whether a plugin or datapack recipe of the furnace's kind cooks `stack`.
+#[must_use]
+pub fn can_smelt_dynamic(
+    provider: &dyn RecipeProvider,
+    stack: &ItemStack,
+    window_type: WindowType,
+) -> bool {
+    let Some(kind) = cooking_kind(window_type) else {
+        return false;
+    };
+    provider.get_dynamic_recipes().iter().any(|recipe| {
+        matches!(recipe, DynamicRecipe::Cooking(cooking)
+            if cooking
+                .of_kind(&kind)
+                .is_some_and(|cooking| cooking.ingredient.match_stack(stack)))
+    })
+}
+
 pub struct FurnaceLikeScreenHandler {
     pub inventory: Arc<dyn Inventory>,
     pub property_delegate: Arc<dyn PropertyDelegate>,
     pub experience_container: Arc<dyn ExperienceContainer>,
     pub window_type: WindowType,
     pub behaviour: ScreenHandlerBehaviour,
+    /// Plugin and datapack recipes, for shift-click routing.
+    pub recipe_provider: Option<Arc<dyn RecipeProvider>>,
 }
 
 impl FurnaceLikeScreenHandler {
@@ -67,6 +95,7 @@ impl FurnaceLikeScreenHandler {
         property_delegate: &Arc<dyn PropertyDelegate>,
         experience_container: Arc<dyn ExperienceContainer>,
         window_type: WindowType,
+        recipe_provider: Option<Arc<dyn RecipeProvider>>,
     ) -> Self {
         struct FurnaceLikeScreenListener;
         impl ScreenHandlerListener for FurnaceLikeScreenListener {
@@ -88,6 +117,7 @@ impl FurnaceLikeScreenHandler {
             experience_container,
             window_type,
             behaviour: ScreenHandlerBehaviour::new(sync_id, Some(window_type)),
+            recipe_provider,
         };
 
         for i in 0..4 {
@@ -120,6 +150,9 @@ impl FurnaceLikeScreenHandler {
     #[must_use]
     pub fn can_smelt(&self, item_stack: &ItemStack) -> bool {
         can_smelt_item(item_stack.item, self.window_type)
+            || self.recipe_provider.as_ref().is_some_and(|provider| {
+                can_smelt_dynamic(provider.as_ref(), item_stack, self.window_type)
+            })
     }
 
     #[must_use]
