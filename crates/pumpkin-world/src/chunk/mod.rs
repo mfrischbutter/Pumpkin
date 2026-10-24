@@ -446,6 +446,51 @@ impl ChunkSections {
         );
     }
 
+    /// Returns the distinct block states of the section at section coordinate `section_y`
+    /// (`y >> 4`), read from its palette without visiting its blocks. Returns `None` when the
+    /// section lies outside the chunk's height.
+    #[must_use]
+    pub fn section_block_states(&self, section_y: i32) -> Option<Vec<BlockStateId>> {
+        let index = usize::try_from(section_y.checked_sub(self.min_y >> 4)?).ok()?;
+        self.block_sections
+            .read()
+            .unwrap_or_else(std::sync::PoisonError::into_inner)
+            .get(index)
+            .map(BlockPalette::distinct_values)
+    }
+
+    /// Returns the position of every block whose state matches `predicate`, as chunk-relative x
+    /// and z and absolute y, ordered by section and then as [`BlockPalette::iter`] visits them.
+    ///
+    /// The predicate is checked against each section's palette first, so a section holding none
+    /// of the wanted states is skipped without visiting its blocks.
+    #[must_use]
+    pub fn find_blocks_matching(
+        &self,
+        mut predicate: impl FnMut(BlockStateId) -> bool,
+    ) -> Vec<(usize, i32, usize)> {
+        const SIZE: usize = BlockPalette::SIZE;
+
+        let sections = self
+            .block_sections
+            .read()
+            .unwrap_or_else(std::sync::PoisonError::into_inner);
+        let mut found = Vec::new();
+        for (index, section) in sections.iter().enumerate() {
+            if !section.contains_matching(&mut predicate) {
+                continue;
+            }
+            let base_y = self.min_y + (index * SIZE) as i32;
+            for (i, state) in section.iter().enumerate() {
+                if predicate(state) {
+                    let y = base_y + (i / (SIZE * SIZE)) as i32;
+                    found.push((i % SIZE, y, (i / SIZE) % SIZE));
+                }
+            }
+        }
+        found
+    }
+
     /// Gets the given block in the chunk
     fn get_relative_block(
         &self,
@@ -1087,6 +1132,46 @@ mod tests {
         assert!(ChunkHeightmapType::MotionBlockingNoLeaves.is_opaque(stone));
         assert!(!ChunkHeightmapType::MotionBlockingNoLeaves.is_opaque(leaves)); // Excludes leaves
         assert!(ChunkHeightmapType::MotionBlockingNoLeaves.is_opaque(water)); // Water is liquid
+    }
+
+    #[test]
+    fn section_block_states_from_palette() {
+        let chunk = super::ChunkData::empty(0, 0);
+        let stone = Block::STONE.default_state.id;
+        chunk.section.set_block_absolute_y(3, 70, 5, stone);
+
+        let mut states = chunk.section.section_block_states(70 >> 4).unwrap_or_default();
+        states.sort();
+        let mut expected = vec![Block::AIR.default_state.id, stone];
+        expected.sort();
+        assert_eq!(states, expected);
+
+        assert_eq!(
+            chunk.section.section_block_states(0),
+            Some(vec![Block::AIR.default_state.id])
+        );
+        assert_eq!(chunk.section.section_block_states(-5), None);
+        assert_eq!(chunk.section.section_block_states(20), None);
+        assert_eq!(chunk.section.section_block_states(i32::MAX), None);
+    }
+
+    #[test]
+    fn find_blocks_matching_skips_other_sections() {
+        let chunk = super::ChunkData::empty(0, 0);
+        let stone = Block::STONE.default_state.id;
+        chunk.section.set_block_absolute_y(3, 70, 5, stone);
+        chunk.section.set_block_absolute_y(15, -64, 0, stone);
+
+        assert_eq!(
+            chunk.section.find_blocks_matching(|state| state == stone),
+            vec![(15, -64, 0), (3, 70, 5)]
+        );
+        assert!(
+            chunk
+                .section
+                .find_blocks_matching(|state| state == Block::DIRT.default_state.id)
+                .is_empty()
+        );
     }
 
     #[test]

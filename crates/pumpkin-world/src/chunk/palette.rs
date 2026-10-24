@@ -461,6 +461,22 @@ impl<V: Hash + Eq + Copy + Default, const DIM: usize> PalettedContainer<V, DIM> 
         }
     }
 
+    /// Returns each value stored in the container once, read from the palette, in no particular
+    /// order.
+    #[must_use]
+    pub fn distinct_values(&self) -> Vec<V> {
+        match self {
+            Self::Homogeneous(value) => vec![*value],
+            Self::Heterogeneous(data) => data
+                .palette
+                .iter()
+                .zip(&data.counts)
+                .filter(|&(_, &count)| count > 0)
+                .map(|(&value, _)| value)
+                .collect(),
+        }
+    }
+
     pub fn iter(&self) -> Box<dyn Iterator<Item = V> + '_> {
         match self {
             Self::Homogeneous(registry_id) => {
