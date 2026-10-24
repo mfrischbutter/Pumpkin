@@ -58,7 +58,7 @@ use pumpkin_util::math::{
 use pumpkin_util::text::TextComponent;
 use pumpkin_util::text::hover::HoverEvent;
 use pumpkin_util::version::JavaMinecraftVersion;
-use std::collections::{BTreeMap, HashSet};
+use std::collections::{BTreeMap, HashMap, HashSet};
 use std::sync::{
     Arc,
     atomic::{
@@ -1073,6 +1073,10 @@ pub struct Entity {
     pub last_sent_velocity: AtomicCell<Vector3<f64>>,
     /// Persistent custom data container for plugins
     pub custom_data: std::sync::Mutex<NbtCompound>,
+    /// Whether players are shown this entity unless they hid it. Player entities ignore it.
+    pub visible_by_default: AtomicBool,
+    /// Per-viewer exceptions to `visible_by_default`, by player UUID.
+    pub visibility_overrides: std::sync::Mutex<HashMap<Uuid, bool>>,
 }
 
 /// Entity bounds that keep the world's spatial queries current when written.
@@ -1260,6 +1264,8 @@ impl Entity {
             last_sent_pos: AtomicCell::new(position),
             last_sent_velocity: AtomicCell::new(Vector3::default()),
             custom_data: std::sync::Mutex::new(NbtCompound::new()),
+            visible_by_default: AtomicBool::new(true),
+            visibility_overrides: std::sync::Mutex::new(HashMap::new()),
         }
     }
 
@@ -2794,6 +2800,39 @@ impl Entity {
         if self.invisible.load(Ordering::Relaxed) != invisible {
             self.invisible.store(invisible, Relaxed);
             self.set_flag(Flag::Invisible, invisible);
+        }
+    }
+
+    /// Whether the player with UUID `viewer` is shown this entity. Player entities ignore it.
+    #[must_use]
+    pub fn is_visible_to(&self, viewer: &Uuid) -> bool {
+        let visible_by_default = self.visible_by_default.load(Relaxed);
+        self.visibility_overrides
+            .lock()
+            .unwrap_or_else(std::sync::PoisonError::into_inner)
+            .get(viewer)
+            .copied()
+            .unwrap_or(visible_by_default)
+    }
+
+    /// Records whether the player with UUID `viewer` is shown this entity, whatever the default.
+    pub fn set_visible_to(&self, viewer: Uuid, visible: bool) {
+        self.visibility_overrides
+            .lock()
+            .unwrap_or_else(std::sync::PoisonError::into_inner)
+            .insert(viewer, visible);
+    }
+
+    /// Sets whether players are shown this entity unless they hid it. With `false`, only players
+    /// it was shown to with `Player::show_entity` track it.
+    pub fn set_visible_by_default(&self, visible: bool) {
+        if self.visible_by_default.swap(visible, Relaxed) == visible {
+            return;
+        }
+        let world = self.world.load_full();
+        if let Some(tracked) = world.entity_tracker.get_tracked_entity(self.entity_id) {
+            let players = world.players.load();
+            tracked.update_players(players.as_ref(), &world);
         }
     }
 
