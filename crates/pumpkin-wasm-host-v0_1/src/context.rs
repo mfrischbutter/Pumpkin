@@ -12,6 +12,7 @@ use crate::{
             event::{EventPriority, EventType},
             permission::{Permission, PermissionDefault, PermissionLevel},
             server::Server,
+            text::TextComponent,
         },
     },
 };
@@ -1791,6 +1792,26 @@ impl pumpkin::plugin::context::HostContext for PluginHostState {
             Err(error) => return Ok(Err(error)),
         };
         Ok(context.register_registry_entry(&registry, &id, data))
+    }
+
+    fn register_jukebox_song(
+        &mut self,
+        context: Resource<WitContext>,
+        id: String,
+        sound_event: String,
+        description: Resource<TextComponent>,
+        length_seconds: f32,
+        comparator_output: u8,
+    ) -> wasmtime::Result<Result<(), String>> {
+        let description = self.take(description)?;
+        let context = self.get(&context)?;
+        Ok(context.register_jukebox_song(
+            &id,
+            &sound_event,
+            &description,
+            length_seconds,
+            comparator_output,
+        ))
     }
 
     fn get_data_folder(&mut self, _context: Resource<WitContext>) -> wasmtime::Result<String> {
