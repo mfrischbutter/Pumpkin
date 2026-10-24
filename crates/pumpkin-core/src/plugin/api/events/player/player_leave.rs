@@ -17,6 +17,23 @@ pub struct PlayerLeaveEvent {
 
     /// The message to display when the player leaves.
     pub leave_message: TextComponent,
+
+    /// Why the player left.
+    pub reason: PlayerLeaveReason,
+}
+
+/// Why a player left the server.
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub enum PlayerLeaveReason {
+    /// The connection closed for any reason not listed here, usually because the client quit.
+    #[default]
+    Disconnected,
+    /// The server kicked the player.
+    Kicked,
+    /// The client stopped answering keep-alives.
+    TimedOut,
+    /// The server is shutting down.
+    ServerStopping,
 }
 
 impl PlayerLeaveEvent {
@@ -25,13 +42,19 @@ impl PlayerLeaveEvent {
     /// # Arguments
     /// - `player`: A reference to the player leaving the game.
     /// - `leave_message`: The message to display upon leaving.
+    /// - `reason`: Why the player left.
     ///
     /// # Returns
     /// A new instance of `PlayerLeaveEvent`.
-    pub const fn new(player: Arc<Player>, leave_message: TextComponent) -> Self {
+    pub const fn new(
+        player: Arc<Player>,
+        leave_message: TextComponent,
+        reason: PlayerLeaveReason,
+    ) -> Self {
         Self {
             player,
             leave_message,
+            reason,
             cancelled: false,
         }
     }

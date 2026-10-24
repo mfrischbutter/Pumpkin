@@ -33,6 +33,7 @@ use crate::{
             PlayerItemBreakEventData, PlayerItemConsumeEventData, PlayerItemDamageEventData,
             PlayerItemHeldEventData, PlayerItemMendEventData, PlayerJoinEventData,
             PlayerKickEventData, PlayerLeashEntityEventData, PlayerLeaveEventData,
+            PlayerLeaveReason as WasmPlayerLeaveReason,
             PlayerLevelChangeEventData, PlayerLinksSendEventData, PlayerLocaleChangeEventData,
             PlayerLoginEventData, PlayerMoveEventData, PlayerNameEntityEventData,
             PlayerOpenSignEventData, PlayerPermissionCheckEventData, PlayerPickBlockEventData,
@@ -91,7 +92,7 @@ use pumpkin_core::plugin::player::{
     player_join::PlayerJoinEvent,
     player_kick::PlayerKickEvent,
     player_leash_entity::PlayerLeashEntityEvent,
-    player_leave::PlayerLeaveEvent,
+    player_leave::{PlayerLeaveEvent, PlayerLeaveReason},
     player_level_change::PlayerLevelChangeEvent,
     player_links_send::PlayerLinksSendEvent,
     player_locale_change::PlayerLocaleChangeEvent,
@@ -249,6 +250,24 @@ impl ToFromWasmEvent for PlayerJoinEvent {
     }
 }
 
+const fn to_wasm_leave_reason(reason: PlayerLeaveReason) -> WasmPlayerLeaveReason {
+    match reason {
+        PlayerLeaveReason::Disconnected => WasmPlayerLeaveReason::Disconnected,
+        PlayerLeaveReason::Kicked => WasmPlayerLeaveReason::Kicked,
+        PlayerLeaveReason::TimedOut => WasmPlayerLeaveReason::TimedOut,
+        PlayerLeaveReason::ServerStopping => WasmPlayerLeaveReason::ServerStopping,
+    }
+}
+
+const fn from_wasm_leave_reason(reason: WasmPlayerLeaveReason) -> PlayerLeaveReason {
+    match reason {
+        WasmPlayerLeaveReason::Disconnected => PlayerLeaveReason::Disconnected,
+        WasmPlayerLeaveReason::Kicked => PlayerLeaveReason::Kicked,
+        WasmPlayerLeaveReason::TimedOut => PlayerLeaveReason::TimedOut,
+        WasmPlayerLeaveReason::ServerStopping => PlayerLeaveReason::ServerStopping,
+    }
+}
+
 impl ToFromWasmEvent for PlayerLeaveEvent {
     fn to_wasm_event(&self, state: &mut PluginHostState) -> Event {
         let player = state
@@ -261,6 +280,7 @@ impl ToFromWasmEvent for PlayerLeaveEvent {
         Event::PlayerLeaveEvent(PlayerLeaveEventData {
             player,
             leave_message,
+            reason: to_wasm_leave_reason(self.reason),
             cancelled: self.cancelled,
         })
     }
@@ -270,6 +290,7 @@ impl ToFromWasmEvent for PlayerLeaveEvent {
             Event::PlayerLeaveEvent(data) => Self {
                 player: consume_player(state, &data.player),
                 leave_message: consume_text_component(state, &data.leave_message),
+                reason: from_wasm_leave_reason(data.reason),
                 cancelled: data.cancelled,
             },
             _ => panic!("unexpected event type"),
