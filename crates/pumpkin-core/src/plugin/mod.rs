@@ -1091,6 +1091,7 @@ impl PluginManager {
 
         self.unregister_handlers(name);
         plugin.context.unregister_commands();
+        plugin.context.unregister_loot_tables();
 
         if let Some(instance) = plugin.instance.take() {
             instance.on_unload(plugin.context.clone()).await.ok();

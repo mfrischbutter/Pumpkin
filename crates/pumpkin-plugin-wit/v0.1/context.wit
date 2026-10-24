@@ -48,6 +48,12 @@ interface context {
         /// Registers a permission node with the server.
         register-permission: func(permission: permission) -> result<_, string>;
 
+        /// Registers a loot table from its JSON definition, in the format of a datapack's
+        /// `data/<namespace>/loot_table/<path>.json`. It replaces a vanilla table with the same id,
+        /// while a datapack table with the same id still wins. The table stays registered across
+        /// `/reload` until the plugin unloads.
+        register-loot-table: func(id: string, json: string) -> result<_, string>;
+
         /// Returns the path to the plugin's private data folder.
         get-data-folder: func() -> string;
 
