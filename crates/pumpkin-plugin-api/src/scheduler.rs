@@ -178,8 +178,10 @@ static WORKER_JOB_HANDLERS: Mutex<BTreeMap<u32, WorkerJobHandler>> = Mutex::new(
 ///
 /// The worker instance shares no memory with this one: statics and anything set up in
 /// [`Plugin::on_load`](crate::Plugin::on_load) are not there, and only logging works among the
-/// host APIs. Pass everything the job needs in `input`. Each running job costs one more instance
-/// of the plugin's memory.
+/// host APIs. Pass everything else the job needs in `input`. If the plugin has the
+/// `fs.read.data` or `fs.write.data` permission, the job can read (but not write) files in the
+/// plugin's data folder, at the same path as on this instance. Each running job costs one more
+/// instance of the plugin's memory.
 ///
 /// Returns the job ID, or an error if the host does not run worker jobs for this plugin.
 pub fn submit_worker_job<F>(kind: &str, input: &[u8], on_done: F) -> Result<u32, String>

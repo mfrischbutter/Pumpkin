@@ -7,15 +7,20 @@
 //!
 //! A worker instance shares nothing with the main instance. It has its own linear memory, gets
 //! `init-plugin` but never `on-load`, and every Pumpkin import except logging traps there, so a
-//! job takes and returns plain bytes. Each running job costs one more instance of the plugin: its
-//! linear memory and tables, up to the memory limit of the plugin's main store. The compiled code
-//! is shared with the main instance. At most [`MAX_RUNNING_JOBS`] jobs of one plugin run at a
-//! time; further jobs wait for a free slot. A job cannot be cancelled, and the result of a job
-//! that ends after its plugin unloaded is dropped.
+//! job takes and returns plain bytes. Its only file access is a read-only view of the plugin's
+//! data folder, at the same guest path as on the main instance, and only when the plugin may read
+//! or write that folder; it has no network or environment. Each running job costs one more
+//! instance of the plugin: its linear memory and tables, up to the memory limit of the plugin's
+//! main store. The compiled code is shared with the main instance. At most [`MAX_RUNNING_JOBS`]
+//! jobs of one plugin run at a time; further jobs wait for a free slot. A job cannot be
+//! cancelled, and the result of a job that ends after its plugin unloaded is dropped.
 
-use std::sync::{
-    Arc,
-    atomic::{AtomicU32, Ordering},
+use std::{
+    path::{Path, PathBuf},
+    sync::{
+        Arc,
+        atomic::{AtomicU32, Ordering},
+    },
 };
 
 use tokio::sync::Semaphore;
@@ -23,8 +28,9 @@ use wasmtime::{
     AsContextMut, Store, StoreLimits,
     component::{Component, Func, Instance, InstancePre, Linker},
 };
+use wasmtime_wasi::{FsPerms, WasiCtx, WasiCtxBuilder};
 
-use crate::state::PluginHostState;
+use crate::state::{DATA_FOLDER_GUEST_PATH, PluginHostState};
 
 /// How many worker jobs of one plugin run at the same time.
 pub const MAX_RUNNING_JOBS: usize = 2;
@@ -38,6 +44,28 @@ const HANDLE_JOB_RESULT: &str = "handle-job-result";
 
 /// The output of a worker job, or why it failed.
 pub type JobOutcome = Result<Vec<u8>, String>;
+
+/// What a worker instance takes over from the plugin's main store.
+pub struct WorkerSetup {
+    /// The resource limits of the main store.
+    pub limits: StoreLimits,
+    /// The plugin name its log lines carry.
+    pub name: Option<String>,
+    /// The host path of the plugin's data folder, preopened read-only.
+    pub data_folder: Option<PathBuf>,
+}
+
+impl WorkerSetup {
+    /// Takes the setup of a worker instance from the state of the plugin's main store.
+    #[must_use]
+    pub fn from_main(state: &PluginHostState) -> Self {
+        Self {
+            limits: state.limits.clone(),
+            name: state.name.clone(),
+            data_folder: state.data_folder.clone(),
+        }
+    }
+}
 
 /// Runs worker jobs for one plugin whose component exports the `worker` interface.
 pub struct PluginWorker {
@@ -78,8 +106,8 @@ impl PluginWorker {
 
     /// Starts a job on a worker instance and returns its ID right away.
     ///
-    /// `limits` are the resource limits of the new instance and `name` is the plugin name its
-    /// log lines carry. `deliver` receives the job ID and the outcome once the job has finished.
+    /// `setup` configures the new instance. `deliver` receives the job ID and the outcome once
+    /// the job has finished.
     ///
     /// # Errors
     /// Returns an error if no Tokio runtime is available to run the job on.
@@ -87,8 +115,7 @@ impl PluginWorker {
         &self,
         kind: String,
         input: Vec<u8>,
-        limits: StoreLimits,
-        name: Option<String>,
+        setup: WorkerSetup,
         deliver: F,
     ) -> Result<u32, String>
     where
@@ -103,8 +130,7 @@ impl PluginWorker {
             interface: self.interface,
             kind,
             input,
-            limits,
-            name,
+            setup,
         };
         let job_slots = Arc::clone(&self.job_slots);
         let handle = runtime.clone();
@@ -125,8 +151,7 @@ struct WorkerJob {
     interface: &'static str,
     kind: String,
     input: Vec<u8>,
-    limits: StoreLimits,
-    name: Option<String>,
+    setup: WorkerSetup,
 }
 
 /// Waits for a free job slot of the plugin, then runs the job on the blocking pool.
@@ -159,8 +184,9 @@ async fn run_in_slot(
 /// error `run-job` returned.
 async fn run_job(job: WorkerJob) -> wasmtime::Result<JobOutcome> {
     let mut state = PluginHostState::new();
-    state.limits = job.limits;
-    state.name = job.name;
+    state.wasi_ctx = worker_wasi_ctx(job.setup.data_folder.as_deref())?;
+    state.limits = job.setup.limits;
+    state.name = job.setup.name;
     let mut store = Store::new(job.instance_pre.engine(), state);
     store.limiter(|state| &mut state.limits);
 
@@ -181,6 +207,17 @@ async fn run_job(job: WorkerJob) -> wasmtime::Result<JobOutcome> {
         .call_async(&mut store, (job.kind, job.input))
         .await?;
     Ok(outcome)
+}
+
+/// WASI for a worker instance: standard output, and the plugin's data folder read-only.
+fn worker_wasi_ctx(data_folder: Option<&Path>) -> wasmtime::Result<WasiCtx> {
+    let mut builder = WasiCtxBuilder::new();
+    builder.inherit_stdout();
+    builder.inherit_stderr();
+    if let Some(data_folder) = data_folder {
+        builder.preopened_dir(data_folder, DATA_FOLDER_GUEST_PATH, FsPerms::ReadOnly)?;
+    }
+    Ok(builder.build())
 }
 
 /// Looks up `handle-job-result` of the `interface` export on a plugin's main instance.

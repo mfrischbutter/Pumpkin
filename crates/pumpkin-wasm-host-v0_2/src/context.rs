@@ -15,7 +15,7 @@ use crate::{
     },
 };
 use pumpkin_core::plugin::Context;
-use pumpkin_wasm_host_common::state::PluginHostState;
+use pumpkin_wasm_host_common::state::{DATA_FOLDER_GUEST_PATH, PluginHostState};
 
 fn register_typed_event<E: pumpkin_core::plugin::Payload + ToFromWasmEvent + Clone + 'static>(
     ctx: &Context,
@@ -1721,7 +1721,7 @@ impl pumpkin::plugin::context::HostContext for PluginHostState {
     }
 
     fn get_data_folder(&mut self, _context: Resource<WitContext>) -> wasmtime::Result<String> {
-        Ok("data".to_string())
+        Ok(DATA_FOLDER_GUEST_PATH.to_owned())
     }
 
     fn get_server(&mut self, context: Resource<WitContext>) -> wasmtime::Result<Resource<Server>> {
