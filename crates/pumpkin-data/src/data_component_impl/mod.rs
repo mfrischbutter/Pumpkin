@@ -992,7 +992,10 @@ mod tests {
         let modifiers = AttributeModifiersImpl::read_data(&list).unwrap();
         assert_eq!(modifiers.attribute_modifiers.len(), 1);
         assert_eq!(modifiers.attribute_modifiers[0].amount, 3.0);
-        assert_eq!(modifiers.attribute_modifiers[0].slot, crate::AttributeModifierSlot::Any);
+        assert_eq!(
+            modifiers.attribute_modifiers[0].slot,
+            crate::AttributeModifierSlot::Any
+        );
     }
 
     #[test]
