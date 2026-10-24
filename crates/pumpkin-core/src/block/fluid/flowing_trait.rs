@@ -351,7 +351,10 @@ pub trait FlowingFluid: Send + Sync {
             &Block::LAVA
         };
         let mut event = crate::plugin::api::events::block::block_from_to::BlockFromToEvent::new(
-            *from_pos, *pos, block,
+            world.clone(),
+            *from_pos,
+            *pos,
+            block,
         );
         if let Some(server) = world.server.upgrade() {
             server.plugin_manager.fire_blocking(&server, &mut event);
