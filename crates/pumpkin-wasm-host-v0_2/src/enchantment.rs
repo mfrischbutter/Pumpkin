@@ -4,7 +4,7 @@ use crate::pumpkin::plugin::enchantments::{
     EnchantmentManager as WitEnchantmentManager, HostEnchantmentManager,
     HostEnchantmentManagerWithStore,
 };
-use pumpkin_core::server::enchantment::CustomEnchantmentEntry;
+use pumpkin_core::server::enchantment::{CustomEnchantmentEntry, sync_custom_enchantment};
 use pumpkin_data::enchantment::{AttributeModifierSlot, Enchantment};
 use pumpkin_util::text::TextComponent;
 use pumpkin_wasm_host_common::state::PluginHostState;
@@ -35,7 +35,14 @@ impl HostEnchantmentManagerWithStore<PluginHostState> for HasSelf<PluginHostStat
         };
 
         let server = accessor.server()?;
-        Ok(server.enchantment_manager.register(entry).await)
+        let plugin = accessor.with(|mut host| host.get().name.clone());
+        let result = server.enchantment_manager.register(entry.clone()).await;
+        if result.is_ok()
+            && let Some(plugin) = plugin
+        {
+            sync_custom_enchantment(&server, &plugin, &entry);
+        }
+        Ok(result)
     }
 
     async fn get_enchantment(

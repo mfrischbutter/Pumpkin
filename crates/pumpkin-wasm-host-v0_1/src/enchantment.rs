@@ -2,7 +2,7 @@ use crate::pumpkin::plugin::enchantments::{
     AttributeModifierSlot as WitAttributeModifierSlot, CustomEnchantment as WitCustomEnchantment,
     EnchantmentManager as WitEnchantmentManager, HostEnchantmentManager,
 };
-use pumpkin_core::server::enchantment::CustomEnchantmentEntry;
+use pumpkin_core::server::enchantment::{CustomEnchantmentEntry, sync_custom_enchantment};
 use pumpkin_data::enchantment::{AttributeModifierSlot, Enchantment};
 use pumpkin_util::text::TextComponent;
 use pumpkin_wasm_host_common::state::PluginHostState;
@@ -30,7 +30,13 @@ impl HostEnchantmentManager for PluginHostState {
             .server
             .as_ref()
             .ok_or_else(|| wasmtime::Error::msg("Server not available"))?;
-        Ok(server.enchantment_manager.register(entry).await)
+        let result = server.enchantment_manager.register(entry.clone()).await;
+        if result.is_ok()
+            && let Some(plugin) = &self.name
+        {
+            sync_custom_enchantment(server, plugin, &entry);
+        }
+        Ok(result)
     }
 
     async fn get_enchantment(
