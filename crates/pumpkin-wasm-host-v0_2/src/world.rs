@@ -1193,7 +1193,7 @@ impl pumpkin::plugin::world::HostWorldWithStore<PluginHostState> for HasSelf<Plu
         };
         let pos = pumpkin_util::math::vector3::Vector3::new(pos.0, pos.1, pos.2);
         run_blocking(accessor, move || {
-            world.explode(None, pos, power, interaction)
+            world.explode(None, pos, power, interaction);
         })
         .await
     }
