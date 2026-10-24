@@ -14,6 +14,8 @@ use rustc_hash::FxHashMap;
 pub enum BlockStateHook {
     /// Fire `BlockShapeUpdateEvent` before a shape update changes the state.
     ShapeUpdate = 1 << 0,
+    /// Fire `BlockScheduledTickEvent` before a scheduled tick of the state runs.
+    ScheduledTick = 1 << 1,
 }
 
 /// The states each plugin registered, per hook.
@@ -81,6 +83,28 @@ impl BlockStateHooks {
                 .or_default()
                 .insert(hook, states.into_vec());
         }
+        self.rebuild(&registrations);
+    }
+
+    /// Adds `states` to the states `plugin` registered for `hook`.
+    pub fn add(
+        &self,
+        plugin: &str,
+        hook: BlockStateHook,
+        states: impl IntoIterator<Item = BlockStateId>,
+    ) {
+        let mut registrations = self
+            .registrations
+            .lock()
+            .unwrap_or_else(std::sync::PoisonError::into_inner);
+        let registered = registrations
+            .entry(plugin.to_string())
+            .or_default()
+            .entry(hook)
+            .or_default();
+        registered.extend(states);
+        registered.sort_unstable();
+        registered.dedup();
         self.rebuild(&registrations);
     }
 

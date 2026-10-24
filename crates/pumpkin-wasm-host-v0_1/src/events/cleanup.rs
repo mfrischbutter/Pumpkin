@@ -825,5 +825,8 @@ pub fn cleanup_event(event: &Event, state: &mut PluginHostState) {
         Event::BlockShapeUpdateEvent(data) => {
             cleanup_world(state, &data.target_world);
         }
+        Event::BlockScheduledTickEvent(data) => {
+            cleanup_world(state, &data.target_world);
+        }
     }
 }

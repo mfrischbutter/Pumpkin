@@ -53,7 +53,10 @@ use crate::{
     error::PumpkinError,
     net::{ClientPlatform, bedrock::BedrockClient, java::JavaClient},
     plugin::{
-        block::{block_break::BlockBreakEvent, block_shape_update::BlockShapeUpdateEvent},
+        block::{
+            block_break::BlockBreakEvent, block_scheduled_tick::BlockScheduledTickEvent,
+            block_shape_update::BlockShapeUpdateEvent,
+        },
         block_hooks::BlockStateHook,
         player::{
             player_change_world::PlayerChangeWorldEvent, player_join::PlayerJoinEvent,
@@ -2333,7 +2336,10 @@ impl World {
                 let world = world.clone();
                 for scheduled_tick in batch {
                     let pos = scheduled_tick.position;
-                    let block = world.get_block(&pos);
+                    let (block, state_id) = world.get_block_and_state_id(&pos);
+                    if world.fire_block_scheduled_tick(&pos, state_id) {
+                        continue;
+                    }
                     if let Some(pumpkin_block) = world.block_registry.get_pumpkin_block(block.id) {
                         pumpkin_block.on_scheduled_tick(OnScheduledTickArgs {
                             world: &world,
@@ -6769,6 +6775,27 @@ impl World {
         );
         server.plugin_manager.fire_blocking(&server, &mut event);
         (!event.cancelled && event.new_state_id != old_state_id).then_some(event.new_state_id)
+    }
+
+    /// Fires `BlockScheduledTickEvent` for a hooked state. Returns whether a plugin cancelled
+    /// the tick.
+    fn fire_block_scheduled_tick(self: &Arc<Self>, pos: &BlockPos, state_id: BlockStateId) -> bool {
+        if !self
+            .block_registry
+            .plugin_hooks
+            .contains(BlockStateHook::ScheduledTick, state_id)
+        {
+            return false;
+        }
+        let Some(server) = self.server.upgrade() else {
+            return false;
+        };
+        if !server.plugin_manager.has_handlers::<BlockScheduledTickEvent>() {
+            return false;
+        }
+        let mut event = BlockScheduledTickEvent::new(self.clone(), *pos, state_id);
+        server.plugin_manager.fire_blocking(&server, &mut event);
+        event.cancelled
     }
 
     /// Returns whether monsters can be spawned in the world

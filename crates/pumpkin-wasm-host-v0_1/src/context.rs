@@ -1285,6 +1285,11 @@ fn register_block_event(
                 pumpkin_core::plugin::api::events::block::block_shape_update::BlockShapeUpdateEvent,
             >(resource, handler, priority, blocking);
         }
+        EventType::BlockScheduledTickEvent => {
+            register_typed_event::<
+                pumpkin_core::plugin::api::events::block::block_scheduled_tick::BlockScheduledTickEvent,
+            >(resource, handler, priority, blocking);
+        }
 
         _ => {
             tracing::error!("non-block event should not be routed to register_block_event");
@@ -1628,7 +1633,8 @@ impl pumpkin::plugin::context::HostContext for PluginHostState {
             | EventType::MoistureChangeEvent
             | EventType::SculkBloomEvent
             | EventType::VaultDisplayItemEvent
-            | EventType::BlockShapeUpdateEvent) => {
+            | EventType::BlockShapeUpdateEvent
+            | EventType::BlockScheduledTickEvent) => {
                 register_block_event(ctx, &handler, priority, blocking, event_type);
             }
             event_type @ (EventType::InventoryOpenEvent
@@ -1792,6 +1798,18 @@ impl pumpkin::plugin::context::HostContext for PluginHostState {
         let states = block_states_from_wasm(&states);
         self.get(&context)?.watch_block_states(states);
         Ok(())
+    }
+
+    fn register_scheduled_tick_hook(
+        &mut self,
+        context: Resource<WitContext>,
+        block: String,
+    ) -> wasmtime::Result<bool> {
+        let Some(block) = pumpkin_data::Block::from_name(&block) else {
+            return Ok(false);
+        };
+        self.get(&context)?.register_scheduled_tick_hook(block);
+        Ok(true)
     }
 
     fn drop(&mut self, rep: Resource<WitContext>) -> wasmtime::Result<()> {

@@ -69,6 +69,12 @@ interface context {
         /// Replaces the states this plugin watched before; an empty list stops watching.
         /// Ids that are not block states are ignored.
         watch-block-states: func(states: list<u16>);
+
+        /// Fires `block-scheduled-tick-event` before each scheduled tick of `block`
+        /// (a namespaced block name such as "minecraft:fire") runs.
+        ///
+        /// Returns false if the block is unknown.
+        register-scheduled-tick-hook: func(block: string) -> bool;
     }
 }
 
