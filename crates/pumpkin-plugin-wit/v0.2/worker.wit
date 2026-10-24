@@ -23,5 +23,5 @@ interface worker {
     ///
     /// * `job-id`: The ID `scheduler.submit-worker-job` returned.
     /// * `result`: The output of `run-job`, or why the job failed, including a trap.
-    handle-job-result: func(job-id: u32, server: server, result: result<list<u8>, string>);
+    handle-job-result: func(job-id: u32, server: server, %result: result<list<u8>, string>);
 }
