@@ -8,6 +8,7 @@ use pumpkin_protocol::java::client::play::ParticleOptions;
 use pumpkin_util::math::position::BlockPos;
 use pumpkin_world::chunk::ChunkHeightmapType;
 use pumpkin_world::chunk::io::Dirtiable;
+use pumpkin_world::tick::TickPriority;
 use pumpkin_world::world::BlockFlags;
 use std::sync::{Arc, Mutex as StdMutex};
 use wasmtime::component::{Accessor, HasSelf, Resource};
@@ -908,6 +909,24 @@ impl pumpkin::plugin::world::HostWorld for PluginHostState {
 
     fn get_logical_height(&mut self, world: Resource<World>) -> wasmtime::Result<i32> {
         Ok(self.get(&world)?.dimension.logical_height)
+    }
+
+    fn schedule_block_tick(
+        &mut self,
+        world: Resource<World>,
+        pos: WitBlockPos,
+        block: String,
+        delay: u32,
+    ) -> wasmtime::Result<bool> {
+        let Some(block) = pumpkin_data::Block::from_name(&block) else {
+            return Ok(false);
+        };
+        // The tick scheduler keeps at most 255 ticks of delay.
+        let delay = u8::try_from(delay).unwrap_or(u8::MAX);
+        let pos = BlockPos::new(pos.x, pos.y, pos.z);
+        self.get(&world)?
+            .schedule_block_tick(block, pos, delay, TickPriority::Normal);
+        Ok(true)
     }
 
     fn get_sky_light(&mut self, world: Resource<World>, pos: WitBlockPos) -> wasmtime::Result<u8> {
