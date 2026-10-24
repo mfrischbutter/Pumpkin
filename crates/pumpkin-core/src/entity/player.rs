@@ -452,6 +452,8 @@ pub struct Player {
     pub sleeping_bed_pos: AtomicCell<Option<BlockPos>>,
     /// Manages the player's breath level
     pub breath_manager: BreathManager,
+    /// Stacks a plugin kept in a death without keepInventory, put back on respawn.
+    pub kept_on_death: std::sync::Mutex<Vec<ItemStack>>,
     /// Manages the player's hunger level.
     pub hunger_manager: HungerManager,
     /// The ID of the currently open container (if any).
@@ -767,6 +769,7 @@ impl Player {
             client,
             awaiting_teleports: Mutex::new(VecDeque::new()),
             breath_manager: BreathManager::default(),
+            kept_on_death: std::sync::Mutex::new(Vec::new()),
             // TODO: Load this from previous instance
             hunger_manager: HungerManager::default(),
             current_block_destroy_stage: AtomicI32::new(-1),
@@ -5128,7 +5131,7 @@ impl Player {
     }
 
     /// Drops `drops` at the death position. Unless `keep_inventory` is set, the main inventory
-    /// is cleared first and `items_to_keep` are put back into it.
+    /// is cleared first and `items_to_keep` are put back into it on respawn.
     pub fn handle_killed(
         &self,
         death_msg: &TextComponent,
@@ -5162,10 +5165,11 @@ impl Player {
             self.world().drop_stack(&block_pos, stack);
         }
         if !keep_inventory {
-            for mut stack in items_to_keep {
-                self.inventory().insert_stack_anywhere(&mut stack);
-                self.world().drop_stack(&block_pos, stack);
-            }
+            // The respawn clears the inventory again, so the kept stacks go back after that.
+            *self
+                .kept_on_death
+                .lock()
+                .unwrap_or_else(std::sync::PoisonError::into_inner) = items_to_keep;
         }
 
         // Reset air supply & drowning ticks on death
