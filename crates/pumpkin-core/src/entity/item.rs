@@ -745,9 +745,11 @@ impl EntityBase for ItemEntity {
             .unwrap_or_else(std::sync::PoisonError::into_inner)
             .clone();
         if (player.is_creative() || player.inventory.can_insert_stack_anywhere(&offered))
-            && !player
-                .living_entity
-                .fire_pickup_event(&self.entity, Some(&offered), offered.item_count.into())
+            && !player.living_entity.fire_pickup_event(
+                &self.entity,
+                Some(&offered),
+                offered.item_count.into(),
+            )
         {
             return;
         }
