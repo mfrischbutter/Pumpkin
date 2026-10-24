@@ -132,6 +132,9 @@ pub mod noise_parameter;
 #[path = "generated/biome.rs"]
 pub mod biome;
 
+#[cfg(feature = "biome")]
+pub mod biome_registry;
+
 #[cfg(feature = "chunk_status")]
 #[rustfmt::skip]
 #[path = "generated/chunk_status.rs"]

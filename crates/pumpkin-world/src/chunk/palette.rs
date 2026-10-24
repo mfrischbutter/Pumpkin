@@ -1210,7 +1210,7 @@ pub type BiomePalette = PalettedContainer<u8, 4>;
 const BIOME_DISK_MIN_BITS: u8 = 0;
 const BIOME_NETWORK_MIN_MAP_BITS: u8 = 1;
 const BIOME_NETWORK_MAX_MAP_BITS: u8 = 3;
-pub(crate) const BIOME_NETWORK_MAX_BITS: u8 = 7;
+pub const BIOME_NETWORK_MAX_BITS: u8 = 7;
 
 #[cfg(test)]
 mod tests {
