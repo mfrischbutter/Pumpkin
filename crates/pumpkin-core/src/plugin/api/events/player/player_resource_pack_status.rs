@@ -4,6 +4,8 @@ use pumpkin_macros::{Event, cancellable};
 use std::sync::Arc;
 
 /// An event that occurs when a player responds to a resource pack request.
+///
+/// Responses from the configuration phase are fired once the player has joined.
 #[cancellable]
 #[derive(Event, Clone)]
 pub struct PlayerResourcePackStatusEvent {

@@ -3,6 +3,8 @@ use crate::wit::pumpkin::plugin::event::{Event, EventType, PlayerResourcePackSta
 use super::super::FromIntoEvent;
 
 /// An event that occurs when a player responds to a resource pack request.
+///
+/// Responses from the configuration phase are fired once the player has joined.
 pub struct PlayerResourcePackStatusEvent;
 impl FromIntoEvent for PlayerResourcePackStatusEvent {
     const EVENT_TYPE: EventType = EventType::PlayerResourcePackStatusEvent;

@@ -9,6 +9,7 @@ use pumpkin_util::version::JavaMinecraftVersion;
 
 use crate::VarInt;
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ResourcePackResponseResult {
     DownloadSuccess,
     DownloadFail,
