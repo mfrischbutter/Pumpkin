@@ -993,6 +993,8 @@ interface player {
 
         /// Opens a GUI for the player.
         open-gui: async func (gui-ref: gui);
+        /// Returns the plugin GUI the player currently has open, if any.
+        get-open-gui: func () -> option<gui>;
         /// Closes the window the player has open and fires the inventory close event.
         close-window: async func ();
 
