@@ -30,7 +30,7 @@ pub fn serialize_java_packet(
                 mode: data.mode,
                 display_name: TextComponent::text(data.display_name.clone()),
                 render_type: VarInt(data.render_type),
-                number_format: fixed_number_format(data.number_format.as_deref()),
+                number_format: data.number_format.as_deref().map(fixed_number_format),
             },
             version,
         ),
@@ -40,7 +40,7 @@ pub fn serialize_java_packet(
                 data.objective_name.clone(),
                 VarInt(data.value),
                 data.display_name.clone().map(TextComponent::text),
-                fixed_number_format(data.number_format.as_deref()),
+                data.number_format.as_deref().map(fixed_number_format),
             ),
             version,
         ),
@@ -70,8 +70,8 @@ pub fn warn_unsupported(packet: &ClientboundPacket) {
     }
 }
 
-fn fixed_number_format(text: Option<&str>) -> Option<NumberFormat> {
-    text.map(|text| NumberFormat::Fixed(TextComponent::text(text.to_owned())))
+fn fixed_number_format(text: &str) -> NumberFormat {
+    NumberFormat::Fixed(TextComponent::text(text.to_owned()))
 }
 
 fn write<P: ClientPacket>(packet: &P, version: JavaMinecraftVersion) -> Option<Bytes> {
