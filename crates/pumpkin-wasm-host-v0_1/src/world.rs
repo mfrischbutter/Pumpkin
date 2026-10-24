@@ -1426,6 +1426,51 @@ impl pumpkin::plugin::world::HostChunk for PluginHostState {
         Ok(Some(states))
     }
 
+    fn get_section_palette(
+        &mut self,
+        chunk: Resource<WitChunk>,
+        section_y: i32,
+    ) -> wasmtime::Result<Option<Vec<u16>>> {
+        let chunk_res = self.get(&chunk)?;
+        let (_, chunk_data) = &chunk_res;
+        let Some(chunk_data) = chunk_data.upgrade() else {
+            return Err(wasmtime::Error::msg("Chunk unloaded"));
+        };
+        Ok(chunk_data
+            .section
+            .section_block_states(section_y)
+            .map(|states| states.into_iter().map(BlockStateId::as_u16).collect()))
+    }
+
+    fn find_states(
+        &mut self,
+        chunk: Resource<WitChunk>,
+        states: Vec<u16>,
+    ) -> wasmtime::Result<Vec<WitBlockPos>> {
+        let chunk_res = self.get(&chunk)?;
+        let (_, chunk_data) = &chunk_res;
+        let Some(chunk_data) = chunk_data.upgrade() else {
+            return Err(wasmtime::Error::msg("Chunk unloaded"));
+        };
+        let mut wanted: Vec<BlockStateId> =
+            states.into_iter().filter_map(BlockStateId::new).collect();
+        if wanted.is_empty() {
+            return Ok(Vec::new());
+        }
+        wanted.sort_unstable();
+        wanted.dedup();
+        Ok(chunk_data
+            .section
+            .find_blocks_matching(|state| wanted.binary_search(&state).is_ok())
+            .into_iter()
+            .map(|(x, y, z)| WitBlockPos {
+                x: x as i32,
+                y,
+                z: z as i32,
+            })
+            .collect())
+    }
+
     fn get_block_state(
         &mut self,
         chunk: Resource<WitChunk>,
