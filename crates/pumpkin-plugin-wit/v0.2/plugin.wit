@@ -139,3 +139,12 @@ world plugin {
     /// Dispatches gametest callbacks to the plugin.
     export gametest-callbacks;
 }
+
+/// A plugin that also exports `worker`, so it can run jobs in worker instances of itself.
+///
+/// The host binds the `plugin` world and looks the `worker` export up by name, so plugins built
+/// for either world load.
+world plugin-with-worker {
+    include plugin;
+    export worker;
+}

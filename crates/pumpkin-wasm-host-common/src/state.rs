@@ -134,6 +134,8 @@ pub struct PluginHostState {
     pub permissions: Vec<String>,
     pub name: Option<String>,
     pub marketplace_metadata: Option<crate::signature::PumpkinMetadata>,
+    /// The plugin's `worker.handle-job-result` export, when it exports the `worker` interface.
+    pub worker_job_result_handler: Option<wasmtime::component::Func>,
 }
 
 impl Default for PluginHostState {
@@ -160,6 +162,7 @@ impl PluginHostState {
             permissions: Vec::new(),
             name: None,
             marketplace_metadata: None,
+            worker_job_result_handler: None,
         }
     }
 

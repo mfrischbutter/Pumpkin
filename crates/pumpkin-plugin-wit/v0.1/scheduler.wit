@@ -21,4 +21,18 @@ interface scheduler {
     ///
     /// * `task-id`: The ID of the task to cancel.
     cancel-task: func(task-id: u32);
+
+    /// Runs a job in a worker instance of this plugin, outside its main instance.
+    ///
+    /// A worker instance is a second instance of the plugin's component. It shares no memory with
+    /// this instance, and every Pumpkin import except `logging` traps there, so a job only works
+    /// on the bytes it is given. The host runs the plugin's `worker.run-job` export off the server
+    /// threads and hands the outcome to `worker.handle-job-result` of this instance.
+    ///
+    /// * `kind`: Which job to run, passed on to `worker.run-job`.
+    /// * `input`: The job's input, passed on to `worker.run-job`.
+    ///
+    /// Returns the job ID that `worker.handle-job-result` reports the outcome with, or an error
+    /// if the plugin does not export the `worker` interface.
+    submit-worker-job: func(kind: string, input: list<u8>) -> result<u32, string>;
 }
