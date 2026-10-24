@@ -58,6 +58,11 @@ pub trait ToFromWasmEvent {
     {
         *self = Self::from_wasm_event(event, state);
     }
+
+    /// Whether `plugin` gets this event. `false` skips its handler without entering the guest.
+    fn wanted_by(&self, _plugin: &WasmPlugin) -> bool {
+        true
+    }
 }
 
 pub(super) const fn to_wasm_position(position: Vector3<f64>) -> pumpkin::plugin::common::Position {
@@ -339,6 +344,9 @@ impl WasmPluginEventHandler {
 impl<E: Payload + ToFromWasmEvent + Clone + 'static> EventHandler<E> for WasmPluginEventHandler {
     fn handle<'a>(&'a self, server: &'a Arc<Server>, event: &'a E) -> BoxFuture<'a, ()> {
         Box::pin(async {
+            if !event.wanted_by(&self.plugin) {
+                return;
+            }
             let pending = Box::new(NotifiedEvent(event.clone()));
             if let Err(error) = self.dispatch(server.clone(), pending).await {
                 tracing::error!(handler_id = self.handler_id, %error, "Wasm event handler failed");
@@ -352,6 +360,9 @@ impl<E: Payload + ToFromWasmEvent + Clone + 'static> EventHandler<E> for WasmPlu
         event: &'a mut E,
     ) -> BoxFuture<'a, ()> {
         Box::pin(async {
+            if !event.wanted_by(&self.plugin) {
+                return;
+            }
             let pending = Box::new(BlockingEvent(event.clone()));
             match self.dispatch(server.clone(), pending).await {
                 Ok(updated_event) => {
