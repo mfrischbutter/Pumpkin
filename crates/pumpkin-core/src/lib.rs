@@ -597,6 +597,7 @@ impl PumpkinServer {
                                      java_client.start_outgoing_packet_task();
                                      let client_platform = Arc::new(ClientPlatform::Java(java_client));
                                      let mut config = config;
+                                     let mut rejoin = false;
 
                                      // A reconfiguration takes the player out and creates it again
                                      // from its saved data, like vanilla `placeNewPlayer`.
@@ -608,7 +609,7 @@ impl PumpkinServer {
                                          client.set_player(player.clone());
                                      }
                                      world
-                                         .spawn_java_player(&server_clone.basic_config, &player, &server_clone)
+                                         .spawn_java_player(&server_clone.basic_config, &player, &server_clone, rejoin)
                                          .await;
 
                                      let reconfigure = match player.client.as_ref() {
@@ -644,6 +645,7 @@ impl PumpkinServer {
                                          break;
                                      }
                                      config = (**player.config.load()).clone();
+                                     rejoin = true;
                                     }
                                      if let Some(client) = client_platform.java() {
                                          client.close();
