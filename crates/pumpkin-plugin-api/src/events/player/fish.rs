@@ -5,8 +5,9 @@ use super::super::FromIntoEvent;
 /// An event that occurs during a fishing action.
 ///
 /// The associated [`PlayerFishEventData`] contains the player, the fishing state,
-/// the hand used, the hook entity, optionally the caught entity, and the experience
-/// to drop. This event is cancellable.
+/// the hand used, the hook entity, optionally the caught entity, the experience
+/// to drop and, for `caught-fish`, the caught items. The caught items and the
+/// experience can be changed. This event is cancellable.
 pub struct PlayerFishEvent;
 impl FromIntoEvent for PlayerFishEvent {
     const EVENT_TYPE: EventType = EventType::PlayerFishEvent;

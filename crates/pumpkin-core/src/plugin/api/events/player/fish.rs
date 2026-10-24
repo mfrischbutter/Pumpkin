@@ -1,3 +1,4 @@
+use pumpkin_data::item_stack::ItemStack;
 use pumpkin_macros::{Event, cancellable};
 use pumpkin_util::Hand;
 use std::sync::Arc;
@@ -55,6 +56,9 @@ pub struct PlayerFishEvent {
 
     /// Experience to drop.
     pub exp_to_drop: i32,
+
+    /// The items the hook caught. Only filled for [`PlayerFishState::CaughtFish`].
+    pub caught_items: Vec<ItemStack>,
 }
 
 impl PlayerFishEvent {
@@ -76,8 +80,16 @@ impl PlayerFishEvent {
             state,
             hand,
             exp_to_drop,
+            caught_items: Vec::new(),
             cancelled: false,
         }
+    }
+
+    /// Sets the caught items.
+    #[must_use]
+    pub fn with_caught_items(mut self, caught_items: Vec<ItemStack>) -> Self {
+        self.caught_items = caught_items;
+        self
     }
 }
 
