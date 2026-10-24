@@ -65,6 +65,7 @@ impl ClientPacket for CChunksBiomes<'_> {
                 chunk.section.biome_sections.read().map_err(|_| {
                     WritingError::Message("biome_sections read lock poisoned".into())
                 })?;
+            let biome_sections = chunk.section.client_biomes.apply(&biome_sections);
             let mut data = Vec::new();
             for biomes in biome_sections.iter() {
                 v1_18::write_biomes(&mut data, biomes, version)?;
