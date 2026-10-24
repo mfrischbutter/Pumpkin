@@ -967,6 +967,8 @@ impl EntityBase for ArrowEntity {
                             crate::item::potion::PotionContents::read_potion_effects(&item_stack),
                             scale,
                             crate::item::potion::PotionApplicationSource::Arrow,
+                            None,
+                            None,
                         );
 
                         if is_spectral {
