@@ -132,11 +132,17 @@ impl PotionContents {
     }
 
     /// Apply instant or duration effects to a target living entity.
+    ///
+    /// `direct` is the entity that applied the effects (a thrown potion) and `owner` the one
+    /// that threw it; like vanilla `applyInstantaneousEffect`, they make instant damage
+    /// indirect magic attributed to them.
     pub fn apply_effects_to(
         target: &LivingEntity,
         effects: Vec<(&'static StatusEffect, i32, u8, bool, bool, bool)>,
         scale: f32,
         source: PotionApplicationSource,
+        direct: Option<&dyn EntityBase>,
+        owner: Option<&dyn EntityBase>,
     ) {
         for (effect_type, duration, amplifier, ambient, show_particles, show_icon) in effects {
             // Instant effects should apply immediately
@@ -155,10 +161,18 @@ impl PotionContents {
                 } else if effect_type.id == pumpkin_data::effect::StatusEffect::INSTANT_DAMAGE.id {
                     let amount = 6.0 * (1 << amplifier) as f32 * instant_scale;
 
-                    let _ = target.damage(
+                    let damage_type = if direct.is_some() {
+                        pumpkin_data::damage::DamageType::INDIRECT_MAGIC
+                    } else {
+                        pumpkin_data::damage::DamageType::MAGIC
+                    };
+                    let _ = target.damage_with_context(
                         target.get_entity(),
                         amount,
-                        pumpkin_data::damage::DamageType::MAGIC,
+                        damage_type,
+                        None,
+                        direct,
+                        owner,
                     );
                 }
 
