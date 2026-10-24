@@ -1,6 +1,7 @@
 pub use crate::wit::pumpkin::plugin::display::{
     BillboardMode, BlockDisplayEntity, DisplayEntity, DisplayTransformation, InteractionEntity,
-    ItemDisplayEntity, ItemDisplayMode, Quaternionf, TextAlignment, TextDisplayEntity, Vector3f,
+    ItemDisplayEntity, ItemDisplayMode, ItemEntity, Quaternionf, TextAlignment, TextDisplayEntity,
+    Vector3f,
 };
 use crate::wit::pumpkin::plugin::item_stack::ItemStack;
 use crate::wit::pumpkin::plugin::text::TextComponent;
@@ -114,6 +115,8 @@ pub trait EntityDisplayExt {
     fn as_text_display(&self) -> Option<TextDisplayEntity>;
     /// Attempts to view this entity as an [`InteractionEntity`].
     fn as_interaction(&self) -> Option<InteractionEntity>;
+    /// Attempts to view this entity as a dropped [`ItemEntity`].
+    fn as_item_entity(&self) -> Option<ItemEntity>;
 }
 
 impl EntityDisplayExt for Entity {
@@ -135,6 +138,10 @@ impl EntityDisplayExt for Entity {
 
     fn as_interaction(&self) -> Option<InteractionEntity> {
         InteractionEntity::from_entity(self)
+    }
+
+    fn as_item_entity(&self) -> Option<ItemEntity> {
+        ItemEntity::from_entity(self)
     }
 }
 

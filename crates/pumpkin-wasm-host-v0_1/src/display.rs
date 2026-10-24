@@ -8,8 +8,9 @@ use crate::{
         display::{
             BillboardMode, BlockDisplayEntity, DisplayEntity, DisplayTransformation, Host,
             HostBlockDisplayEntity, HostDisplayEntity, HostInteractionEntity,
-            HostItemDisplayEntity, HostTextDisplayEntity, InteractionEntity, ItemDisplayEntity,
-            ItemDisplayMode, Quaternionf, TextAlignment, TextDisplayEntity, Vector3f,
+            HostItemDisplayEntity, HostItemEntity, HostTextDisplayEntity, InteractionEntity,
+            ItemDisplayEntity, ItemDisplayMode, ItemEntity, Quaternionf, TextAlignment,
+            TextDisplayEntity, Vector3f,
         },
         item_stack::ItemStack as WitHostItemStack,
         text::TextComponent,
@@ -22,6 +23,7 @@ use pumpkin_core::entity::decoration::display::{
     BlockDisplayEntity as InternalBlockDisplayEntity, DisplayEntity as InternalDisplayEntity,
     ItemDisplayEntity as InternalItemDisplayEntity, TextDisplayEntity as InternalTextDisplayEntity,
 };
+use pumpkin_core::entity::item::ItemEntity as InternalItemEntity;
 use pumpkin_wasm_host_common::state::PluginHostState;
 
 impl Host for PluginHostState {}
@@ -810,6 +812,111 @@ impl HostInteractionEntity for PluginHostState {
     }
 
     fn drop(&mut self, rep: Resource<InteractionEntity>) -> wasmtime::Result<()> {
+        self.drop(rep)
+    }
+}
+
+impl HostItemEntity for PluginHostState {
+    fn from_entity(
+        &mut self,
+        entity: /* borrow */ Resource<Entity>,
+    ) -> wasmtime::Result<Option<Resource<ItemEntity>>> {
+        if let Ok(entity) = Arc::downcast::<InternalItemEntity>(self.get(&entity)?.clone()) {
+            Ok(Some(self.add(entity)?))
+        } else {
+            Ok(None)
+        }
+    }
+
+    fn get_entity(
+        &mut self,
+        item_entity: Resource<ItemEntity>,
+    ) -> wasmtime::Result<Resource<Entity>> {
+        self.add(self.get(&item_entity)?.clone() as _)
+    }
+
+    fn get_item(
+        &mut self,
+        item_entity: Resource<ItemEntity>,
+    ) -> wasmtime::Result<Option<Resource<WitHostItemStack>>> {
+        let item = self
+            .get(&item_entity)?
+            .get_item_stack()
+            .lock()
+            .unwrap_or_else(std::sync::PoisonError::into_inner)
+            .clone();
+        if item.is_empty() {
+            Ok(None)
+        } else {
+            Ok(Some(self.add(Arc::new(tokio::sync::Mutex::new(item)))?))
+        }
+    }
+
+    async fn set_item(
+        &mut self,
+        item_entity: Resource<ItemEntity>,
+        item: Resource<WitHostItemStack>,
+    ) -> wasmtime::Result<()> {
+        let stack = self.take(item)?.lock().await.clone();
+        self.get(&item_entity)?.set_item_stack(stack);
+        Ok(())
+    }
+
+    fn get_pickup_delay(&mut self, item_entity: Resource<ItemEntity>) -> wasmtime::Result<u8> {
+        Ok(self.get(&item_entity)?.get_pickup_delay())
+    }
+
+    fn set_pickup_delay(
+        &mut self,
+        item_entity: Resource<ItemEntity>,
+        ticks: u8,
+    ) -> wasmtime::Result<()> {
+        self.get(&item_entity)?.set_pickup_delay(ticks);
+        Ok(())
+    }
+
+    fn get_never_pickup(&mut self, item_entity: Resource<ItemEntity>) -> wasmtime::Result<bool> {
+        Ok(self.get(&item_entity)?.is_never_pickup())
+    }
+
+    fn set_never_pickup(
+        &mut self,
+        item_entity: Resource<ItemEntity>,
+        never_pickup: bool,
+    ) -> wasmtime::Result<()> {
+        self.get(&item_entity)?.set_never_pickup(never_pickup);
+        Ok(())
+    }
+
+    fn get_never_despawn(&mut self, item_entity: Resource<ItemEntity>) -> wasmtime::Result<bool> {
+        Ok(self.get(&item_entity)?.is_never_despawn())
+    }
+
+    fn set_never_despawn(
+        &mut self,
+        item_entity: Resource<ItemEntity>,
+        never_despawn: bool,
+    ) -> wasmtime::Result<()> {
+        self.get(&item_entity)?.set_never_despawn(never_despawn);
+        Ok(())
+    }
+
+    fn get_thrower(&mut self, item_entity: Resource<ItemEntity>) -> wasmtime::Result<Option<Uuid>> {
+        let thrower = self.get(&item_entity)?.get_thrower();
+        Ok(thrower.map(|thrower| Uuid::to_wit(&thrower)))
+    }
+
+    fn set_thrower(
+        &mut self,
+        item_entity: Resource<ItemEntity>,
+        thrower: Uuid,
+    ) -> wasmtime::Result<()> {
+        let thrower = Uuid::from_wit(&thrower);
+        self.get(&item_entity)?.set_thrower(thrower);
+        Ok(())
+    }
+
+    fn drop(&mut self, rep: Resource<ItemEntity>) -> wasmtime::Result<()> {
         self.drop(rep)
     }
 }

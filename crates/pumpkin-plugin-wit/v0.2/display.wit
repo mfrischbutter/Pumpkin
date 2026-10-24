@@ -168,4 +168,31 @@ interface display {
         get-last-attacker: func() -> option<uuid>;
         get-last-interaction: func() -> option<uuid>;
     }
+
+    /// Resource specifically for dropped item entities.
+    resource item-entity {
+        from-entity: static func(entity: borrow<entity>) -> option<item-entity>;
+        get-entity: func() -> entity;
+
+        /// Returns the dropped stack, or none once it has been picked up.
+        get-item: func() -> option<item-stack>;
+        /// Replaces the dropped stack. An empty stack removes the entity on its next tick.
+        set-item: async func(item: item-stack);
+
+        /// Ticks left until the item can be picked up.
+        get-pickup-delay: func() -> u8;
+        set-pickup-delay: func(ticks: u8);
+
+        /// Whether nothing can pick the item up, regardless of the pickup delay.
+        get-never-pickup: func() -> bool;
+        set-never-pickup: func(never-pickup: bool);
+
+        /// Whether the item never despawns.
+        get-never-despawn: func() -> bool;
+        set-never-despawn: func(never-despawn: bool);
+
+        /// The entity that dropped or threw the item.
+        get-thrower: func() -> option<uuid>;
+        set-thrower: func(thrower: uuid);
+    }
 }
