@@ -581,10 +581,7 @@ impl Level {
                             let block_state_id = sections[i].get(x_offset, y_in_section, z_offset);
                             let tick_block = has_random_ticks(block_state_id);
                             let tick_fluid = has_random_ticking_fluid(block_state_id);
-                            if tick_block
-                                || tick_fluid
-                                || has_plugin_random_ticks(block_state_id)
-                            {
+                            if tick_block || tick_fluid || has_plugin_random_ticks(block_state_id) {
                                 ticks.random_ticks.push(RandomTickSample {
                                     position: BlockPos::new(
                                         chunk_x_base + x_offset as i32,
