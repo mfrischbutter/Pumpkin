@@ -56,6 +56,13 @@ interface context {
 
         /// Returns verified marketplace metadata if this plugin binary is signed, or none if unsigned.
         get-marketplace-metadata: func() -> option<marketplace-metadata>;
+
+        /// Fires `block-shape-update-event` for shape updates that would change one of
+        /// `states` (block state ids).
+        ///
+        /// Replaces the states this plugin watched before; an empty list stops watching.
+        /// Ids that are not block states are ignored.
+        watch-block-states: func(states: list<u16>);
     }
 }
 

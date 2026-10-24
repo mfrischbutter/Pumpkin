@@ -6,7 +6,7 @@ interface event {
     use screens.{screen};
     use player.{player};
     use text.{text-component};
-    use %world.{%world};
+    use %world.{%world, block-direction};
     use java-packets.{serverbound-packet as java-serverbound-packet, clientbound-packet as java-clientbound-packet};
     use bedrock-packets.{serverbound-packet as bedrock-serverbound-packet, clientbound-packet as bedrock-clientbound-packet};
     use uuid.{uuid};
@@ -1884,6 +1884,21 @@ interface event {
         cancelled: bool
     }
 
+    /// Fired before a shape update changes a block state the plugin watches
+    /// (see `context.watch-block-states`).
+    ///
+    /// Cancelling keeps `old-state-id`; changing `new-state-id` sets that state instead.
+    record block-shape-update-event-data {
+        target-world: %world,
+        block-pos: block-pos,
+        old-state-id: u16,
+        new-state-id: u16,
+        /// The direction from `block-pos` to `neighbor-pos`.
+        direction: block-direction,
+        neighbor-pos: block-pos,
+        cancelled: bool
+    }
+
     enum event-type {
         player-join-event,
         player-leave-event,
@@ -2158,6 +2173,7 @@ interface event {
         raid-stop-event,
         raid-trigger-event,
         lightning-strike-event,
+        block-shape-update-event,
     }
 
     variant event {
@@ -2434,5 +2450,6 @@ interface event {
         raid-stop-event(raid-stop-event-data),
         raid-trigger-event(raid-trigger-event-data),
         lightning-strike-event(lightning-strike-event-data),
+        block-shape-update-event(block-shape-update-event-data),
     }
 }
