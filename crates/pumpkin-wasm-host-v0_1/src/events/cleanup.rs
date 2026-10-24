@@ -414,6 +414,15 @@ pub fn cleanup_event(event: &Event, state: &mut PluginHostState) {
         Event::InventoryPickupItemEvent(_) => {}
         Event::PrepareAnvilEvent(data) => {
             cleanup_player(state, &data.player);
+            if let Some(res) = &data.left {
+                cleanup_item_stack(state, res);
+            }
+            if let Some(res) = &data.right {
+                cleanup_item_stack(state, res);
+            }
+            if let Some(res) = &data.result {
+                cleanup_item_stack(state, res);
+            }
         }
         Event::PrepareGrindstoneEvent(data) => {
             cleanup_player(state, &data.player);

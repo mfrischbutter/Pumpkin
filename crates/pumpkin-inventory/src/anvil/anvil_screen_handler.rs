@@ -220,7 +220,7 @@ impl AnvilScreenHandler {
         handler
     }
 
-    pub fn set_item_name(&mut self, name: &str, has_infinite_materials: bool) -> bool {
+    pub fn set_item_name(&mut self, name: &str, player: &dyn InventoryPlayer) -> bool {
         let validated_name = validate_name(name);
         if let Some(validated_name) = validated_name
             && self.item_name.as_deref() != Some(&validated_name)
@@ -236,18 +236,18 @@ impl AnvilScreenHandler {
                 }
                 self.inventory.set_stack(2, updated_stack);
             }
-            self.create_result(has_infinite_materials);
+            self.create_result(player);
             return true;
         }
         false
     }
 
-    pub fn update_item_name(&mut self, name: &str) {
-        self.set_item_name(name, false);
+    pub fn update_item_name(&mut self, name: &str, player: &dyn InventoryPlayer) {
+        self.set_item_name(name, player);
     }
 
-    pub fn update_result_slot(&mut self) {
-        self.create_result(false);
+    pub fn update_result_slot(&mut self, player: &dyn InventoryPlayer) {
+        self.create_result(player);
     }
 
     pub fn set_repair_cost(&mut self, cost: i32) {
@@ -269,8 +269,38 @@ impl AnvilScreenHandler {
         self.repair_cost.load(Ordering::Relaxed)
     }
 
+    /// Computes the result for the current inputs, then lets plugins adjust it.
+    pub fn create_result(&mut self, player: &dyn InventoryPlayer) {
+        self.compute_result(player.has_infinite_materials());
+        self.fire_prepare_anvil_event(player);
+    }
+
+    /// Hands the computed result, its cost and the repair item count to plugins and writes back
+    /// what they changed.
+    fn fire_prepare_anvil_event(&mut self, player: &dyn InventoryPlayer) {
+        let left = self.inventory.get_stack(0);
+        let right = self.inventory.get_stack(1);
+        let mut result = self.inventory.get_stack(2);
+        let mut repair_cost = self.get_cost();
+        let mut repair_item_count = self.repair_item_count_cost.load(Ordering::Relaxed);
+        if !player.fire_prepare_anvil_event(
+            &left,
+            &right,
+            &mut result,
+            &mut repair_cost,
+            &mut repair_item_count,
+            self.item_name.as_deref(),
+        ) {
+            return;
+        }
+        self.inventory.set_stack(2, result);
+        self.set_repair_cost(repair_cost);
+        self.repair_item_count_cost.store(repair_item_count, Ordering::Relaxed);
+        self.send_content_updates();
+    }
+
     #[allow(clippy::too_many_lines)]
-    pub fn create_result(&mut self, has_infinite_materials: bool) {
+    fn compute_result(&mut self, has_infinite_materials: bool) {
         let input = self.inventory.get_stack(0);
         self.only_renaming.store(false, Ordering::Relaxed);
         self.set_repair_cost(1);
@@ -508,7 +538,7 @@ impl ScreenHandler for AnvilScreenHandler {
                     }
                     slot.on_quick_move_crafted(slot_stack.clone(), stack_left.clone());
                     slot.on_take_item(player, &stack_left);
-                    self.create_result(player.has_infinite_materials());
+                    self.create_result(player);
                     self.send_content_updates();
                     return stack_left;
                 }
@@ -533,7 +563,7 @@ impl ScreenHandler for AnvilScreenHandler {
             slot.set_stack_prev(slot_stack.clone(), stack_left.clone());
             slot.on_take_item(player, &slot_stack);
             slot.mark_dirty();
-            self.create_result(player.has_infinite_materials());
+            self.create_result(player);
             self.send_content_updates();
         }
 
@@ -549,7 +579,7 @@ impl ScreenHandler for AnvilScreenHandler {
     ) {
         self.internal_on_slot_click(slot_index, button, action_type, player);
         if slot_index == 0 || slot_index == 1 || slot_index == 2 {
-            self.create_result(player.has_infinite_materials());
+            self.create_result(player);
             self.send_content_updates();
         }
     }
@@ -671,7 +701,7 @@ mod tests {
         let sword = ItemStack::new(1, &Item::DIAMOND_SWORD);
         anvil_inv.set_stack(0, sword);
 
-        handler.set_item_name("Excalibur", false);
+        handler.set_item_name("Excalibur", &player);
 
         assert_eq!(handler.get_cost(), 1);
         let result = anvil_inv.get_stack(2);
@@ -694,7 +724,7 @@ mod tests {
         let ingots = ItemStack::new(4, &Item::IRON_INGOT);
         anvil_inv.set_stack(1, ingots);
 
-        handler.create_result(false);
+        handler.create_result(&player);
 
         assert_eq!(handler.get_cost(), 3);
         let result = anvil_inv.get_stack(2);
@@ -718,7 +748,7 @@ mod tests {
         sword2.set_damage(500);
         anvil_inv.set_stack(1, sword2);
 
-        handler.create_result(false);
+        handler.create_result(&player);
 
         assert_eq!(handler.get_cost(), 2);
         let result = anvil_inv.get_stack(2);
@@ -745,7 +775,7 @@ mod tests {
         book.set_data_component(stored);
         anvil_inv.set_stack(1, book);
 
-        handler.create_result(false);
+        handler.create_result(&player);
 
         // Sharpness anvil cost = 1. Fee using book = max(1, 1/2) = 1. Price = 1 * 3 = 3.
         assert_eq!(handler.get_cost(), 3);
@@ -777,7 +807,7 @@ mod tests {
         sword2.set_data_component(ench2);
         anvil_inv.set_stack(1, sword2);
 
-        handler.create_result(false);
+        handler.create_result(&player);
 
         let result = anvil_inv.get_stack(2);
         let enchs = get_enchantments_for_crafting(&result);
@@ -802,14 +832,15 @@ mod tests {
         sword2.set_damage(500);
         anvil_inv.set_stack(1, sword2);
 
-        handler.create_result(false);
+        handler.create_result(&player);
 
         // Tax is 35 + 35 = 70. Combining damaged tools adds 2. Total = 72 >= 40.
         assert_eq!(handler.get_cost(), 72);
         assert!(anvil_inv.get_stack(2).is_empty());
 
         // But in creative mode, result is available
-        handler.create_result(true);
+        let creative_player = DummyPlayer::new(50, true);
+        handler.create_result(&creative_player);
         assert!(!anvil_inv.get_stack(2).is_empty());
     }
 
@@ -823,7 +854,7 @@ mod tests {
         sword.set_repair_cost(45);
         anvil_inv.set_stack(0, sword);
 
-        handler.set_item_name("Legendary", false);
+        handler.set_item_name("Legendary", &player);
 
         // Renaming only is capped at 39 even with high repair cost
         assert_eq!(handler.get_cost(), 39);

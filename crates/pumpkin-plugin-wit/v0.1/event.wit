@@ -1840,8 +1840,12 @@ interface event {
 
     record prepare-anvil-event-data {
         player: player,
+        left: option<item-stack>,
+        right: option<item-stack>,
+        %result: option<item-stack>,
         rename-text: string,
-        repair-cost: u32
+        repair-cost: u32,
+        repair-item-count: u32
     }
 
     record prepare-grindstone-event-data {
