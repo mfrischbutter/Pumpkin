@@ -153,6 +153,42 @@ fn loaded_chunk_data(
         .ok_or_else(|| wasmtime::Error::msg("Chunk unloaded"))
 }
 
+/// Fetching drops its own ticket as soon as the chunk arrives, so a plugin writing to it straight
+/// after would race the unloader. Vanilla's getChunk holds a ticket for a tick for the same reason;
+/// this holds one a little longer, then lets the chunk unload and save as usual.
+const LOAD_CHUNK_HOLD: std::time::Duration = std::time::Duration::from_secs(5);
+
+/// Loads the chunk from disk, or generates it, and keeps a full chunk ticket on it for
+/// [`LOAD_CHUNK_HOLD`].
+async fn load_chunk_held(
+    level: Arc<pumpkin_world::level::Level>,
+    pos: pumpkin_util::math::vector2::Vector2<i32>,
+) -> pumpkin_world::level::SyncChunk {
+    use pumpkin_world::chunk_system::ChunkLoading;
+
+    // Scoped so the lock guard, which is not Send, is gone before the await.
+    {
+        let mut loading = level
+            .chunk_loading
+            .lock()
+            .unwrap_or_else(std::sync::PoisonError::into_inner);
+        loading.add_ticket(pos, ChunkLoading::FULL_CHUNK_LEVEL);
+        loading.send_change();
+    };
+    let chunk = level.get_or_fetch_chunk(pos, Clone::clone).await;
+    let spawner = Arc::clone(&level);
+    spawner.spawn_task(async move {
+        tokio::time::sleep(LOAD_CHUNK_HOLD).await;
+        let mut loading = level
+            .chunk_loading
+            .lock()
+            .unwrap_or_else(std::sync::PoisonError::into_inner);
+        loading.remove_ticket(pos, ChunkLoading::FULL_CHUNK_LEVEL);
+        loading.send_change();
+    });
+    chunk
+}
+
 async fn set_block_state_with_store(
     accessor: &Accessor<PluginHostState, HasSelf<PluginHostState>>,
     world: Resource<World>,
@@ -1387,6 +1423,18 @@ impl pumpkin::plugin::world::HostWorldWithStore<PluginHostState> for HasSelf<Plu
         let world = accessor.with(|mut host| world_from_state(host.get(), &world))?;
         in_active_context(accessor, world.save()).await?;
         Ok(Ok(()))
+    }
+
+    async fn load_chunk(
+        accessor: &Accessor<PluginHostState, Self>,
+        world: Resource<World>,
+        x: i32,
+        z: i32,
+    ) -> wasmtime::Result<Resource<WitChunk>> {
+        let world = accessor.with(|mut host| world_from_state(host.get(), &world))?;
+        let pos = pumpkin_util::math::vector2::Vector2::new(x, z);
+        let chunk = in_active_context(accessor, load_chunk_held(world.level.clone(), pos)).await?;
+        accessor.add_res((world, Arc::downgrade(&chunk)))
     }
 
     async fn set_block(
