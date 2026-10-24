@@ -28,14 +28,17 @@ use crate::screen_handler::{
 use crate::slot::{NormalSlot, Slot};
 
 use crate::inventory::Inventory;
-use pumpkin_data::data_component_impl::{PotDecorationsImpl, ProvidesPotteryPatternImpl};
+use pumpkin_data::data_component::DataComponent;
+use pumpkin_data::data_component_impl::{
+    DataComponentImpl, PotDecorationsImpl, ProvidesPotteryPatternImpl,
+};
 use pumpkin_data::item_stack::ItemStack;
-use pumpkin_data::recipes::{CraftingRecipeTypes, RECIPES_CRAFTING};
+use pumpkin_data::recipes::{CraftingRecipeTypes, RECIPES_CRAFTING, RecipeResultStruct};
 use pumpkin_data::screen::WindowType;
 use pumpkin_data::statistic::StatisticCategory;
 use pumpkin_data::tag;
 use pumpkin_data::tag::Taggable;
-use pumpkin_protocol::codec::recipe::{DynamicRecipe, OwnedCraftingRecipe};
+use pumpkin_protocol::codec::recipe::{DynamicRecipe, OwnedCraftingRecipe, OwnedRecipeResult};
 
 /// The result slot in a crafting screen.
 pub struct ResultSlot {
@@ -53,9 +56,29 @@ pub struct RecipeResult {
     pub item_id: String,
     pub count: u8,
     pub pot_decorations: Option<[u16; 4]>,
+    /// Component patch of the result, set by plugin recipes.
+    pub components: Vec<(DataComponent, Option<Box<dyn DataComponentImpl>>)>,
 }
 
 impl RecipeResult {
+    fn from_vanilla(result: &RecipeResultStruct) -> Self {
+        Self {
+            item_id: result.id.to_string(),
+            count: result.count,
+            pot_decorations: None,
+            components: Vec::new(),
+        }
+    }
+
+    fn from_dynamic(result: &OwnedRecipeResult) -> Self {
+        Self {
+            item_id: result.item_id.clone(),
+            count: result.count,
+            pot_decorations: None,
+            components: result.components.clone(),
+        }
+    }
+
     #[must_use]
     pub fn to_item_stack(&self) -> ItemStack {
         let key = self
@@ -64,7 +87,7 @@ impl RecipeResult {
             .unwrap_or(&self.item_id);
         let item = pumpkin_data::item::Item::from_registry_key(key)
             .unwrap_or(&pumpkin_data::item::Item::AIR);
-        let mut stack = ItemStack::new(self.count, item);
+        let mut stack = ItemStack::new_with_component(self.count, item, self.components.clone());
         if let Some(sherds) = self.pot_decorations {
             let sherd_names = sherds
                 .into_iter()
@@ -201,11 +224,7 @@ fn recipe_matches(
                 }
             }
 
-            matched.then_some(RecipeResult {
-                item_id: result.id.to_string(),
-                count: result.count,
-                pot_decorations: None,
-            })
+            matched.then(|| RecipeResult::from_vanilla(result))
         }
         GenericRecipe::Vanilla(CraftingRecipeTypes::CraftingShapeless {
             ingredients,
@@ -229,11 +248,7 @@ fn recipe_matches(
                 }
                 return None;
             }
-            Some(RecipeResult {
-                item_id: result.id.to_string(),
-                count: result.count,
-                pot_decorations: None,
-            })
+            Some(RecipeResult::from_vanilla(result))
         }
         GenericRecipe::Vanilla(CraftingRecipeTypes::CraftingTransmute {
             input,
@@ -253,11 +268,7 @@ fn recipe_matches(
                     return None;
                 }
             }
-            Some(RecipeResult {
-                item_id: result.id.to_string(),
-                count: result.count,
-                pot_decorations: None,
-            })
+            Some(RecipeResult::from_vanilla(result))
         }
         GenericRecipe::Vanilla(CraftingRecipeTypes::CraftingDecoratedPot { .. }) => {
             if count != 4 || inventory.get_width() != 3 || inventory.get_height() != 3 {
@@ -282,6 +293,7 @@ fn recipe_matches(
                 item_id: "minecraft:decorated_pot".to_string(),
                 count: 1,
                 pot_decorations: Some(sherds),
+                components: Vec::new(),
             })
         }
         GenericRecipe::Dynamic(OwnedCraftingRecipe::Shaped {
@@ -330,11 +342,7 @@ fn recipe_matches(
                     }
                 }
             }
-            matched.then_some(RecipeResult {
-                item_id: result.item_id.clone(),
-                count: result.count,
-                pot_decorations: None,
-            })
+            matched.then(|| RecipeResult::from_dynamic(result))
         }
         GenericRecipe::Dynamic(OwnedCraftingRecipe::Shapeless {
             ingredients,
@@ -358,11 +366,7 @@ fn recipe_matches(
                 }
                 return None;
             }
-            Some(RecipeResult {
-                item_id: result.item_id.clone(),
-                count: result.count,
-                pot_decorations: None,
-            })
+            Some(RecipeResult::from_dynamic(result))
         }
         _ => None,
     }
