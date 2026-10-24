@@ -169,6 +169,7 @@ use time::LevelTime;
 pub mod block_placer;
 pub mod border;
 pub mod bossbar;
+pub mod client_biome;
 pub mod custom_bossbar;
 pub mod dragon_fight;
 pub mod end_podium;

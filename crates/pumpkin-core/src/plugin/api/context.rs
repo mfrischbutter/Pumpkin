@@ -8,12 +8,17 @@ use crate::{
     LoggerOption,
     block::blocks::redstone::SIGNAL_MAX,
     command::client_suggestions,
-    data::datapack::{ENCHANTMENT_REGISTRY, JUKEBOX_SONG_REGISTRY},
+    data::datapack::{BIOME_REGISTRY, ENCHANTMENT_REGISTRY, JUKEBOX_SONG_REGISTRY},
     net::ClientPlatform,
     plugin::PluginMetadata,
     plugin_log,
+    world::client_biome::{BiomeEffects, MAX_SYNCED_BIOMES, biome_definition},
 };
 use arc_swap::ArcSwap;
+use pumpkin_data::biome::Biome;
+use pumpkin_data::biome_registry::{
+    biome_network_id, dynamic_biome_count, register_dynamic_biome, unregister_dynamic_biome,
+};
 use pumpkin_data::jukebox_song_registry::{
     DynamicJukeboxSong, register_dynamic_jukebox_song, unregister_dynamic_jukebox_song,
 };
@@ -370,6 +375,46 @@ impl Context {
         Ok(())
     }
 
+    /// Registers a biome for clients, shown where a plugin sets it as a client biome. It looks
+    /// like `effects` and otherwise like the vanilla biome `base`, whose climate, sounds and
+    /// particles it copies. The server never stores it: palettes, saves and gameplay keep the
+    /// biome that is actually there. The biome is removed when this plugin unloads.
+    pub fn register_biome(
+        &self,
+        id: &str,
+        base: &str,
+        effects: &BiomeEffects,
+    ) -> Result<(), String> {
+        let base = Identifier::parse(base)
+            .map_err(|error| error.to_string())?
+            .to_string();
+        let base_biome = base
+            .strip_prefix("minecraft:")
+            .and_then(Biome::from_name)
+            .ok_or_else(|| format!("Base biome {base} is not a vanilla biome"))?;
+        let normalized = Identifier::parse(id)
+            .map_err(|error| error.to_string())?
+            .to_string();
+        if biome_network_id(&normalized).is_none()
+            && Biome::ALL.len() + dynamic_biome_count() >= MAX_SYNCED_BIOMES
+        {
+            return Err(format!(
+                "Biome {normalized} does not fit: clients take at most {MAX_SYNCED_BIOMES} biomes"
+            ));
+        }
+        let definition = biome_definition(base_biome, effects)?;
+
+        let id = self.server.datapack_manager.insert_plugin_registry_entry(
+            &self.metadata.name,
+            BIOME_REGISTRY.to_string(),
+            id,
+            definition,
+        )?;
+        register_dynamic_biome(id.clone());
+        self.warn_if_players_online(&id);
+        Ok(())
+    }
+
     /// Players that already configured keep the registries they received.
     fn warn_if_players_online(&self, entry_id: &str) {
         if self.server.get_player_count() > 0 {
@@ -389,6 +434,8 @@ impl Context {
         for (registry_id, entry_id) in removed {
             if registry_id == JUKEBOX_SONG_REGISTRY {
                 unregister_dynamic_jukebox_song(&entry_id);
+            } else if registry_id == BIOME_REGISTRY {
+                unregister_dynamic_biome(&entry_id);
             } else if registry_id == ENCHANTMENT_REGISTRY {
                 self.server.enchantment_manager.unregister(&entry_id).await;
             }

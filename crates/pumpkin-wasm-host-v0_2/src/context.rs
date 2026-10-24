@@ -8,7 +8,7 @@ use crate::{
         plugin::{
             command::Command,
             common::NbtTree,
-            context::{Context as WitContext, MarketplaceMetadata},
+            context::{BiomeEffects, Context as WitContext, MarketplaceMetadata},
             event::{EventPriority, EventType},
             permission::{Permission, PermissionDefault, PermissionLevel},
             server::Server,
@@ -1759,6 +1759,28 @@ impl pumpkin::plugin::context::HostContext for PluginHostState {
             &description,
             length_seconds,
             comparator_output,
+        ))
+    }
+
+    fn register_biome(
+        &mut self,
+        context: Resource<WitContext>,
+        id: String,
+        base: String,
+        effects: BiomeEffects,
+    ) -> wasmtime::Result<Result<(), String>> {
+        let context = self.get(&context)?;
+        Ok(context.register_biome(
+            &id,
+            &base,
+            &pumpkin_core::world::client_biome::BiomeEffects {
+                water_color: effects.water_color,
+                water_fog_color: effects.water_fog_color,
+                grass_color: effects.grass_color,
+                foliage_color: effects.foliage_color,
+                sky_color: effects.sky_color,
+                fog_color: effects.fog_color,
+            },
         ))
     }
 
