@@ -249,7 +249,7 @@ impl Serialize for RGBColor {
 /// An ARGB color with alpha, red, green, and blue components.
 ///
 /// Used for advanced color effects like custom text shadows.
-#[derive(Debug, Clone, Copy, Eq, Hash, PartialEq, Deserialize)]
+#[derive(Debug, Clone, Copy, Eq, Hash, PartialEq)]
 pub struct ARGBColor {
     /// The alpha (transparency) component (0-255).
     pub alpha: u8,
@@ -315,6 +315,36 @@ impl ARGBColor {
     #[must_use]
     pub const fn from_argb_int(val: i32) -> Self {
         Self::from_argb_u32(val as u32)
+    }
+}
+
+impl<'de> Deserialize<'de> for ARGBColor {
+    fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        // Vanilla writes `shadow_color` as an ARGB int, Pumpkin's own JSON as the four components.
+        #[derive(Deserialize)]
+        #[serde(untagged)]
+        enum Repr {
+            Int(i64),
+            Components {
+                alpha: u8,
+                red: u8,
+                green: u8,
+                blue: u8,
+            },
+        }
+
+        match Repr::deserialize(deserializer)? {
+            Repr::Int(value) => i32::try_from(value)
+                .map(Self::from_argb_int)
+                .or_else(|_| u32::try_from(value).map(Self::from_argb_u32))
+                .map_err(|_| serde::de::Error::custom("ARGB color int out of range")),
+            Repr::Components {
+                alpha,
+                red,
+                green,
+                blue,
+            } => Ok(Self::new(alpha, red, green, blue)),
+        }
     }
 }
 
