@@ -438,6 +438,24 @@ pub trait EntityBase: Send + Sync + std::any::Any {
             .has_tag(&tag::EntityType::MINECRAFT_NON_CONTROLLING_RIDER)
     }
 
+    /// Places `passenger` on this vehicle, like vanilla `Entity.positionRider`.
+    fn position_rider(&self, passenger: &dyn EntityBase) {
+        let vehicle = self.get_entity();
+        let seat = vehicle.pos.load().add(&vehicle.passenger_attachment_point());
+        passenger
+            .get_entity()
+            .set_pos(seat.sub(&passenger.vehicle_attachment_point()));
+    }
+
+    /// The point of this entity that sits on a vehicle's passenger attachment point, like vanilla
+    /// `Entity.getVehicleAttachmentPoint`.
+    ///
+    /// This is vanilla's default of the entity's origin. Types with their own vehicle attachment
+    /// in vanilla need it extracted into the entity data first.
+    fn vehicle_attachment_point(&self) -> Vector3<f64> {
+        Vector3::new(0.0, 0.0, 0.0)
+    }
+
     fn is_flutterer(&self) -> bool {
         false
     }
@@ -2685,6 +2703,17 @@ impl Entity {
 
     pub fn height(&self) -> f32 {
         self.entity_dimension.load().height
+    }
+
+    /// Where a passenger sits on this entity, relative to its position, like vanilla
+    /// `Entity.getPassengerAttachmentPoint`.
+    ///
+    /// This is vanilla's default for every passenger: the top of the entity's current dimensions.
+    /// Types with their own passenger attachments in vanilla need them extracted into the entity
+    /// data first.
+    #[must_use]
+    pub fn passenger_attachment_point(&self) -> Vector3<f64> {
+        Vector3::new(0.0, f64::from(self.height()), 0.0)
     }
 
     /// Applies knockback to the entity, following vanilla Minecraft's mechanics.
