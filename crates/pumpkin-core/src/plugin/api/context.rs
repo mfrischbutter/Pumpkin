@@ -8,12 +8,9 @@ use crate::{
     LoggerOption,
     block::blocks::redstone::SIGNAL_MAX,
     command::client_suggestions,
-    data::datapack::JUKEBOX_SONG_REGISTRY,
-    net::ClientPlatform,
-    plugin::{PluginMetadata, block_hooks::BlockStateHook},
     data::datapack::{ENCHANTMENT_REGISTRY, JUKEBOX_SONG_REGISTRY},
     net::ClientPlatform,
-    plugin::PluginMetadata,
+    plugin::{PluginMetadata, block_hooks::BlockStateHook},
     plugin_log,
 };
 use arc_swap::ArcSwap;
@@ -380,12 +377,9 @@ impl Context {
         id: &str,
         data: NbtCompound,
     ) -> Result<(), String> {
-        self.server.datapack_manager.register_plugin_registry_entry(
-            &self.metadata.name,
-            registry,
-            id,
-            data,
-        )?;
+        self.server
+            .datapack_manager
+            .register_plugin_registry_entry(&self.metadata.name, registry, id, data)?;
         self.warn_if_players_online(id);
         Ok(())
     }
@@ -405,7 +399,9 @@ impl Context {
         // Vanilla's `JukeboxSong` codec takes a positive length and a signal from 0 to 15
         // (from memory).
         if !length_in_seconds.is_finite() || length_in_seconds <= 0.0 {
-            return Err(format!("Jukebox song length must be positive, got {length_in_seconds}"));
+            return Err(format!(
+                "Jukebox song length must be positive, got {length_in_seconds}"
+            ));
         }
         if comparator_output > SIGNAL_MAX {
             return Err(format!(
@@ -414,7 +410,10 @@ impl Context {
         }
         let mut data = NbtCompound::new();
         data.put_string("sound_event", sound_event.to_string());
-        data.put("description", description.to_nbt_tag_for_version(&CURRENT_MC_VERSION));
+        data.put(
+            "description",
+            description.to_nbt_tag_for_version(&CURRENT_MC_VERSION),
+        );
         data.put_float("length_in_seconds", length_in_seconds);
         data.put_int("comparator_output", i32::from(comparator_output));
 

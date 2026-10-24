@@ -71,7 +71,9 @@ pub fn get_jukebox_song(id: &str) -> Option<JukeboxSongEntry> {
     }
     let songs = DYNAMIC_SONGS.read().unwrap_or_else(PoisonError::into_inner);
     let song = songs.get(id)?;
-    let index = songs.range::<str, _>(..id).count() as u32;
+    let index = songs
+        .range::<str, _>((std::ops::Bound::Unbounded, std::ops::Bound::Excluded(id)))
+        .count() as u32;
     Some(JukeboxSongEntry {
         network_id: VANILLA_SONG_COUNT + index,
         // Vanilla: `JukeboxSong.lengthInTicks()` rounds up (from memory).
@@ -113,7 +115,10 @@ mod tests {
         assert_eq!(first.network_id, VANILLA_SONG_COUNT);
         assert_eq!(second.network_id, VANILLA_SONG_COUNT + 1);
         assert_eq!(first.length_in_ticks, 50);
-        assert_eq!(jukebox_song_id(second.network_id).as_deref(), Some("test_b:song"));
+        assert_eq!(
+            jukebox_song_id(second.network_id).as_deref(),
+            Some("test_b:song")
+        );
         let pigstep = get_jukebox_song("minecraft:pigstep").unwrap();
         assert_eq!(pigstep.network_id, JukeboxSong::Pigstep.get_id());
 

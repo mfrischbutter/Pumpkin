@@ -31,8 +31,6 @@ use pumpkin_core::plugin::inventory::{
     smith_item::SmithItemEvent, trade_select::TradeSelectEvent,
 };
 use pumpkin_wasm_host_common::state::PluginHostState;
-use std::sync::Arc;
-use tokio::sync::Mutex;
 
 impl ToFromWasmEvent for InventoryOpenEvent {
     fn to_wasm_event(&self, state: &mut PluginHostState) -> Event {

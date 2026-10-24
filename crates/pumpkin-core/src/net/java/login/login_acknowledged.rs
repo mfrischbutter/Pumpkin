@@ -123,7 +123,10 @@ impl PendingConnection {
         let plugin_packs = server.login_resource_packs.load_full();
         for pack in plugin_packs.iter().flat_map(|(_, list)| list) {
             if packs.iter().any(|(sent, _)| sent.uuid == pack.uuid) {
-                debug!("Skipping login resource pack {}: UUID already sent", pack.uuid);
+                debug!(
+                    "Skipping login resource pack {}: UUID already sent",
+                    pack.uuid
+                );
                 continue;
             }
             packs.push((pack.clone(), false));

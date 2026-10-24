@@ -75,12 +75,12 @@
 
 use std::collections::HashMap;
 
+use crate::wit::pumpkin::plugin::data_components::DataComponent;
+use crate::wit::pumpkin::plugin::recipe::CustomDataIngredient;
 pub use crate::wit::pumpkin::plugin::recipe::{
     CookingRecipe, CookingType, Ingredient as WitIngredient, RecipeCategory, RecipeManager,
     ShapedRecipe, ShapelessRecipe,
 };
-use crate::wit::pumpkin::plugin::data_components::DataComponent;
-use crate::wit::pumpkin::plugin::recipe::CustomDataIngredient;
 use crate::{Context, ItemStack, Server};
 
 /// Represents an ingredient in a recipe.

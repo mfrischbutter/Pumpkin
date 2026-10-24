@@ -1114,7 +1114,6 @@ impl PluginManager {
         plugin.context.unregister_block_hooks();
         plugin.context.unregister_loot_tables();
         plugin.context.server.set_login_resource_packs(name, &[]);
-        plugin.context.unregister_registry_entries();
         plugin.context.unregister_registry_entries().await;
 
         if let Some(instance) = plugin.instance.take() {

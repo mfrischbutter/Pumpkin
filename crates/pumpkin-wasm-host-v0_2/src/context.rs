@@ -18,7 +18,6 @@ use crate::{
 };
 use pumpkin_core::plugin::Context;
 use pumpkin_data::BlockStateId;
-use pumpkin_wasm_host_common::state::PluginHostState;
 use pumpkin_wasm_host_common::state::{DATA_FOLDER_GUEST_PATH, PluginHostState};
 
 fn register_typed_event<E: pumpkin_core::plugin::Payload + ToFromWasmEvent + Clone + 'static>(
@@ -1789,7 +1788,11 @@ impl pumpkin::plugin::context::HostContext for PluginHostState {
         let context = self.get(&context)?;
         let data = match crate::common::from_wit_nbt_tree(&data) {
             Ok(pumpkin_nbt::tag::NbtTag::Compound(compound)) => compound,
-            Ok(_) => return Ok(Err("Registry entry data must be an NBT compound".to_string())),
+            Ok(_) => {
+                return Ok(Err(
+                    "Registry entry data must be an NBT compound".to_string()
+                ));
+            }
             Err(error) => return Ok(Err(error)),
         };
         Ok(context.register_registry_entry(&registry, &id, data))
