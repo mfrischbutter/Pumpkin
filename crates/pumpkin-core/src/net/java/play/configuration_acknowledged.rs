@@ -9,6 +9,8 @@ impl JavaClient {
             "Player {} acknowledged a configuration switch that was not requested",
             player.gameprofile.name
         );
-        self.try_kick(&TextComponent::text("Unexpected configuration acknowledgement"));
+        self.try_kick(&TextComponent::text(
+            "Unexpected configuration acknowledgement",
+        ));
     }
 }

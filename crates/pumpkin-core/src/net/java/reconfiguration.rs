@@ -86,7 +86,9 @@ impl JavaClient {
         // Play packets the client sent before it got the switch are dropped: the player is
         // no longer in a world.
         loop {
-            let packet = self.next_configuration_packet(server, network_reader).await?;
+            let packet = self
+                .next_configuration_packet(server, network_reader)
+                .await?;
             if packet.id == SConfigurationAcknowledged::to_id(version) {
                 break;
             }
@@ -108,7 +110,9 @@ impl JavaClient {
             .await;
 
         loop {
-            let packet = self.next_configuration_packet(server, network_reader).await?;
+            let packet = self
+                .next_configuration_packet(server, network_reader)
+                .await?;
             match packet.id {
                 id if id == SKnownPacks::to_id(version) => {
                     for registry in synced_registries(server) {
