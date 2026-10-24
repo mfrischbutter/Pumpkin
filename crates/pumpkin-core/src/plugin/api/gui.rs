@@ -1,6 +1,7 @@
 use std::any::Any;
 use std::sync::Arc;
 use std::sync::RwLock;
+use std::sync::Weak;
 
 use pumpkin_data::{item_stack::ItemStack, screen::WindowType};
 use pumpkin_inventory::inventory::SimpleInventory;
@@ -8,7 +9,11 @@ use pumpkin_inventory::player::player_inventory::PlayerInventory;
 use pumpkin_inventory::screen_handler::{InventoryPlayer, ScreenHandler, ScreenHandlerBehaviour};
 use pumpkin_inventory::slot::{NormalSlot, Slot};
 use pumpkin_inventory::{Clearable, Inventory};
+use pumpkin_protocol::java::client::play::COpenScreen;
 use pumpkin_util::text::TextComponent;
+
+use crate::entity::player::Player;
+use crate::net::ClientPlatform;
 
 pub struct PluginGui {
     pub window_type: WindowType,
@@ -16,9 +21,46 @@ pub struct PluginGui {
     pub inventory: Arc<PluginInventory>,
     pub allow_grab_items: bool,
     pub allow_put_items: bool,
+    /// Players this GUI was opened for. Players who closed it are dropped on the next title change.
+    pub viewers: Vec<Weak<Player>>,
 }
 
 impl PluginGui {
+    /// Returns the plugin GUI `player` currently has open, if any.
+    #[must_use]
+    pub fn open_for(player: &Player) -> Option<Arc<tokio::sync::Mutex<Self>>> {
+        let current = player
+            .current_screen_handler
+            .lock()
+            .unwrap_or_else(std::sync::PoisonError::into_inner);
+        let handler = current
+            .lock()
+            .unwrap_or_else(std::sync::PoisonError::into_inner);
+        handler
+            .as_any()
+            .downcast_ref::<PluginScreenHandler>()
+            .and_then(|plugin_handler| plugin_handler.gui.clone())
+    }
+
+    /// Remembers `player` as a viewer, so that later title changes reach them.
+    pub fn add_viewer(&mut self, player: &Arc<Player>) {
+        self.viewers.retain(|viewer| {
+            viewer.strong_count() > 0 && !std::ptr::eq(viewer.as_ptr(), Arc::as_ptr(player))
+        });
+        self.viewers.push(Arc::downgrade(player));
+    }
+
+    /// Sets the title and shows it to every player who currently has this GUI open.
+    pub fn set_title(&mut self, title: TextComponent) {
+        let inventory = &self.inventory;
+        self.viewers.retain(|viewer| {
+            viewer
+                .upgrade()
+                .is_some_and(|player| retitle_viewer(&player, inventory, &title))
+        });
+        self.title = title;
+    }
+
     /// Returns the number of plugin-owned slots in the screen.
     #[must_use]
     pub const fn inventory_size(window_type: WindowType) -> usize {
@@ -43,6 +85,43 @@ impl PluginGui {
             WindowType::Loom | WindowType::Smithing => 4,
         }
     }
+}
+
+/// Shows `title` to `player` if their open screen belongs to `inventory`; returns whether it does.
+///
+/// The client only reads a title when a screen opens, so this re-sends the open screen packet with
+/// the same sync id, followed by a full content sync because the new client screen starts empty.
+fn retitle_viewer(
+    player: &Player,
+    inventory: &Arc<PluginInventory>,
+    title: &TextComponent,
+) -> bool {
+    let current = player
+        .current_screen_handler
+        .lock()
+        .unwrap_or_else(std::sync::PoisonError::into_inner);
+    let mut handler = current
+        .lock()
+        .unwrap_or_else(std::sync::PoisonError::into_inner);
+    let is_viewer = handler
+        .as_any()
+        .downcast_ref::<PluginScreenHandler>()
+        .is_some_and(|plugin_handler| Arc::ptr_eq(&plugin_handler.inventory, inventory));
+    if !is_viewer {
+        return false;
+    }
+    let Some(window_type) = handler.window_type() else {
+        return false;
+    };
+    if let ClientPlatform::Java(client) = player.client.as_ref() {
+        client.try_send_packet(&COpenScreen::new(
+            handler.sync_id().into(),
+            (window_type as i32).into(),
+            title,
+        ));
+    }
+    handler.sync_state();
+    true
 }
 
 pub struct PluginInventory {
@@ -140,6 +219,8 @@ impl Inventory for PluginInventory {
 
 pub struct PluginScreenHandler {
     pub inventory: Arc<PluginInventory>,
+    /// The GUI this screen was opened from, if it was opened through the plugin API.
+    pub gui: Option<Arc<tokio::sync::Mutex<PluginGui>>>,
     behaviour: ScreenHandlerBehaviour,
 }
 
@@ -160,6 +241,7 @@ impl PluginScreenHandler {
 
         let mut handler = Self {
             inventory: inventory.clone(),
+            gui: None,
             behaviour,
         };
 

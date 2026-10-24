@@ -17,6 +17,9 @@ interface gui {
         
         /// Returns the title of this GUI.
         get-title: func() -> text-component;
+
+        /// Sets the title of this GUI and shows it to every player who currently has it open.
+        set-title: func(title: text-component);
         
         /// Returns the number of slots in this GUI.
         get-size: func() -> u32;

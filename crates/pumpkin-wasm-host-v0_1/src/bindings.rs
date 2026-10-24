@@ -97,6 +97,7 @@ bindgen!({
         "pumpkin:plugin/gui@0.1.0.[method]gui.set-allow-grab-items": async | trappable,
         "pumpkin:plugin/gui@0.1.0.[method]gui.set-allow-put-items": async | trappable,
         "pumpkin:plugin/gui@0.1.0.[method]gui.set-item": async | trappable,
+        "pumpkin:plugin/gui@0.1.0.[method]gui.set-title": async | trappable,
         "pumpkin:plugin/inventory@0.1.0.[method]inventory.clear": async | trappable,
         "pumpkin:plugin/inventory@0.1.0.[method]inventory.remove-item": async | trappable,
         "pumpkin:plugin/inventory@0.1.0.[method]inventory.set-all-items": async | trappable,

@@ -27,7 +27,7 @@ use crate::{
     },
     uuid::UuidExt,
 };
-use pumpkin_core::plugin::api::gui::PluginScreenHandler;
+use pumpkin_core::plugin::api::gui::{PluginGui, PluginScreenHandler};
 use pumpkin_core::{
     entity::{
         EntityBase,
@@ -1593,6 +1593,14 @@ impl pumpkin::plugin::player::HostPlayer for PluginHostState {
         Ok(())
     }
 
+    fn get_open_gui(
+        &mut self,
+        player: Resource<Player>,
+    ) -> wasmtime::Result<Option<Resource<pumpkin::plugin::gui::Gui>>> {
+        let gui = PluginGui::open_for(self.get(&player)?);
+        gui.map(|gui| self.add(gui)).transpose()
+    }
+
     fn is_movement_locked(&mut self, player: Resource<Player>) -> wasmtime::Result<bool> {
         let player = self.get(&player)?;
         Ok(player.is_movement_locked())
@@ -2985,8 +2993,9 @@ impl pumpkin::plugin::player::HostPlayerWithStore<PluginHostState> for HasSelf<P
             Ok((state.get(&player)?.clone(), gui))
         })?;
 
-        let (window_type, inventory, allow_grab_items, allow_put_items, title) = (async move {
-            let gui = gui.lock().await;
+        let (window_type, inventory, allow_grab_items, allow_put_items, title) = {
+            let mut gui = gui.lock().await;
+            gui.add_viewer(&player);
             (
                 gui.window_type,
                 gui.inventory.clone(),
@@ -2994,22 +3003,23 @@ impl pumpkin::plugin::player::HostPlayerWithStore<PluginHostState> for HasSelf<P
                 gui.allow_put_items,
                 gui.title.clone(),
             )
-        })
-        .await;
+        };
 
         run_blocking(accessor, move || {
             player.increment_screen_handler_sync_id();
             let sync_id = player.screen_handler_sync_id.load(Ordering::Relaxed);
-            let screen_handler: Arc<
-                std::sync::Mutex<dyn pumpkin_inventory::screen_handler::ScreenHandler>,
-            > = Arc::new(std::sync::Mutex::new(PluginScreenHandler::new(
+            let mut handler = PluginScreenHandler::new(
                 sync_id,
                 window_type,
                 player.inventory(),
                 &inventory,
                 allow_grab_items,
                 allow_put_items,
-            )));
+            );
+            handler.gui = Some(gui);
+            let screen_handler: Arc<
+                std::sync::Mutex<dyn pumpkin_inventory::screen_handler::ScreenHandler>,
+            > = Arc::new(std::sync::Mutex::new(handler));
             player.open_handled_screen_direct(screen_handler, &title);
         })
         .await
