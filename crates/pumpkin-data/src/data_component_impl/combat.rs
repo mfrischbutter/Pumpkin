@@ -828,14 +828,184 @@ impl DataComponentImpl for DeathProtectionImpl {
     default_impl!(DeathProtection);
 }
 
-#[derive(Clone, Debug, Hash, PartialEq, Eq)]
-pub struct BlocksAttacksImpl;
+/// A set of damage types, vanilla's `HolderSet<DamageType>`.
+#[derive(Clone, Debug, PartialEq)]
+pub enum DamageTypeSet {
+    /// A damage type tag, without the leading `#`.
+    Tag(Cow<'static, str>),
+    Direct(Cow<'static, [DamageType]>),
+}
+impl DamageTypeSet {
+    /// Reads `#tag`, a single damage type id or a list of ids.
+    pub fn read(data: &NbtTag) -> Option<Self> {
+        match data {
+            NbtTag::String(name) => {
+                if let Some(tag) = name.strip_prefix('#') {
+                    Some(Self::Tag(Cow::Owned(tag.to_string())))
+                } else {
+                    Some(Self::Direct(Cow::Owned(vec![damage_type_from_name(name)?])))
+                }
+            }
+            NbtTag::List(names) => Some(Self::Direct(Cow::Owned(
+                names
+                    .iter()
+                    .filter_map(NbtTag::extract_string)
+                    .filter_map(damage_type_from_name)
+                    .collect(),
+            ))),
+            _ => None,
+        }
+    }
+
+    pub fn write(&self) -> NbtTag {
+        match self {
+            Self::Tag(tag) => NbtTag::String(format!("#{tag}").into()),
+            Self::Direct(types) => NbtTag::List(
+                types
+                    .iter()
+                    .filter_map(DamageType::to_name)
+                    .map(NbtTag::from)
+                    .collect(),
+            ),
+        }
+    }
+}
+
+fn damage_type_from_name(name: &str) -> Option<DamageType> {
+    DamageType::from_name(name.strip_prefix("minecraft:").unwrap_or(name))
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub struct DamageReduction {
+    pub horizontal_blocking_angle: f32,
+    pub r#type: Option<DamageTypeSet>,
+    pub base: f32,
+    pub factor: f32,
+}
+impl DamageReduction {
+    fn read(data: &NbtTag) -> Option<Self> {
+        let compound = data.extract_compound()?;
+        Some(Self {
+            horizontal_blocking_angle: compound
+                .get_numeric_float("horizontal_blocking_angle")
+                .unwrap_or(90.0),
+            r#type: compound.get("type").and_then(DamageTypeSet::read),
+            base: compound.get_numeric_float("base")?,
+            factor: compound.get_numeric_float("factor")?,
+        })
+    }
+
+    fn write(&self) -> NbtTag {
+        let mut compound = NbtCompound::new();
+        compound.put_float("horizontal_blocking_angle", self.horizontal_blocking_angle);
+        if let Some(r#type) = &self.r#type {
+            compound.put("type", r#type.write());
+        }
+        compound.put_float("base", self.base);
+        compound.put_float("factor", self.factor);
+        NbtTag::Compound(compound)
+    }
+}
+
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub struct ItemDamageFunction {
+    pub threshold: f32,
+    pub base: f32,
+    pub factor: f32,
+}
+impl ItemDamageFunction {
+    pub const DEFAULT: Self = Self {
+        threshold: 1.0,
+        base: 0.0,
+        factor: 1.0,
+    };
+
+    fn read(compound: &NbtCompound) -> Option<Self> {
+        Some(Self {
+            threshold: compound.get_numeric_float("threshold")?,
+            base: compound.get_numeric_float("base")?,
+            factor: compound.get_numeric_float("factor")?,
+        })
+    }
+
+    fn write(&self) -> NbtTag {
+        let mut compound = NbtCompound::new();
+        compound.put_float("threshold", self.threshold);
+        compound.put_float("base", self.base);
+        compound.put_float("factor", self.factor);
+        NbtTag::Compound(compound)
+    }
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub struct BlocksAttacksImpl {
+    pub block_delay_seconds: f32,
+    pub disable_cooldown_scale: f32,
+    pub damage_reductions: Cow<'static, [DamageReduction]>,
+    pub item_damage: ItemDamageFunction,
+    pub bypassed_by: Option<DamageTypeSet>,
+    pub block_sound: Option<IdOr<SoundEvent>>,
+    pub disabled_sound: Option<IdOr<SoundEvent>>,
+}
 impl BlocksAttacksImpl {
-    pub const fn read_data(_data: &NbtTag) -> Option<Self> {
-        Some(Self)
+    /// Used when `damage_reductions` is absent: all damage from the front 90 degrees is blocked.
+    pub const DEFAULT_DAMAGE_REDUCTIONS: &'static [DamageReduction] = &[DamageReduction {
+        horizontal_blocking_angle: 90.0,
+        r#type: None,
+        base: 0.0,
+        factor: 1.0,
+    }];
+
+    pub fn read_data(data: &NbtTag) -> Option<Self> {
+        let compound = data.extract_compound()?;
+        let damage_reductions = match compound.get_list("damage_reductions") {
+            Some(reductions) => Cow::Owned(
+                reductions
+                    .iter()
+                    .map(DamageReduction::read)
+                    .collect::<Option<Vec<_>>>()?,
+            ),
+            None => Cow::Borrowed(Self::DEFAULT_DAMAGE_REDUCTIONS),
+        };
+        let item_damage = match compound.get_compound("item_damage") {
+            Some(item_damage) => ItemDamageFunction::read(item_damage)?,
+            None => ItemDamageFunction::DEFAULT,
+        };
+        Some(Self {
+            block_delay_seconds: compound
+                .get_numeric_float("block_delay_seconds")
+                .unwrap_or(0.0),
+            disable_cooldown_scale: compound
+                .get_numeric_float("disable_cooldown_scale")
+                .unwrap_or(1.0),
+            damage_reductions,
+            item_damage,
+            bypassed_by: compound.get("bypassed_by").and_then(DamageTypeSet::read),
+            block_sound: get_optional_idor(compound, "block_sound"),
+            disabled_sound: get_optional_idor(compound, "disabled_sound"),
+        })
     }
 }
 impl DataComponentImpl for BlocksAttacksImpl {
+    fn write_data(&self) -> NbtTag {
+        let mut compound = NbtCompound::new();
+        compound.put_float("block_delay_seconds", self.block_delay_seconds);
+        compound.put_float("disable_cooldown_scale", self.disable_cooldown_scale);
+        compound.put_list(
+            "damage_reductions",
+            self.damage_reductions
+                .iter()
+                .map(DamageReduction::write)
+                .collect(),
+        );
+        compound.put("item_damage", self.item_damage.write());
+        if let Some(bypassed_by) = &self.bypassed_by {
+            compound.put("bypassed_by", bypassed_by.write());
+        }
+        put_optional_idor(&mut compound, "block_sound", self.block_sound.as_ref());
+        put_optional_idor(&mut compound, "disabled_sound", self.disabled_sound.as_ref());
+        NbtTag::Compound(compound)
+    }
     default_impl!(BlocksAttacks);
 }
 
