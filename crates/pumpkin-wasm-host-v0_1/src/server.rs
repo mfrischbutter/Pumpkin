@@ -207,6 +207,12 @@ impl pumpkin::plugin::server::HostServer for PluginHostState {
             .any(|world| world.get_world_name() == name || world.dimension.minecraft_name == name))
     }
 
+    fn allocate_entity_ids(&mut self, _rep: Resource<Server>, count: u32) -> wasmtime::Result<i32> {
+        let count = i32::try_from(count)
+            .map_err(|_| wasmtime::Error::msg("Entity id count out of range"))?;
+        Ok(pumpkin_core::entity::Entity::reserve_ids(count))
+    }
+
     fn get_players_in_world(
         &mut self,
         _rep: Resource<Server>,
