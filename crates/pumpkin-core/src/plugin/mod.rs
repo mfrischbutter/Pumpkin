@@ -635,6 +635,7 @@ impl PluginManager {
                 Err(e) => {
                     // Handle initialization failure
                     let error_msg = format!("Initialization failed: {e}");
+                    context.unregister_registry_entries();
                     let _ = instance.on_unload(context).await;
 
                     // Get the loader data before removing the plugin
@@ -1091,6 +1092,7 @@ impl PluginManager {
 
         self.unregister_handlers(name);
         plugin.context.unregister_commands();
+        plugin.context.unregister_registry_entries();
 
         if let Some(instance) = plugin.instance.take() {
             instance.on_unload(plugin.context.clone()).await.ok();

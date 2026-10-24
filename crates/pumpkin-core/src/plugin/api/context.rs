@@ -9,11 +9,12 @@ use crate::{
     plugin_log,
 };
 use arc_swap::ArcSwap;
+use pumpkin_nbt::NbtCompound;
 use pumpkin_util::{
     PermissionLvl,
     permission::{Permission, PermissionManager},
 };
-use tracing::Level;
+use tracing::{Level, warn};
 
 use crate::{
     entity::player::Player,
@@ -289,6 +290,44 @@ impl Context {
         }
 
         self.permission_manager.register_permission(permission)
+    }
+
+    /// Adds an entry to a synced registry, such as a chat type or a wolf variant.
+    ///
+    /// `data` is the entry in the registry's NBT form, as a datapack defines it. Players receive
+    /// the entry from their next configuration on. It is removed when this plugin unloads.
+    pub fn register_registry_entry(
+        &self,
+        registry: &str,
+        id: &str,
+        data: NbtCompound,
+    ) -> Result<(), String> {
+        self.server.datapack_manager.register_plugin_registry_entry(
+            &self.metadata.name,
+            registry,
+            id,
+            data,
+        )?;
+        self.warn_if_players_online(id);
+        Ok(())
+    }
+
+    /// Players that already configured keep the registries they received.
+    fn warn_if_players_online(&self, entry_id: &str) {
+        if self.server.get_player_count() > 0 {
+            warn!(
+                "Registry entry {entry_id} of plugin {} was added while players are online; they receive it when they rejoin",
+                self.metadata.name
+            );
+        }
+    }
+
+    /// Removes the registry entries this plugin added.
+    pub(crate) fn unregister_registry_entries(&self) {
+        let _ = self
+            .server
+            .datapack_manager
+            .remove_plugin_registry_entries(&self.metadata.name);
     }
 
     /// Check if a player has a permission
