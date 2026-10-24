@@ -71,7 +71,9 @@ pub fn get_jukebox_song(id: &str) -> Option<JukeboxSongEntry> {
     }
     let songs = DYNAMIC_SONGS.read().unwrap_or_else(PoisonError::into_inner);
     let song = songs.get(id)?;
-    let index = songs.range::<str, _>(..id).count() as u32;
+    let index = songs
+        .range::<str, _>((std::ops::Bound::Unbounded, std::ops::Bound::Excluded(id)))
+        .count() as u32;
     Some(JukeboxSongEntry {
         network_id: VANILLA_SONG_COUNT + index,
         // Vanilla: `JukeboxSong.lengthInTicks()` rounds up (from memory).
