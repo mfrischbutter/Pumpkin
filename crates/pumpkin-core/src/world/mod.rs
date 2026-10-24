@@ -5044,7 +5044,10 @@ impl World {
         let Some(server) = self.server.upgrade() else {
             return true;
         };
-        if !server.plugin_manager.has_handlers::<ProjectileLaunchEvent>() {
+        if !server
+            .plugin_manager
+            .has_handlers::<ProjectileLaunchEvent>()
+        {
             return true;
         }
 
