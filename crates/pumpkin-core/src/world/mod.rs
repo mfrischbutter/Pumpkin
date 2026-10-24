@@ -4244,6 +4244,18 @@ impl World {
         if !keep_inventory {
             player.set_experience(0, 0.0, 0);
             player.inventory.clear();
+            let kept = std::mem::take(
+                &mut *player
+                    .kept_on_death
+                    .lock()
+                    .unwrap_or_else(std::sync::PoisonError::into_inner),
+            );
+            for mut stack in kept {
+                player.inventory.insert_stack_anywhere(&mut stack);
+                if !stack.is_empty() {
+                    target_world.drop_stack(&position.to_block_pos(), stack);
+                }
+            }
         }
 
         // Set entity position BEFORE loading chunks, so chunks load at the right location
