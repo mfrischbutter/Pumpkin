@@ -1,9 +1,10 @@
 use std::sync::Arc;
+use tokio::sync::Mutex;
 
 use crate::{
     events::{
-        ToFromWasmEvent, cleanup_event, consume_entity, consume_world, from_wasm_block_position,
-        to_wasm_block_position,
+        ToFromWasmEvent, cleanup_event, consume_world, consume_item_stack,
+        from_wasm_block_position, to_wasm_block_position,
     },
     pumpkin::plugin::event::{
         ChunkLoadEventData, ChunkSaveEventData, ChunkSendEventData, Event, SpawnChangeEventData,
@@ -526,28 +527,56 @@ impl ToFromWasmEvent for pumpkin_core::plugin::api::events::world::generic_game:
 impl ToFromWasmEvent
     for pumpkin_core::plugin::api::events::world::loot_generate::LootGenerateEvent
 {
-    fn to_wasm_event(&self, _state: &mut PluginHostState) -> Event {
+    fn to_wasm_event(&self, state: &mut PluginHostState) -> Event {
+        let target_world = state
+            .add(self.world.clone())
+            .expect("failed to add world resource");
+        let entity = self.entity.as_ref().map(|entity| {
+            state
+                .add(entity.clone())
+                .expect("failed to add entity resource")
+        });
+        let player = self
+            .player
+            .as_ref()
+            .map(|p| state.add(p.clone()).expect("failed to add player resource"));
+        let items = self
+            .items
+            .iter()
+            .map(|i| {
+                state
+                    .add(Arc::new(Mutex::new(i.clone())))
+                    .expect("failed to add item stack resource")
+            })
+            .collect();
         Event::LootGenerateEvent(crate::pumpkin::plugin::event::LootGenerateEventData {
             loot_table: self.loot_table.clone(),
+            target_world,
+            block_pos: self.block_pos.map(to_wasm_block_position),
+            entity,
+            player,
+            items,
             cancelled: self.cancelled,
         })
     }
 
     fn from_wasm_event(event: Event, _state: &mut PluginHostState) -> Self {
         match event {
-            Event::LootGenerateEvent(data) => Self {
-                loot_table: data.loot_table,
-                cancelled: data.cancelled,
-            },
+            Event::LootGenerateEvent(_) => panic!("Cannot construct LootGenerateEvent from WASM"),
             _ => panic!("unexpected event type"),
         }
     }
 
     fn apply_wasm_event(&mut self, event: Event, state: &mut PluginHostState) {
-        cleanup_event(&event, state);
-        if let Event::LootGenerateEvent(data) = event {
+        if let Event::LootGenerateEvent(data) = &event {
+            self.items = data
+                .items
+                .iter()
+                .map(|stack| consume_item_stack(state, stack))
+                .collect();
             self.cancelled = data.cancelled;
         }
+        cleanup_event(&event, state);
     }
 }
 

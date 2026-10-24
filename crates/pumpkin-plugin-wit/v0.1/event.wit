@@ -1716,6 +1716,11 @@ interface event {
 
     record loot-generate-event-data {
         loot-table: string,
+        target-world: %world,
+        block-pos: option<block-pos>,
+        entity: option<entity>,
+        player: option<player>,
+        items: list<item-stack>,
         cancelled: bool
     }
 
