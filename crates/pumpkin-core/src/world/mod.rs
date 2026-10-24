@@ -535,7 +535,7 @@ impl World {
             .unwrap_or_default()
     }
 
-    /// Get the world folder name (e.g., `world`, `world_nether`, `world_the_end`).
+    /// Get the level folder name (e.g., `world`), shared by all dimensions of the level.
     /// Falls back to "world" if the name cannot be determined.
     pub fn get_world_name(&self) -> &str {
         self.level
