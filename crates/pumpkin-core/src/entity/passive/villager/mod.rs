@@ -601,7 +601,9 @@ impl VillagerEntity {
 
     fn create_explorer_map(&self, destination: &str, given: &ItemStack) -> Option<ItemStack> {
         use pumpkin_data::data_component::DataComponent;
-        use pumpkin_data::data_component_impl::{DataComponentImpl, ItemNameImpl, MapIdImpl};
+        use pumpkin_data::data_component_impl::{
+            DataComponentImpl, ItemNameImpl, ItemNameText, MapIdImpl,
+        };
         use pumpkin_data::structures::StructureSet;
         use pumpkin_world::generation::generator::structure_finder::find_nearest_structure_start;
 
@@ -642,7 +644,12 @@ impl VillagerEntity {
             let mut stack = ItemStack::new(1, &Item::FILLED_MAP);
             stack.patch.push((
                 DataComponent::ItemName,
-                Some(ItemNameImpl { name: name.into() }.to_dyn()),
+                Some(
+                    ItemNameImpl {
+                        name: ItemNameText::key(name),
+                    }
+                    .to_dyn(),
+                ),
             ));
             stack
         } else {

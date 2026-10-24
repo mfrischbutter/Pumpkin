@@ -228,8 +228,8 @@ mod tests {
     use pumpkin_data::{
         data_component::DataComponent,
         data_component_impl::{
-            DataComponentImpl, DyedColorImpl, ItemNameImpl, MapIdImpl, SuspiciousStewEffect,
-            SuspiciousStewEffectsImpl,
+            DataComponentImpl, DyedColorImpl, ItemNameImpl, ItemNameText, MapIdImpl,
+            SuspiciousStewEffect, SuspiciousStewEffectsImpl,
         },
         item::Item,
         item_stack::ItemStack,
@@ -324,7 +324,7 @@ mod tests {
             DataComponent::ItemName,
             Some(
                 ItemNameImpl {
-                    name: Cow::Borrowed("filled_map.mansion"),
+                    name: ItemNameText::key("filled_map.mansion"),
                 }
                 .to_dyn(),
             ),
