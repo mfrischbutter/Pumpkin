@@ -3126,7 +3126,10 @@ impl Player {
         let Some(server) = world.server.upgrade() else {
             return;
         };
-        if !server.plugin_manager.has_handlers::<PlayerArmorChangeEvent>() {
+        if !server
+            .plugin_manager
+            .has_handlers::<PlayerArmorChangeEvent>()
+        {
             return;
         }
         let Some(player) = world.get_player_by_uuid(self.gameprofile.id) else {
