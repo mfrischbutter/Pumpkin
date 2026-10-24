@@ -50,7 +50,9 @@ pub fn biome_network_id(id: &str) -> Option<u8> {
     if !biomes.contains(id) {
         return None;
     }
-    let index = biomes.range::<str, _>(..id).count();
+    let index = biomes
+        .range::<str, _>((std::ops::Bound::Unbounded, std::ops::Bound::Excluded(id)))
+        .count();
     u8::try_from(Biome::ALL.len() + index).ok()
 }
 
