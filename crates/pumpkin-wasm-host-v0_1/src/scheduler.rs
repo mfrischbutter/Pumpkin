@@ -72,7 +72,9 @@ impl scheduler::Host for PluginHostState {
             .clone()
             .ok_or_else(|| wasmtime::Error::msg("Server not found"))?;
         let (Some(worker), Some(_)) = (&plugin.worker, self.worker_job_result_handler) else {
-            return Ok(Err(format!("the plugin does not export `{WORKER_INTERFACE}`")));
+            return Ok(Err(format!(
+                "the plugin does not export `{WORKER_INTERFACE}`"
+            )));
         };
         let weak_plugin = Arc::downgrade(&plugin);
         Ok(worker.submit(
@@ -113,9 +115,10 @@ async fn deliver_job_result(
                     .call_func::<JobResultParams, ()>(handler, (job_id, server_resource, outcome))
                     .await;
                 guest.with(|mut store| {
-                    let _ = store.data_mut().resource_table.delete::<Arc<Server>>(
-                        Resource::new_own(server_rep),
-                    );
+                    let _ = store
+                        .data_mut()
+                        .resource_table
+                        .delete::<Arc<Server>>(Resource::new_own(server_rep));
                 });
                 result
             })

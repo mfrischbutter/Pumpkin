@@ -381,7 +381,10 @@ fn prepare_worker(
         .and_then(|linker| PluginWorker::new(&linker, component, interface));
     match worker {
         Ok(worker) => {
-            tracing::debug!(wasm_plugin = plugin_name, "Prepared Wasm plugin worker instances");
+            tracing::debug!(
+                wasm_plugin = plugin_name,
+                "Prepared Wasm plugin worker instances"
+            );
             Some(worker)
         }
         Err(error) => {

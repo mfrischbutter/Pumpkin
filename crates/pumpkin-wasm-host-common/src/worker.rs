@@ -81,7 +81,11 @@ impl PluginWorker {
     pub fn is_exported_by(component: &Component, interface: &str) -> bool {
         component
             .get_export_index(None, interface)
-            .is_some_and(|exports| component.get_export_index(Some(&exports), RUN_JOB).is_some())
+            .is_some_and(|exports| {
+                component
+                    .get_export_index(Some(&exports), RUN_JOB)
+                    .is_some()
+            })
     }
 
     /// Prepares worker instances of `component`.
