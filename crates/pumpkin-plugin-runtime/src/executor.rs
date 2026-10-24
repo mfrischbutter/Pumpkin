@@ -1040,6 +1040,19 @@ impl<T> StoreExecutor<T, LegacySyncReentry>
 where
     T: Send + 'static,
 {
+    /// Whether a guest call of this Store is active in the current causal chain. A guest call
+    /// started from here would wait on that call unless it is pumping callbacks.
+    ///
+    /// Reads the chain from the task-local context, so it sees calls of sequential Stores.
+    #[must_use]
+    pub fn is_active_in_current_chain(&self) -> bool {
+        self.handle
+            .shared
+            .policy
+            .inherited_context()
+            .is_some_and(|context| self.handle.shared.reentry.has_active_context(context))
+    }
+
     /// Stops admission, drains accepted work, runs one final Store operation,
     /// drains Wasmtime tasks, and drops the Store.
     pub async fn shutdown<R, F>(&self, call: F) -> wasmtime::Result<R>
