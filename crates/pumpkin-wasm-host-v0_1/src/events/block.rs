@@ -456,8 +456,18 @@ impl ToFromWasmEvent for BlockPistonExtendEvent {
             block_pos: to_wasm_block_position(self.block_pos),
             direction: self.direction.clone(),
             target_world,
-            blocks: self.blocks.iter().copied().map(to_wasm_block_position).collect(),
-            broken: self.broken.iter().copied().map(to_wasm_block_position).collect(),
+            blocks: self
+                .blocks
+                .iter()
+                .copied()
+                .map(to_wasm_block_position)
+                .collect(),
+            broken: self
+                .broken
+                .iter()
+                .copied()
+                .map(to_wasm_block_position)
+                .collect(),
             cancelled: self.cancelled,
         })
     }
@@ -468,8 +478,16 @@ impl ToFromWasmEvent for BlockPistonExtendEvent {
                 world: consume_world(state, &data.target_world),
                 block_pos: from_wasm_block_position(data.block_pos),
                 direction: data.direction,
-                blocks: data.blocks.into_iter().map(from_wasm_block_position).collect(),
-                broken: data.broken.into_iter().map(from_wasm_block_position).collect(),
+                blocks: data
+                    .blocks
+                    .into_iter()
+                    .map(from_wasm_block_position)
+                    .collect(),
+                broken: data
+                    .broken
+                    .into_iter()
+                    .map(from_wasm_block_position)
+                    .collect(),
                 cancelled: data.cancelled,
             },
             _ => panic!("unexpected event type"),
@@ -486,8 +504,18 @@ impl ToFromWasmEvent for BlockPistonRetractEvent {
             block_pos: to_wasm_block_position(self.block_pos),
             direction: self.direction.clone(),
             target_world,
-            blocks: self.blocks.iter().copied().map(to_wasm_block_position).collect(),
-            broken: self.broken.iter().copied().map(to_wasm_block_position).collect(),
+            blocks: self
+                .blocks
+                .iter()
+                .copied()
+                .map(to_wasm_block_position)
+                .collect(),
+            broken: self
+                .broken
+                .iter()
+                .copied()
+                .map(to_wasm_block_position)
+                .collect(),
             cancelled: self.cancelled,
         })
     }
@@ -498,8 +526,16 @@ impl ToFromWasmEvent for BlockPistonRetractEvent {
                 world: consume_world(state, &data.target_world),
                 block_pos: from_wasm_block_position(data.block_pos),
                 direction: data.direction,
-                blocks: data.blocks.into_iter().map(from_wasm_block_position).collect(),
-                broken: data.broken.into_iter().map(from_wasm_block_position).collect(),
+                blocks: data
+                    .blocks
+                    .into_iter()
+                    .map(from_wasm_block_position)
+                    .collect(),
+                broken: data
+                    .broken
+                    .into_iter()
+                    .map(from_wasm_block_position)
+                    .collect(),
                 cancelled: data.cancelled,
             },
             _ => panic!("unexpected event type"),
