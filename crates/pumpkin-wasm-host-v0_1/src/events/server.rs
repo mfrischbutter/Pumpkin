@@ -19,7 +19,7 @@ use pumpkin_core::plugin::server::{
     server_tick_end::ServerTickEndEvent,
     server_tick_start::ServerTickStartEvent,
 };
-use pumpkin_wasm_host_common::state::PluginHostState;
+use pumpkin_wasm_host_common::{plugin::WasmPlugin, state::PluginHostState};
 
 impl ToFromWasmEvent for PacketReceivedEvent {
     fn to_wasm_event(&self, state: &mut PluginHostState) -> Event {
@@ -110,6 +110,11 @@ impl ToFromWasmEvent for PacketSentEvent {
             self.cancelled = data.cancelled;
         }
     }
+
+    fn wanted_by(&self, plugin: &WasmPlugin) -> bool {
+        plugin.wants_packet_sent(self.packet_id)
+    }
+
     fn from_wasm_event(event: Event, _state: &mut PluginHostState) -> Self {
         match event {
             Event::PacketSentEvent(_) => {

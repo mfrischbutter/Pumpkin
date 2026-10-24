@@ -1,4 +1,8 @@
-use std::{any::Any, sync::Arc};
+use std::{
+    any::Any,
+    collections::HashSet,
+    sync::{Arc, PoisonError, RwLock},
+};
 use thiserror::Error;
 
 use crate::{concurrent_store::LegacyStore, scheduler::TaskScheduler};
@@ -106,6 +110,8 @@ pub struct WasmPlugin {
     pub api_version: PluginApiVersion,
     pub store: LegacyStore,
     pub task_scheduler: Arc<TaskScheduler>,
+    /// Packet ids this plugin's `packet-sent-event` handlers get, `None` for all of them.
+    pub packet_sent_filter: RwLock<Option<HashSet<i32>>>,
 }
 
 impl WasmPlugin {
@@ -118,6 +124,27 @@ impl WasmPlugin {
         self.plugin_instance
             .downcast_ref()
             .unwrap_or_else(|| panic!("Unexpected plugin version in host path."))
+    }
+
+    /// Whether this plugin's `packet-sent-event` handlers get packets with `packet_id`.
+    #[must_use]
+    pub fn wants_packet_sent(&self, packet_id: i32) -> bool {
+        self.packet_sent_filter
+            .read()
+            .unwrap_or_else(PoisonError::into_inner)
+            .as_ref()
+            .is_none_or(|ids| ids.contains(&packet_id))
+    }
+
+    /// Limits this plugin's `packet-sent-event` handlers to `ids`; an empty list removes the
+    /// limit.
+    pub fn set_packet_sent_filter(&self, ids: Vec<i32>) {
+        let filter = (!ids.is_empty()).then(|| ids.into_iter().collect());
+        let mut guard = self
+            .packet_sent_filter
+            .write()
+            .unwrap_or_else(PoisonError::into_inner);
+        *guard = filter;
     }
 }
 
