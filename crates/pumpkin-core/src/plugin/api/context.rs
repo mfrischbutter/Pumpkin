@@ -337,6 +337,27 @@ impl Context {
         self.permission_manager.register_permission(permission)
     }
 
+    /// Registers a loot table from its JSON definition, like a datapack's
+    /// `data/<namespace>/loot_table/<path>.json`. It replaces a vanilla table with the same id,
+    /// while a datapack table with the same id still wins. It stays registered across `/reload`
+    /// until the plugin unloads.
+    pub fn register_loot_table(&self, id: &str, json: &str) -> Result<(), String> {
+        let table = crate::data::datapack::loot_table_loader::parse_loot_table(json)
+            .ok_or_else(|| format!("Loot table {id} is not valid loot table JSON"))?;
+        self.server.datapack_manager.insert_plugin_loot_table(
+            &self.metadata.name,
+            id,
+            Arc::new(table),
+        );
+        Ok(())
+    }
+
+    pub(crate) fn unregister_loot_tables(&self) {
+        self.server
+            .datapack_manager
+            .remove_plugin_loot_tables(&self.metadata.name);
+    }
+
     /// Check if a player has a permission
     #[must_use]
     pub fn player_has_permission(&self, player_uuid: &uuid::Uuid, permission: &str) -> bool {
