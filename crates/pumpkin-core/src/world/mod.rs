@@ -4546,7 +4546,8 @@ impl World {
         }
 
         if collect_loaded {
-            self.load_entities(Vector2::new(chunk.x, chunk.z), loaded).await;
+            self.load_entities(Vector2::new(chunk.x, chunk.z), loaded)
+                .await;
         }
     }
 
