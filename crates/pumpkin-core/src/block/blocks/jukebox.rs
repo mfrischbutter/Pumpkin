@@ -11,7 +11,7 @@ use crate::entity::item::ItemEntity;
 use crate::world::World;
 use pumpkin_data::data_component_impl::JukeboxPlayableImpl;
 use pumpkin_data::entity::EntityType;
-use pumpkin_data::jukebox_song::JukeboxSong;
+use pumpkin_data::jukebox_song_registry::get_jukebox_song;
 use pumpkin_data::world::WorldEvent;
 use pumpkin_data::{Block, BlockStateId, block_properties::JukeboxLikeProperties};
 use pumpkin_macros::pumpkin_block;
@@ -122,12 +122,8 @@ impl BlockBehaviour for JukeboxBlock {
             return BlockActionResult::PassToDefaultBlockAction;
         };
 
-        let Some(song_name) = jukebox_playable.split(':').nth(1) else {
-            return BlockActionResult::PassToDefaultBlockAction;
-        };
-
-        let Some(jukebox_song) = JukeboxSong::from_name(song_name) else {
-            error!("Jukebox playable song not registered: {song_name}");
+        let Some(jukebox_song) = get_jukebox_song(&jukebox_playable) else {
+            error!("Jukebox playable song not registered: {jukebox_playable}");
             return BlockActionResult::PassToDefaultBlockAction;
         };
 
@@ -140,14 +136,14 @@ impl BlockBehaviour for JukeboxBlock {
         {
             jukebox_entity.set_record(record);
             // Start tracking playback with song duration
-            jukebox_entity.start_playing(jukebox_song.length_in_ticks());
+            jukebox_entity.start_playing(jukebox_song.length_in_ticks);
         }
 
         // Update block state to has_record = true
         Self::set_record_state(true, args.block, args.position, world);
 
         // Start playing the music (client-side audio)
-        Self::start_playing(args.position, world, jukebox_song.get_id());
+        Self::start_playing(args.position, world, jukebox_song.network_id);
 
         args.player.increment_stat(
             pumpkin_data::statistic::StatisticCategory::Custom,
@@ -202,10 +198,9 @@ impl BlockBehaviour for JukeboxBlock {
             let record = jukebox_entity.get_record();
             // Get the song from the record's jukebox_playable component
             if let Some(playable) = record.get_data_component::<JukeboxPlayableImpl>()
-                && let Some(song_name) = playable.song.rsplit(':').next()
-                && let Some(song) = JukeboxSong::from_name(song_name)
+                && let Some(song) = get_jukebox_song(&playable.song)
             {
-                return Some(song.comparator_output());
+                return Some(song.comparator_output);
             }
         }
         Some(0)

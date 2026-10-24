@@ -5,6 +5,7 @@ interface context {
     use command.{command};
     use permission.{permission};
     use common.{nbt-tree};
+    use text.{text-component};
 
     /// Verified marketplace metadata for signed plugins.
     record marketplace-metadata {
@@ -60,6 +61,17 @@ interface context {
         /// while the plugin loads. The entry is removed when the plugin unloads. Registries the
         /// server simulates itself (damage types, enchantments, jukebox songs, biomes) are refused.
         register-registry-entry: func(registry: string, id: string, data: nbt-tree) -> result<_, string>;
+
+        /// Registers a jukebox song. Jukeboxes play discs whose `jukebox_playable` component
+        /// names `id`, for `length-seconds`, with `comparator-output` (0 to 15) as the comparator
+        /// signal; clients show `description` while it plays and in the disc's tooltip.
+        ///
+        /// * `id`: The namespaced song id. The `minecraft` namespace is refused.
+        /// * `sound-event`: The sound to play, e.g. a sound from a resource pack.
+        ///
+        /// Like `register-registry-entry`, players receive the song from their next
+        /// configuration on, and it is removed when the plugin unloads.
+        register-jukebox-song: func(id: string, sound-event: string, description: text-component, length-seconds: f32, comparator-output: u8) -> result<_, string>;
 
         /// Returns the path to the plugin's private data folder.
         get-data-folder: func() -> string;
