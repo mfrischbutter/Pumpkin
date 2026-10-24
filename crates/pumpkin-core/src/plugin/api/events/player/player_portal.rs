@@ -19,6 +19,18 @@ pub struct PlayerPortalEvent {
     pub to_pos: Option<BlockPos>,
 }
 
+impl PlayerPortalEvent {
+    #[must_use]
+    pub const fn new(player: Arc<Player>, from_pos: BlockPos, to_pos: Option<BlockPos>) -> Self {
+        Self {
+            player,
+            from_pos,
+            to_pos,
+            cancelled: false,
+        }
+    }
+}
+
 impl PlayerEvent for PlayerPortalEvent {
     fn get_player(&self) -> &Arc<Player> {
         &self.player
