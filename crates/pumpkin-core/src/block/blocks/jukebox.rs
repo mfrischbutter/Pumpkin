@@ -115,7 +115,7 @@ impl BlockBehaviour for JukeboxBlock {
         // Vanilla: JukeboxPlayableComponent lv = stack.get(DataComponentTypes.JUKEBOX_PLAYABLE)
         let jukebox_playable = item_stack
             .get_data_component::<JukeboxPlayableImpl>()
-            .map(|i| i.song);
+            .map(|i| i.song.clone());
 
         // Vanilla: if (lv == null) return PASS_TO_DEFAULT_BLOCK_ACTION
         let Some(jukebox_playable) = jukebox_playable else {

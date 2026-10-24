@@ -111,6 +111,35 @@ impl JukeboxSong {
             Self::Ward => 21u32,
         }
     }
+    #[doc = r" Returns the `JukeboxSong` with the given numeric ID."]
+    #[must_use]
+    pub const fn from_id(id: u32) -> Option<Self> {
+        match id {
+            0u32 => Some(Self::Id11),
+            1u32 => Some(Self::Id13),
+            2u32 => Some(Self::Id5),
+            3u32 => Some(Self::Blocks),
+            4u32 => Some(Self::Bounce),
+            5u32 => Some(Self::Cat),
+            6u32 => Some(Self::Chirp),
+            7u32 => Some(Self::Creator),
+            8u32 => Some(Self::CreatorMusicBox),
+            9u32 => Some(Self::Far),
+            10u32 => Some(Self::LavaChicken),
+            11u32 => Some(Self::Mall),
+            12u32 => Some(Self::Mellohi),
+            13u32 => Some(Self::Otherside),
+            14u32 => Some(Self::Pigstep),
+            15u32 => Some(Self::Precipice),
+            16u32 => Some(Self::Relic),
+            17u32 => Some(Self::Stal),
+            18u32 => Some(Self::Strad),
+            19u32 => Some(Self::Tears),
+            20u32 => Some(Self::Wait),
+            21u32 => Some(Self::Ward),
+            _ => None,
+        }
+    }
     #[doc = r" Returns the comparator output value (0-15) for this song."]
     #[must_use]
     pub const fn comparator_output(&self) -> u8 {

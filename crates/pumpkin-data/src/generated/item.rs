@@ -67949,7 +67949,7 @@ impl Item {
             (
                 JukeboxPlayable,
                 &JukeboxPlayableImpl {
-                    song: "minecraft:11",
+                    song: Cow::Borrowed("minecraft:11"),
                 },
             ),
             (
@@ -68023,7 +68023,7 @@ impl Item {
             (
                 JukeboxPlayable,
                 &JukeboxPlayableImpl {
-                    song: "minecraft:13",
+                    song: Cow::Borrowed("minecraft:13"),
                 },
             ),
             (
@@ -68097,7 +68097,7 @@ impl Item {
             (
                 JukeboxPlayable,
                 &JukeboxPlayableImpl {
-                    song: "minecraft:5",
+                    song: Cow::Borrowed("minecraft:5"),
                 },
             ),
             (
@@ -68171,7 +68171,7 @@ impl Item {
             (
                 JukeboxPlayable,
                 &JukeboxPlayableImpl {
-                    song: "minecraft:blocks",
+                    song: Cow::Borrowed("minecraft:blocks"),
                 },
             ),
             (
@@ -68245,7 +68245,7 @@ impl Item {
             (
                 JukeboxPlayable,
                 &JukeboxPlayableImpl {
-                    song: "minecraft:bounce",
+                    song: Cow::Borrowed("minecraft:bounce"),
                 },
             ),
             (
@@ -68319,7 +68319,7 @@ impl Item {
             (
                 JukeboxPlayable,
                 &JukeboxPlayableImpl {
-                    song: "minecraft:cat",
+                    song: Cow::Borrowed("minecraft:cat"),
                 },
             ),
             (
@@ -68393,7 +68393,7 @@ impl Item {
             (
                 JukeboxPlayable,
                 &JukeboxPlayableImpl {
-                    song: "minecraft:chirp",
+                    song: Cow::Borrowed("minecraft:chirp"),
                 },
             ),
             (
@@ -68467,7 +68467,7 @@ impl Item {
             (
                 JukeboxPlayable,
                 &JukeboxPlayableImpl {
-                    song: "minecraft:creator",
+                    song: Cow::Borrowed("minecraft:creator"),
                 },
             ),
             (
@@ -68541,7 +68541,7 @@ impl Item {
             (
                 JukeboxPlayable,
                 &JukeboxPlayableImpl {
-                    song: "minecraft:creator_music_box",
+                    song: Cow::Borrowed("minecraft:creator_music_box"),
                 },
             ),
             (
@@ -68615,7 +68615,7 @@ impl Item {
             (
                 JukeboxPlayable,
                 &JukeboxPlayableImpl {
-                    song: "minecraft:far",
+                    song: Cow::Borrowed("minecraft:far"),
                 },
             ),
             (
@@ -68689,7 +68689,7 @@ impl Item {
             (
                 JukeboxPlayable,
                 &JukeboxPlayableImpl {
-                    song: "minecraft:lava_chicken",
+                    song: Cow::Borrowed("minecraft:lava_chicken"),
                 },
             ),
             (
@@ -68763,7 +68763,7 @@ impl Item {
             (
                 JukeboxPlayable,
                 &JukeboxPlayableImpl {
-                    song: "minecraft:mall",
+                    song: Cow::Borrowed("minecraft:mall"),
                 },
             ),
             (
@@ -68837,7 +68837,7 @@ impl Item {
             (
                 JukeboxPlayable,
                 &JukeboxPlayableImpl {
-                    song: "minecraft:mellohi",
+                    song: Cow::Borrowed("minecraft:mellohi"),
                 },
             ),
             (
@@ -68911,7 +68911,7 @@ impl Item {
             (
                 JukeboxPlayable,
                 &JukeboxPlayableImpl {
-                    song: "minecraft:otherside",
+                    song: Cow::Borrowed("minecraft:otherside"),
                 },
             ),
             (
@@ -68985,7 +68985,7 @@ impl Item {
             (
                 JukeboxPlayable,
                 &JukeboxPlayableImpl {
-                    song: "minecraft:pigstep",
+                    song: Cow::Borrowed("minecraft:pigstep"),
                 },
             ),
             (
@@ -69059,7 +69059,7 @@ impl Item {
             (
                 JukeboxPlayable,
                 &JukeboxPlayableImpl {
-                    song: "minecraft:precipice",
+                    song: Cow::Borrowed("minecraft:precipice"),
                 },
             ),
             (
@@ -69133,7 +69133,7 @@ impl Item {
             (
                 JukeboxPlayable,
                 &JukeboxPlayableImpl {
-                    song: "minecraft:relic",
+                    song: Cow::Borrowed("minecraft:relic"),
                 },
             ),
             (
@@ -69207,7 +69207,7 @@ impl Item {
             (
                 JukeboxPlayable,
                 &JukeboxPlayableImpl {
-                    song: "minecraft:stal",
+                    song: Cow::Borrowed("minecraft:stal"),
                 },
             ),
             (
@@ -69281,7 +69281,7 @@ impl Item {
             (
                 JukeboxPlayable,
                 &JukeboxPlayableImpl {
-                    song: "minecraft:strad",
+                    song: Cow::Borrowed("minecraft:strad"),
                 },
             ),
             (
@@ -69355,7 +69355,7 @@ impl Item {
             (
                 JukeboxPlayable,
                 &JukeboxPlayableImpl {
-                    song: "minecraft:tears",
+                    song: Cow::Borrowed("minecraft:tears"),
                 },
             ),
             (
@@ -69429,7 +69429,7 @@ impl Item {
             (
                 JukeboxPlayable,
                 &JukeboxPlayableImpl {
-                    song: "minecraft:wait",
+                    song: Cow::Borrowed("minecraft:wait"),
                 },
             ),
             (
@@ -69503,7 +69503,7 @@ impl Item {
             (
                 JukeboxPlayable,
                 &JukeboxPlayableImpl {
-                    song: "minecraft:ward",
+                    song: Cow::Borrowed("minecraft:ward"),
                 },
             ),
             (
