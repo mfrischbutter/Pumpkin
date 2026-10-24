@@ -365,6 +365,10 @@ interface event {
         cancelled: bool
     }
 
+    /// A packet on its way to a player. A blocking handler can cancel it or change `packet-id`
+    /// and `raw-payload`. Packets a plugin sends itself are not reported to it: nothing sent
+    /// while one of its own calls is running (its host calls and what they trigger) reaches its
+    /// handlers. See also `context.set-packet-sent-filter`.
     record packet-sent-event-data {
         player: player,
         packet: clientbound-packet,

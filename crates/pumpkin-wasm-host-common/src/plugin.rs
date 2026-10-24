@@ -126,14 +126,18 @@ impl WasmPlugin {
             .unwrap_or_else(|| panic!("Unexpected plugin version in host path."))
     }
 
-    /// Whether this plugin's `packet-sent-event` handlers get packets with `packet_id`.
+    /// Whether this plugin's `packet-sent-event` handlers get packets with `packet_id`. Never
+    /// while one of the plugin's own calls is running: a packet its host call sends would fire
+    /// the event back into that call, which waits for the host call to return.
     #[must_use]
     pub fn wants_packet_sent(&self, packet_id: i32) -> bool {
-        self.packet_sent_filter
+        let listed = self
+            .packet_sent_filter
             .read()
             .unwrap_or_else(PoisonError::into_inner)
             .as_ref()
-            .is_none_or(|ids| ids.contains(&packet_id))
+            .is_none_or(|ids| ids.contains(&packet_id));
+        listed && !self.store.is_active_in_current_chain()
     }
 
     /// Limits this plugin's `packet-sent-event` handlers to `ids`; an empty list removes the
