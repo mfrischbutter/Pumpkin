@@ -3,7 +3,7 @@ use tokio::sync::Mutex;
 
 use crate::{
     events::{
-        ToFromWasmEvent, cleanup_event, consume_world, consume_item_stack,
+        ToFromWasmEvent, cleanup_event, consume_entity, consume_item_stack, consume_world,
         from_wasm_block_position, to_wasm_block_position,
     },
     pumpkin::plugin::event::{
