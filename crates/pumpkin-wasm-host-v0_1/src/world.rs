@@ -1090,6 +1090,27 @@ impl pumpkin::plugin::world::HostWorld for PluginHostState {
         Ok(())
     }
 
+    fn set_client_biome(
+        &mut self,
+        world: Resource<World>,
+        pos: WitBlockPos,
+        biome: String,
+    ) -> wasmtime::Result<Result<(), String>> {
+        let world = self.get(&world)?;
+        let owner = self.name.as_deref().unwrap_or_default();
+        Ok(world.set_client_biome(&BlockPos::new(pos.x, pos.y, pos.z), &biome, owner))
+    }
+
+    fn clear_client_biome(
+        &mut self,
+        world: Resource<World>,
+        pos: WitBlockPos,
+    ) -> wasmtime::Result<()> {
+        self.get(&world)?
+            .clear_client_biome(&BlockPos::new(pos.x, pos.y, pos.z));
+        Ok(())
+    }
+
     fn get_entities(
         &mut self,
         world: Resource<World>,

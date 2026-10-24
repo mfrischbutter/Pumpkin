@@ -1004,6 +1004,24 @@ interface %world {
         /// to every player who has them loaded.
         refresh-biomes: func(chunks: list<tuple<s32, s32>>);
 
+        /// Shows players `biome` in the 4x4x4 biome cell that contains `pos`, instead of the
+        /// biome stored there. `biome` is a vanilla biome or one registered with
+        /// `context.register-biome`, by its namespaced id (`minecraft:` may be left out).
+        ///
+        /// Only what players see changes: the stored biome, saves and gameplay stay as they
+        /// are. The cell is never saved and is forgotten when its chunk unloads, so set it
+        /// again after the chunk loads (`chunk-load-event`). Players see it from the next time
+        /// the chunk is sent to them; call `refresh-biomes` for chunks they already have. The
+        /// cells a plugin set are cleared, and resent, when it unloads.
+        ///
+        /// Fails when the biome is unknown, the chunk is not loaded or the position lies
+        /// outside the world's height.
+        set-client-biome: func(pos: block-pos, biome: string) -> result<_, string>;
+
+        /// Shows players the stored biome again in the biome cell that contains `pos`. Call
+        /// `refresh-biomes` afterwards for chunks players already have.
+        clear-client-biome: func(pos: block-pos);
+
         /// Spawns an entity of the specified type at the given position.
         spawn-entity: func(entity-type: entity-type, pos: position) -> entity;
 

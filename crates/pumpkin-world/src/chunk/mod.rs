@@ -1,3 +1,4 @@
+use crate::chunk::client_biomes::{BiomeCell, ClientBiome, ClientBiomes};
 use crate::chunk::format::LightContainer;
 use crate::tick::scheduler::ChunkTickScheduler;
 use palette::{BiomePalette, BlockPalette, has_random_ticking_fluid, is_randomly_ticking};
@@ -15,6 +16,7 @@ use std::sync::atomic::AtomicBool;
 use std::sync::atomic::AtomicU64;
 use thiserror::Error;
 
+pub mod client_biomes;
 pub mod format;
 pub mod io;
 pub mod palette;
@@ -109,6 +111,8 @@ pub struct ChunkSections {
     pub random_tick_sections: RwLock<Option<Box<[RandomTickSectionCache]>>>,
     pub randomly_ticking_mask: std::sync::atomic::AtomicU32,
     pub biome_sections: RwLock<Box<[BiomePalette]>>,
+    /// Biome cells players are shown differently from `biome_sections`; never saved.
+    pub client_biomes: ClientBiomes,
     pub min_y: i32,
 }
 
@@ -367,6 +371,7 @@ impl ChunkSections {
             random_tick_sections: RwLock::new(random_tick_sections),
             randomly_ticking_mask: std::sync::atomic::AtomicU32::new(randomly_ticking_mask),
             biome_sections: RwLock::new(biome_sections),
+            client_biomes: ClientBiomes::default(),
             min_y,
         }
     }
@@ -392,6 +397,7 @@ impl ChunkSections {
             random_tick_sections: RwLock::new(random_tick_sections),
             randomly_ticking_mask: std::sync::atomic::AtomicU32::new(randomly_ticking_mask),
             biome_sections: RwLock::new(biome_sections),
+            client_biomes: ClientBiomes::default(),
             min_y,
         }
     }
@@ -507,6 +513,47 @@ impl ChunkSections {
             }
         }
         found
+    }
+
+    /// Shows players `biome` instead of the stored biome in the 4x4x4 cell containing an
+    /// absolute Y, see [`ClientBiomes`]. Returns false when Y lies outside the chunk.
+    #[must_use]
+    pub fn set_client_biome_absolute_y(
+        &self,
+        relative_x: usize,
+        y: i32,
+        relative_z: usize,
+        biome: ClientBiome,
+    ) -> bool {
+        let Some(cell) = self.biome_cell_absolute_y(relative_x, y, relative_z) else {
+            return false;
+        };
+        self.client_biomes.set(cell, biome);
+        true
+    }
+
+    /// Shows players the stored biome again in the cell containing an absolute Y.
+    pub fn clear_client_biome_absolute_y(&self, relative_x: usize, y: i32, relative_z: usize) {
+        if let Some(cell) = self.biome_cell_absolute_y(relative_x, y, relative_z) {
+            self.client_biomes.clear(cell);
+        }
+    }
+
+    const fn biome_cell_absolute_y(
+        &self,
+        relative_x: usize,
+        y: i32,
+        relative_z: usize,
+    ) -> Option<BiomeCell> {
+        let y = y - self.min_y;
+        if y < 0 {
+            return None;
+        }
+        let cell_y = y as usize / BiomePalette::SIZE;
+        if cell_y / BiomePalette::SIZE >= self.count {
+            return None;
+        }
+        Some(((relative_x >> 2) & 3, cell_y, (relative_z >> 2) & 3))
     }
 
     /// Gets the given block in the chunk

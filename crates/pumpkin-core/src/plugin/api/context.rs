@@ -506,6 +506,13 @@ impl Context {
         }
     }
 
+    /// Clears the client biomes this plugin set in every world.
+    pub(crate) fn clear_client_biomes(&self) {
+        for world in self.server.worlds.load().iter() {
+            world.clear_client_biomes_of(&self.metadata.name);
+        }
+    }
+
     /// Check if a player has a permission
     #[must_use]
     pub fn player_has_permission(&self, player_uuid: &uuid::Uuid, permission: &str) -> bool {

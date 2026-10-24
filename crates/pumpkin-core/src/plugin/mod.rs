@@ -653,6 +653,7 @@ impl PluginManager {
                     // Handle initialization failure
                     let error_msg = format!("Initialization failed: {e}");
                     context.unregister_registry_entries().await;
+                    context.clear_client_biomes();
                     let _ = instance.on_unload(context).await;
 
                     // Get the loader data before removing the plugin
@@ -1115,6 +1116,7 @@ impl PluginManager {
         plugin.context.unregister_loot_tables();
         plugin.context.server.set_login_resource_packs(name, &[]);
         plugin.context.unregister_registry_entries().await;
+        plugin.context.clear_client_biomes();
 
         if let Some(instance) = plugin.instance.take() {
             instance.on_unload(plugin.context.clone()).await.ok();
