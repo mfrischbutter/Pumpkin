@@ -380,6 +380,10 @@ pub const DATA_VERSION: i32 = 5023; // 26.3
 /// must apply the same gating.
 pub const MINE_BLOCK_EXHAUSTION: f32 = 0.005; // Vanilla: 0.005F
 
+/// Vanilla `Player.DEFAULT_VEHICLE_ATTACHMENT`: the point of a player that sits on a vehicle's
+/// passenger attachment point, so a riding player is placed this far below it.
+pub const DEFAULT_VEHICLE_ATTACHMENT: Vector3<f64> = Vector3::new(0.0, 0.6, 0.0);
+
 const fn bedrock_inventory_slot(player_screen_slot: i16) -> Option<u32> {
     match player_screen_slot {
         9..=35 => Some(player_screen_slot as u32),
@@ -527,6 +531,9 @@ pub struct Player {
     pub held_chunk_tickets: Mutex<Option<HeldChunkTickets>>,
     pub chunk_send_epoch: AtomicU32,
     pub has_played_before: AtomicBool,
+    /// The entity id of the last vehicle the client sent a vehicle move for, which means the
+    /// client drives that vehicle itself.
+    pub driven_vehicle: AtomicCell<Option<i32>>,
     root_vehicle_uuid: AtomicCell<Option<Uuid>>,
     pub chat_session: Arc<Mutex<ChatSession>>,
     pub signature_cache: Mutex<MessageCache>,
@@ -835,6 +842,7 @@ impl Player {
             last_food_saturation: AtomicBool::new(true),
             subscribed_debug_sample: AtomicBool::new(false),
             has_played_before: AtomicBool::new(false),
+            driven_vehicle: AtomicCell::new(None),
             root_vehicle_uuid: AtomicCell::new(None),
             chat_session: Arc::new(Mutex::new(ChatSession::default())), // Placeholder value until the player actually sets their session id
             signature_cache: Mutex::new(MessageCache::default()),
@@ -7162,6 +7170,10 @@ impl EntityBase for Player {
 
     fn get_player(&self) -> Option<&Player> {
         Some(self)
+    }
+
+    fn vehicle_attachment_point(&self) -> Vector3<f64> {
+        DEFAULT_VEHICLE_ATTACHMENT
     }
 
     /// Bedrock renders remote players only from `AddPlayer`, never `AddActor`.

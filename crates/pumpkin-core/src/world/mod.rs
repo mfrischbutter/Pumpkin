@@ -368,6 +368,14 @@ impl PartialEq for World {
 
 impl Eq for World {}
 
+fn passengers_of(entity: &Entity) -> Vec<Arc<dyn EntityBase>> {
+    entity
+        .passengers
+        .lock()
+        .unwrap_or_else(std::sync::PoisonError::into_inner)
+        .clone()
+}
+
 impl World {
     const TAB_LIST_ADD_FLAGS: u8 = PlayerInfoFlags::ADD_PLAYER.bits()
         | PlayerInfoFlags::UPDATE_LISTED.bits()
@@ -676,6 +684,42 @@ impl World {
         }
 
         self.update_active_chunks();
+    }
+
+    /// Places the passengers of `vehicle` on it if it is a root vehicle, as vanilla does after
+    /// every rider's tick (`Entity.rideTick` calls the vehicle's `positionRider`).
+    ///
+    /// The driver of a vehicle its client drives is left alone: the client's vehicle moves place
+    /// the vehicle and the driver.
+    fn position_passengers(&self, vehicle: &dyn EntityBase) {
+        let entity = vehicle.get_entity();
+        let mut passengers = passengers_of(entity);
+        if passengers.is_empty() || entity.has_vehicle() {
+            return;
+        }
+        let client_driven = passengers[0]
+            .get_player()
+            .is_some_and(|driver| driver.driven_vehicle.load() == Some(entity.entity_id));
+        if client_driven {
+            let driver = passengers.remove(0);
+            self.position_riders(driver.as_ref(), passengers_of(driver.get_entity()));
+        }
+        self.position_riders(vehicle, passengers);
+    }
+
+    fn position_riders(&self, vehicle: &dyn EntityBase, passengers: Vec<Arc<dyn EntityBase>>) {
+        for passenger in passengers {
+            let passenger_entity = passenger.get_entity();
+            let old_chunk = passenger_entity.chunk_pos.load();
+            vehicle.position_rider(passenger.as_ref());
+            if passenger_entity.chunk_pos.load() != old_chunk
+                && passenger.get_player().is_some()
+                && let Some(player) = self.get_player_by_id(passenger_entity.entity_id)
+            {
+                chunker::update_position(&player);
+            }
+            self.position_riders(passenger.as_ref(), passengers_of(passenger_entity));
+        }
     }
 
     pub fn get_lighting_config(&self) -> LightingEngineConfig {
@@ -1894,6 +1938,12 @@ impl World {
             order::set_entity_order(None);
         }
         self.order_tick_spawns();
+        for (entity, _) in &tickable {
+            self.position_passengers(entity.as_ref());
+        }
+        for player in players.iter() {
+            self.position_passengers(player.as_ref());
+        }
         let entity_elapsed = t_entities.elapsed();
 
         self.entity_tracker.update_all(self);
