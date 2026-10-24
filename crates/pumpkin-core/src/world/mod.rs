@@ -5805,7 +5805,8 @@ impl World {
         }
 
         let item_entity = Arc::new(ItemEntity::new(entity, stack));
-        self.spawn_entity(item_entity.clone()).then_some(item_entity)
+        self.spawn_entity(item_entity.clone())
+            .then_some(item_entity)
     }
 
     pub fn drop_stack_from_face(
