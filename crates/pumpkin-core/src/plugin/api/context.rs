@@ -11,6 +11,9 @@ use crate::{
     data::datapack::JUKEBOX_SONG_REGISTRY,
     net::ClientPlatform,
     plugin::{PluginMetadata, block_hooks::BlockStateHook},
+    data::datapack::{ENCHANTMENT_REGISTRY, JUKEBOX_SONG_REGISTRY},
+    net::ClientPlatform,
+    plugin::PluginMetadata,
     plugin_log,
 };
 use arc_swap::ArcSwap;
@@ -443,7 +446,7 @@ impl Context {
     }
 
     /// Removes the registry entries this plugin added, and the server's model of them.
-    pub(crate) fn unregister_registry_entries(&self) {
+    pub(crate) async fn unregister_registry_entries(&self) {
         let removed = self
             .server
             .datapack_manager
@@ -451,6 +454,8 @@ impl Context {
         for (registry_id, entry_id) in removed {
             if registry_id == JUKEBOX_SONG_REGISTRY {
                 unregister_dynamic_jukebox_song(&entry_id);
+            } else if registry_id == ENCHANTMENT_REGISTRY {
+                self.server.enchantment_manager.unregister(&entry_id).await;
             }
         }
     }

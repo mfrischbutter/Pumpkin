@@ -88,6 +88,11 @@ interface enchantments {
   /// Global manager for registering and querying custom enchantments.
   resource enchantment-manager {
     /// Registers a new custom enchantment with the server.
+    ///
+    /// Players receive its definition in the `minecraft:enchantment` registry from their next
+    /// configuration on, unless a client could not read it (`supported-items` must be an item
+    /// tag or a vanilla item; exclusive entries other than vanilla enchantments or one tag are
+    /// left out). A synced enchantment is removed when the plugin unloads.
     register-enchantment: func(enchantment: custom-enchantment) -> result<_, string>;
 
     /// Gets an enchantment definition by its ID.
