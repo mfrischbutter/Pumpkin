@@ -2503,10 +2503,12 @@ impl LivingEntity {
         let resource_name = self.get_entity().entity_type.resource_name;
         let key = format!("minecraft:entities/{resource_name}");
         let world = self.entity.world.load();
-        world.get_loot_table(&key).map_or_else(Vec::new, |loot_table| {
-            let seed: i64 = rand::random();
-            crate::world::loot::generate_loot_from_handle(&loot_table, seed, params)
-        })
+        world
+            .get_loot_table(&key)
+            .map_or_else(Vec::new, |loot_table| {
+                let seed: i64 = rand::random();
+                crate::world::loot::generate_loot_from_handle(&loot_table, seed, params)
+            })
     }
 
     fn tick_effects(&self) {
