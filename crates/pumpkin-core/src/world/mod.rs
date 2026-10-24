@@ -2139,43 +2139,38 @@ impl World {
         let random_ticks = self.fire_block_random_ticks(tick_data.random_ticks);
         let world = self.clone();
         let random_handle = handle.clone();
-        random_ticks
-            .par_chunks(BATCH_SIZE)
-            .for_each(|batch| {
-                let _guard = random_handle.enter();
-                let world = world.clone();
-                for scheduled_tick in batch {
-                    let pos = scheduled_tick.position;
-                    let (block, fluid) =
-                        match (scheduled_tick.tick_block, scheduled_tick.tick_fluid) {
-                            (true, true) => {
-                                let (b, f) = world.get_block_and_fluid(&pos);
-                                (Some(b), Some(f))
-                            }
-                            (true, false) => (Some(world.get_block(&pos)), None),
-                            (false, true) => (None, Some(world.get_fluid(&pos))),
-                            (false, false) => (None, None),
-                        };
-
-                    if let Some(block) = block
-                        && let Some(pumpkin_block) =
-                            world.block_registry.get_pumpkin_block(block.id)
-                    {
-                        pumpkin_block.random_tick(RandomTickArgs {
-                            world: &world,
-                            block,
-                            position: &pos,
-                        });
+        random_ticks.par_chunks(BATCH_SIZE).for_each(|batch| {
+            let _guard = random_handle.enter();
+            let world = world.clone();
+            for scheduled_tick in batch {
+                let pos = scheduled_tick.position;
+                let (block, fluid) = match (scheduled_tick.tick_block, scheduled_tick.tick_fluid) {
+                    (true, true) => {
+                        let (b, f) = world.get_block_and_fluid(&pos);
+                        (Some(b), Some(f))
                     }
+                    (true, false) => (Some(world.get_block(&pos)), None),
+                    (false, true) => (None, Some(world.get_fluid(&pos))),
+                    (false, false) => (None, None),
+                };
 
-                    if let Some(fluid) = fluid
-                        && let Some(pumpkin_fluid) =
-                            world.block_registry.get_pumpkin_fluid(fluid.id)
-                    {
-                        pumpkin_fluid.random_tick(fluid, &world, &pos);
-                    }
+                if let Some(block) = block
+                    && let Some(pumpkin_block) = world.block_registry.get_pumpkin_block(block.id)
+                {
+                    pumpkin_block.random_tick(RandomTickArgs {
+                        world: &world,
+                        block,
+                        position: &pos,
+                    });
                 }
-            });
+
+                if let Some(fluid) = fluid
+                    && let Some(pumpkin_fluid) = world.block_registry.get_pumpkin_fluid(fluid.id)
+                {
+                    pumpkin_fluid.random_tick(fluid, &world, &pos);
+                }
+            }
+        });
 
         // 4. Calculate Spawn List (Sequential setup)
         let spawn_state = self.spawn_state.load();
