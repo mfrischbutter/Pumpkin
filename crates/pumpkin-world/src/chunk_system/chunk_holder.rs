@@ -14,6 +14,8 @@ pub struct ChunkHolder {
     pub occupied: NodeKey,
     pub occupied_by: EdgeKey,
     pub public: bool,
+    /// Whether the chunk reached `Full` through generation instead of being read from disk.
+    pub generated: bool,
     pub tasks: [NodeKey; StagedChunkEnum::COUNT],
 }
 
@@ -27,6 +29,7 @@ impl Default for ChunkHolder {
             occupied: NodeKey::null(),
             occupied_by: EdgeKey::null(),
             public: false,
+            generated: false,
             tasks: [NodeKey::null(); StagedChunkEnum::COUNT],
         }
     }

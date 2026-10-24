@@ -50,7 +50,10 @@ pub type SyncEntityChunk = Arc<ChunkEntityData>;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum LoadedChunkChange {
+    /// A chunk read from disk became available.
     Loaded(Vector2<i32>),
+    /// A newly generated chunk became available.
+    Generated(Vector2<i32>),
     Unloaded(Vector2<i32>),
 }
 
@@ -80,6 +83,8 @@ pub struct Level {
     // from the loaded chunks map and sent to the underlying ChunkIO
     pub loaded_chunks: Arc<DashMap<Vector2<i32>, SyncChunk>>,
     pub(crate) loaded_chunk_changes: Arc<SegQueue<LoadedChunkChange>>,
+    /// The same changes as `loaded_chunk_changes`, for the chunk lifecycle plugin events.
+    pub(crate) chunk_lifecycle_changes: Arc<SegQueue<LoadedChunkChange>>,
     loaded_entity_chunks: Arc<DashMap<Vector2<i32>, SyncEntityChunk>>,
     pub chunks_with_scheduled_ticks: Arc<dashmap::DashSet<Vector2<i32>>>,
     pub chunk_loading: Mutex<ChunkLoading>,
@@ -299,6 +304,7 @@ impl Level {
             schedule_tick_counts: AtomicU64::new(0),
             loaded_chunks: Arc::new(DashMap::new()),
             loaded_chunk_changes: Arc::new(SegQueue::new()),
+            chunk_lifecycle_changes: Arc::new(SegQueue::new()),
             loaded_entity_chunks: Arc::new(DashMap::new()),
             chunks_with_scheduled_ticks: Arc::new(dashmap::DashSet::new()),
             chunk_loading: Mutex::new(ChunkLoading::new(level_channel.clone())),
@@ -677,6 +683,11 @@ impl Level {
 
     pub fn loaded_chunk_changes(&self) -> impl Iterator<Item = LoadedChunkChange> + '_ {
         std::iter::from_fn(|| self.loaded_chunk_changes.pop())
+    }
+
+    /// Drains the chunks the chunk system published or dropped since the last call.
+    pub fn chunk_lifecycle_changes(&self) -> impl Iterator<Item = LoadedChunkChange> + '_ {
+        std::iter::from_fn(|| self.chunk_lifecycle_changes.pop())
     }
 
     async fn fetch_chunk(self: &Arc<Self>, pos: Vector2<i32>) -> SyncChunk {
