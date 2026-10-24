@@ -272,6 +272,10 @@ impl EntityBase for SplashPotionEntity {
             affected.retain(|(c, _)| event.affected_entities.contains(&c.get_entity().entity_id));
         }
 
+        let owner = self
+            .thrown
+            .owner_id
+            .and_then(|id| world.get_entity_by_id(id));
         for (cand, scale) in affected {
             if let Some(living) = cand.get_living_entity() {
                 crate::item::potion::PotionContents::apply_effects_to(
@@ -279,6 +283,8 @@ impl EntityBase for SplashPotionEntity {
                     effects.clone(),
                     scale,
                     crate::item::potion::PotionApplicationSource::Normal,
+                    Some(self.get_entity()),
+                    owner.as_deref(),
                 );
             }
         }

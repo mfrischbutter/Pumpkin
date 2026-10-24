@@ -3761,6 +3761,8 @@ impl EntityBase for LivingEntity {
                         effects,
                         1.0,
                         crate::item::potion::PotionApplicationSource::Normal,
+                        None,
+                        None,
                     );
                 }
 
