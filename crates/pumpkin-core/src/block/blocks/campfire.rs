@@ -1,10 +1,7 @@
 use pumpkin_data::{
     Block, BlockDirection, BlockState, BlockStateId, Enchantment,
-    block_properties::CampfireLikeProperties,
-    damage::DamageType,
-    data_component_impl::EquipmentSlot,
-    effect::StatusEffect,
-    fluid::Fluid,
+    block_properties::CampfireLikeProperties, damage::DamageType,
+    data_component_impl::EquipmentSlot, effect::StatusEffect, fluid::Fluid,
     recipes::CookingRecipeKind,
 };
 use pumpkin_macros::pumpkin_block_from_tag;
