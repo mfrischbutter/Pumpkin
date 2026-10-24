@@ -546,8 +546,8 @@ pub async fn init_plugin(
         .scope_bootstrap(plugin_pre.instance_pre().instantiate_async(&mut store))
         .await
         .map_err(PluginInitError::InstantiationFailed)?;
-    let plugin = Plugin::new(&mut store, &instance)
-        .map_err(PluginInitError::InstantiationFailed)?;
+    let plugin =
+        Plugin::new(&mut store, &instance).map_err(PluginInitError::InstantiationFailed)?;
     store.data_mut().worker_job_result_handler = worker_job_result_handler(&mut store, &instance);
 
     store
