@@ -509,6 +509,11 @@ impl NbtTag {
             Self::Int(int) => Some(f64::from(int)),
             Self::Long(long) => Some(long as f64),
             Self::Float(float) => Some(f64::from(float)),
+            Self::Byte(byte) => Some(byte.into()),
+            Self::Short(short) => Some(short.into()),
+            Self::Int(int) => Some(int.into()),
+            Self::Long(long) => Some(long as f64),
+            Self::Float(float) => Some(float.into()),
             Self::Double(double) => Some(double),
             _ => None,
         }
