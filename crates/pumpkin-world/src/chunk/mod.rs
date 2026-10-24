@@ -1140,7 +1140,10 @@ mod tests {
         let stone = Block::STONE.default_state.id;
         chunk.section.set_block_absolute_y(3, 70, 5, stone);
 
-        let mut states = chunk.section.section_block_states(70 >> 4).unwrap_or_default();
+        let mut states = chunk
+            .section
+            .section_block_states(70 >> 4)
+            .unwrap_or_default();
         states.sort();
         let mut expected = vec![Block::AIR.default_state.id, stone];
         expected.sort();
