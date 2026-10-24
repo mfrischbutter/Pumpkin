@@ -657,6 +657,16 @@ impl ToFromWasmEvent for PlayerFishEvent {
             .add(self.player.clone())
             .expect("failed to add player resource");
 
+        let caught_items = self
+            .caught_items
+            .iter()
+            .map(|i| {
+                state
+                    .add(Arc::new(Mutex::new(i.clone())))
+                    .expect("failed to add item stack resource")
+            })
+            .collect();
+
         Event::PlayerFishEvent(PlayerFishEventData {
             player,
             caught_uuid: self.caught_uuid.as_ref().map(WitUuid::to_wit),
@@ -665,6 +675,7 @@ impl ToFromWasmEvent for PlayerFishEvent {
             state: to_wasm_fish_state(self.state),
             hand: to_wasm_hand(self.hand),
             exp_to_drop: self.exp_to_drop,
+            caught_items,
             cancelled: self.cancelled,
         })
     }
@@ -679,6 +690,11 @@ impl ToFromWasmEvent for PlayerFishEvent {
                 state: from_wasm_fish_state(data.state),
                 hand: from_wasm_hand(data.hand),
                 exp_to_drop: data.exp_to_drop,
+                caught_items: data
+                    .caught_items
+                    .iter()
+                    .map(|stack| consume_item_stack(state, stack))
+                    .collect(),
                 cancelled: data.cancelled,
             },
             _ => panic!("unexpected event type"),

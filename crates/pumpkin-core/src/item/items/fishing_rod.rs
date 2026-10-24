@@ -73,7 +73,7 @@ impl ItemBehaviour for FishingRodItem {
             let mut dmg = 0;
             if let Some(bobber_base) = world.get_entity_by_id(bobber_id) {
                 if let Some(bobber) = bobber_base.cast_any().downcast_ref::<FishingBobberEntity>() {
-                    dmg = bobber.reel_in(player, &rod);
+                    dmg = bobber.reel_in(player, &rod, hand);
                 }
                 bobber_base.get_entity().remove();
             }

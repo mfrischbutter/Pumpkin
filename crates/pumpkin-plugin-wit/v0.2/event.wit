@@ -152,6 +152,7 @@ interface event {
         state: player-fish-state,
         hand: hand,
         exp-to-drop: s32,
+        caught-items: list<item-stack>,
         cancelled: bool
     }
 
