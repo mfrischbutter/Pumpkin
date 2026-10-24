@@ -41,7 +41,7 @@ use pumpkin_util::version::JavaMinecraftVersion;
 use tokio::{
     io::{BufReader, BufWriter},
     net::tcp::{OwnedReadHalf, OwnedWriteHalf},
-    sync::oneshot,
+    sync::{Notify, oneshot},
 };
 use tokio::{
     sync::mpsc::{UnboundedReceiver, UnboundedSender},
@@ -58,6 +58,7 @@ mod outgoing;
 pub mod pending;
 pub mod play;
 pub mod recipe_helper;
+mod reconfiguration;
 pub mod status;
 
 pub use chunk_data::{CChunkData, ChunkLightExt};
@@ -75,6 +76,15 @@ use crate::plugin::api::events::world::chunk_send::ChunkSend;
 use crate::plugin::player::player_custom_payload::PlayerCustomPayloadEvent;
 use crate::plugin::server::packet::PacketSentEvent;
 use crate::{error::PumpkinError, server::Server};
+
+/// Why [`JavaClient::progress_player_packets`] returned.
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+pub enum PlayPhaseEnd {
+    /// The connection is closing.
+    Disconnected,
+    /// [`JavaClient::request_reconfiguration`] asked to send the client back to configuration.
+    Reconfigure,
+}
 
 #[repr(C)]
 pub struct JavaClient {
@@ -134,6 +144,10 @@ pub struct JavaClient {
     pub packet_limiter: PacketRateLimiter,
     /// Vanilla `suspendFlushingOnServerThread`.
     suspend_flushing: Arc<AtomicBool>,
+    /// Set by [`Self::request_reconfiguration`] until the client is back in play.
+    reconfiguring: AtomicBool,
+    /// Wakes [`Self::progress_player_packets`] for a reconfiguration.
+    reconfigure_requested: Notify,
 }
 
 impl JavaClient {
@@ -172,6 +186,8 @@ impl JavaClient {
             packet_sequence: AtomicI32::new(-1),
             packet_limiter: pending.packet_limiter,
             suspend_flushing: Arc::new(AtomicBool::new(false)),
+            reconfiguring: AtomicBool::new(false),
+            reconfigure_requested: Notify::new(),
         }
     }
 
@@ -206,14 +222,18 @@ impl JavaClient {
         self.player.store(Arc::new(Some(player)));
     }
 
-    pub async fn progress_player_packets(&self, player: &Arc<Player>, server: &Arc<Server>) {
+    pub async fn progress_player_packets(
+        &self,
+        player: &Arc<Player>,
+        server: &Arc<Server>,
+    ) -> PlayPhaseEnd {
         let Some(mut network_reader) = self
             .network_reader
             .lock()
             .unwrap_or_else(std::sync::PoisonError::into_inner)
             .take()
         else {
-            return;
+            return PlayPhaseEnd::Disconnected;
         };
 
         let keep_alive_time = server.advanced_config.networking.java.keep_alive_time;
@@ -225,7 +245,7 @@ impl JavaClient {
         // Skip the immediate first tick so we don't send a keep-alive the exact millisecond they join
         keep_alive_interval.tick().await;
 
-        loop {
+        let end = loop {
             tokio::select! {
                 // KEEP-ALIVE TIMER
                 _ = keep_alive_interval.tick() => {
@@ -241,7 +261,7 @@ impl JavaClient {
 
                     if has_timed_out {
                         self.kick(pumpkin_macros::translate_cross!(translation::java::DISCONNECT_TIMEOUT, translation::bedrock::DISCONNECT_TIMEOUT)).await;
-                        break;
+                        break PlayPhaseEnd::Disconnected;
                     }
 
                     let keep_alive_id = i64::from(
@@ -269,13 +289,17 @@ impl JavaClient {
                 }
 
                 () = self.close_token.cancelled() => {
-                    break;
+                    break PlayPhaseEnd::Disconnected;
+                }
+
+                () = self.reconfigure_requested.notified() => {
+                    break PlayPhaseEnd::Reconfigure;
                 }
 
                 // INCOMING PACKETS
                 packet_opt = self.get_packet_with_reader(&mut network_reader) => {
                     let Some(packet) = packet_opt else {
-                        break;
+                        break PlayPhaseEnd::Disconnected;
                     };
                     self.last_packet_time.store(Instant::now());
 
@@ -296,13 +320,21 @@ impl JavaClient {
                                 .clone(),
                         ))
                         .await;
-                        break;
+                        break PlayPhaseEnd::Disconnected;
                     }
 
                     player.inbound_packets.push(packet);
                 }
             }
+        };
+
+        if end == PlayPhaseEnd::Reconfigure {
+            *self
+                .network_reader
+                .lock()
+                .unwrap_or_else(std::sync::PoisonError::into_inner) = Some(network_reader);
         }
+        end
     }
 
     pub async fn await_tasks(&self) {
@@ -478,6 +510,9 @@ impl JavaClient {
     }
 
     pub fn try_enqueue_packet_data(&self, packet_data: Bytes) {
+        if self.is_configuring() {
+            return;
+        }
         let Some((packet_data, packet_len)) = self.reserve_pending_bytes(packet_data, true) else {
             return;
         };
@@ -487,6 +522,9 @@ impl JavaClient {
     /// Like [`Self::try_enqueue_packet_data`] but does not fire `PacketSentEvent` for
     /// current-version clients. For packets that a plugin already observed itself.
     pub fn try_enqueue_packet_data_unobserved(&self, packet_data: Bytes) {
+        if self.is_configuring() {
+            return;
+        }
         let Some((packet_data, packet_len)) = self.reserve_pending_bytes(packet_data, false) else {
             return;
         };
@@ -614,6 +652,9 @@ impl JavaClient {
     /// Enqueue on the per-connection FIFO and wait until the writer has
     /// `write_frame`d into the `BufWriter`. Never waits for a TCP flush.
     pub async fn send_packet_now_data(&self, packet: Bytes) {
+        if self.is_configuring() {
+            return;
+        }
         self.send_and_wait(packet, OutgoingPacket::high_priority)
             .await;
     }
