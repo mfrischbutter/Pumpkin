@@ -56,6 +56,12 @@ impl Clone for Box<dyn DataComponentImpl> {
     }
 }
 
+impl std::fmt::Debug for dyn DataComponentImpl {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        std::fmt::Debug::fmt(&self.get_self_enum(), f)
+    }
+}
+
 #[inline]
 pub fn get<T: DataComponentImpl + 'static>(value: &dyn DataComponentImpl) -> &T {
     if value.get_self_enum() == T::get_enum() {
