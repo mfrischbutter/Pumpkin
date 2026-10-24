@@ -1720,6 +1720,15 @@ impl pumpkin::plugin::context::HostContext for PluginHostState {
         Ok(context_res.register_permission(util_permission))
     }
 
+    fn register_loot_table(
+        &mut self,
+        context: Resource<WitContext>,
+        id: String,
+        json: String,
+    ) -> wasmtime::Result<Result<(), String>> {
+        Ok(self.get(&context)?.register_loot_table(&id, &json))
+    }
+
     fn get_data_folder(&mut self, _context: Resource<WitContext>) -> wasmtime::Result<String> {
         Ok("data".to_string())
     }
