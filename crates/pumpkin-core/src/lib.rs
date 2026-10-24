@@ -17,9 +17,9 @@ use crate::net::bedrock::{
     nethernet::{NetherNetListener, load_or_create_identity_key},
     status::{IceSocket, StatusResponder},
 };
-use crate::net::java::{JavaClient, PlayPhaseEnd};
 use crate::net::java::pending::PendingConnection;
 use crate::net::java::play::resource_pack_response::fire_configuration_resource_pack_statuses;
+use crate::net::java::{JavaClient, PlayPhaseEnd};
 use crate::net::{ClientPlatform, DisconnectReason, PacketHandlerResult, PacketRateLimiter};
 use crate::net::{lan_broadcast::LANBroadcast, management::ManagementServer, query};
 use crate::plugin::loader::PluginLoader;
@@ -594,7 +594,7 @@ impl PumpkinServer {
                                      pending.close();
                                 },
                                 PacketHandlerResult::ReadyToPlay(profile, config) => {
-                                     let resource_pack_statuses = std::mem::take(&mut pending.resource_pack_statuses);
+                                     let mut resource_pack_statuses = std::mem::take(&mut pending.resource_pack_statuses);
                                      let mut java_client = JavaClient::from_pending(pending, profile.clone(), config.clone());
                                      java_client.start_outgoing_packet_task();
                                      let client_platform = Arc::new(ClientPlatform::Java(java_client));
@@ -616,7 +616,7 @@ impl PumpkinServer {
                                      fire_configuration_resource_pack_statuses(
                                          &server_clone,
                                          &player,
-                                         resource_pack_statuses,
+                                         std::mem::take(&mut resource_pack_statuses),
                                      )
                                      .await;
 
