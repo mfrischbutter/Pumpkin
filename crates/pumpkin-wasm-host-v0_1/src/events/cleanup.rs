@@ -362,6 +362,12 @@ pub fn cleanup_event(event: &Event, state: &mut PluginHostState) {
         }
         Event::PrepareItemCraftEvent(data) => {
             cleanup_player(state, &data.player);
+            for res in data.matrix.iter().flatten() {
+                cleanup_item_stack(state, res);
+            }
+            if let Some(res) = &data.result {
+                cleanup_item_stack(state, res);
+            }
         }
         Event::PrepareSmithingEvent(data) => {
             cleanup_player(state, &data.player);

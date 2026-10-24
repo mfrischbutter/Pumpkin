@@ -27,6 +27,7 @@
 
 use crate::{
     container_click::MouseClick,
+    crafting::recipes::RecipeInputInventory,
     player::player_inventory::PlayerInventory,
     slot::{NormalSlot, Slot},
     sync_handler::{SyncHandler, TrackedStack},
@@ -213,6 +214,17 @@ pub trait InventoryPlayer: Send + Sync {
         _enchantments_to_add: &mut Vec<(&'static Enchantment, i32)>,
     ) -> bool {
         false
+    }
+
+    /// Fires a prepare item craft event after the crafting grid changed.
+    ///
+    /// `result` is the stack the result slot will show; the event may replace or clear it.
+    fn fire_prepare_item_craft_event(
+        &self,
+        _grid: &dyn RecipeInputInventory,
+        _recipe_id: Option<&str>,
+        _result: &mut ItemStack,
+    ) {
     }
 
     /// Closes the player's current handled screen.
