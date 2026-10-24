@@ -89,6 +89,9 @@ pub fn cleanup_event(event: &Event, state: &mut PluginHostState) {
         }
         Event::PlayerFishEvent(data) => {
             cleanup_player(state, &data.player);
+            for res in &data.caught_items {
+                cleanup_item_stack(state, res);
+            }
         }
         Event::PlayerEggThrowEvent(data) => {
             cleanup_player(state, &data.player);

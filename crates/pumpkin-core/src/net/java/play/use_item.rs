@@ -158,13 +158,23 @@ impl JavaClient {
             return true;
         }
 
-        // TODO: Apply fishing rod durability on retrieval based on catch type.
+        // A rod use casts a new hook, or reels in the one already out.
+        let bobber_id = player.fishing_bobber.load(Ordering::Relaxed);
+        let (state, hook_uuid) = if bobber_id == -1 {
+            (PlayerFishState::Fishing, uuid::Uuid::nil())
+        } else {
+            let hook_uuid = player
+                .world()
+                .get_entity_by_id(bobber_id)
+                .map_or_else(uuid::Uuid::nil, |hook| hook.get_entity().entity_uuid);
+            (PlayerFishState::ReelIn, hook_uuid)
+        };
         let mut fish_event = PlayerFishEvent::new(
             player.clone(),
             None,
-            uuid::Uuid::nil(),
+            hook_uuid,
             String::new(),
-            PlayerFishState::Fishing,
+            state,
             hand,
             0,
         );
