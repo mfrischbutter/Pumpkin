@@ -1076,6 +1076,10 @@ impl pumpkin::plugin::world::HostWorld for PluginHostState {
         Ok(self.get(&world)?.get_world_name().to_string())
     }
 
+    fn get_seed(&mut self, world: Resource<World>) -> wasmtime::Result<u64> {
+        Ok(self.get(&world)?.level.seed.0)
+    }
+
     fn set_custom_data(
         &mut self,
         world: Resource<World>,

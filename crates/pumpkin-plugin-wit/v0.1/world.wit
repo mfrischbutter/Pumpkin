@@ -931,6 +931,9 @@ interface %world {
         /// Returns the name of this world (e.g. "world", "world_nether", "arena_1").
         get-name: func() -> string;
 
+        /// Returns the seed this world generates terrain from.
+        get-seed: func() -> u64;
+
         /// Saves all chunk data, block entities, and entities for this world to disk.
         save: func() -> result<_, string>;
 
