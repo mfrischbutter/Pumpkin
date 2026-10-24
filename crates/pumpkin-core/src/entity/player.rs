@@ -1219,7 +1219,6 @@ impl Player {
         world.remove_player(self, true).await;
 
         let cylindrical = self.watched_section.load();
-        self.clean_up_chunk_tickets(&world.level);
         if let Ok(mut sender) = self.chunk_sender.lock() {
             sender.reset();
         }
@@ -1249,6 +1248,9 @@ impl Player {
             world.remove_entities_in_chunks(&cleaned_chunks).await;
             level.clean_entity_chunks(&cleaned_chunks);
         }
+        // Only now: the chunk system drops a chunk that is not dirty without saving it, so the
+        // live block entities have to be in the chunk before the tickets go.
+        self.clean_up_chunk_tickets(level);
 
         debug!(
             "Removed player id {} from world {} ({} chunks remain cached)",

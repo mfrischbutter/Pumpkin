@@ -2003,9 +2003,13 @@ impl World {
 
             // Auto-save logic
             if level_time.world_age % 100 == 0 {
-                self.level.should_unload.store(true, Relaxed);
                 let cleaned_chunks = self.level.clean_memory();
                 if !cleaned_chunks.is_empty() {
+                    // Before `should_unload`: the chunk system drops a chunk that is not dirty
+                    // without saving it.
+                    for chunk_pos in &cleaned_chunks {
+                        self.save_block_entities(*chunk_pos);
+                    }
                     let world_clone = self.clone();
                     if let Some(server) = self.server.upgrade() {
                         server.spawn_task(async move {
@@ -2014,6 +2018,7 @@ impl World {
                         });
                     }
                 }
+                self.level.should_unload.store(true, Relaxed);
                 // If autosave is configured and this tick will trigger an autosave, don't double notify
                 if self.level.autosave_ticks == 0 {
                     self.level.level_channel.notify();
