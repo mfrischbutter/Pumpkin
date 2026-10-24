@@ -847,7 +847,11 @@ interface %world {
 
     /// Represents a Minecraft world (dimension).
     resource %world {
-        /// Returns the unique identifier of this world.
+        /// Returns the name of the level this world belongs to (e.g. "world", "arena_1").
+        ///
+        /// The dimensions of one level share this name, so the overworld, the Nether and
+        /// the End of the default level all return "world". Pair it with `get-dimension`
+        /// to tell worlds apart.
         get-id: func() -> string;
 
         /// Gets the world border associated with this world (alias for get-world-border).
@@ -1063,7 +1067,8 @@ interface %world {
         /// The NBT must contain a valid "id" field (e.g. "minecraft:chest").
         set-block-entity-nbt: func(pos: block-pos, nbt-data: list<u8>) -> result<_, string>;
 
-        /// Returns the name of this world (e.g. "world", "world_nether", "arena_1").
+        /// Returns the name of the level this world belongs to (e.g. "world", "arena_1").
+        /// Same value as `get-id`, shared by the dimensions of one level.
         get-name: func() -> string;
 
         /// Returns the seed this world generates terrain from.
