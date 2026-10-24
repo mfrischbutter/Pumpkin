@@ -720,7 +720,8 @@ fn write_dynamic_ingredient_slot_display(
     version: JavaMinecraftVersion,
 ) -> Result<(), WritingError> {
     match ingredient {
-        crate::codec::recipe::OwnedRecipeIngredient::Simple(id) => {
+        crate::codec::recipe::OwnedRecipeIngredient::Simple(id)
+        | crate::codec::recipe::OwnedRecipeIngredient::CustomData { item: id, .. } => {
             let key = id.strip_prefix("minecraft:").unwrap_or(id);
             if let Some(item) = Item::from_registry_key(key) {
                 write_item_slot_display(write, item, version)?;
@@ -764,6 +765,9 @@ fn write_dynamic_ingredient_slot_display(
                 }
             }
         }
+        crate::codec::recipe::OwnedRecipeIngredient::Exact(stack) => {
+            write_stack_slot_display(write, stack.copy_with_count(1), version)?;
+        }
     }
     Ok(())
 }
@@ -774,7 +778,8 @@ fn write_dynamic_ingredient_holderset(
     version: JavaMinecraftVersion,
 ) -> Result<(), WritingError> {
     match ingredient {
-        crate::codec::recipe::OwnedRecipeIngredient::Simple(id) => {
+        crate::codec::recipe::OwnedRecipeIngredient::Simple(id)
+        | crate::codec::recipe::OwnedRecipeIngredient::CustomData { item: id, .. } => {
             let key = id.strip_prefix("minecraft:").unwrap_or(id);
             write.write_var_int(&VarInt(2))?;
             if let Some(item) = Item::from_registry_key(key) {
@@ -817,6 +822,11 @@ fn write_dynamic_ingredient_holderset(
                     write.write_var_int(&VarInt(*id))?;
                 }
             }
+        }
+        // Holder sets only name items, so the client's craftable check ignores components.
+        crate::codec::recipe::OwnedRecipeIngredient::Exact(stack) => {
+            write.write_var_int(&VarInt(2))?;
+            write.write_var_int(&VarInt(stack.item.id as i32))?;
         }
     }
     Ok(())
