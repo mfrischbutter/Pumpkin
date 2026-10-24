@@ -524,11 +524,16 @@ impl DatapackManager {
         if let Some(owner) = guard.owners.get(&key)
             && owner.as_str() != plugin
         {
-            return Err(format!("{} is already registered in {} by {owner}", key.1, key.0));
+            return Err(format!(
+                "{} is already registered in {} by {owner}",
+                key.1, key.0
+            ));
         }
         let entry = RegistryEntryData {
             entry_id: key.1.clone(),
-            data: Some(dynamic_registry_loader::compound_to_registry_nbt_bytes(data)),
+            data: Some(dynamic_registry_loader::compound_to_registry_nbt_bytes(
+                data,
+            )),
         };
         guard
             .entries
@@ -1865,7 +1870,13 @@ mod tests {
         assert_eq!(ids, ["minecraft:pale", "a:spotted"]);
 
         let removed = manager.remove_plugin_registry_entries("a");
-        assert_eq!(removed, [("minecraft:wolf_variant".to_string(), "a:spotted".to_string())]);
+        assert_eq!(
+            removed,
+            [(
+                "minecraft:wolf_variant".to_string(),
+                "a:spotted".to_string()
+            )]
+        );
         let merged = manager.merge_registry_entries("minecraft:wolf_variant", &vanilla);
         assert_eq!(merged.len(), 1);
     }

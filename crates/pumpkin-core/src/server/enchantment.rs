@@ -37,20 +37,32 @@ impl CustomEnchantmentEntry {
     /// a definition a client could not read, which would keep it from joining.
     fn to_synced_definition(&self) -> Result<NbtCompound, String> {
         if !(1..=MAX_LEVEL).contains(&self.max_level) {
-            return Err(format!("max level {} is not in 1..={MAX_LEVEL}", self.max_level));
+            return Err(format!(
+                "max level {} is not in 1..={MAX_LEVEL}",
+                self.max_level
+            ));
         }
         if !(1..=MAX_WEIGHT).contains(&self.weight) {
             return Err(format!("weight {} is not in 1..={MAX_WEIGHT}", self.weight));
         }
         let mut definition = NbtCompound::new();
-        definition.put("description", self.description.to_nbt_tag_for_version(&CURRENT_MC_VERSION));
-        definition.put_string("supported_items", synced_supported_items(&self.supported_items)?);
+        definition.put(
+            "description",
+            self.description.to_nbt_tag_for_version(&CURRENT_MC_VERSION),
+        );
+        definition.put_string(
+            "supported_items",
+            synced_supported_items(&self.supported_items)?,
+        );
         if let Some(exclusive_set) = self.synced_exclusive_set() {
             definition.put("exclusive_set", exclusive_set);
         }
         definition.put_int("weight", self.weight as i32);
         definition.put_int("max_level", self.max_level as i32);
-        definition.put_int("anvil_cost", i32::try_from(self.anvil_cost).unwrap_or(i32::MAX));
+        definition.put_int(
+            "anvil_cost",
+            i32::try_from(self.anvil_cost).unwrap_or(i32::MAX),
+        );
         definition.put_compound("min_cost", synced_cost());
         definition.put_compound("max_cost", synced_cost());
         definition.put_list(
@@ -134,7 +146,10 @@ pub fn sync_custom_enchantment(
         )
     });
     if let Err(error) = synced {
-        warn!("Custom enchantment {} is not sent to clients: {error}", enchantment.id);
+        warn!(
+            "Custom enchantment {} is not sent to clients: {error}",
+            enchantment.id
+        );
     }
 }
 

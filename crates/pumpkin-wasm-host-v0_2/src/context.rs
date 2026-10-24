@@ -1732,7 +1732,11 @@ impl pumpkin::plugin::context::HostContext for PluginHostState {
         let context = self.get(&context)?;
         let data = match crate::common::from_wit_nbt_tree(&data) {
             Ok(pumpkin_nbt::tag::NbtTag::Compound(compound)) => compound,
-            Ok(_) => return Ok(Err("Registry entry data must be an NBT compound".to_string())),
+            Ok(_) => {
+                return Ok(Err(
+                    "Registry entry data must be an NBT compound".to_string()
+                ));
+            }
             Err(error) => return Ok(Err(error)),
         };
         Ok(context.register_registry_entry(&registry, &id, data))
