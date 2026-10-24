@@ -955,6 +955,21 @@ mod tests {
     }
 
     #[test]
+    fn tooltip_display_round_trip() {
+        assert_round_trip(
+            TooltipDisplayImpl {
+                hide_tooltip: false,
+                hidden_components: Cow::Owned(vec![
+                    DataComponent::AttributeModifiers,
+                    DataComponent::Enchantments,
+                ]),
+            },
+            TooltipDisplayImpl::read_data,
+        );
+        assert_round_trip(TooltipDisplayImpl::DEFAULT, TooltipDisplayImpl::read_data);
+    }
+
+    #[test]
     fn blocks_attacks_round_trip() {
         assert_round_trip(
             BlocksAttacksImpl {
