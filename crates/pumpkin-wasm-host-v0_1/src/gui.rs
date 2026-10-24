@@ -92,6 +92,7 @@ impl gui::HostGui for PluginHostState {
             inventory: Arc::new(PluginInventory::new(size)),
             allow_grab_items: true,
             allow_put_items: true,
+            viewers: Vec::new(),
         }));
 
         self.add(gui)
@@ -175,6 +176,17 @@ impl gui::HostGui for PluginHostState {
         };
         self.add(title)
             .map_err(|_| wasmtime::Error::msg("Failed to add text component resource"))
+    }
+
+    async fn set_title(
+        &mut self,
+        res: Resource<Gui>,
+        title: Resource<crate::pumpkin::plugin::text::TextComponent>,
+    ) -> wasmtime::Result<()> {
+        let title = self.take(title)?;
+        let mut gui = self.get(&res)?.lock().await;
+        gui.set_title(title);
+        Ok(())
     }
 
     async fn get_size(&mut self, res: Resource<Gui>) -> wasmtime::Result<u32> {
