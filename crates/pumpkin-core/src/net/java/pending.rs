@@ -96,6 +96,9 @@ pub struct PendingConnection {
     /// Resource packs of the configuration phase without a final status. The phase goes on
     /// once this is empty, like vanilla `ServerResourcePackConfigurationTask`.
     pub pending_resource_packs: Vec<PendingResourcePack>,
+    /// Resource pack statuses of the configuration phase, fired as
+    /// `PlayerResourcePackStatusEvent` once the player exists.
+    pub resource_pack_statuses: Vec<(Uuid, ResourcePackResponseResult)>,
     /// For the connection packet events.
     server: Weak<Server>,
 }
@@ -126,6 +129,7 @@ impl PendingConnection {
             login_started: false,
             login_success_sent: false,
             pending_resource_packs: Vec::new(),
+            resource_pack_statuses: Vec::new(),
             verify_token: None,
             vine_challenge: None,
             server,
@@ -636,6 +640,11 @@ impl PendingConnection {
             );
             return;
         };
+        // Repeats are dropped, so a client cannot grow the list.
+        let status = (packet.uuid, result);
+        if !self.resource_pack_statuses.contains(&status) {
+            self.resource_pack_statuses.push(status);
+        }
         let pack = &self.pending_resource_packs[index];
         let kick_reason = match result {
             // Not final yet: vanilla `ServerboundResourcePackPacket.Action.isTerminal`.
