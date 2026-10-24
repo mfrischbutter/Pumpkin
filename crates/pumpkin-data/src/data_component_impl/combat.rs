@@ -16,6 +16,8 @@ use crate::sound::Sound;
 use crate::tag::Taggable;
 use pumpkin_nbt::compound::NbtCompound;
 use pumpkin_nbt::tag::NbtTag;
+use pumpkin_util::text::TextComponent;
+use pumpkin_util::version::JavaMinecraftVersion;
 use std::borrow::Cow;
 use std::hash::Hash;
 
@@ -25,14 +27,155 @@ pub enum Operation {
     AddMultipliedBase,
     AddMultipliedTotal,
 }
+impl Operation {
+    #[must_use]
+    pub const fn to_name(self) -> &'static str {
+        match self {
+            Self::AddValue => "add_value",
+            Self::AddMultipliedBase => "add_multiplied_base",
+            Self::AddMultipliedTotal => "add_multiplied_total",
+        }
+    }
+
+    #[must_use]
+    pub fn from_name(name: &str) -> Option<Self> {
+        match name {
+            "add_value" => Some(Self::AddValue),
+            "add_multiplied_base" => Some(Self::AddMultipliedBase),
+            "add_multiplied_total" => Some(Self::AddMultipliedTotal),
+            _ => None,
+        }
+    }
+
+    #[must_use]
+    pub const fn from_id(id: i32) -> Option<Self> {
+        match id {
+            0 => Some(Self::AddValue),
+            1 => Some(Self::AddMultipliedBase),
+            2 => Some(Self::AddMultipliedTotal),
+            _ => None,
+        }
+    }
+}
+
+/// Vanilla's `EquipmentSlotGroup` names and network ids.
+impl crate::AttributeModifierSlot {
+    #[must_use]
+    pub const fn to_name(&self) -> &'static str {
+        match self {
+            Self::Any => "any",
+            Self::MainHand => "mainhand",
+            Self::OffHand => "offhand",
+            Self::Hand => "hand",
+            Self::Feet => "feet",
+            Self::Legs => "legs",
+            Self::Chest => "chest",
+            Self::Head => "head",
+            Self::Armor => "armor",
+            Self::Body => "body",
+            Self::Saddle => "saddle",
+        }
+    }
+
+    #[must_use]
+    pub fn from_name(name: &str) -> Option<Self> {
+        match name {
+            "any" => Some(Self::Any),
+            "mainhand" => Some(Self::MainHand),
+            "offhand" => Some(Self::OffHand),
+            "hand" => Some(Self::Hand),
+            "feet" => Some(Self::Feet),
+            "legs" => Some(Self::Legs),
+            "chest" => Some(Self::Chest),
+            "head" => Some(Self::Head),
+            "armor" => Some(Self::Armor),
+            "body" => Some(Self::Body),
+            "saddle" => Some(Self::Saddle),
+            _ => None,
+        }
+    }
+
+    #[must_use]
+    pub const fn to_id(&self) -> i32 {
+        match self {
+            Self::Any => 0,
+            Self::MainHand => 1,
+            Self::OffHand => 2,
+            Self::Hand => 3,
+            Self::Feet => 4,
+            Self::Legs => 5,
+            Self::Chest => 6,
+            Self::Head => 7,
+            Self::Armor => 8,
+            Self::Body => 9,
+            Self::Saddle => 10,
+        }
+    }
+
+    #[must_use]
+    pub const fn from_id(id: i32) -> Option<Self> {
+        match id {
+            0 => Some(Self::Any),
+            1 => Some(Self::MainHand),
+            2 => Some(Self::OffHand),
+            3 => Some(Self::Hand),
+            4 => Some(Self::Feet),
+            5 => Some(Self::Legs),
+            6 => Some(Self::Chest),
+            7 => Some(Self::Head),
+            8 => Some(Self::Armor),
+            9 => Some(Self::Body),
+            10 => Some(Self::Saddle),
+            _ => None,
+        }
+    }
+}
+
+/// How a modifier shows in the item tooltip, vanilla's `ItemAttributeModifiers.Display`.
+#[derive(Clone, Debug, Hash, PartialEq)]
+pub enum ModifierDisplay {
+    Default,
+    Hidden,
+    OverrideText(TextComponent),
+}
+impl ModifierDisplay {
+    fn read(data: &NbtTag) -> Option<Self> {
+        let compound = data.extract_compound()?;
+        match compound.get_string("type")? {
+            "default" => Some(Self::Default),
+            "hidden" => Some(Self::Hidden),
+            "override" => Some(Self::OverrideText(TextComponent::from_nbt(
+                compound.get("value")?,
+            ))),
+            _ => None,
+        }
+    }
+
+    fn write(&self) -> NbtTag {
+        let mut compound = NbtCompound::new();
+        match self {
+            Self::Default => compound.put_string("type", "default".to_string()),
+            Self::Hidden => compound.put_string("type", "hidden".to_string()),
+            Self::OverrideText(text) => {
+                compound.put_string("type", "override".to_string());
+                compound.put(
+                    "value",
+                    text.to_nbt_tag_for_version(&JavaMinecraftVersion::V_26_3),
+                );
+            }
+        }
+        NbtTag::Compound(compound)
+    }
+}
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct Modifier {
     pub r#type: &'static Attributes,
-    pub id: &'static str,
+    pub id: Cow<'static, str>,
     pub amount: f64,
     pub operation: Operation,
     pub slot: crate::AttributeModifierSlot,
+    pub display: ModifierDisplay,
 }
 impl Hash for Modifier {
     fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
@@ -41,6 +184,44 @@ impl Hash for Modifier {
         unsafe { (*(&raw const self.amount).cast::<u64>()).hash(state) };
         self.operation.hash(state);
         self.slot.hash(state);
+        self.display.hash(state);
+    }
+}
+impl Modifier {
+    fn read(data: &NbtTag) -> Option<Self> {
+        let compound = data.extract_compound()?;
+        let attribute = compound.get_string("type")?;
+        let attribute = attribute.strip_prefix("minecraft:").unwrap_or(attribute);
+        let r#type = Attributes::ALL
+            .iter()
+            .find(|candidate| candidate.name.strip_prefix("minecraft:") == Some(attribute))?;
+        Some(Self {
+            r#type,
+            id: Cow::Owned(compound.get_string("id")?.to_string()),
+            amount: compound.get_numeric_double("amount")?,
+            operation: Operation::from_name(compound.get_string("operation")?)?,
+            slot: match compound.get_string("slot") {
+                Some(slot) => crate::AttributeModifierSlot::from_name(slot)?,
+                None => crate::AttributeModifierSlot::Any,
+            },
+            display: match compound.get("display") {
+                Some(display) => ModifierDisplay::read(display)?,
+                None => ModifierDisplay::Default,
+            },
+        })
+    }
+
+    fn write(&self) -> NbtTag {
+        let mut compound = NbtCompound::new();
+        compound.put_string("type", self.r#type.name.to_string());
+        compound.put_string("id", self.id.to_string());
+        compound.put_double("amount", self.amount);
+        compound.put_string("operation", self.operation.to_name().to_string());
+        compound.put_string("slot", self.slot.to_name().to_string());
+        if self.display != ModifierDisplay::Default {
+            compound.put("display", self.display.write());
+        }
+        NbtTag::Compound(compound)
     }
 }
 
@@ -49,13 +230,27 @@ pub struct AttributeModifiersImpl {
     pub attribute_modifiers: Cow<'static, [Modifier]>,
 }
 impl AttributeModifiersImpl {
-    pub const fn read_data(_data: &NbtTag) -> Option<Self> {
+    /// Reads the entry list; an entry that does not parse is dropped instead of losing the stack.
+    pub fn read_data(data: &NbtTag) -> Option<Self> {
+        let modifiers = data
+            .extract_list()?
+            .iter()
+            .filter_map(Modifier::read)
+            .collect();
         Some(Self {
-            attribute_modifiers: Cow::Borrowed(&[]),
+            attribute_modifiers: Cow::Owned(modifiers),
         })
     }
 }
 impl DataComponentImpl for AttributeModifiersImpl {
+    fn write_data(&self) -> NbtTag {
+        NbtTag::List(
+            self.attribute_modifiers
+                .iter()
+                .map(Modifier::write)
+                .collect(),
+        )
+    }
     default_impl!(AttributeModifiers);
 }
 

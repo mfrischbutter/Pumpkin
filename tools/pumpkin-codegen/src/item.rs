@@ -327,14 +327,19 @@ impl ToTokens for ItemComponents {
                 let amount = modifier.amount;
                 let operation = Ident::new(&format!("{:?}", modifier.operation), Span::call_site());
                 let slot = modifier.slot.to_tokens();
+                let display = match modifier.display {
+                    None | Some(ModifierDisplay::Default) => quote! { ModifierDisplay::Default },
+                    Some(ModifierDisplay::Hidden) => quote! { ModifierDisplay::Hidden },
+                };
 
                 quote! {
                     Modifier {
                         r#type: &Attributes::#r#type,
-                        id: #id,
+                        id: Cow::Borrowed(#id),
                         amount: #amount,
                         operation: Operation::#operation,
                         slot: #slot,
+                        display: #display,
                     }
                 }
             });
@@ -1354,6 +1359,16 @@ pub struct Modifier {
     // TODO: Make this an enum
     /// Equipment slot in which this modifier is active.
     pub slot: AttributeModifierSlot,
+    /// How the modifier shows in the tooltip; `None` is the default display.
+    pub display: Option<ModifierDisplay>,
+}
+
+/// Deserialized tooltip display of an attribute modifier; an `override` text cannot be `const`.
+#[derive(Deserialize, Clone)]
+#[serde(tag = "type", rename_all = "snake_case")]
+pub enum ModifierDisplay {
+    Default,
+    Hidden,
 }
 
 /// Serde default helper returning `true`.
