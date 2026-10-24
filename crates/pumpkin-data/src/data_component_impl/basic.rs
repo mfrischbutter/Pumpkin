@@ -182,6 +182,7 @@ impl ItemNameText {
     }
 
     #[must_use]
+    #[expect(deprecated)]
     pub fn to_text_component(&self) -> TextComponent {
         match self {
             Self::Key(key) => TextComponent::translate(key.clone(), Vec::new()),
