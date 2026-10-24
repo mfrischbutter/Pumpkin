@@ -1911,6 +1911,25 @@ interface event {
         cancelled: bool
     }
 
+    /// One random tick in a `block-random-tick-event`.
+    record block-random-tick {
+        block-pos: block-pos,
+        /// The state at `block-pos` when the random ticks were picked.
+        state-id: u16,
+        /// Skips vanilla's random tick of this block. States vanilla does not random tick
+        /// only tick for plugins, so this changes nothing for them.
+        cancelled: bool
+    }
+
+    /// Fired once per world tick, before random ticks run, with the random ticks of the
+    /// states the plugin watches (see `context.watch-random-tick-states`).
+    ///
+    /// Only the `cancelled` flags are read back; entries are matched by index and position.
+    record block-random-tick-event-data {
+        target-world: %world,
+        ticks: list<block-random-tick>
+    }
+
     enum event-type {
         player-join-event,
         player-leave-event,
@@ -2187,6 +2206,7 @@ interface event {
         lightning-strike-event,
         block-shape-update-event,
         block-scheduled-tick-event,
+        block-random-tick-event,
     }
 
     variant event {
@@ -2465,5 +2485,6 @@ interface event {
         lightning-strike-event(lightning-strike-event-data),
         block-shape-update-event(block-shape-update-event-data),
         block-scheduled-tick-event(block-scheduled-tick-event-data),
+        block-random-tick-event(block-random-tick-event-data),
     }
 }

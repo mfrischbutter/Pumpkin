@@ -48,6 +48,8 @@ pub mod block_physics;
 pub mod block_piston;
 /// Block place event.
 pub mod block_place;
+/// Block random tick event.
+pub mod block_random_tick;
 /// Block receive game event.
 pub mod block_receive_game;
 /// Block redstone signal event.
@@ -116,6 +118,7 @@ pub use block_multi_place::*;
 pub use block_physics::*;
 pub use block_piston::*;
 pub use block_place::*;
+pub use block_random_tick::*;
 pub use block_receive_game::*;
 pub use block_redstone::*;
 pub use block_scheduled_tick::*;

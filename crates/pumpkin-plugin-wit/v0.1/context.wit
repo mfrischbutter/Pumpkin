@@ -69,6 +69,14 @@ interface context {
         ///
         /// Returns false if the block is unknown.
         register-scheduled-tick-hook: func(block: string) -> bool;
+
+        /// Fires `block-random-tick-event` for random ticks of `states` (block state ids).
+        /// States vanilla never random ticks start getting random ticks at the vanilla rate;
+        /// those ticks only reach plugins.
+        ///
+        /// Replaces the states this plugin watched before; an empty list stops watching.
+        /// Ids that are not block states are ignored.
+        watch-random-tick-states: func(states: list<u16>);
     }
 }
 
