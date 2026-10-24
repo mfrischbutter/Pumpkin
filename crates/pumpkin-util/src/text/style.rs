@@ -212,3 +212,29 @@ impl Style {
         self
     }
 }
+
+#[cfg(test)]
+mod test {
+    use crate::text::TextComponent;
+    use crate::text::color::ARGBColor;
+    use crate::text::hover::HoverEvent;
+
+    #[test]
+    fn vanilla_json_hover_and_shadow() {
+        let expected = TextComponent::text("x")
+            .hover_event(HoverEvent::show_text(TextComponent::text("h")))
+            .shadow_color(ARGBColor::new(255, 0, 0, 0));
+
+        let vanilla = r#"{"text":"x","hover_event":{"action":"show_text","value":{"text":"h"}},"shadow_color":-16777216}"#;
+        assert_eq!(
+            serde_json::from_str::<TextComponent>(vanilla).unwrap(),
+            expected
+        );
+
+        let pumpkin = serde_json::to_string(&expected).unwrap();
+        assert_eq!(
+            serde_json::from_str::<TextComponent>(&pumpkin).unwrap(),
+            expected
+        );
+    }
+}

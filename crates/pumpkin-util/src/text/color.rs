@@ -249,7 +249,7 @@ impl Serialize for RGBColor {
 /// An ARGB color with alpha, red, green, and blue components.
 ///
 /// Used for advanced color effects like custom text shadows.
-#[derive(Debug, Clone, Copy, Eq, Hash, PartialEq, Deserialize)]
+#[derive(Debug, Clone, Copy, Eq, Hash, PartialEq)]
 pub struct ARGBColor {
     /// The alpha (transparency) component (0-255).
     pub alpha: u8,
@@ -315,6 +315,66 @@ impl ARGBColor {
     #[must_use]
     pub const fn from_argb_int(val: i32) -> Self {
         Self::from_argb_u32(val as u32)
+    }
+}
+
+impl<'de> Deserialize<'de> for ARGBColor {
+    fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        // Vanilla writes `shadow_color` as an ARGB int, Pumpkin's own JSON as the
+        // four components (a list, or a map with named fields).
+        struct ColorVisitor;
+
+        impl<'de> serde::de::Visitor<'de> for ColorVisitor {
+            type Value = ARGBColor;
+
+            fn expecting(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+                f.write_str("an ARGB int or four color components")
+            }
+
+            fn visit_i64<E: serde::de::Error>(self, value: i64) -> Result<ARGBColor, E> {
+                i32::try_from(value)
+                    .map(ARGBColor::from_argb_int)
+                    .or_else(|_| u32::try_from(value).map(ARGBColor::from_argb_u32))
+                    .map_err(|_| E::custom("ARGB color int out of range"))
+            }
+
+            fn visit_u64<E: serde::de::Error>(self, value: u64) -> Result<ARGBColor, E> {
+                u32::try_from(value)
+                    .map(ARGBColor::from_argb_u32)
+                    .map_err(|_| E::custom("ARGB color int out of range"))
+            }
+
+            fn visit_seq<A: serde::de::SeqAccess<'de>>(
+                self,
+                mut seq: A,
+            ) -> Result<ARGBColor, A::Error> {
+                let mut next = || -> Result<u8, A::Error> {
+                    seq.next_element()?
+                        .ok_or_else(|| serde::de::Error::custom("expected four color components"))
+                };
+                Ok(ARGBColor::new(next()?, next()?, next()?, next()?))
+            }
+
+            fn visit_map<A: serde::de::MapAccess<'de>>(
+                self,
+                mut map: A,
+            ) -> Result<ARGBColor, A::Error> {
+                let (mut alpha, mut red, mut green, mut blue) = (0, 0, 0, 0);
+                while let Some(key) = map.next_key::<std::borrow::Cow<'de, str>>()? {
+                    let value: u8 = map.next_value()?;
+                    match key.as_ref() {
+                        "alpha" => alpha = value,
+                        "red" => red = value,
+                        "green" => green = value,
+                        "blue" => blue = value,
+                        _ => {}
+                    }
+                }
+                Ok(ARGBColor::new(alpha, red, green, blue))
+            }
+        }
+
+        deserializer.deserialize_any(ColorVisitor)
     }
 }
 
