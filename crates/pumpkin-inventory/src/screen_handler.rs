@@ -215,6 +215,20 @@ pub trait InventoryPlayer: Send + Sync {
         false
     }
 
+    /// Fires a prepare anvil event for a computed anvil result. An empty `result` means no
+    /// result. Returns true if the event was fired, so the values may have changed.
+    fn fire_prepare_anvil_event(
+        &self,
+        _left: &ItemStack,
+        _right: &ItemStack,
+        _result: &mut ItemStack,
+        _repair_cost: &mut i32,
+        _repair_item_count: &mut i32,
+        _rename_text: Option<&str>,
+    ) -> bool {
+        false
+    }
+
     /// Closes the player's current handled screen.
     fn close_screen_handler(&self) {}
 
