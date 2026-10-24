@@ -1222,11 +1222,17 @@ impl pumpkin::plugin::world::HostWorldWithStore<PluginHostState> for HasSelf<Plu
         world: Resource<World>,
         pos: pumpkin::plugin::common::Position,
         item: Resource<WitHostItemStack>,
-    ) -> wasmtime::Result<()> {
+    ) -> wasmtime::Result<Option<Resource<pumpkin::plugin::world::Entity>>> {
         let world = accessor.with(|mut host| world_from_state(host.get(), &world))?;
         let stack = accessor.take_res(item)?.lock().await.clone();
         let pos = pumpkin_util::math::vector3::Vector3::new(pos.0, pos.1, pos.2);
-        run_blocking(accessor, move || world.drop_stack_at(pos, stack)).await
+        let Some(entity) = run_blocking(accessor, move || world.drop_stack_at(pos, stack)).await?
+        else {
+            return Ok(None);
+        };
+        accessor
+            .add_res(entity as Arc<dyn pumpkin_core::entity::EntityBase>)
+            .map(Some)
     }
 
     async fn strike_lightning(
