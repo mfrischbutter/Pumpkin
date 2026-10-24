@@ -5632,9 +5632,12 @@ impl World {
         if !self.is_in_build_limit(*position) {
             return Block::AIR.default_state.id;
         }
-        let replaced_block_state_id = self
-            .write_block_state_if(position, block_state_id, |_| true)
-            .unwrap_or(Block::AIR.default_state.id);
+        // A chunk that is not loaded took nothing: no callbacks, updates or lighting.
+        let Some(replaced_block_state_id) =
+            self.write_block_state_if(position, block_state_id, |_| true)
+        else {
+            return Block::AIR.default_state.id;
+        };
         self.on_block_state_set(position, replaced_block_state_id, block_state_id, flags)
     }
 
