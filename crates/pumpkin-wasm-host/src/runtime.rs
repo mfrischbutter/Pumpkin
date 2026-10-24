@@ -11,7 +11,7 @@ use pumpkin_wasm_host_common::{
     plugin::{PluginApiVersion, PluginInitError, WasmPlugin, scan_component_names},
     scheduler::TaskScheduler,
     signature,
-    state::PluginHostState,
+    state::{DATA_FOLDER_GUEST_PATH, PluginHostState},
     worker::PluginWorker,
 };
 
@@ -530,10 +530,11 @@ pub async fn on_load(
 
     let may_write_data = has_permission(permissions::FS_WRITE_DATA);
     let may_read_data = has_permission(permissions::FS_READ_DATA);
-    if may_read_data || may_write_data {
+    let data_folder = (may_read_data || may_write_data).then(|| context.get_data_folder());
+    if let Some(data_folder) = &data_folder {
         builder.preopened_dir(
-            context.get_data_folder(),
-            "data",
+            data_folder,
+            DATA_FOLDER_GUEST_PATH,
             if may_write_data {
                 FsPerms::ReadWrite
             } else {
@@ -565,6 +566,7 @@ pub async fn on_load(
 
                     store.data_mut().permissions = filtered_permissions;
                     store.data_mut().wasi_ctx = wasi_ctx;
+                    store.data_mut().data_folder = data_folder;
                     store.data_mut().wasi_http_hooks.allow_outbound = allow_http_outbound;
                     store.data_mut().server = Some(server);
                     store.data_mut().name = Some(name);

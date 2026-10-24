@@ -490,7 +490,8 @@ pub trait Plugin: Send + Sync {
     ///
     /// Called on a worker instance of the plugin, which got [`Plugin::new`] but never
     /// [`on_load`](Plugin::on_load). Only logging works among the host APIs there; every other
-    /// host call fails the job. Returns the job's output for the submitter's callback.
+    /// host call fails the job. The plugin's data folder is readable there (read-only) when the
+    /// plugin has a data folder permission. Returns the job's output for the submitter's callback.
     fn run_worker_job(&self, kind: &str, _input: Vec<u8>) -> Result<Vec<u8>, String> {
         Err(format!("This plugin has no worker job `{kind}`."))
     }

@@ -1,6 +1,10 @@
 use crate::{JobResultParams, WORKER_INTERFACE, pumpkin::plugin::scheduler};
 use pumpkin_core::server::Server;
-use pumpkin_wasm_host_common::{plugin::WasmPlugin, state::PluginHostState, worker::JobOutcome};
+use pumpkin_wasm_host_common::{
+    plugin::WasmPlugin,
+    state::PluginHostState,
+    worker::{JobOutcome, WorkerSetup},
+};
 use std::sync::{Arc, Weak, atomic::Ordering};
 use wasmtime::component::Resource;
 
@@ -74,8 +78,7 @@ impl scheduler::Host for PluginHostState {
         Ok(worker.submit(
             kind,
             input,
-            self.limits.clone(),
-            self.name.clone(),
+            WorkerSetup::from_main(self),
             move |job_id, outcome| deliver_job_result(weak_plugin, server, job_id, outcome),
         ))
     }
