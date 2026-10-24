@@ -1843,17 +1843,30 @@ impl DataComponentCodec<Self> for CustomModelDataImpl {
 
 impl DataComponentCodec<Self> for TooltipDisplayImpl {
     fn serialize(&self, seq: &mut impl NetworkWriteExt) -> Result<(), WritingError> {
-        seq.write_bool(false)?;
-        seq.write_var_int(&VarInt(0))
+        seq.write_bool(self.hide_tooltip)?;
+        seq.write_list(&self.hidden_components, |w, component| {
+            w.write_var_int(&VarInt(i32::from(component.to_id())))
+        })
     }
 
     fn deserialize(seq: &mut impl NetworkReadExt) -> Result<Self, ReadingError> {
-        let _hide_tooltip = seq.get_bool()?;
-        let len = seq.get_var_int()?.0 as usize;
-        for _ in 0..len {
-            let _comp_id = seq.get_var_int()?;
+        let hide_tooltip = seq.get_bool()?;
+        let ids = seq.get_list(NetworkReadExt::get_var_int)?;
+        let mut hidden_components = Vec::with_capacity(ids.len());
+        for VarInt(id) in ids {
+            let component = u8::try_from(id)
+                .ok()
+                .and_then(DataComponent::try_from_id)
+                .ok_or_else(|| ReadingError::Message("Invalid data component id".into()))?;
+            // Vanilla collects these into a set.
+            if !hidden_components.contains(&component) {
+                hidden_components.push(component);
+            }
         }
-        Ok(Self)
+        Ok(Self {
+            hide_tooltip,
+            hidden_components: Cow::Owned(hidden_components),
+        })
     }
 }
 

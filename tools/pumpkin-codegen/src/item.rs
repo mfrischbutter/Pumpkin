@@ -1235,7 +1235,7 @@ impl ToTokens for ItemComponents {
             });
         }
         if self.tooltip_display.is_some() {
-            tokens.extend(quote! { (TooltipDisplay, &TooltipDisplayImpl), });
+            tokens.extend(quote! { (TooltipDisplay, &TooltipDisplayImpl::DEFAULT), });
         }
         if let Some(use_effects) = &self.use_effects {
             let can_sprint = LitBool::new(use_effects.can_sprint, Span::call_site());
