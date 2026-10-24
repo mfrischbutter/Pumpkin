@@ -31,6 +31,24 @@ interface context {
         issued-at: string,
     }
 
+    /// How a biome registered with `register-biome` looks. Colors are RGB, `0xRRGGBB`; a color
+    /// left out keeps the base biome's.
+    record biome-effects {
+        /// The color of water.
+        water-color: u32,
+        /// The color of the fog seen under water.
+        water-fog-color: u32,
+        /// The color of grass. Setting it also drops the base biome's grass color modifier
+        /// (swamp, dark forest).
+        grass-color: option<u32>,
+        /// The color of leaves and vines.
+        foliage-color: option<u32>,
+        /// The color of the sky.
+        sky-color: option<u32>,
+        /// The color of the fog in the distance.
+        fog-color: option<u32>,
+    }
+
     /// A contextual handle for plugin-related operations.
     resource context {
         /// Registers a handler for a specific event.
@@ -82,6 +100,20 @@ interface context {
         /// Like `register-registry-entry`, players receive the song from their next
         /// configuration on, and it is removed when the plugin unloads.
         register-jukebox-song: func(id: string, sound-event: string, description: text-component, length-seconds: f32, comparator-output: u8) -> result<_, string>;
+
+        /// Registers a biome for clients. Players are shown it only where a plugin sets it with
+        /// `world.set-client-biome`; the server keeps storing, saving and simulating the biome that
+        /// is actually there.
+        ///
+        /// * `id`: The namespaced biome id. The `minecraft` namespace is refused.
+        /// * `base`: The vanilla biome whose climate, sounds and particles it copies, such as
+        ///   `minecraft:plains`.
+        /// * `effects`: Its colors.
+        ///
+        /// Like `register-registry-entry`, players receive the biome from their next
+        /// configuration on, and it is removed when the plugin unloads. Clients take at most 128
+        /// biomes, vanilla ones included.
+        register-biome: func(id: string, base: string, effects: biome-effects) -> result<_, string>;
 
         /// Returns the path to the plugin's private data folder.
         get-data-folder: func() -> string;
