@@ -996,6 +996,8 @@ interface player {
 
         /// Opens a GUI for the player.
         open-gui: func (gui-ref: gui);
+        /// Closes the window the player has open and fires the inventory close event.
+        close-window: func ();
 
         /// Bans the player with the specified options.
         ban: func (options: ban-player-options);

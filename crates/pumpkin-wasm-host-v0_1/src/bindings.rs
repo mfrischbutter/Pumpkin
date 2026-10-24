@@ -17,6 +17,7 @@ bindgen!({
         "pumpkin:plugin/player@0.1.0.[method]player.award-advancement-criterion": async | store | trappable,
         "pumpkin:plugin/player@0.1.0.[method]player.ban": async | store | trappable,
         "pumpkin:plugin/player@0.1.0.[method]player.ban-ip": async | store | trappable,
+        "pumpkin:plugin/player@0.1.0.[method]player.close-window": async | store | trappable,
         "pumpkin:plugin/player@0.1.0.[method]player.damage": async | store | trappable,
         "pumpkin:plugin/player@0.1.0.[method]player.has-permission": async | store | trappable,
         "pumpkin:plugin/player@0.1.0.[method]player.heal": async | store | trappable,
