@@ -4,6 +4,7 @@ interface context {
     use event.{event-type, event-priority};
     use command.{command};
     use permission.{permission};
+    use common.{nbt-tree};
 
     /// Verified marketplace metadata for signed plugins.
     record marketplace-metadata {
@@ -47,6 +48,18 @@ interface context {
 
         /// Registers a permission node with the server.
         register-permission: func(permission: permission) -> result<_, string>;
+
+        /// Adds an entry to a synced registry, such as `minecraft:chat_type` or
+        /// `minecraft:wolf_variant`.
+        ///
+        /// * `registry`: The registry id; `minecraft:` may be left out.
+        /// * `id`: The namespaced entry id. The `minecraft` namespace is refused.
+        /// * `data`: The entry as an NBT compound, in the form a datapack defines it.
+        ///
+        /// Players receive the entry from their next configuration on, so register entries
+        /// while the plugin loads. The entry is removed when the plugin unloads. Registries the
+        /// server simulates itself (damage types, enchantments, jukebox songs, biomes) are refused.
+        register-registry-entry: func(registry: string, id: string, data: nbt-tree) -> result<_, string>;
 
         /// Returns the path to the plugin's private data folder.
         get-data-folder: func() -> string;
