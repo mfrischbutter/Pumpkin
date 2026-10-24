@@ -16,6 +16,7 @@ impl JavaClient {
             .clone();
         if let Some(vehicle) = vehicle {
             let vehicle_entity = vehicle.get_entity();
+            player.driven_vehicle.store(Some(vehicle_entity.entity_id));
             vehicle_entity.set_pos(pos);
             vehicle_entity.set_rotation(packet.yaw, packet.pitch);
         }
