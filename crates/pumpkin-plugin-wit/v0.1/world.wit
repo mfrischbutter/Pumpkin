@@ -524,6 +524,12 @@ interface %world {
 
         /// Returns whether this entity is an AI-driven mob.
         is-mob: func() -> bool;
+
+        /// Sets whether players are shown this entity unless they hid it with `player.hide-entity`.
+        /// When false, only players it was shown to with `player.show-entity` see it. Player entities ignore this.
+        set-visible-by-default: func(visible: bool);
+        /// Returns whether players are shown this entity unless they hid it.
+        is-visible-by-default: func() -> bool;
     }
 
     /// Represents a living entity with health, combat stats, attributes, and equipment (mobs, players, armor stands).
