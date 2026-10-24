@@ -88,6 +88,10 @@ impl Drop for ItemMergeReservation<'_> {
 
 /// Vanilla `ItemEntity.LIFETIME`.
 const LIFETIME: u32 = 6000; // 5 minutes in ticks
+/// Vanilla `ItemEntity.INFINITE_PICKUP_DELAY`: the saved `PickupDelay` of a never-pickup item.
+const INFINITE_PICKUP_DELAY: i16 = 32767;
+/// Vanilla `ItemEntity.INFINITE_LIFETIME`: the saved `Age` of a never-despawn item.
+const INFINITE_LIFETIME: i16 = -32768;
 /// Vanilla `ItemEntity.merge(to, from, 64)`: cap on top of `getMaxStackSize`.
 const MERGE_MAX_COUNT: u8 = 64;
 
@@ -159,12 +163,54 @@ impl ItemEntity {
         &self.item_stack
     }
 
+    /// Vanilla `ItemEntity.setItem`: replaces the stack and resends it to tracking players.
+    /// An empty stack removes the entity on its next tick.
+    pub fn set_item_stack(&self, item_stack: ItemStack) {
+        Self::update_fire_immune(&self.entity, &item_stack);
+        *self
+            .item_stack
+            .lock()
+            .unwrap_or_else(std::sync::PoisonError::into_inner) = item_stack;
+        self.on_count_changed();
+    }
+
+    pub fn get_thrower(&self) -> Option<uuid::Uuid> {
+        self.thrower.load()
+    }
+
+    pub fn set_thrower(&self, uuid: uuid::Uuid) {
+        self.thrower.store(Some(uuid));
+    }
+
     pub fn get_pickup_delay(&self) -> u8 {
         self.pickup_delay.load(Ordering::Relaxed)
     }
 
     pub fn set_pickup_delay(&self, pickup_delay: u8) {
         self.pickup_delay.store(pickup_delay, Ordering::Relaxed);
+    }
+
+    /// Vanilla `ItemEntity.hasPickUpDelay`: a never-pickup item always has one.
+    pub fn has_pickup_delay(&self) -> bool {
+        self.never_pickup.load(Ordering::Relaxed) || self.get_pickup_delay() > 0
+    }
+
+    pub fn is_never_pickup(&self) -> bool {
+        self.never_pickup.load(Ordering::Relaxed)
+    }
+
+    /// Vanilla `ItemEntity.setNeverPickUp`: nothing can pick the item up while this is set.
+    pub fn set_never_pickup(&self, never_pickup: bool) {
+        self.never_pickup.store(never_pickup, Ordering::Relaxed);
+    }
+
+    pub fn is_never_despawn(&self) -> bool {
+        self.never_despawn.load(Ordering::Relaxed)
+    }
+
+    /// Vanilla `ItemEntity.setUnlimitedLifetime`: the item does not age while this is set.
+    pub fn set_never_despawn(&self, never_despawn: bool) {
+        self.never_despawn.store(never_despawn, Ordering::Relaxed);
     }
 
     pub const fn get_entity(&self) -> &Entity {
@@ -705,7 +751,7 @@ impl EntityBase for ItemEntity {
     }
 
     fn on_player_collision(&self, player: &Arc<Player>) {
-        if self.pickup_delay.load(Ordering::Relaxed) > 0
+        if self.has_pickup_delay()
             || player.living_entity.health.load() <= 0.0
             || player.is_spectator()
         {
@@ -815,11 +861,18 @@ impl EntityBase for ItemEntity {
         item.write_item_stack(&mut item_compound);
         nbt.put_compound("Item", item_compound);
 
-        nbt.put_short("Age", self.item_age.load(Ordering::Relaxed) as i16);
-        nbt.put_short(
-            "PickupDelay",
-            self.pickup_delay.load(Ordering::Relaxed) as i16,
-        );
+        let age = if self.is_never_despawn() {
+            INFINITE_LIFETIME
+        } else {
+            self.item_age.load(Ordering::Relaxed) as i16
+        };
+        nbt.put_short("Age", age);
+        let pickup_delay = if self.is_never_pickup() {
+            INFINITE_PICKUP_DELAY
+        } else {
+            i16::from(self.get_pickup_delay())
+        };
+        nbt.put_short("PickupDelay", pickup_delay);
         nbt.put_short("Health", self.health.load(Relaxed) as i16);
     }
 
@@ -837,12 +890,20 @@ impl EntityBase for ItemEntity {
         }
 
         // Vanilla stores Age as a short
-        self.item_age
-            .store(nbt.get_short("Age").unwrap_or(0) as u32, Ordering::Relaxed);
+        let age = nbt.get_short("Age").unwrap_or(0);
+        let never_despawn = age == INFINITE_LIFETIME;
+        self.set_never_despawn(never_despawn);
+        if !never_despawn {
+            self.item_age.store(age as u32, Ordering::Relaxed);
+        }
 
         // Vanilla stores PickupDelay as a short
         if let Some(delay) = nbt.get_short("PickupDelay") {
-            self.pickup_delay.store(delay as u8, Ordering::Relaxed);
+            let never_pickup = delay == INFINITE_PICKUP_DELAY;
+            self.set_never_pickup(never_pickup);
+            if !never_pickup {
+                self.pickup_delay.store(delay as u8, Ordering::Relaxed);
+            }
         }
 
         // Vanilla stores Health as a short

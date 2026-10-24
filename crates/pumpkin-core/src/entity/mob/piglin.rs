@@ -764,7 +764,7 @@ impl PiglinEntity {
                 continue;
             };
             if item.get_entity().is_alive()
-                && item.get_pickup_delay() == 0
+                && !item.has_pickup_delay()
                 && self.wants_item_entity(item)
             {
                 self.pick_up_item(item);
