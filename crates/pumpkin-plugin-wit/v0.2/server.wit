@@ -189,6 +189,10 @@ interface server {
         /// Checks if a world exists by name or dimension.
         has-world: func(name: string) -> bool;
 
+        /// Reserves `count` consecutive entity ids that no server entity will get, for entities that
+        /// exist only on clients (sent with `send-packet`). Returns the first id.
+        allocate-entity-ids: func(count: u32) -> s32;
+
         execute-command: async func(command: string, sender: command-sender);
 
         /// Creates or loads a world by its name and dimension.
