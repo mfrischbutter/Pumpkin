@@ -15,6 +15,7 @@ use crate::{
     },
 };
 use pumpkin_core::plugin::Context;
+use pumpkin_data::BlockStateId;
 use pumpkin_wasm_host_common::state::PluginHostState;
 
 fn register_typed_event<E: pumpkin_core::plugin::Payload + ToFromWasmEvent + Clone + 'static>(
@@ -1279,6 +1280,11 @@ fn register_block_event(
                 pumpkin_core::plugin::api::events::block::vault_display_item::VaultDisplayItemEvent,
             >(resource, handler, priority, blocking);
         }
+        EventType::BlockShapeUpdateEvent => {
+            register_typed_event::<
+                pumpkin_core::plugin::api::events::block::block_shape_update::BlockShapeUpdateEvent,
+            >(resource, handler, priority, blocking);
+        }
 
         _ => {
             tracing::error!("non-block event should not be routed to register_block_event");
@@ -1621,7 +1627,8 @@ impl pumpkin::plugin::context::HostContext for PluginHostState {
             | EventType::LeavesDecayEvent
             | EventType::MoistureChangeEvent
             | EventType::SculkBloomEvent
-            | EventType::VaultDisplayItemEvent) => {
+            | EventType::VaultDisplayItemEvent
+            | EventType::BlockShapeUpdateEvent) => {
                 register_block_event(ctx, &handler, priority, blocking, event_type);
             }
             event_type @ (EventType::InventoryOpenEvent
@@ -1777,7 +1784,29 @@ impl pumpkin::plugin::context::HostContext for PluginHostState {
             }))
     }
 
+    fn watch_block_states(
+        &mut self,
+        context: Resource<WitContext>,
+        states: Vec<u16>,
+    ) -> wasmtime::Result<()> {
+        let states = block_states_from_wasm(&states);
+        self.get(&context)?.watch_block_states(states);
+        Ok(())
+    }
+
     fn drop(&mut self, rep: Resource<WitContext>) -> wasmtime::Result<()> {
         self.drop(rep)
     }
+}
+
+/// Converts plugin-supplied block state ids, skipping ids that are no block state.
+fn block_states_from_wasm(states: &[u16]) -> Box<[BlockStateId]> {
+    let valid: Box<[BlockStateId]> = states.iter().copied().filter_map(BlockStateId::new).collect();
+    if valid.len() != states.len() {
+        tracing::warn!(
+            "Ignoring {} invalid block state ids from a plugin",
+            states.len() - valid.len()
+        );
+    }
+    valid
 }

@@ -19,6 +19,7 @@ use tokio::{
 use tracing::{debug, error, info, warn};
 
 pub mod api;
+pub mod block_hooks;
 pub mod cache;
 pub mod loader;
 /// Constants for plugin permissions.
@@ -1109,6 +1110,7 @@ impl PluginManager {
 
         self.unregister_handlers(name);
         plugin.context.unregister_commands();
+        plugin.context.unregister_block_hooks();
 
         if let Some(instance) = plugin.instance.take() {
             instance.on_unload(plugin.context.clone()).await.ok();

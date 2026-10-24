@@ -1986,6 +1986,21 @@ interface event {
         new-item: option<item-stack>
     }
 
+    /// Fired before a shape update changes a block state the plugin watches
+    /// (see `context.watch-block-states`).
+    ///
+    /// Cancelling keeps `old-state-id`; changing `new-state-id` sets that state instead.
+    record block-shape-update-event-data {
+        target-world: %world,
+        block-pos: block-pos,
+        old-state-id: u16,
+        new-state-id: u16,
+        /// The direction from `block-pos` to `neighbor-pos`.
+        direction: block-direction,
+        neighbor-pos: block-pos,
+        cancelled: bool
+    }
+
     enum event-type {
         player-join-event,
         player-leave-event,
@@ -2263,6 +2278,7 @@ interface event {
         player-pick-block-event,
         player-pick-entity-event,
         player-armor-change-event,
+        block-shape-update-event,
     }
 
     variant event {
@@ -2542,5 +2558,6 @@ interface event {
         player-pick-block-event(player-pick-block-event-data),
         player-pick-entity-event(player-pick-entity-event-data),
         player-armor-change-event(player-armor-change-event-data),
+        block-shape-update-event(block-shape-update-event-data),
     }
 }
