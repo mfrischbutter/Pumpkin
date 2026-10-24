@@ -825,6 +825,14 @@ interface %world {
         /// Returns true if the block was recognized and set.
         set-block-by-name: func(pos: block-pos, name: string, update-flags: block-flags) -> bool;
 
+        /// Schedules a tick of `block` at `pos` in `delay` game ticks, the way blocks such as
+        /// fire schedule their own ticks. Does nothing if the chunk at `pos` is not loaded or
+        /// a tick of `block` is already scheduled at `pos`. Delays above 255 ticks are clamped
+        /// to 255.
+        ///
+        /// Returns false if the block is unknown.
+        schedule-block-tick: func(pos: block-pos, block: string, delay: u32) -> bool;
+
         /// Returns the current time of day in ticks.
         get-time-of-day: func() -> u64;
 
