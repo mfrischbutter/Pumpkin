@@ -1352,6 +1352,7 @@ interface event {
         from-pos: block-pos,
         to-pos: block-pos,
         block: string,
+        target-world: %world,
         cancelled: bool
     }
 
