@@ -1,11 +1,16 @@
+use std::borrow::Cow;
 use std::io::Write;
 
+use pumpkin_data::BlockStateId;
+use pumpkin_data::item_stack::ItemStack;
 use pumpkin_data::packet::clientbound::play::LEVEL_PARTICLES;
+use pumpkin_data::particle::Particle;
 use pumpkin_macros::java_packet;
 use pumpkin_util::{math::vector3::Vector3, version::JavaMinecraftVersion};
 
 use crate::{
     ClientPacket, ServerPacket, VarInt,
+    codec::item_stack_seralizer::ItemStackSerializer,
     ser::{NetworkReadExt, NetworkReadSliceExt, NetworkWriteExt, ReadingError, WritingError},
 };
 
@@ -37,6 +42,122 @@ pub struct CParticle<'a> {
     /// Extra data required by specific particles (e.g., block states for
     /// `block` particles or RGB values for `dust`).
     pub data: &'a [u8],
+}
+
+/// The payload that follows the particle ID for particles whose vanilla `ParticleOptions` is not
+/// a plain `SimpleParticleType`.
+///
+/// Particles that take no options are spawned through [`CParticle`] with an empty `data`.
+#[derive(Clone, PartialEq)]
+pub enum ParticleOptions {
+    /// Vanilla `BlockParticleOption`, read by `block`, `block_marker`, `falling_dust`,
+    /// `dust_pillar` and `block_crumble`.
+    Block {
+        particle: Particle,
+        state: BlockStateId,
+    },
+    /// Vanilla `ItemParticleOption`, read by `item`.
+    Item(ItemStack),
+    /// Vanilla `DustParticleOptions`, read by `dust`.
+    Dust {
+        /// The color, encoded as `0xRRGGBB`. The top bits are ignored.
+        color: i32,
+        /// The client clamps it to 0.01 to 4.0.
+        scale: f32,
+    },
+    /// Vanilla `DustColorTransitionOptions`, read by `dust_color_transition`.
+    DustColorTransition {
+        /// The start color, encoded as `0xRRGGBB`. The top bits are ignored.
+        from_color: i32,
+        /// The end color, encoded as `0xRRGGBB`. The top bits are ignored.
+        to_color: i32,
+        /// The client clamps it to 0.01 to 4.0.
+        scale: f32,
+    },
+    /// Vanilla `ColorParticleOption`, read by `entity_effect` and `tinted_leaves`.
+    Color {
+        particle: Particle,
+        /// The color, encoded as `0xAARRGGBB`.
+        color: i32,
+    },
+    /// A payload written as it is, for options without a variant here. The caller is
+    /// responsible for its format.
+    Raw { particle: Particle, data: Vec<u8> },
+}
+
+impl ParticleOptions {
+    /// The particle this payload is sent with.
+    #[must_use]
+    pub const fn particle(&self) -> Particle {
+        match self {
+            Self::Block { particle, .. }
+            | Self::Color { particle, .. }
+            | Self::Raw { particle, .. } => *particle,
+            Self::Item(_) => Particle::Item,
+            Self::Dust { .. } => Particle::Dust,
+            Self::DustColorTransition { .. } => Particle::DustColorTransition,
+        }
+    }
+
+    /// Whether vanilla reads this payload for [`Self::particle`].
+    ///
+    /// A client that gets a payload it does not expect cannot decode the packet and drops the
+    /// connection. `Raw` payloads are not checked.
+    #[must_use]
+    pub const fn is_valid(&self) -> bool {
+        match self {
+            Self::Block { particle, .. } => matches!(
+                particle,
+                Particle::Block
+                    | Particle::BlockMarker
+                    | Particle::FallingDust
+                    | Particle::DustPillar
+                    | Particle::BlockCrumble
+            ),
+            Self::Color { particle, .. } => {
+                matches!(particle, Particle::EntityEffect | Particle::TintedLeaves)
+            }
+            Self::Item(stack) => !stack.is_empty(),
+            Self::Dust { .. } | Self::DustColorTransition { .. } | Self::Raw { .. } => true,
+        }
+    }
+
+    /// Writes the payload that follows the particle ID.
+    pub fn write(
+        &self,
+        write: impl Write,
+        version: &JavaMinecraftVersion,
+    ) -> Result<(), WritingError> {
+        let mut write = write;
+        match self {
+            Self::Block { state, .. } => write.write_var_int(&VarInt(i32::from(state.as_u16()))),
+            Self::Item(stack) => ItemStackSerializer(Cow::Borrowed(stack))
+                .write_template_with_version(&mut write, version),
+            Self::Dust { color, scale } => {
+                write.write_i32_be(*color)?;
+                write.write_f32_be(*scale)
+            }
+            Self::DustColorTransition {
+                from_color,
+                to_color,
+                scale,
+            } => {
+                write.write_i32_be(*from_color)?;
+                write.write_i32_be(*to_color)?;
+                write.write_f32_be(*scale)
+            }
+            Self::Color { color, .. } => write.write_i32_be(*color),
+            Self::Raw { data, .. } => write.write_slice(data),
+        }
+    }
+
+    /// The payload to send to a client on `version`, or `None` when it cannot be written.
+    #[must_use]
+    pub fn encode_for(&self, version: &JavaMinecraftVersion) -> Option<Vec<u8>> {
+        let mut payload = Vec::new();
+        self.write(&mut payload, version).ok()?;
+        Some(payload)
+    }
 }
 
 impl<'a> CParticle<'a> {
@@ -300,7 +421,7 @@ mod tests {
 
     use crate::{ClientPacket, VarInt};
 
-    use super::CParticle;
+    use super::{CParticle, ParticleOptions};
 
     #[test]
     fn particle_encoding_legacy_1_7_string() {
@@ -370,5 +491,36 @@ mod tests {
         let mut cursor = Cursor::new(bytes);
         let id = VarInt::decode(&mut cursor).unwrap();
         assert_eq!(id, VarInt(Particle::ExplosionEmitter as i32));
+    }
+
+    /// Vanilla writes these with `ByteBufCodecs.VAR_INT` (block state), `INT` (colors) and
+    /// `FLOAT` (scale).
+    #[test]
+    fn particle_options_match_vanilla_stream_codecs() {
+        let version = JavaMinecraftVersion::V_26_3;
+        let block = ParticleOptions::Block {
+            particle: Particle::Block,
+            state: pumpkin_data::BlockStateId::new(300).unwrap(),
+        };
+        assert_eq!(block.encode_for(&version).unwrap(), vec![0xAC, 0x02]);
+
+        let dust = ParticleOptions::Dust {
+            color: 0x00FF_0000,
+            scale: 1.0,
+        };
+        assert_eq!(
+            dust.encode_for(&version).unwrap(),
+            vec![0x00, 0xFF, 0x00, 0x00, 0x3F, 0x80, 0x00, 0x00]
+        );
+
+        let transition = ParticleOptions::DustColorTransition {
+            from_color: 0x0000_00FF,
+            to_color: 0x0000_FF00,
+            scale: 2.0,
+        };
+        assert_eq!(
+            transition.encode_for(&version).unwrap(),
+            vec![0, 0, 0, 0xFF, 0, 0, 0xFF, 0, 0x40, 0, 0, 0]
+        );
     }
 }
