@@ -57,6 +57,7 @@ impl FishingBobberEntity {
         }
     }
 
+    #[expect(clippy::too_many_lines)]
     pub fn reel_in(&self, player: &Player, rod: &ItemStack, hand: Hand) -> i32 {
         let world = self.entity.world.load();
         let hooked_id = self.hooked_entity_id.load(Ordering::Relaxed);
