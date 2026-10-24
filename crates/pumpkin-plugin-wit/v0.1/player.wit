@@ -2,7 +2,7 @@
 interface player {
     use common.{hand, position, game-mode, block-pos};
     use item-stack.{item-stack};
-    use %world.{%world, entity, ray-trace-block-result, ray-trace-entity-result};
+    use %world.{%world, entity, particle-data, ray-trace-block-result, ray-trace-entity-result};
     use permission.{permission-level};
     use text.{text-component};
     use gui.{gui};
@@ -944,6 +944,9 @@ interface player {
 
         /// Spawns particles visible only to this player.
         spawn-particles: func(particle: particle, pos: position, count: u32, offset: position, max-speed: f32);
+        /// Spawns particles that carry data, visible only to this player.
+        /// Returns false and sends nothing if the data does not fit the particle.
+        spawn-particles-with-data: func(particle: particle, pos: position, count: u32, offset: position, max-speed: f32, data: particle-data) -> bool;
 
         // Visuals & Client Overrides
 

@@ -1,6 +1,7 @@
 use pumpkin_data::block_properties::NoteblockInstrument as InternalNoteblockInstrument;
 use pumpkin_data::block_state::PistonBehavior;
 use pumpkin_data::{BlockDirection as InternalBlockDirection, BlockId, BlockStateId};
+use pumpkin_protocol::java::client::play::ParticleOptions;
 use pumpkin_util::math::position::BlockPos;
 use pumpkin_world::chunk::ChunkHeightmapType;
 use pumpkin_world::chunk::io::Dirtiable;
@@ -180,6 +181,45 @@ async fn load_chunk_held(
         loading.send_change();
     });
     chunk
+}
+
+/// Converts plugin particle data to the options vanilla reads for `particle`.
+///
+/// Returns `None` if the data does not fit the particle, since clients cannot decode that.
+pub(crate) async fn to_particle_options(
+    host: &mut PluginHostState,
+    particle: pumpkin::plugin::particles::Particle,
+    data: pumpkin::plugin::world::ParticleData,
+) -> wasmtime::Result<Option<ParticleOptions>> {
+    use pumpkin::plugin::world::ParticleData;
+
+    let id = particle as u16;
+    let particle = pumpkin_data::particle::Particle::from_id(id)
+        .ok_or_else(|| wasmtime::Error::msg(format!("Unknown particle ID: {id}")))?;
+    let options = match data {
+        ParticleData::BlockState(state) => {
+            let Some(state) = BlockStateId::new(state) else {
+                return Ok(None);
+            };
+            ParticleOptions::Block { particle, state }
+        }
+        ParticleData::Item(item) => ParticleOptions::Item(host.take(item)?.lock().await.clone()),
+        ParticleData::Dust(dust) => ParticleOptions::Dust {
+            color: dust.color as i32,
+            scale: dust.scale,
+        },
+        ParticleData::DustColorTransition(dust) => ParticleOptions::DustColorTransition {
+            from_color: dust.from_color as i32,
+            to_color: dust.to_color as i32,
+            scale: dust.scale,
+        },
+        ParticleData::Color(color) => ParticleOptions::Color {
+            particle,
+            color: color as i32,
+        },
+        ParticleData::Raw(data) => ParticleOptions::Raw { particle, data },
+    };
+    Ok((options.particle() == particle && options.is_valid()).then_some(options))
 }
 
 async fn set_block_state_with_store(
@@ -844,6 +884,34 @@ impl pumpkin::plugin::world::HostWorld for PluginHostState {
             particle_data,
         );
         Ok(())
+    }
+
+    async fn spawn_particle_with_data(
+        &mut self,
+        world: Resource<World>,
+        particle: pumpkin::plugin::particles::Particle,
+        pos: pumpkin::plugin::common::Position,
+        offset: pumpkin::plugin::common::Position,
+        max_speed: f32,
+        count: i32,
+        data: pumpkin::plugin::world::ParticleData,
+    ) -> wasmtime::Result<bool> {
+        let Some(options) = to_particle_options(self, particle, data).await? else {
+            return Ok(false);
+        };
+        let world_ref = self.get(&world)?;
+        world_ref.spawn_particle_with_options(
+            pumpkin_util::math::vector3::Vector3::new(pos.0, pos.1, pos.2),
+            pumpkin_util::math::vector3::Vector3::new(
+                offset.0 as f32,
+                offset.1 as f32,
+                offset.2 as f32,
+            ),
+            max_speed,
+            count,
+            &options,
+        );
+        Ok(true)
     }
 
     fn get_sea_level(&mut self, world: Resource<World>) -> wasmtime::Result<i32> {

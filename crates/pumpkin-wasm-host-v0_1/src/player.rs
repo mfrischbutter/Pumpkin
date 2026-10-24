@@ -1650,6 +1650,34 @@ impl pumpkin::plugin::player::HostPlayer for PluginHostState {
         Ok(())
     }
 
+    async fn spawn_particles_with_data(
+        &mut self,
+        player: Resource<Player>,
+        particle: pumpkin::plugin::particles::Particle,
+        pos: pumpkin::plugin::common::Position,
+        count: u32,
+        offset: pumpkin::plugin::common::Position,
+        max_speed: f32,
+        data: pumpkin::plugin::world::ParticleData,
+    ) -> wasmtime::Result<bool> {
+        let Some(options) = super::world::to_particle_options(self, particle, data).await? else {
+            return Ok(false);
+        };
+        let player = self.get(&player)?;
+        player.spawn_particle_with_options(
+            pumpkin_util::math::vector3::Vector3::new(pos.0, pos.1, pos.2),
+            pumpkin_util::math::vector3::Vector3::new(
+                offset.0 as f32,
+                offset.1 as f32,
+                offset.2 as f32,
+            ),
+            max_speed,
+            count as i32,
+            &options,
+        );
+        Ok(true)
+    }
+
     fn send_block_change(
         &mut self,
         player: Resource<Player>,
