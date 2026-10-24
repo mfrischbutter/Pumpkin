@@ -171,7 +171,9 @@ macro_rules! impl_cooking_block_entity_base {
                 };
                 !items[0].is_empty()
                     && items[2].item_count
-                        < self.get_max_count_per_stack().min(items[2].get_max_stack_size())
+                        < self
+                            .get_max_count_per_stack()
+                            .min(items[2].get_max_stack_size())
             }
             fn craft_recipe(
                 &self,
