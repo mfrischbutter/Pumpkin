@@ -2180,6 +2180,16 @@ impl pumpkin::plugin::player::HostPlayer for PluginHostState {
         Ok(player.can_see(&other.gameprofile.id))
     }
 
+    fn can_see_entity(
+        &mut self,
+        player: Resource<Player>,
+        entity: Resource<pumpkin::plugin::world::Entity>,
+    ) -> wasmtime::Result<bool> {
+        let entity = self.get(&entity)?;
+        let player = self.get(&player)?;
+        Ok(player.can_see_entity(entity.as_ref()))
+    }
+
     fn set_tab_list_ping(
         &mut self,
         player: Resource<Player>,
@@ -3411,6 +3421,43 @@ impl pumpkin::plugin::player::HostPlayerWithStore<PluginHostState> for HasSelf<P
                 }
                 result.awarded()
             })
+            .await
+    }
+    async fn hide_entity(
+        mut host: Access<'_, PluginHostState, Self>,
+        player: Resource<Player>,
+        entity: Resource<pumpkin::plugin::world::Entity>,
+    ) -> wasmtime::Result<()> {
+        let (player, entity, plugin) = {
+            let state = host.get();
+            (
+                state.get(&player)?.clone(),
+                state.get(&entity)?.clone(),
+                plugin_from_state(state)?,
+            )
+        };
+        plugin
+            .store
+            .pump_blocking(&mut host, move || player.hide_entity(entity.as_ref()))
+            .await
+    }
+
+    async fn show_entity(
+        mut host: Access<'_, PluginHostState, Self>,
+        player: Resource<Player>,
+        entity: Resource<pumpkin::plugin::world::Entity>,
+    ) -> wasmtime::Result<()> {
+        let (player, entity, plugin) = {
+            let state = host.get();
+            (
+                state.get(&player)?.clone(),
+                state.get(&entity)?.clone(),
+                plugin_from_state(state)?,
+            )
+        };
+        plugin
+            .store
+            .pump_blocking(&mut host, move || player.show_entity(entity.as_ref()))
             .await
     }
 }
