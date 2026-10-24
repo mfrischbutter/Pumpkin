@@ -11,6 +11,18 @@ interface recipe {
         blocks,
     }
 
+    /// Matches an item by a value in its custom data.
+    record custom-data-ingredient {
+        /// The item (e.g. "minecraft:diamond").
+        item: string,
+        /// The custom data namespace.
+        namespace: string,
+        /// The key inside the namespace.
+        key: string,
+        /// The string the key must hold; none only requires the key to be present.
+        value: option<string>,
+    }
+
     /// Represents an ingredient in a recipe.
     variant ingredient {
         /// A specific item (e.g. "minecraft:diamond").
@@ -19,6 +31,10 @@ interface recipe {
         tag(string),
         /// One of multiple specific items.
         one-of(list<string>),
+        /// A stack with the same item and components as this one; its count is ignored.
+        exact(item-stack),
+        /// An item whose custom data has a key, optionally holding a given string.
+        custom-data(custom-data-ingredient),
     }
 
     /// Represents a shaped crafting recipe.
