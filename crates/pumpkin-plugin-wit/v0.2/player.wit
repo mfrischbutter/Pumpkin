@@ -1382,6 +1382,12 @@ interface player {
 
         /// Sends an entity status / animation event packet to the Java player for a specific entity ID.
         send-entity-status: func(entity-id: s32, status: entity-status);
+
+        /// Sends the Java player back to the configuration phase, which resends registries
+        /// and tags, so entries added after they joined reach them. The player leaves the
+        /// world and joins it again from their saved data, like after a relog. Returns false
+        /// when the player cannot be reconfigured right now.
+        reconfigure: func() -> bool;
     }
 
     /// A handle to a player connected via the Bedrock Edition.
