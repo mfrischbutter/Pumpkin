@@ -141,6 +141,7 @@ impl PluginRuntime {
         }
     }
 
+    #[expect(clippy::too_many_lines)]
     pub async fn init_plugin<P: AsRef<Path>>(
         &self,
         path: P,

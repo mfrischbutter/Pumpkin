@@ -231,5 +231,5 @@ pub fn job_result_handler(
 ) -> Option<Func> {
     let exports = instance.get_export_index(&mut store, None, interface)?;
     let handler = instance.get_export_index(&mut store, Some(&exports), HANDLE_JOB_RESULT)?;
-    instance.get_func(&mut store, &handler)
+    instance.get_func(&mut store, handler)
 }
