@@ -343,7 +343,7 @@ impl WasmPluginEventHandler {
 impl<E: Payload + ToFromWasmEvent + Clone + 'static> EventHandler<E> for WasmPluginEventHandler {
     fn handle<'a>(&'a self, server: &'a Arc<Server>, event: &'a E) -> BoxFuture<'a, ()> {
         Box::pin(async {
-            if !event.wanted_by(&self.plugin) {
+            if self.plugin.store.is_closed() || !event.wanted_by(&self.plugin) {
                 return;
             }
             let pending = Box::new(NotifiedEvent(event.clone()));
@@ -359,7 +359,7 @@ impl<E: Payload + ToFromWasmEvent + Clone + 'static> EventHandler<E> for WasmPlu
         event: &'a mut E,
     ) -> BoxFuture<'a, ()> {
         Box::pin(async {
-            if !event.wanted_by(&self.plugin) {
+            if self.plugin.store.is_closed() || !event.wanted_by(&self.plugin) {
                 return;
             }
             let pending = Box::new(BlockingEvent(event.clone()));
