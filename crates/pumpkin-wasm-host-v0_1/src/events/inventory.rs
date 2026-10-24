@@ -463,9 +463,28 @@ impl ToFromWasmEvent for PrepareItemCraftEvent {
             .add(self.player.clone())
             .expect("failed to add player resource");
 
+        let matrix = self
+            .matrix
+            .iter()
+            .map(|stack| {
+                stack.as_ref().map(|stack| {
+                    state
+                        .add(Arc::new(Mutex::new(stack.clone())))
+                        .expect("failed to add item stack resource")
+                })
+            })
+            .collect();
+        let result = self.result.as_ref().map(|stack| {
+            state
+                .add(Arc::new(Mutex::new(stack.clone())))
+                .expect("failed to add item stack resource")
+        });
+
         Event::PrepareItemCraftEvent(PrepareItemCraftEventData {
             player,
             recipe_id: self.recipe_id.clone(),
+            matrix,
+            result,
             cancelled: self.cancelled,
         })
     }
@@ -475,6 +494,15 @@ impl ToFromWasmEvent for PrepareItemCraftEvent {
             Event::PrepareItemCraftEvent(data) => Self {
                 player: consume_player(state, &data.player),
                 recipe_id: data.recipe_id,
+                matrix: data
+                    .matrix
+                    .iter()
+                    .map(|stack| stack.as_ref().map(|stack| consume_item_stack(state, stack)))
+                    .collect(),
+                result: data
+                    .result
+                    .as_ref()
+                    .map(|stack| consume_item_stack(state, stack)),
                 cancelled: data.cancelled,
             },
             _ => panic!("unexpected event type"),

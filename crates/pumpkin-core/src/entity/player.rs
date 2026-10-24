@@ -6181,20 +6181,12 @@ impl Player {
                     self.clone(),
                     stack.item.registry_key.to_string(),
                 );
-            let mut prep_craft =
-                crate::plugin::api::events::inventory::prepare_item_craft::PrepareItemCraftEvent::new(
-                    self.clone(),
-                    stack.item.registry_key.to_string(),
-                );
             if let Some(server) = self.world().server.upgrade() {
                 server
                     .plugin_manager
                     .fire_blocking(&server, &mut craft_event);
-                server
-                    .plugin_manager
-                    .fire_blocking(&server, &mut prep_craft);
             }
-            if craft_event.cancelled || prep_craft.cancelled {
+            if craft_event.cancelled {
                 cancel_screen();
                 return;
             }
@@ -8041,6 +8033,39 @@ impl InventoryPlayer for Player {
         }
         *enchantments_to_add = event.enchantments_to_add;
         false
+    }
+
+    fn fire_prepare_item_craft_event(
+        &self,
+        grid: &dyn pumpkin_inventory::crafting::recipes::RecipeInputInventory,
+        recipe_id: Option<&str>,
+        result: &mut ItemStack,
+    ) {
+        use crate::plugin::api::events::inventory::prepare_item_craft::PrepareItemCraftEvent;
+
+        let Some(server) = self.world().server.upgrade() else {
+            return;
+        };
+        if !server.plugin_manager.has_handlers::<PrepareItemCraftEvent>() {
+            return;
+        }
+        let Some(player_arc) = self.world().get_player_by_uuid(self.gameprofile.id) else {
+            return;
+        };
+        let matrix = (0..grid.size())
+            .map(|slot| Some(grid.get_stack(slot)).filter(|stack| !stack.is_empty()))
+            .collect();
+        let mut event = PrepareItemCraftEvent::new(
+            player_arc,
+            recipe_id.map(str::to_string),
+            matrix,
+            Some(result.clone()).filter(|stack| !stack.is_empty()),
+        );
+        server.plugin_manager.fire_blocking(&server, &mut event);
+        *result = event
+            .result
+            .filter(|_| !event.cancelled)
+            .unwrap_or_else(|| ItemStack::EMPTY.clone());
     }
 
     fn close_screen_handler(&self) {

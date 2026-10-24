@@ -16,7 +16,7 @@
 
 use std::any::Any;
 use std::sync::atomic::{AtomicU8, Ordering};
-use std::sync::{Arc, Mutex};
+use std::sync::{Arc, Mutex, Weak};
 
 use super::recipe_provider::{GenericRecipe, RecipeProvider};
 use super::recipes::{RecipeFinderScreenHandler, RecipeInputInventory};
@@ -52,6 +52,8 @@ pub struct ResultSlot {
     pub result: Arc<Mutex<ItemStack>>,
     /// Provider for dynamic recipes.
     pub recipe_provider: Option<Arc<dyn RecipeProvider>>,
+    /// The player using the grid, known once a sync handler is attached.
+    player: Mutex<Option<Weak<dyn InventoryPlayer>>>,
 }
 
 pub struct RecipeResult {
@@ -60,6 +62,8 @@ pub struct RecipeResult {
     pub pot_decorations: Option<[u16; 4]>,
     /// Component patch of the result, set by plugin recipes.
     pub components: Vec<(DataComponent, Option<Box<dyn DataComponentImpl>>)>,
+    /// The id of the matched plugin or datapack recipe; built-in vanilla recipes have none.
+    pub recipe_id: Option<String>,
 }
 
 impl RecipeResult {
@@ -69,15 +73,17 @@ impl RecipeResult {
             count: result.count,
             pot_decorations: None,
             components: Vec::new(),
+            recipe_id: None,
         }
     }
 
-    fn from_dynamic(result: &OwnedRecipeResult) -> Self {
+    fn from_dynamic(recipe_id: Option<&str>, result: &OwnedRecipeResult) -> Self {
         Self {
             item_id: result.item_id.clone(),
             count: result.count,
             pot_decorations: None,
             components: result.components.clone(),
+            recipe_id: recipe_id.map(str::to_string),
         }
     }
 
@@ -296,9 +302,11 @@ fn recipe_matches(
                 count: 1,
                 pot_decorations: Some(sherds),
                 components: Vec::new(),
+                recipe_id: None,
             })
         }
         GenericRecipe::Dynamic(OwnedCraftingRecipe::Shaped {
+            recipe_id,
             pattern,
             key,
             result,
@@ -344,9 +352,10 @@ fn recipe_matches(
                     }
                 }
             }
-            matched.then(|| RecipeResult::from_dynamic(result))
+            matched.then(|| RecipeResult::from_dynamic(recipe_id.as_deref(), result))
         }
         GenericRecipe::Dynamic(OwnedCraftingRecipe::Shapeless {
+            recipe_id,
             ingredients,
             result,
             ..
@@ -365,7 +374,7 @@ fn recipe_matches(
                 let mut visited = vec![false; ingredients.len()];
                 assign_ingredient(slot, &stacks, ingredients, &mut visited, &mut owners)
             });
-            all_assigned.then(|| RecipeResult::from_dynamic(result))
+            all_assigned.then(|| RecipeResult::from_dynamic(recipe_id.as_deref(), result))
         }
         _ => None,
     }
@@ -474,6 +483,7 @@ impl ResultSlot {
             id: AtomicU8::new(0),
             result: Arc::new(Mutex::new(ItemStack::EMPTY.clone())),
             recipe_provider: provider,
+            player: Mutex::new(None),
         }
     }
 
@@ -481,11 +491,22 @@ impl ResultSlot {
         match_crafting_recipe(&*self.inventory, self.recipe_provider.as_deref())
     }
 
+    // CraftingMenu.slotChangedCraftingGrid
     fn refill_output(&self) -> ItemStack {
-        let result = self.match_recipe().map_or_else(
-            || ItemStack::EMPTY.clone(),
-            |matched| matched.to_item_stack(),
-        );
+        let matched = self.match_recipe();
+        let mut result = matched
+            .as_ref()
+            .map_or_else(|| ItemStack::EMPTY.clone(), RecipeResult::to_item_stack);
+        let player = self
+            .player
+            .lock()
+            .unwrap_or_else(std::sync::PoisonError::into_inner)
+            .as_ref()
+            .and_then(Weak::upgrade);
+        if let Some(player) = player {
+            let recipe_id = matched.as_ref().and_then(|m| m.recipe_id.as_deref());
+            player.fire_prepare_item_craft_event(&*self.inventory, recipe_id, &mut result);
+        }
         *self
             .result
             .lock()
@@ -576,6 +597,16 @@ impl ScreenHandlerListener for ResultSlot {
         if (0..=(self.inventory.get_width() * self.inventory.get_height()))
             .contains(&(slot as usize))
         {
+            if let Some(player) = screen_handler
+                .sync_handler
+                .as_ref()
+                .and_then(|sync_handler| sync_handler.player())
+            {
+                self.player
+                    .lock()
+                    .unwrap_or_else(std::sync::PoisonError::into_inner)
+                    .replace(Arc::downgrade(&player));
+            }
             let result = self.refill_output();
             let next_revision = screen_handler.next_revision();
             if let Some(sync_handler) = screen_handler.sync_handler.as_ref() {
