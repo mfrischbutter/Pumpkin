@@ -241,6 +241,7 @@ use pumpkin_data::data_component_impl::{EquipmentSlot, EquippableImpl, ToolImpl,
 use pumpkin_data::effect::StatusEffect;
 use pumpkin_data::entity::{EntityPose, EntityStatus, EntityType};
 use pumpkin_data::item_stack::{DamageResult, ItemStack};
+use pumpkin_data::packet::CURRENT_MC_VERSION;
 use pumpkin_data::particle::Particle;
 use pumpkin_data::sound::{Sound, SoundCategory};
 use pumpkin_data::statistic::StatisticCategory;
@@ -273,8 +274,8 @@ use pumpkin_protocol::java::client::play::{
     CSetContainerContent, CSetContainerProperty, CSetContainerSlot, CSetCursorItem, CSetExperience,
     CSetHealth, CSetPlayerInventory, CSetSelectedSlot, CSoundEffect, CStopSound, CSubtitle,
     CSystemChatMessage, CTabList, CTitleAnimation, CTitleText, CUnloadChunk, CUpdateMobEffect,
-    CUpdateTime, GameEvent, MapIcon, MapPatch, PlayerAction, PlayerInfoFlags, PlayerSpawnData,
-    PreviousMessage, Statistic,
+    CUpdateTime, GameEvent, MapIcon, MapPatch, ParticleOptions, PlayerAction, PlayerInfoFlags,
+    PlayerSpawnData, PreviousMessage, Statistic,
 };
 use pumpkin_protocol::java::server::play::{
     SClickSlot, SContainerButtonClick, SRenameItem, SlotActionType,
@@ -2567,6 +2568,31 @@ impl Player {
             count as i32,
             (particle.to_id() as i32).into(),
             &[],
+        );
+        self.try_send_client_packet(&packet);
+    }
+
+    /// Spawns a particle that carries a [`ParticleOptions`] payload for this player only.
+    pub fn spawn_particle_with_options(
+        &self,
+        position: Vector3<f64>,
+        offset: Vector3<f32>,
+        max_speed: f32,
+        particle_count: i32,
+        options: &ParticleOptions,
+    ) {
+        let Some(payload) = options.encode_for(&CURRENT_MC_VERSION) else {
+            return;
+        };
+        let packet = CParticle::new(
+            false,
+            false,
+            position,
+            offset,
+            max_speed,
+            particle_count,
+            VarInt(i32::from(options.particle().to_id())),
+            &payload,
         );
         self.try_send_client_packet(&packet);
     }

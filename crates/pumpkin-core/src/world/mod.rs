@@ -100,7 +100,7 @@ use pumpkin_protocol::java::client::play::{
 use pumpkin_protocol::java::client::play::{
     CPlayerSpawnPosition, CRecipeBookAdd, CRecipeBookSettings, CSystemChatMessage,
 };
-use pumpkin_protocol::java::client::play::{CSetEntityMetadata, Metadata};
+use pumpkin_protocol::java::client::play::{CSetEntityMetadata, Metadata, ParticleOptions};
 use pumpkin_protocol::{
     BClientPacket, ClientPacket, IdOr, SoundEvent,
     bedrock::{
@@ -1296,6 +1296,31 @@ impl World {
         for player in self.players.load().iter() {
             player.spawn_particle(position, offset, max_speed, particle_count, particle);
         }
+    }
+
+    /// Spawns a particle that carries a [`ParticleOptions`] payload for every player in this world.
+    pub fn spawn_particle_with_options(
+        &self,
+        position: Vector3<f64>,
+        offset: Vector3<f32>,
+        max_speed: f32,
+        particle_count: i32,
+        options: &ParticleOptions,
+    ) {
+        let Some(payload) = options.encode_for(&CURRENT_MC_VERSION) else {
+            return;
+        };
+        let packet = CParticle::new(
+            false,
+            false,
+            position,
+            offset,
+            max_speed,
+            particle_count,
+            VarInt(i32::from(options.particle().to_id())),
+            &payload,
+        );
+        self.broadcast_packet_all(&packet);
     }
 
     pub fn play_sound(&self, sound: Sound, category: SoundCategory, position: &Vector3<f64>) {
