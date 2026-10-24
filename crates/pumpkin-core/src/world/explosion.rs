@@ -526,8 +526,8 @@ impl Explosion {
         mut blocks: ExplodedBlocks,
         yield_rate: f32,
     ) -> Option<(ExplodedBlocks, f32)> {
-        let (cancelled, returned_blocks, yield_rate) = match self.source_entity_id {
-            Some(entity_id) => {
+        let (cancelled, returned_blocks, yield_rate) =
+            if let Some(entity_id) = self.source_entity_id {
                 if !server.plugin_manager.has_handlers::<EntityExplodeEvent>() {
                     return Some((blocks, yield_rate));
                 }
@@ -540,8 +540,7 @@ impl Explosion {
                 );
                 server.plugin_manager.fire_blocking(server, &mut event);
                 (event.cancelled, event.blocks, event.yield_rate)
-            }
-            None => {
+            } else {
                 if !server.plugin_manager.has_handlers::<BlockExplodeEvent>() {
                     return Some((blocks, yield_rate));
                 }
@@ -553,8 +552,7 @@ impl Explosion {
                 );
                 server.plugin_manager.fire_blocking(server, &mut event);
                 (event.cancelled, event.blocks, event.yield_rate)
-            }
-        };
+            };
         if cancelled {
             return None;
         }

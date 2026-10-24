@@ -4,8 +4,7 @@ use tokio::sync::Mutex;
 use crate::{
     events::{
         ToFromWasmEvent, consume_item_stack, consume_player, consume_world,
-        from_wasm_block_position,
-        to_wasm_block_position,
+        from_wasm_block_position, to_wasm_block_position,
     },
     pumpkin::plugin::event::{
         BrewEventData, BrewingStandFuelEventData, CraftItemEventData, Event, FurnaceBurnEventData,

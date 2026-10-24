@@ -788,10 +788,11 @@ impl PiglinEntity {
             (count, stack.copy_with_count(count))
         };
         if count == 0
-            || !self
-                .mob_entity
-                .living_entity
-                .pickup(item.get_entity(), Some(&picked_up), u32::from(count))
+            || !self.mob_entity.living_entity.pickup(
+                item.get_entity(),
+                Some(&picked_up),
+                u32::from(count),
+            )
         {
             return;
         }
