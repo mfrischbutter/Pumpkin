@@ -1198,7 +1198,11 @@ impl DataComponentImpl for BlocksAttacksImpl {
             compound.put("bypassed_by", bypassed_by.write());
         }
         put_optional_idor(&mut compound, "block_sound", self.block_sound.as_ref());
-        put_optional_idor(&mut compound, "disabled_sound", self.disabled_sound.as_ref());
+        put_optional_idor(
+            &mut compound,
+            "disabled_sound",
+            self.disabled_sound.as_ref(),
+        );
         NbtTag::Compound(compound)
     }
     default_impl!(BlocksAttacks);

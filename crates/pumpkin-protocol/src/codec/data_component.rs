@@ -2010,14 +2010,18 @@ impl DataComponentCodec<Self> for BlocksAttacksImpl {
         seq.write_f32(self.disable_cooldown_scale)?;
         seq.write_list(&self.damage_reductions, |w, reduction| {
             w.write_f32(reduction.horizontal_blocking_angle)?;
-            w.write_option(&reduction.r#type, |w, set| serialize_damage_type_set(set, w))?;
+            w.write_option(&reduction.r#type, |w, set| {
+                serialize_damage_type_set(set, w)
+            })?;
             w.write_f32(reduction.base)?;
             w.write_f32(reduction.factor)
         })?;
         seq.write_f32(self.item_damage.threshold)?;
         seq.write_f32(self.item_damage.base)?;
         seq.write_f32(self.item_damage.factor)?;
-        seq.write_option(&self.bypassed_by, |w, set| serialize_damage_type_set(set, w))?;
+        seq.write_option(&self.bypassed_by, |w, set| {
+            serialize_damage_type_set(set, w)
+        })?;
         serialize_optional_sound(self.block_sound.as_ref(), seq)?;
         serialize_optional_sound(self.disabled_sound.as_ref(), seq)
     }
@@ -3504,7 +3508,10 @@ mod tests {
         let mut slice = encoded.as_slice();
         let decoded = AttributeModifiersImpl::deserialize(&mut slice).unwrap();
         assert!(slice.is_empty());
-        assert_eq!(decoded.attribute_modifiers[0], modifiers.attribute_modifiers[0]);
+        assert_eq!(
+            decoded.attribute_modifiers[0],
+            modifiers.attribute_modifiers[0]
+        );
         assert_eq!(decoded.attribute_modifiers[1].id, "example:armor");
         assert!(matches!(
             &decoded.attribute_modifiers[1].display,
