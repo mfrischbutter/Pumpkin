@@ -145,7 +145,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -224,7 +224,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -303,7 +303,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -382,7 +382,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -461,7 +461,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -540,7 +540,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -619,7 +619,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -700,7 +700,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -769,7 +769,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -848,7 +848,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -927,7 +927,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -1006,7 +1006,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -1086,7 +1086,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -1166,7 +1166,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -1247,7 +1247,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -1326,7 +1326,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -1405,7 +1405,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -1484,7 +1484,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -1563,7 +1563,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -1631,7 +1631,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -1699,7 +1699,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -1768,7 +1768,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -1837,7 +1837,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -1905,7 +1905,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -1973,7 +1973,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -2047,7 +2047,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -2121,7 +2121,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -2189,7 +2189,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -2257,7 +2257,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -2325,7 +2325,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -2393,7 +2393,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -2467,7 +2467,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -2535,7 +2535,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -2622,7 +2622,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -2696,7 +2696,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -2764,7 +2764,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -2833,7 +2833,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -2901,7 +2901,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -2975,7 +2975,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -3043,7 +3043,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -3112,7 +3112,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -3181,7 +3181,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -3261,7 +3261,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -3330,7 +3330,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -3399,7 +3399,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -3486,7 +3486,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -3565,7 +3565,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -3644,7 +3644,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -3723,7 +3723,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -3802,7 +3802,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -3881,7 +3881,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -3960,7 +3960,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -4039,7 +4039,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -4120,7 +4120,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -4199,7 +4199,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -4278,7 +4278,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -4357,7 +4357,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -4436,7 +4436,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -4515,7 +4515,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -4594,7 +4594,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -4674,7 +4674,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -4755,7 +4755,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -4834,7 +4834,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -4913,7 +4913,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -4992,7 +4992,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -5072,7 +5072,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -5140,7 +5140,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -5208,7 +5208,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -5277,7 +5277,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -5345,7 +5345,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -5413,7 +5413,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -5491,7 +5491,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -5560,7 +5560,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -5646,7 +5646,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -5724,7 +5724,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -5811,7 +5811,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -5881,7 +5881,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -5967,7 +5967,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -6041,7 +6041,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -6110,7 +6110,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -6189,7 +6189,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -6268,7 +6268,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -6347,7 +6347,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -6426,7 +6426,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -6505,7 +6505,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -6584,7 +6584,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -6665,7 +6665,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -6734,7 +6734,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -6813,7 +6813,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -6892,7 +6892,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -6971,7 +6971,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -7051,7 +7051,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -7131,7 +7131,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -7212,7 +7212,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -7291,7 +7291,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -7370,7 +7370,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -7449,7 +7449,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -7528,7 +7528,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -7608,7 +7608,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -7676,7 +7676,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -7745,7 +7745,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -7813,7 +7813,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -7911,7 +7911,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -7979,7 +7979,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -8047,7 +8047,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -8115,7 +8115,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -8183,7 +8183,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -8262,7 +8262,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -8336,7 +8336,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -8404,7 +8404,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -8488,7 +8488,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -8557,7 +8557,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -8625,7 +8625,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -8693,7 +8693,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -8761,7 +8761,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -8840,7 +8840,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -8919,7 +8919,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -8998,7 +8998,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -9066,7 +9066,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -9134,7 +9134,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -9202,7 +9202,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -9270,7 +9270,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -9344,7 +9344,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -9413,7 +9413,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -9482,7 +9482,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -9561,7 +9561,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -9630,7 +9630,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -9710,7 +9710,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -9778,7 +9778,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -9847,7 +9847,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -9915,7 +9915,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -10013,7 +10013,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -10081,7 +10081,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -10149,7 +10149,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -10217,7 +10217,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -10285,7 +10285,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -10364,7 +10364,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -10438,7 +10438,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -10512,7 +10512,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -10580,7 +10580,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -10664,7 +10664,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -10732,7 +10732,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -10801,7 +10801,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -10870,7 +10870,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -10938,7 +10938,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -11006,7 +11006,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -11074,7 +11074,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -11153,7 +11153,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -11232,7 +11232,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -11311,7 +11311,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -11380,7 +11380,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -11448,7 +11448,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -11516,7 +11516,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -11584,7 +11584,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -11652,7 +11652,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -11721,7 +11721,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -11800,7 +11800,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -11874,7 +11874,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -11956,7 +11956,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -12035,7 +12035,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -12103,7 +12103,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -12171,7 +12171,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -12239,7 +12239,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -12326,7 +12326,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -12395,7 +12395,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -12464,7 +12464,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -12538,7 +12538,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -12607,7 +12607,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -12675,7 +12675,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -12743,7 +12743,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -12811,7 +12811,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -12879,7 +12879,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -12947,7 +12947,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -13027,7 +13027,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -13095,7 +13095,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -13164,7 +13164,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -13232,7 +13232,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -13330,7 +13330,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -13398,7 +13398,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -13466,7 +13466,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -13534,7 +13534,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -13602,7 +13602,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -13681,7 +13681,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -13755,7 +13755,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -13829,7 +13829,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -13897,7 +13897,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -13981,7 +13981,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -14050,7 +14050,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -14119,7 +14119,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -14188,7 +14188,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -14256,7 +14256,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -14324,7 +14324,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -14392,7 +14392,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -14471,7 +14471,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -14550,7 +14550,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -14629,7 +14629,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -14699,7 +14699,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -14767,7 +14767,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -14835,7 +14835,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -14903,7 +14903,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -14971,7 +14971,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -15039,7 +15039,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -15108,7 +15108,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -15177,7 +15177,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -15246,7 +15246,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -15315,7 +15315,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -15384,7 +15384,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -15458,7 +15458,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -15527,7 +15527,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -15596,7 +15596,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -15665,7 +15665,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -15734,7 +15734,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -15802,7 +15802,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -15870,7 +15870,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -15939,7 +15939,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -16008,7 +16008,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -16077,7 +16077,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -16145,7 +16145,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -16232,7 +16232,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -16303,7 +16303,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -16382,7 +16382,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -16473,7 +16473,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -16542,7 +16542,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -16610,7 +16610,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -16679,7 +16679,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -16747,7 +16747,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -16855,7 +16855,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -16963,7 +16963,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -17071,7 +17071,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -17179,7 +17179,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -17258,7 +17258,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -17337,7 +17337,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -17416,7 +17416,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -17495,7 +17495,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -17574,7 +17574,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -17653,7 +17653,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -17732,7 +17732,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -17813,7 +17813,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -17882,7 +17882,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -17961,7 +17961,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -18040,7 +18040,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -18119,7 +18119,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -18199,7 +18199,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -18279,7 +18279,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -18360,7 +18360,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -18439,7 +18439,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -18518,7 +18518,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -18597,7 +18597,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -18676,7 +18676,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -18756,7 +18756,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -18824,7 +18824,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -18920,7 +18920,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -18989,7 +18989,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -19057,7 +19057,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -19137,7 +19137,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -19205,7 +19205,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -19273,7 +19273,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -19341,7 +19341,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -19409,7 +19409,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -19477,7 +19477,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -19545,7 +19545,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -19613,7 +19613,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -19681,7 +19681,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -19749,7 +19749,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -19817,7 +19817,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -19885,7 +19885,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -19953,7 +19953,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -20021,7 +20021,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -20089,7 +20089,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -20182,7 +20182,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -20250,7 +20250,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -20318,7 +20318,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -20386,7 +20386,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -20454,7 +20454,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -20522,7 +20522,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -20590,7 +20590,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -20658,7 +20658,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -20726,7 +20726,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -20794,7 +20794,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -20862,7 +20862,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -20930,7 +20930,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -20998,7 +20998,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -21067,7 +21067,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -21146,7 +21146,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -21225,7 +21225,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -21293,7 +21293,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -21361,7 +21361,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -21429,7 +21429,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -21497,7 +21497,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -21565,7 +21565,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -21633,7 +21633,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -21701,7 +21701,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -21769,7 +21769,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -21837,7 +21837,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -21905,7 +21905,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -21973,7 +21973,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -22041,7 +22041,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -22110,7 +22110,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -22196,7 +22196,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -22273,7 +22273,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -22342,7 +22342,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -22410,7 +22410,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -22478,7 +22478,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -22546,7 +22546,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -22614,7 +22614,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -22693,7 +22693,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -22761,7 +22761,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -22847,7 +22847,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -22933,7 +22933,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -23019,7 +23019,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -23105,7 +23105,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -23191,7 +23191,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -23277,7 +23277,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -23363,7 +23363,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -23450,7 +23450,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -23575,7 +23575,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -23643,7 +23643,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -23711,7 +23711,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -23819,7 +23819,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -23887,7 +23887,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -23955,7 +23955,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -24023,7 +24023,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -24131,7 +24131,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -24199,7 +24199,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -24268,7 +24268,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -24345,7 +24345,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -24413,7 +24413,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -24521,7 +24521,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -24646,7 +24646,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -24745,7 +24745,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -24819,7 +24819,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -24887,7 +24887,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -24995,7 +24995,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -25094,7 +25094,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -25162,7 +25162,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -25230,7 +25230,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -25349,7 +25349,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -25474,7 +25474,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -25629,7 +25629,7 @@ impl Item {
                     duration: 17i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -25753,7 +25753,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -25821,7 +25821,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -25889,7 +25889,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -25958,7 +25958,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -26027,7 +26027,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -26095,7 +26095,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -26163,7 +26163,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -26231,7 +26231,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -26299,7 +26299,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -26367,7 +26367,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -26436,7 +26436,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -26515,7 +26515,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -26583,7 +26583,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -26652,7 +26652,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -26726,7 +26726,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -26825,7 +26825,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -26894,7 +26894,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -26962,7 +26962,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -27030,7 +27030,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -27098,7 +27098,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -27166,7 +27166,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -27235,7 +27235,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -27305,7 +27305,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -27373,7 +27373,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -27441,7 +27441,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -27509,7 +27509,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -27577,7 +27577,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -27646,7 +27646,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -27715,7 +27715,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -27785,7 +27785,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -27853,7 +27853,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -27921,7 +27921,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -27989,7 +27989,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -28057,7 +28057,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -28145,7 +28145,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -28213,7 +28213,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -28281,7 +28281,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -28349,7 +28349,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -28417,7 +28417,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -28485,7 +28485,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -28553,7 +28553,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -28621,7 +28621,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -28689,7 +28689,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -28769,7 +28769,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -28837,7 +28837,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -28906,7 +28906,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -28974,7 +28974,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -29072,7 +29072,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -29140,7 +29140,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -29208,7 +29208,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -29276,7 +29276,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -29344,7 +29344,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -29423,7 +29423,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -29497,7 +29497,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -29565,7 +29565,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -29649,7 +29649,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -29718,7 +29718,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -29786,7 +29786,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -29854,7 +29854,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -29922,7 +29922,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -30001,7 +30001,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -30080,7 +30080,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -30159,7 +30159,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -30227,7 +30227,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -30296,7 +30296,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -30370,7 +30370,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -30449,7 +30449,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -30528,7 +30528,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -30607,7 +30607,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -30686,7 +30686,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -30765,7 +30765,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -30844,7 +30844,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -30925,7 +30925,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -30994,7 +30994,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -31073,7 +31073,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -31152,7 +31152,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -31231,7 +31231,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -31311,7 +31311,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -31391,7 +31391,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -31472,7 +31472,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -31551,7 +31551,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -31630,7 +31630,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -31709,7 +31709,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -31788,7 +31788,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -31856,7 +31856,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -31924,7 +31924,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -31992,7 +31992,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -32071,7 +32071,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -32139,7 +32139,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -32207,7 +32207,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -32275,7 +32275,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -32343,7 +32343,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -32411,7 +32411,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -32479,7 +32479,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -32558,7 +32558,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -32626,7 +32626,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -32694,7 +32694,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -32762,7 +32762,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -32830,7 +32830,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -32898,7 +32898,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -32966,7 +32966,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -33034,7 +33034,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -33102,7 +33102,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -33170,7 +33170,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -33243,7 +33243,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -33313,7 +33313,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -33381,7 +33381,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -33449,7 +33449,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -33517,7 +33517,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -33585,7 +33585,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -33653,7 +33653,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -33721,7 +33721,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -33789,7 +33789,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -33857,7 +33857,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -33925,7 +33925,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -33993,7 +33993,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -34061,7 +34061,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -34129,7 +34129,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -34197,7 +34197,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -34265,7 +34265,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -34333,7 +34333,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -34401,7 +34401,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -34469,7 +34469,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -34538,7 +34538,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -34607,7 +34607,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -34675,7 +34675,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -34749,7 +34749,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -34874,7 +34874,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -34942,7 +34942,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -35050,7 +35050,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -35158,7 +35158,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -35266,7 +35266,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -35391,7 +35391,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -35490,7 +35490,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -35598,7 +35598,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -35697,7 +35697,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -35765,7 +35765,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -35884,7 +35884,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -36009,7 +36009,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -36164,7 +36164,7 @@ impl Item {
                     duration: 21i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -36288,7 +36288,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -36356,7 +36356,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -36424,7 +36424,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -36492,7 +36492,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -36560,7 +36560,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -36628,7 +36628,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -36696,7 +36696,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -36764,7 +36764,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -36833,7 +36833,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -36902,7 +36902,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -36971,7 +36971,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -37039,7 +37039,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -37107,7 +37107,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -37197,7 +37197,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -37265,7 +37265,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -37352,7 +37352,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -37432,7 +37432,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -37500,7 +37500,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -37569,7 +37569,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -37638,7 +37638,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -37706,7 +37706,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -37774,7 +37774,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -37848,7 +37848,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -37917,7 +37917,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -38010,7 +38010,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -38084,7 +38084,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -38152,7 +38152,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -38220,7 +38220,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -38298,7 +38298,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -38424,7 +38424,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -38492,7 +38492,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -38564,7 +38564,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -38632,7 +38632,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -38700,7 +38700,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -38768,7 +38768,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -38836,7 +38836,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -38904,7 +38904,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -38972,7 +38972,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -39040,7 +39040,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -39108,7 +39108,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -39177,7 +39177,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -39245,7 +39245,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -39320,7 +39320,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -39389,7 +39389,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -39458,7 +39458,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -39527,7 +39527,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -39599,7 +39599,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -39673,7 +39673,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -39741,7 +39741,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -39809,7 +39809,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -39877,7 +39877,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -39945,7 +39945,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -40013,7 +40013,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -40081,7 +40081,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -40149,7 +40149,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -40226,7 +40226,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -40294,7 +40294,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -40362,7 +40362,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -40430,7 +40430,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -40498,7 +40498,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -40566,7 +40566,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -40634,7 +40634,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -40702,7 +40702,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -40770,7 +40770,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -40838,7 +40838,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -40906,7 +40906,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -40974,7 +40974,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -41043,7 +41043,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -41117,7 +41117,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -41186,7 +41186,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -41254,7 +41254,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -41322,7 +41322,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -41390,7 +41390,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -41458,7 +41458,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -41527,7 +41527,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -41602,7 +41602,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -41670,7 +41670,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -41752,7 +41752,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -41831,7 +41831,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -41899,7 +41899,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -41969,7 +41969,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -42037,7 +42037,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -42111,7 +42111,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -42185,7 +42185,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -42259,7 +42259,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -42327,7 +42327,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -42407,7 +42407,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -42476,7 +42476,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -42545,7 +42545,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -42619,7 +42619,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -42688,7 +42688,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -42756,7 +42756,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -42825,7 +42825,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -42893,7 +42893,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -42962,7 +42962,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -43030,7 +43030,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -43098,7 +43098,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -43166,7 +43166,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -43234,7 +43234,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -43302,7 +43302,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -43370,7 +43370,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -43444,7 +43444,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -43531,7 +43531,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -43599,7 +43599,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -43667,7 +43667,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -43736,7 +43736,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -43805,7 +43805,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -43873,7 +43873,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -43941,7 +43941,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -44015,7 +44015,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -44084,7 +44084,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -44152,7 +44152,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -44226,7 +44226,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -44294,7 +44294,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -44362,7 +44362,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -44468,7 +44468,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -44593,7 +44593,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -44701,7 +44701,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -44787,7 +44787,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -44895,7 +44895,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -44963,7 +44963,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -45071,7 +45071,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -45196,7 +45196,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -45295,7 +45295,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -45403,7 +45403,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -45502,7 +45502,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -45621,7 +45621,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -45746,7 +45746,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -45901,7 +45901,7 @@ impl Item {
                     duration: 19i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -46025,7 +46025,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -46093,7 +46093,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -46161,7 +46161,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -46229,7 +46229,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -46297,7 +46297,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -46365,7 +46365,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -46433,7 +46433,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -46513,7 +46513,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -46581,7 +46581,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -46650,7 +46650,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -46718,7 +46718,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -46816,7 +46816,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -46884,7 +46884,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -46952,7 +46952,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -47020,7 +47020,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -47088,7 +47088,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -47167,7 +47167,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -47241,7 +47241,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -47309,7 +47309,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -47393,7 +47393,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -47462,7 +47462,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -47530,7 +47530,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -47598,7 +47598,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -47666,7 +47666,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -47745,7 +47745,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -47824,7 +47824,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -47903,7 +47903,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -47983,7 +47983,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -48051,7 +48051,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -48120,7 +48120,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -48188,7 +48188,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -48286,7 +48286,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -48354,7 +48354,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -48422,7 +48422,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -48490,7 +48490,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -48558,7 +48558,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -48637,7 +48637,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -48711,7 +48711,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -48779,7 +48779,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -48863,7 +48863,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -48932,7 +48932,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -49000,7 +49000,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -49068,7 +49068,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -49136,7 +49136,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -49215,7 +49215,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -49294,7 +49294,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -49373,7 +49373,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -49441,7 +49441,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -49510,7 +49510,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -49578,7 +49578,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -49652,7 +49652,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -49726,7 +49726,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -49795,7 +49795,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -49864,7 +49864,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -49933,7 +49933,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -50001,7 +50001,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -50075,7 +50075,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -50149,7 +50149,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -50217,7 +50217,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -50285,7 +50285,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -50354,7 +50354,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -50422,7 +50422,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -50510,7 +50510,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -50584,7 +50584,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -50652,7 +50652,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -50721,7 +50721,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -50789,7 +50789,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -50857,7 +50857,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -50925,7 +50925,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -50993,7 +50993,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -51062,7 +51062,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -51130,7 +51130,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -51204,7 +51204,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -51273,7 +51273,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -51341,7 +51341,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -51409,7 +51409,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -51477,7 +51477,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -51545,7 +51545,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -51613,7 +51613,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -51681,7 +51681,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -51749,7 +51749,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -51817,7 +51817,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -51885,7 +51885,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -52010,7 +52010,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -52078,7 +52078,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -52146,7 +52146,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -52254,7 +52254,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -52322,7 +52322,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -52430,7 +52430,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -52498,7 +52498,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -52567,7 +52567,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -52675,7 +52675,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -52800,7 +52800,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -52899,7 +52899,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -52973,7 +52973,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -53081,7 +53081,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -53180,7 +53180,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -53248,7 +53248,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -53316,7 +53316,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -53435,7 +53435,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -53560,7 +53560,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -53715,7 +53715,7 @@ impl Item {
                     duration: 19i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -53839,7 +53839,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -53907,7 +53907,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -53975,7 +53975,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -54043,7 +54043,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -54111,7 +54111,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -54190,7 +54190,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -54269,7 +54269,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -54348,7 +54348,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -54427,7 +54427,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -54506,7 +54506,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -54585,7 +54585,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -54664,7 +54664,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -54745,7 +54745,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -54814,7 +54814,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -54893,7 +54893,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -54972,7 +54972,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -55051,7 +55051,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -55120,7 +55120,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -55200,7 +55200,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -55280,7 +55280,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -55361,7 +55361,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -55440,7 +55440,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -55519,7 +55519,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -55598,7 +55598,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -55677,7 +55677,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -55746,7 +55746,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -55815,7 +55815,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -55894,7 +55894,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -55962,7 +55962,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -56030,7 +56030,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -56104,7 +56104,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -56172,7 +56172,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -56240,7 +56240,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -56309,7 +56309,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -56388,7 +56388,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -56456,7 +56456,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -56536,7 +56536,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -56604,7 +56604,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -56712,7 +56712,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -56820,7 +56820,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -56928,7 +56928,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -57027,7 +57027,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -57135,7 +57135,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -57214,7 +57214,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -57282,7 +57282,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -57356,7 +57356,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -57436,7 +57436,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -57504,7 +57504,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -57573,7 +57573,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -57641,7 +57641,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -57739,7 +57739,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -57807,7 +57807,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -57875,7 +57875,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -57943,7 +57943,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -58011,7 +58011,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -58090,7 +58090,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -58164,7 +58164,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -58232,7 +58232,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -58316,7 +58316,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -58385,7 +58385,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -58453,7 +58453,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -58521,7 +58521,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -58589,7 +58589,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -58668,7 +58668,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -58747,7 +58747,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -58826,7 +58826,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -58906,7 +58906,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -58974,7 +58974,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -59043,7 +59043,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -59111,7 +59111,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -59209,7 +59209,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -59277,7 +59277,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -59345,7 +59345,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -59413,7 +59413,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -59481,7 +59481,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -59560,7 +59560,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -59634,7 +59634,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -59702,7 +59702,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -59786,7 +59786,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -59855,7 +59855,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -59923,7 +59923,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -59991,7 +59991,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -60059,7 +60059,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -60138,7 +60138,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -60217,7 +60217,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -60296,7 +60296,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -60364,7 +60364,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -60432,7 +60432,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -60501,7 +60501,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -60570,7 +60570,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -60639,7 +60639,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -60719,7 +60719,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -60787,7 +60787,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -60856,7 +60856,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -60924,7 +60924,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -61022,7 +61022,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -61090,7 +61090,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -61158,7 +61158,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -61226,7 +61226,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -61294,7 +61294,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -61373,7 +61373,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -61447,7 +61447,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -61515,7 +61515,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -61599,7 +61599,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -61668,7 +61668,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -61736,7 +61736,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -61804,7 +61804,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -61872,7 +61872,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -61951,7 +61951,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -62030,7 +62030,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -62109,7 +62109,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -62190,7 +62190,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -62259,7 +62259,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -62327,7 +62327,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -62406,7 +62406,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -62514,7 +62514,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -62594,7 +62594,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -62662,7 +62662,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -62731,7 +62731,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -62799,7 +62799,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -62897,7 +62897,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -62965,7 +62965,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -63033,7 +63033,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -63101,7 +63101,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -63169,7 +63169,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -63248,7 +63248,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -63322,7 +63322,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -63390,7 +63390,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -63474,7 +63474,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -63543,7 +63543,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -63611,7 +63611,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -63679,7 +63679,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -63747,7 +63747,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -63826,7 +63826,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -63905,7 +63905,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -63984,7 +63984,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -64052,7 +64052,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -64120,7 +64120,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -64189,7 +64189,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -64268,7 +64268,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -64347,7 +64347,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -64426,7 +64426,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -64505,7 +64505,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -64584,7 +64584,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -64663,7 +64663,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -64744,7 +64744,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -64813,7 +64813,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -64892,7 +64892,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -64971,7 +64971,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -65050,7 +65050,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -65130,7 +65130,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -65210,7 +65210,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -65290,7 +65290,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -65371,7 +65371,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -65450,7 +65450,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -65529,7 +65529,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -65608,7 +65608,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -65687,7 +65687,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -65755,7 +65755,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -65823,7 +65823,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -65892,7 +65892,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -65961,7 +65961,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -66048,7 +66048,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -66126,7 +66126,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -66200,7 +66200,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -66274,7 +66274,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -66348,7 +66348,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -66417,7 +66417,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -66486,7 +66486,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -66555,7 +66555,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -66623,7 +66623,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -66691,7 +66691,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -66759,7 +66759,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -66827,7 +66827,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -66895,7 +66895,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -66963,7 +66963,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -67031,7 +67031,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -67099,7 +67099,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -67173,7 +67173,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -67241,7 +67241,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -67309,7 +67309,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -67377,7 +67377,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -67445,7 +67445,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -67513,7 +67513,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -67581,7 +67581,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -67650,7 +67650,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -67719,7 +67719,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -67805,7 +67805,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -67885,7 +67885,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -67959,7 +67959,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -68033,7 +68033,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -68107,7 +68107,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -68181,7 +68181,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -68255,7 +68255,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -68329,7 +68329,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -68403,7 +68403,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -68477,7 +68477,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -68551,7 +68551,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -68625,7 +68625,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -68699,7 +68699,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -68773,7 +68773,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -68847,7 +68847,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -68921,7 +68921,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -68995,7 +68995,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -69069,7 +69069,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -69143,7 +69143,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -69217,7 +69217,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -69291,7 +69291,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -69365,7 +69365,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -69439,7 +69439,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -69525,7 +69525,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -69593,7 +69593,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -69661,7 +69661,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -69729,7 +69729,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -69798,7 +69798,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -69866,7 +69866,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -69934,7 +69934,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -70002,7 +70002,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -70070,7 +70070,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -70138,7 +70138,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -70206,7 +70206,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -70274,7 +70274,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -70342,7 +70342,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -70411,7 +70411,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -70489,7 +70489,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -70558,7 +70558,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -70627,7 +70627,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -70758,7 +70758,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -70832,7 +70832,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -70953,7 +70953,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -71074,7 +71074,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -71195,7 +71195,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -71326,7 +71326,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -71438,7 +71438,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -71518,7 +71518,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -71639,7 +71639,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -71751,7 +71751,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -71876,7 +71876,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -71950,7 +71950,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -72081,7 +72081,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -72242,7 +72242,7 @@ impl Item {
                     duration: 23i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -72372,7 +72372,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -72440,7 +72440,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -72508,7 +72508,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -72587,7 +72587,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -72666,7 +72666,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -72745,7 +72745,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -72824,7 +72824,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -72903,7 +72903,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -72982,7 +72982,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -73061,7 +73061,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -73142,7 +73142,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -73211,7 +73211,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -73290,7 +73290,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -73369,7 +73369,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -73448,7 +73448,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -73528,7 +73528,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -73608,7 +73608,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -73689,7 +73689,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -73768,7 +73768,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -73847,7 +73847,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -73926,7 +73926,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -74005,7 +74005,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -74073,7 +74073,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -74141,7 +74141,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -74210,7 +74210,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -74279,7 +74279,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -74347,7 +74347,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -74431,7 +74431,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -74499,7 +74499,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -74568,7 +74568,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -74648,7 +74648,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -74716,7 +74716,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -74785,7 +74785,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -74853,7 +74853,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -74951,7 +74951,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -75019,7 +75019,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -75087,7 +75087,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -75155,7 +75155,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -75223,7 +75223,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -75302,7 +75302,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -75376,7 +75376,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -75444,7 +75444,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -75528,7 +75528,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -75597,7 +75597,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -75666,7 +75666,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -75734,7 +75734,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -75802,7 +75802,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -75870,7 +75870,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -75939,7 +75939,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -76018,7 +76018,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -76097,7 +76097,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -76176,7 +76176,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -76245,7 +76245,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -76313,7 +76313,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -76381,7 +76381,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -76449,7 +76449,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -76517,7 +76517,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -76585,7 +76585,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -76653,7 +76653,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -76721,7 +76721,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -76798,7 +76798,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -76866,7 +76866,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -76934,7 +76934,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -77002,7 +77002,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -77070,7 +77070,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -77138,7 +77138,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -77206,7 +77206,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -77274,7 +77274,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -77342,7 +77342,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -77410,7 +77410,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -77478,7 +77478,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -77547,7 +77547,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -77616,7 +77616,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -77685,7 +77685,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -77764,7 +77764,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -77843,7 +77843,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -77922,7 +77922,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -78001,7 +78001,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -78080,7 +78080,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -78159,7 +78159,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -78240,7 +78240,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -78309,7 +78309,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -78388,7 +78388,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -78467,7 +78467,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -78546,7 +78546,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -78626,7 +78626,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -78706,7 +78706,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -78787,7 +78787,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -78866,7 +78866,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -78945,7 +78945,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -79024,7 +79024,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -79103,7 +79103,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -79172,7 +79172,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -79240,7 +79240,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -79309,7 +79309,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -79378,7 +79378,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -79446,7 +79446,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -79515,7 +79515,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -79583,7 +79583,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -79651,7 +79651,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -79720,7 +79720,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -79789,7 +79789,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -79863,7 +79863,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -79932,7 +79932,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -80032,7 +80032,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -80101,7 +80101,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -80170,7 +80170,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -80250,7 +80250,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -80318,7 +80318,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -80387,7 +80387,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -80455,7 +80455,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -80553,7 +80553,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -80621,7 +80621,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -80689,7 +80689,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -80757,7 +80757,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -80825,7 +80825,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -80904,7 +80904,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -80978,7 +80978,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -81046,7 +81046,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -81130,7 +81130,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -81199,7 +81199,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -81268,7 +81268,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -81336,7 +81336,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -81404,7 +81404,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -81472,7 +81472,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -81541,7 +81541,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -81620,7 +81620,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -81699,7 +81699,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -81778,7 +81778,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -81846,7 +81846,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -81915,7 +81915,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -81984,7 +81984,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -82053,7 +82053,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -82143,7 +82143,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -82217,7 +82217,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -82285,7 +82285,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -82353,7 +82353,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -82449,7 +82449,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -82518,7 +82518,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -82586,7 +82586,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -82654,7 +82654,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -82722,7 +82722,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -82790,7 +82790,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -82858,7 +82858,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -82926,7 +82926,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -82994,7 +82994,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -83062,7 +83062,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -83130,7 +83130,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -83198,7 +83198,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -83266,7 +83266,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -83334,7 +83334,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -83402,7 +83402,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -83470,7 +83470,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -83538,7 +83538,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -83606,7 +83606,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -83674,7 +83674,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -83742,7 +83742,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -83810,7 +83810,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -83878,7 +83878,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -83946,7 +83946,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -84014,7 +84014,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -84082,7 +84082,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -84150,7 +84150,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -84218,7 +84218,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -84286,7 +84286,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -84354,7 +84354,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -84422,7 +84422,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -84490,7 +84490,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -84558,7 +84558,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -84626,7 +84626,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -84694,7 +84694,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -84762,7 +84762,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -84830,7 +84830,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -84898,7 +84898,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -84966,7 +84966,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -85045,7 +85045,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -85124,7 +85124,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -85203,7 +85203,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -85282,7 +85282,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -85361,7 +85361,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -85440,7 +85440,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -85521,7 +85521,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -85600,7 +85600,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -85679,7 +85679,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -85758,7 +85758,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -85838,7 +85838,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -85918,7 +85918,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -85999,7 +85999,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -86078,7 +86078,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -86157,7 +86157,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -86236,7 +86236,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -86315,7 +86315,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -86383,7 +86383,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -86452,7 +86452,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -86538,7 +86538,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -86625,7 +86625,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -86694,7 +86694,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -86781,7 +86781,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -86855,7 +86855,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -86923,7 +86923,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -86991,7 +86991,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -87059,7 +87059,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -87127,7 +87127,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -87195,7 +87195,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -87263,7 +87263,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -87331,7 +87331,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -87399,7 +87399,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -87467,7 +87467,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -87535,7 +87535,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -87609,7 +87609,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -87723,7 +87723,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -87800,7 +87800,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -87869,7 +87869,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -87938,7 +87938,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -88025,7 +88025,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -88094,7 +88094,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -88174,7 +88174,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -88242,7 +88242,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -88311,7 +88311,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -88379,7 +88379,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -88477,7 +88477,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -88545,7 +88545,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -88613,7 +88613,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -88681,7 +88681,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -88749,7 +88749,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -88828,7 +88828,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -88902,7 +88902,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -88970,7 +88970,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -89054,7 +89054,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -89123,7 +89123,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -89191,7 +89191,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -89259,7 +89259,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -89327,7 +89327,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -89406,7 +89406,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -89485,7 +89485,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -89564,7 +89564,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -89632,7 +89632,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -89700,7 +89700,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -89768,7 +89768,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -89836,7 +89836,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -89910,7 +89910,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -89978,7 +89978,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -90046,7 +90046,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -90114,7 +90114,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -90182,7 +90182,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -90250,7 +90250,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -90336,7 +90336,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -90404,7 +90404,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -90472,7 +90472,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -90541,7 +90541,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -90627,7 +90627,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -90701,7 +90701,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -90769,7 +90769,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -90838,7 +90838,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -90906,7 +90906,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -90974,7 +90974,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -91042,7 +91042,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -91110,7 +91110,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -91178,7 +91178,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -91246,7 +91246,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -91314,7 +91314,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -91394,7 +91394,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -91462,7 +91462,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -91531,7 +91531,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -91599,7 +91599,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -91697,7 +91697,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -91765,7 +91765,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -91833,7 +91833,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -91901,7 +91901,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -91969,7 +91969,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -92048,7 +92048,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -92122,7 +92122,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -92190,7 +92190,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -92274,7 +92274,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -92343,7 +92343,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -92412,7 +92412,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -92480,7 +92480,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -92548,7 +92548,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -92616,7 +92616,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -92684,7 +92684,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -92753,7 +92753,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -92821,7 +92821,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -92889,7 +92889,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -92957,7 +92957,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -93025,7 +93025,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -93093,7 +93093,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -93162,7 +93162,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -93231,7 +93231,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -93299,7 +93299,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -93367,7 +93367,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -93435,7 +93435,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -93504,7 +93504,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -93583,7 +93583,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -93662,7 +93662,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -93741,7 +93741,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -93815,7 +93815,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -93883,7 +93883,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -93951,7 +93951,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -94019,7 +94019,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -94087,7 +94087,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -94155,7 +94155,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -94223,7 +94223,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -94291,7 +94291,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -94359,7 +94359,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -94433,7 +94433,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -94501,7 +94501,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -94569,7 +94569,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -94637,7 +94637,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -94705,7 +94705,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -94773,7 +94773,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -94841,7 +94841,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -94909,7 +94909,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -94977,7 +94977,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -95046,7 +95046,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -95142,7 +95142,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -95226,7 +95226,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -95312,7 +95312,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -95389,7 +95389,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -95458,7 +95458,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -95526,7 +95526,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -95594,7 +95594,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -95662,7 +95662,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -95730,7 +95730,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -95798,7 +95798,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -95867,7 +95867,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -95946,7 +95946,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -96020,7 +96020,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -96088,7 +96088,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -96156,7 +96156,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -96224,7 +96224,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -96292,7 +96292,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -96360,7 +96360,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -96428,7 +96428,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -96497,7 +96497,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -96566,7 +96566,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -96634,7 +96634,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -96702,7 +96702,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -96776,7 +96776,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -96876,7 +96876,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -96945,7 +96945,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -97014,7 +97014,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -97088,7 +97088,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -97199,7 +97199,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -97279,7 +97279,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -97348,7 +97348,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -97417,7 +97417,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -97486,7 +97486,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -97554,7 +97554,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -97623,7 +97623,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -97691,7 +97691,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -97760,7 +97760,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -97829,7 +97829,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -97928,7 +97928,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -97997,7 +97997,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -98071,7 +98071,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -98145,7 +98145,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -98213,7 +98213,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -98281,7 +98281,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -98350,7 +98350,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -98418,7 +98418,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -98487,7 +98487,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -98566,7 +98566,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -98635,7 +98635,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -98703,7 +98703,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -98771,7 +98771,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -98839,7 +98839,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -98907,7 +98907,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -98975,7 +98975,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -99043,7 +99043,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -99111,7 +99111,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -99179,7 +99179,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -99247,7 +99247,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -99315,7 +99315,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -99383,7 +99383,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -99451,7 +99451,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -99519,7 +99519,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -99588,7 +99588,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -99662,7 +99662,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -99730,7 +99730,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -99798,7 +99798,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -99866,7 +99866,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -99935,7 +99935,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -100003,7 +100003,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -100072,7 +100072,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -100141,7 +100141,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -100209,7 +100209,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -100277,7 +100277,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -100345,7 +100345,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -100413,7 +100413,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -100481,7 +100481,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -100549,7 +100549,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -100645,7 +100645,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -100714,7 +100714,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -100782,7 +100782,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -100859,7 +100859,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -100927,7 +100927,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -100996,7 +100996,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -101075,7 +101075,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -101154,7 +101154,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -101233,7 +101233,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -101312,7 +101312,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -101391,7 +101391,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -101470,7 +101470,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -101551,7 +101551,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -101620,7 +101620,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -101699,7 +101699,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -101778,7 +101778,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -101857,7 +101857,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -101937,7 +101937,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -102017,7 +102017,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -102098,7 +102098,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -102177,7 +102177,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -102256,7 +102256,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -102335,7 +102335,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -102414,7 +102414,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -102482,7 +102482,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -102551,7 +102551,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -102630,7 +102630,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -102698,7 +102698,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -102766,7 +102766,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -102891,7 +102891,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -102959,7 +102959,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -103027,7 +103027,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -103095,7 +103095,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -103163,7 +103163,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -103231,7 +103231,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -103356,7 +103356,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -103475,7 +103475,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -103543,7 +103543,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -103668,7 +103668,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -103736,7 +103736,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -103891,7 +103891,7 @@ impl Item {
                     duration: 15i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -103959,7 +103959,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -104083,7 +104083,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -104151,7 +104151,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -104220,7 +104220,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -104289,7 +104289,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -104358,7 +104358,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -104426,7 +104426,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -104505,7 +104505,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -104584,7 +104584,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -104663,7 +104663,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -104742,7 +104742,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -104821,7 +104821,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -104900,7 +104900,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -104979,7 +104979,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -105047,7 +105047,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -105115,7 +105115,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -105194,7 +105194,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -105273,7 +105273,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -105352,7 +105352,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -105431,7 +105431,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -105510,7 +105510,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -105589,7 +105589,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -105668,7 +105668,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -105747,7 +105747,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -105826,7 +105826,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -105905,7 +105905,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -105984,7 +105984,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -106063,7 +106063,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -106142,7 +106142,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -106221,7 +106221,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -106289,7 +106289,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -106357,7 +106357,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -106425,7 +106425,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -106493,7 +106493,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -106561,7 +106561,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -106630,7 +106630,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -106698,7 +106698,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -106766,7 +106766,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -106834,7 +106834,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -106902,7 +106902,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -106970,7 +106970,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -107039,7 +107039,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -107108,7 +107108,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -107176,7 +107176,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -107244,7 +107244,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -107312,7 +107312,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -107380,7 +107380,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -107449,7 +107449,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -107517,7 +107517,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -107585,7 +107585,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -107672,7 +107672,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -107747,7 +107747,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -107834,7 +107834,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -107903,7 +107903,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -107972,7 +107972,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -108041,7 +108041,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -108121,7 +108121,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -108190,7 +108190,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -108258,7 +108258,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -108326,7 +108326,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -108400,7 +108400,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -108468,7 +108468,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -108536,7 +108536,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -108604,7 +108604,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -108685,7 +108685,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -108753,7 +108753,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -108821,7 +108821,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -108889,7 +108889,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -108958,7 +108958,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -109027,7 +109027,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -109132,7 +109132,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -109201,7 +109201,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -109281,7 +109281,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -109349,7 +109349,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -109417,7 +109417,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -109519,7 +109519,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -109587,7 +109587,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -109673,7 +109673,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -109750,7 +109750,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -109819,7 +109819,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -109887,7 +109887,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -109955,7 +109955,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -110023,7 +110023,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -110091,7 +110091,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -110159,7 +110159,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -110227,7 +110227,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -110295,7 +110295,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -110363,7 +110363,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -110431,7 +110431,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -110499,7 +110499,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -110567,7 +110567,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -110635,7 +110635,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -110743,7 +110743,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -110811,7 +110811,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -110880,7 +110880,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -110949,7 +110949,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -111017,7 +111017,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -111085,7 +111085,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -111153,7 +111153,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -111222,7 +111222,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -111291,7 +111291,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -111360,7 +111360,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -111429,7 +111429,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -111498,7 +111498,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -111566,7 +111566,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -111635,7 +111635,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -111704,7 +111704,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -111772,7 +111772,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -111840,7 +111840,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -111908,7 +111908,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -111976,7 +111976,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -112045,7 +112045,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -112115,7 +112115,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -112185,7 +112185,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -112253,7 +112253,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -112321,7 +112321,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -112389,7 +112389,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -112457,7 +112457,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -112526,7 +112526,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -112595,7 +112595,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -112665,7 +112665,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -112733,7 +112733,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -112801,7 +112801,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -112869,7 +112869,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -112937,7 +112937,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -113006,7 +113006,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -113074,7 +113074,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -113142,7 +113142,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -113210,7 +113210,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -113278,7 +113278,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -113346,7 +113346,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -113414,7 +113414,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -113482,7 +113482,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -113550,7 +113550,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -113627,7 +113627,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -113695,7 +113695,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -113763,7 +113763,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -113831,7 +113831,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -113899,7 +113899,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -113967,7 +113967,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -114035,7 +114035,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -114103,7 +114103,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -114171,7 +114171,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -114239,7 +114239,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -114307,7 +114307,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -114375,7 +114375,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -114443,7 +114443,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -114511,7 +114511,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -114588,7 +114588,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -114656,7 +114656,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -114724,7 +114724,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -114792,7 +114792,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -114860,7 +114860,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -114928,7 +114928,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -114996,7 +114996,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -115064,7 +115064,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -115132,7 +115132,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -115200,7 +115200,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -115268,7 +115268,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -115336,7 +115336,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -115404,7 +115404,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -115472,7 +115472,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -115540,7 +115540,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -115608,7 +115608,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -115685,7 +115685,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -115753,7 +115753,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -115821,7 +115821,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -115889,7 +115889,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -115957,7 +115957,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -116025,7 +116025,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -116093,7 +116093,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -116161,7 +116161,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -116229,7 +116229,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -116297,7 +116297,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -116365,7 +116365,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -116433,7 +116433,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -116501,7 +116501,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -116569,7 +116569,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -116637,7 +116637,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -116714,7 +116714,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -116782,7 +116782,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -116850,7 +116850,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -116918,7 +116918,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -116986,7 +116986,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -117054,7 +117054,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -117122,7 +117122,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -117190,7 +117190,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -117258,7 +117258,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -117326,7 +117326,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -117394,7 +117394,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -117462,7 +117462,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -117530,7 +117530,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -117598,7 +117598,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -117666,7 +117666,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -117734,7 +117734,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -117811,7 +117811,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -117879,7 +117879,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -117947,7 +117947,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -118015,7 +118015,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -118083,7 +118083,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -118151,7 +118151,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -118219,7 +118219,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -118287,7 +118287,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -118356,7 +118356,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -118424,7 +118424,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -118493,7 +118493,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -118562,7 +118562,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -118642,7 +118642,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -118710,7 +118710,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -118779,7 +118779,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -118847,7 +118847,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -118945,7 +118945,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -119013,7 +119013,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -119081,7 +119081,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -119149,7 +119149,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -119217,7 +119217,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -119296,7 +119296,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -119370,7 +119370,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -119438,7 +119438,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -119522,7 +119522,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -119591,7 +119591,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -119659,7 +119659,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -119727,7 +119727,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -119795,7 +119795,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -119864,7 +119864,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -119943,7 +119943,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -120022,7 +120022,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -120101,7 +120101,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -120169,7 +120169,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -120238,7 +120238,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -120313,7 +120313,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -120382,7 +120382,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -120451,7 +120451,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -120541,7 +120541,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -120610,7 +120610,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -120679,7 +120679,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -120788,7 +120788,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -120857,7 +120857,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -120993,7 +120993,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -121129,7 +121129,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -121259,7 +121259,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -121395,7 +121395,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -121561,7 +121561,7 @@ impl Item {
                     duration: 13i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -121696,7 +121696,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -121765,7 +121765,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -121833,7 +121833,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -121909,7 +121909,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -121989,7 +121989,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -122057,7 +122057,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -122126,7 +122126,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -122194,7 +122194,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -122292,7 +122292,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -122360,7 +122360,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -122428,7 +122428,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -122496,7 +122496,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -122564,7 +122564,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -122643,7 +122643,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -122717,7 +122717,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -122785,7 +122785,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -122869,7 +122869,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -122938,7 +122938,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -123007,7 +123007,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -123075,7 +123075,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -123143,7 +123143,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -123211,7 +123211,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -123290,7 +123290,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -123369,7 +123369,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -123448,7 +123448,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -123517,7 +123517,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -123616,7 +123616,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -123685,7 +123685,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -123754,7 +123754,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -123823,7 +123823,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -123892,7 +123892,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
@@ -123961,7 +123961,7 @@ impl Item {
                     duration: 6i32,
                 },
             ),
-            (TooltipDisplay, &TooltipDisplayImpl),
+            (TooltipDisplay, &TooltipDisplayImpl::DEFAULT),
             (
                 UseEffects,
                 &UseEffectsImpl {
