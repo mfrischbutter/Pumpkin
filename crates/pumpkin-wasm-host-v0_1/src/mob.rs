@@ -208,6 +208,9 @@ enum GoalCall {
 
 impl CustomWasmGoal {
     fn invoke(&self, mob: &dyn InternalMob, call: GoalCall) {
+        if self.plugin.store.is_closed() {
+            return;
+        }
         let Some(entity) = current_mob_entity(mob) else {
             return;
         };
