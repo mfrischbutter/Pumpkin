@@ -242,11 +242,10 @@ impl RootAdmission {
             let attempt = tokio::time::timeout(WAIT_CYCLE_RECHECK_INTERVAL, acquire.as_mut());
             if let Ok(permit) = attempt.await {
                 let permit = permit.map_err(|_| admission_closed())?;
-                {
-                    let mut graph = self.state.graph();
-                    graph.remove_wait(wait_id);
-                    graph.hold(gate.id, context.chain_id);
-                }
+                let mut graph = self.state.graph();
+                graph.remove_wait(wait_id);
+                graph.hold(gate.id, context.chain_id);
+                drop(graph);
                 let admission = self.admitted(gate, context, permit, waiting_since);
                 return Ok(ChainAdmission::Admitted(admission));
             }

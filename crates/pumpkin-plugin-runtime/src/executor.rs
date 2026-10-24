@@ -780,7 +780,8 @@ where
         }
         let shared = &self.shared;
         loop {
-            match shared.policy.admit_chain(context, &shared.gate).await? {
+            let admission = shared.policy.admit_chain(context, &shared.gate).await?;
+            match admission {
                 ChainAdmission::Held => {
                     let Some(sender) = shared.reentry.sender_for(context) else {
                         return Ok(Some(job));
@@ -1199,7 +1200,8 @@ where
         if shared.mode == StoreMode::Concurrent {
             return Ok(None);
         }
-        match shared.policy.admit_chain(context, &shared.gate).await? {
+        let admission = shared.policy.admit_chain(context, &shared.gate).await?;
+        match admission {
             ChainAdmission::Held => Ok(None),
             ChainAdmission::Admitted(admission) => Ok(Some(admission)),
             ChainAdmission::Cycle { holder_chain_id } => Err(wasmtime::Error::msg(format!(
