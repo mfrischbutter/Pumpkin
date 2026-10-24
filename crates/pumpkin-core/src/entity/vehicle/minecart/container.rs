@@ -112,18 +112,24 @@ impl MinecartInventory {
         };
 
         let inventory: Arc<dyn Inventory> = self.clone();
-        crate::world::loot::fill_chest_inventory_handle(&inventory, &table, seed, params, |items| {
-            let Some(minecart) = minecart else {
-                return items;
-            };
-            minecart.world.load().fire_loot_generate(
-                &loot_table,
-                None,
-                Some(minecart.entity_id),
-                player,
-                items,
-            )
-        });
+        crate::world::loot::fill_chest_inventory_handle(
+            &inventory,
+            &table,
+            seed,
+            params,
+            |items| {
+                let Some(minecart) = minecart else {
+                    return items;
+                };
+                minecart.world.load().fire_loot_generate(
+                    &loot_table,
+                    None,
+                    Some(minecart.entity_id),
+                    player,
+                    items,
+                )
+            },
+        );
     }
 }
 
@@ -326,7 +332,11 @@ mod tests {
         assert_eq!(deferred.get_long("LootTableSeed"), Some(1234));
         assert!(deferred.get_list("Items").is_none());
 
-        inventory.unpack_loot(None, None, &crate::world::loot::LootContextParameters::default());
+        inventory.unpack_loot(
+            None,
+            None,
+            &crate::world::loot::LootContextParameters::default(),
+        );
         assert!(!inventory.is_empty());
 
         let mut unpacked = NbtCompound::new();

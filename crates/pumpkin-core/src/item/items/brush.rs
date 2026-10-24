@@ -48,15 +48,17 @@ fn get_archaeology_loot(
         "minecraft:archaeology/trail_ruins_common"
     };
 
-    let mut items = world.get_loot_table(loot_key).map_or_else(Vec::new, |table| {
-        table.generate_loot_with_context(
-            rand::random(),
-            &crate::world::loot::LootContextParameters {
-                world: Some(world),
-                ..Default::default()
-            },
-        )
-    });
+    let mut items = world
+        .get_loot_table(loot_key)
+        .map_or_else(Vec::new, |table| {
+            table.generate_loot_with_context(
+                rand::random(),
+                &crate::world::loot::LootContextParameters {
+                    world: Some(world),
+                    ..Default::default()
+                },
+            )
+        });
     // Like vanilla `BrushableBlockEntity.unpackLootTable`, only the first item is used.
     items.truncate(1);
     if items.is_empty() {
