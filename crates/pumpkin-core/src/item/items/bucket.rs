@@ -248,7 +248,7 @@ fn apply_mob_bucket_components(bucket_stack: &ItemStack, mob: &dyn EntityBase, p
 
 fn give_player_bucket_item(player: &Player, hand: Hand, filled: ItemStack) {
     let mut hand_stack = player.inventory.get_stack_in_hand(hand);
-    give_filled_bucket_stack(&mut hand_stack, player, filled);
+    give_filled_bucket_stack(&mut hand_stack, player, filled, true);
     player.inventory.set_stack_in_hand(hand, hand_stack);
 }
 
