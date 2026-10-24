@@ -1899,6 +1899,18 @@ interface event {
         cancelled: bool
     }
 
+    /// Fired before a scheduled tick of a hooked block runs
+    /// (see `context.register-scheduled-tick-hook`).
+    ///
+    /// Cancelling skips the tick. The tick is used up either way; use
+    /// `world.schedule-block-tick` to tick the block again later.
+    record block-scheduled-tick-event-data {
+        target-world: %world,
+        block-pos: block-pos,
+        state-id: u16,
+        cancelled: bool
+    }
+
     enum event-type {
         player-join-event,
         player-leave-event,
@@ -2174,6 +2186,7 @@ interface event {
         raid-trigger-event,
         lightning-strike-event,
         block-shape-update-event,
+        block-scheduled-tick-event,
     }
 
     variant event {
@@ -2451,5 +2464,6 @@ interface event {
         raid-trigger-event(raid-trigger-event-data),
         lightning-strike-event(lightning-strike-event-data),
         block-shape-update-event(block-shape-update-event-data),
+        block-scheduled-tick-event(block-scheduled-tick-event-data),
     }
 }
