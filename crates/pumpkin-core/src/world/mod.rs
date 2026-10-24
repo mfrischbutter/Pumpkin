@@ -7320,13 +7320,38 @@ impl World {
         )
     }
 
-    pub fn generate_loot(&self, loot_table: String) {
-        let mut loot_event =
-            crate::plugin::api::events::world::loot_generate::LootGenerateEvent::new(loot_table);
-        if let Some(server) = self.server.upgrade() {
-            server
-                .plugin_manager
-                .fire_blocking(&server, &mut loot_event);
+    /// Fires a `LootGenerateEvent` for `items` generated from `loot_table` and returns the items
+    /// plugins left in it, or nothing if a plugin cancelled it.
+    pub fn fire_loot_generate(
+        self: &Arc<Self>,
+        loot_table: &str,
+        block_pos: Option<BlockPos>,
+        entity_id: Option<i32>,
+        player: Option<&Player>,
+        items: Vec<ItemStack>,
+    ) -> Vec<ItemStack> {
+        use crate::plugin::api::events::world::loot_generate::LootGenerateEvent;
+
+        let Some(server) = self
+            .server
+            .upgrade()
+            .filter(|server| server.plugin_manager.has_handlers::<LootGenerateEvent>())
+        else {
+            return items;
+        };
+        let mut event = LootGenerateEvent::new(
+            self.clone(),
+            loot_table.to_string(),
+            block_pos,
+            entity_id.and_then(|id| self.get_entity_by_id(id)),
+            player.and_then(|player| self.get_player_by_uuid(player.gameprofile.id)),
+            items,
+        );
+        server.plugin_manager.fire_blocking(&server, &mut event);
+        if event.cancelled {
+            Vec::new()
+        } else {
+            event.items
         }
     }
 

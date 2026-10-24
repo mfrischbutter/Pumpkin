@@ -743,11 +743,15 @@ impl EntityBase for MinecartEntity {
                 if let Some(container) = self.container()
                     && container.claim_drops()
                 {
-                    container.unpack_loot(&crate::world::loot::LootContextParameters {
-                        world: Some(&world),
-                        position: Some(self.vehicle.entity.pos.load()),
-                        ..Default::default()
-                    });
+                    container.unpack_loot(
+                        Some(&self.vehicle.entity),
+                        None,
+                        &crate::world::loot::LootContextParameters {
+                            world: Some(&world),
+                            position: Some(self.vehicle.entity.pos.load()),
+                            ..Default::default()
+                        },
+                    );
                     let inventory: Arc<dyn Inventory> = container.clone();
                     world.scatter_inventory(&position, &inventory);
                 }

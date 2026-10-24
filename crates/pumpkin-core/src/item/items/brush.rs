@@ -26,7 +26,12 @@ impl ItemMetadata for BrushItem {
         Box::new([Item::BRUSH.id])
     }
 }
-fn get_archaeology_loot(is_sand: bool, location: BlockPos, world: &World) -> ItemStack {
+fn get_archaeology_loot(
+    is_sand: bool,
+    location: BlockPos,
+    world: &Arc<World>,
+    player: &Player,
+) -> Option<ItemStack> {
     if let Some(block_entity) = world.get_block_entity(&location)
         && let Some(brushable) = block_entity
             .as_any()
@@ -34,7 +39,7 @@ fn get_archaeology_loot(is_sand: bool, location: BlockPos, world: &World) -> Ite
         && let Ok(mut item_guard) = brushable.item.lock()
         && let Some(item) = item_guard.take()
     {
-        return item;
+        return Some(item);
     }
 
     let loot_key = if is_sand {
@@ -43,20 +48,25 @@ fn get_archaeology_loot(is_sand: bool, location: BlockPos, world: &World) -> Ite
         "minecraft:archaeology/trail_ruins_common"
     };
 
-    if let Some(table) = world.get_loot_table(loot_key) {
-        let items = table.generate_loot_with_context(
+    let mut items = world.get_loot_table(loot_key).map_or_else(Vec::new, |table| {
+        table.generate_loot_with_context(
             rand::random(),
             &crate::world::loot::LootContextParameters {
                 world: Some(world),
                 ..Default::default()
             },
-        );
-        if let Some(first) = items.into_iter().next() {
-            return first;
-        }
+        )
+    });
+    // Like vanilla `BrushableBlockEntity.unpackLootTable`, only the first item is used.
+    items.truncate(1);
+    if items.is_empty() {
+        items.push(ItemStack::new(1, &Item::SNORT_POTTERY_SHERD));
     }
 
-    ItemStack::new(1, &Item::SNORT_POTTERY_SHERD)
+    world
+        .fire_loot_generate(loot_key, Some(location), None, Some(player), items)
+        .into_iter()
+        .next()
 }
 
 impl ItemBehaviour for BrushItem {
@@ -152,17 +162,18 @@ impl ItemBehaviour for BrushItem {
                 &block_center,
             );
 
-            let loot_item = get_archaeology_loot(is_sand, location, &world);
-            let spawn_pos = Vector3::new(
-                f64::from(location.0.x) + 0.5,
-                f64::from(location.0.y) + 1.0,
-                f64::from(location.0.z) + 0.5,
-            );
-            let item_entity = Arc::new(ItemEntity::new(
-                Entity::new(world.clone(), spawn_pos, &EntityType::ITEM),
-                loot_item,
-            ));
-            world.spawn_entity(item_entity);
+            if let Some(loot_item) = get_archaeology_loot(is_sand, location, &world, player) {
+                let spawn_pos = Vector3::new(
+                    f64::from(location.0.x) + 0.5,
+                    f64::from(location.0.y) + 1.0,
+                    f64::from(location.0.z) + 0.5,
+                );
+                let item_entity = Arc::new(ItemEntity::new(
+                    Entity::new(world.clone(), spawn_pos, &EntityType::ITEM),
+                    loot_item,
+                ));
+                world.spawn_entity(item_entity);
+            }
         }
 
         if player.gamemode.load() != pumpkin_util::GameMode::Creative {
