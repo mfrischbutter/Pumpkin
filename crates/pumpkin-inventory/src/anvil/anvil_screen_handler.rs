@@ -295,7 +295,8 @@ impl AnvilScreenHandler {
         }
         self.inventory.set_stack(2, result);
         self.set_repair_cost(repair_cost);
-        self.repair_item_count_cost.store(repair_item_count, Ordering::Relaxed);
+        self.repair_item_count_cost
+            .store(repair_item_count, Ordering::Relaxed);
         self.send_content_updates();
     }
 
