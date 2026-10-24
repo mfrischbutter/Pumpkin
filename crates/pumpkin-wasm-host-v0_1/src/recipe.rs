@@ -22,6 +22,11 @@ impl HostRecipeManager for PluginHostState {
         id: String,
         recipe: WitShapedRecipe,
     ) -> wasmtime::Result<()> {
+        let mut key = Vec::with_capacity(recipe.key.len());
+        for (symbol, ing) in recipe.key {
+            let ingredient = to_owned_ingredient(self, ing).await?;
+            key.push((symbol.chars().next().unwrap_or(' '), ingredient));
+        }
         let result_stack = self.take(recipe.output)?;
         let result_stack = result_stack.lock().await;
 
@@ -34,11 +39,7 @@ impl HostRecipeManager for PluginHostState {
             category,
             group: recipe.group,
             show_notification: recipe.show_notification.unwrap_or(true),
-            key: recipe
-                .key
-                .into_iter()
-                .map(|(k, ing)| (k.chars().next().unwrap_or(' '), to_owned_ingredient(ing)))
-                .collect(),
+            key,
             pattern: recipe.pattern,
             result: to_owned_result(&result_stack),
         };
@@ -59,6 +60,10 @@ impl HostRecipeManager for PluginHostState {
         id: String,
         recipe: WitShapelessRecipe,
     ) -> wasmtime::Result<()> {
+        let mut ingredients = Vec::with_capacity(recipe.ingredients.len());
+        for ing in recipe.ingredients {
+            ingredients.push(to_owned_ingredient(self, ing).await?);
+        }
         let result_stack = self.take(recipe.output)?;
         let result_stack = result_stack.lock().await;
 
@@ -70,11 +75,7 @@ impl HostRecipeManager for PluginHostState {
             recipe_id: Some(id),
             category,
             group: recipe.group,
-            ingredients: recipe
-                .ingredients
-                .into_iter()
-                .map(to_owned_ingredient)
-                .collect(),
+            ingredients,
             result: to_owned_result(&result_stack),
         };
 
@@ -95,6 +96,7 @@ impl HostRecipeManager for PluginHostState {
         station_type: WitCookingType,
         recipe: WitCookingRecipe,
     ) -> wasmtime::Result<()> {
+        let ingredient = to_owned_ingredient(self, recipe.ingredient).await?;
         let result_stack = self.take(recipe.output)?;
         let result_stack = result_stack.lock().await;
 
@@ -106,7 +108,7 @@ impl HostRecipeManager for PluginHostState {
             recipe_id: id,
             category,
             group: recipe.group,
-            ingredient: to_owned_ingredient(recipe.ingredient),
+            ingredient,
             cooking_time: recipe.cooking_time as i32,
             experience: recipe.experience,
             result: to_owned_result(&result_stack),
@@ -159,10 +161,23 @@ fn to_owned_result(stack: &ItemStack) -> OwnedRecipeResult {
     }
 }
 
-fn to_owned_ingredient(ing: WitIngredient) -> OwnedRecipeIngredient {
-    match ing {
+/// Converts a WIT ingredient, taking the stack of an `exact` ingredient from the table.
+async fn to_owned_ingredient(
+    state: &mut PluginHostState,
+    ing: WitIngredient,
+) -> wasmtime::Result<OwnedRecipeIngredient> {
+    Ok(match ing {
         WitIngredient::Item(id) => OwnedRecipeIngredient::Simple(id),
         WitIngredient::Tag(tag) => OwnedRecipeIngredient::Tagged(tag),
         WitIngredient::OneOf(items) => OwnedRecipeIngredient::OneOf(items),
-    }
+        WitIngredient::Exact(stack) => {
+            OwnedRecipeIngredient::Exact(state.take(stack)?.lock().await.clone())
+        }
+        WitIngredient::CustomData(ing) => OwnedRecipeIngredient::CustomData {
+            item: ing.item,
+            namespace: ing.namespace,
+            key: ing.key,
+            value: ing.value,
+        },
+    })
 }
