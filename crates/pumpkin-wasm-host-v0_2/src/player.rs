@@ -3015,6 +3015,18 @@ impl pumpkin::plugin::player::HostPlayerWithStore<PluginHostState> for HasSelf<P
         .await
     }
 
+    async fn close_window(
+        accessor: &Accessor<PluginHostState, Self>,
+        player: Resource<Player>,
+    ) -> wasmtime::Result<()> {
+        let player = accessor.get_res(&player)?;
+
+        run_blocking(accessor, move || {
+            player.close_handled_screen();
+        })
+        .await
+    }
+
     async fn ban(
         accessor: &Accessor<PluginHostState, Self>,
         player: Resource<Player>,
