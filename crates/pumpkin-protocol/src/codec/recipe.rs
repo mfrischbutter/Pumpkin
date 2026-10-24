@@ -1,6 +1,9 @@
 use pumpkin_data::recipes::RecipeCategoryTypes;
 
+use pumpkin_data::data_component::DataComponent;
+use pumpkin_data::data_component_impl::DataComponentImpl;
 use pumpkin_data::item::Item;
+use pumpkin_data::item_stack::ItemStack;
 use pumpkin_data::tag::Taggable;
 
 #[derive(Clone, Debug)]
@@ -31,7 +34,21 @@ impl OwnedRecipeIngredient {
 pub struct OwnedRecipeResult {
     pub item_id: String,
     pub count: u8,
-    // TODO: Add components/enchantments if needed for the display result
+    /// Component patch of the result on top of the item's defaults (vanilla `ItemStackTemplate`).
+    pub components: Vec<(DataComponent, Option<Box<dyn DataComponentImpl>>)>,
+}
+
+impl OwnedRecipeResult {
+    /// Creates the stack this result describes, or an empty stack for an unknown item.
+    #[must_use]
+    pub fn to_item_stack(&self) -> ItemStack {
+        let key = self
+            .item_id
+            .strip_prefix("minecraft:")
+            .unwrap_or(&self.item_id);
+        let item = Item::from_registry_key(key).unwrap_or(&Item::AIR);
+        ItemStack::new_with_component(self.count, item, self.components.clone())
+    }
 }
 
 #[derive(Clone, Debug)]

@@ -7,6 +7,7 @@ use crate::pumpkin::plugin::recipe::{
     RecipeManager as WitRecipeManager, ShapedRecipe as WitShapedRecipe,
     ShapelessRecipe as WitShapelessRecipe,
 };
+use pumpkin_data::item_stack::ItemStack;
 use pumpkin_data::recipes::RecipeCategoryTypes;
 use pumpkin_protocol::codec::recipe::{
     DynamicRecipe, OwnedCookingRecipe, OwnedCookingRecipeType, OwnedCraftingRecipe,
@@ -48,10 +49,7 @@ impl HostRecipeManagerWithStore<PluginHostState> for HasSelf<PluginHostState> {
                 .map(|(k, ing)| (k.chars().next().unwrap_or(' '), to_owned_ingredient(ing)))
                 .collect(),
             pattern: recipe.pattern,
-            result: OwnedRecipeResult {
-                item_id: result_stack.item.registry_key.to_string(),
-                count: result_stack.item_count,
-            },
+            result: to_owned_result(&result_stack),
         };
 
         let server = accessor.server()?;
@@ -83,10 +81,7 @@ impl HostRecipeManagerWithStore<PluginHostState> for HasSelf<PluginHostState> {
                 .into_iter()
                 .map(to_owned_ingredient)
                 .collect(),
-            result: OwnedRecipeResult {
-                item_id: result_stack.item.registry_key.to_string(),
-                count: result_stack.item_count,
-            },
+            result: to_owned_result(&result_stack),
         };
 
         let server = accessor.server()?;
@@ -117,10 +112,7 @@ impl HostRecipeManagerWithStore<PluginHostState> for HasSelf<PluginHostState> {
             ingredient: to_owned_ingredient(recipe.ingredient),
             cooking_time: recipe.cooking_time as i32,
             experience: recipe.experience,
-            result: OwnedRecipeResult {
-                item_id: result_stack.item.registry_key.to_string(),
-                count: result_stack.item_count,
-            },
+            result: to_owned_result(&result_stack),
         };
 
         let dynamic_recipe = match station_type {
@@ -152,6 +144,14 @@ const fn to_data_category(cat: WitRecipeCategory) -> RecipeCategoryTypes {
         WitRecipeCategory::Misc => RecipeCategoryTypes::Misc,
         WitRecipeCategory::Food => RecipeCategoryTypes::Food,
         WitRecipeCategory::Blocks => RecipeCategoryTypes::Blocks,
+    }
+}
+
+fn to_owned_result(stack: &ItemStack) -> OwnedRecipeResult {
+    OwnedRecipeResult {
+        item_id: stack.item.registry_key.to_string(),
+        count: stack.item_count,
+        components: stack.patch.clone(),
     }
 }
 
