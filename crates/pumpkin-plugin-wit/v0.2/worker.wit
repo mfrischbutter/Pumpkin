@@ -9,7 +9,9 @@ interface worker {
     ///
     /// The host calls `init-plugin` on a fresh worker instance first, but never `on-load`. Only
     /// `logging` and the WASI clocks, random numbers and standard output work there; every other
-    /// Pumpkin import traps, and the instance has no file system or network access.
+    /// Pumpkin import traps. The instance has no network or environment access. If the plugin may
+    /// read or write its data folder, the worker sees that folder read-only at the path
+    /// `context.get-data-folder` returns; otherwise it has no file system access.
     ///
     /// * `kind`: The kind given to `scheduler.submit-worker-job`.
     /// * `input`: The input given to `scheduler.submit-worker-job`.
