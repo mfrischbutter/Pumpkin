@@ -129,7 +129,10 @@ impl World {
             .get(&chunk_pos)
             .map(|chunk| chunk.value().clone())
         else {
-            return Err(format!("Chunk {}, {} is not loaded", chunk_pos.x, chunk_pos.y));
+            return Err(format!(
+                "Chunk {}, {} is not loaded",
+                chunk_pos.x, chunk_pos.y
+            ));
         };
         let biome = ClientBiome {
             biome: biome.into(),
@@ -143,7 +146,10 @@ impl World {
         ) {
             Ok(())
         } else {
-            Err(format!("Y {} lies outside the world's height", position.0.y))
+            Err(format!(
+                "Y {} lies outside the world's height",
+                position.0.y
+            ))
         }
     }
 
@@ -204,7 +210,10 @@ mod tests {
         assert_eq!(visuals.get_string("water_color"), Some("#123456"));
         assert_eq!(visuals.get_string("grass_color"), Some("#abcdef"));
         assert!(!visuals.has("grass_color_modifier"));
-        assert!(visuals.has("foliage_color"), "the swamp's foliage color stays");
+        assert!(
+            visuals.has("foliage_color"),
+            "the swamp's foliage color stays"
+        );
         let attributes = definition.get_compound("attributes").unwrap();
         assert_eq!(
             attributes.get_string("minecraft:visual/water_fog_color"),

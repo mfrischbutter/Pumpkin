@@ -66,8 +66,14 @@ mod tests {
         register_dynamic_biome("test_a:biome".to_string());
 
         let vanilla_count = Biome::ALL.len();
-        assert_eq!(biome_network_id("test_a:biome").map(usize::from), Some(vanilla_count));
-        assert_eq!(biome_network_id("test_b:biome").map(usize::from), Some(vanilla_count + 1));
+        assert_eq!(
+            biome_network_id("test_a:biome").map(usize::from),
+            Some(vanilla_count)
+        );
+        assert_eq!(
+            biome_network_id("test_b:biome").map(usize::from),
+            Some(vanilla_count + 1)
+        );
         assert_eq!(biome_network_id("minecraft:swamp"), Some(Biome::SWAMP.id));
 
         unregister_dynamic_biome("test_a:biome");
