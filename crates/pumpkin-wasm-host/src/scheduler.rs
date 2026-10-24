@@ -14,6 +14,10 @@ use crate::runtime::v0_2_disabled;
 pub fn tick(scheduler: &TaskScheduler, server: &Arc<Server>) {
     let current_tick = server.tick_count.load(Ordering::Relaxed) as u64;
     for task in scheduler.take_due_tasks(current_tick) {
+        // A failed plugin's tasks are dropped instead of failing again on every run.
+        if task.plugin.store.is_closed() {
+            continue;
+        }
         run_task(server, &task);
         scheduler.reschedule(task, current_tick);
     }
