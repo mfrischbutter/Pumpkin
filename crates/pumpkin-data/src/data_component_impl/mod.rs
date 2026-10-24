@@ -773,6 +773,24 @@ mod tests {
     }
 
     #[test]
+    fn item_name_round_trip() {
+        assert_round_trip(
+            ItemNameImpl {
+                name: ItemNameText::key("item.minecraft.stick"),
+            },
+            ItemNameImpl::read_data,
+        );
+        let mut styled = pumpkin_util::text::TextComponent::text("Wand").add_text(" of Light");
+        styled.0.style.italic = Some(false);
+        assert_round_trip(
+            ItemNameImpl {
+                name: ItemNameText::Text(styled),
+            },
+            ItemNameImpl::read_data,
+        );
+    }
+
+    #[test]
     fn food_round_trip() {
         assert_round_trip(
             FoodImpl {
