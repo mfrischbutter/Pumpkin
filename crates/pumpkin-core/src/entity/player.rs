@@ -8046,10 +8046,7 @@ impl InventoryPlayer for Player {
         let Some(server) = self.world().server.upgrade() else {
             return;
         };
-        if !server
-            .plugin_manager
-            .has_handlers::<PrepareItemCraftEvent>()
-        {
+        if !server.plugin_manager.has_handlers::<PrepareItemCraftEvent>() {
             return;
         }
         let Some(player_arc) = self.world().get_player_by_uuid(self.gameprofile.id) else {
