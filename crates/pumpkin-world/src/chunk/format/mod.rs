@@ -16,6 +16,7 @@ use rustc_hash::FxHashMap;
 use crate::{
     chunk::{
         ChunkEntityData, ChunkReadingError, ChunkSerializingError,
+        client_biomes::ClientBiomes,
         format::anvil::{SingleChunkDataSerializer, WORLD_DATA_VERSION},
         io::{Dirtiable, file_manager::PathFromLevelFolder},
     },
@@ -375,6 +376,7 @@ impl ChunkData {
             random_tick_sections: RwLock::new(random_tick_sections),
             randomly_ticking_mask: std::sync::atomic::AtomicU32::new(randomly_ticking_mask),
             biome_sections: RwLock::new(biome_palettes.into_boxed_slice()),
+            client_biomes: ClientBiomes::default(),
             min_y,
         };
 
@@ -988,6 +990,7 @@ impl ChunkData {
             random_tick_sections: RwLock::new(random_tick_sections),
             randomly_ticking_mask: std::sync::atomic::AtomicU32::new(randomly_ticking_mask),
             biome_sections: RwLock::new(biome_palettes.into_boxed_slice()),
+            client_biomes: ClientBiomes::default(),
             min_y,
         };
         let light_engine = ChunkLight {

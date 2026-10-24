@@ -81,6 +81,7 @@ pub fn write_chunk_data(
             .biome_sections
             .read()
             .map_err(|_| WritingError::Message("biome_sections read lock poisoned".into()))?;
+        let biome_sections = chunk.section.client_biomes.apply(&biome_sections);
 
         let mut zero_bytes_count = 0;
 
