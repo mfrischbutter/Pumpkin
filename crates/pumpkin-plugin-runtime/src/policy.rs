@@ -1,6 +1,8 @@
 use std::future::Future;
 
-use crate::chain::{ChainAdmission, ReentryContext, RootAdmission, StoreAdmission, StoreGate, scope};
+use crate::chain::{
+    ChainAdmission, ReentryContext, RootAdmission, StoreAdmission, StoreGate, scope,
+};
 
 mod sealed {
     pub trait StorePolicy {}
