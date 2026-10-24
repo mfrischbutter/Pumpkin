@@ -1195,7 +1195,7 @@ impl pumpkin::plugin::world::HostWorldWithStore<PluginHostState> for HasSelf<Plu
         plugin
             .store
             .pump_blocking(&mut host, move || {
-                world.explode(None, pos, power, interaction)
+                world.explode(None, pos, power, interaction);
             })
             .await
     }
