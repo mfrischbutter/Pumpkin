@@ -6,6 +6,7 @@ use crate::sound::Sound;
 use pumpkin_nbt::compound::NbtCompound;
 use pumpkin_nbt::tag::NbtTag;
 use pumpkin_util::text::TextComponent;
+use pumpkin_util::version::JavaMinecraftVersion;
 use std::borrow::Cow;
 
 #[derive(Clone, Debug, PartialEq)]
@@ -107,20 +108,33 @@ impl DataComponentImpl for UnbreakableImpl {
     default_impl!(Unbreakable);
 }
 
+/// Reads a text component saved as a plain string, a compound or a list.
+fn read_text_component(data: &NbtTag) -> Option<TextComponent> {
+    match data {
+        NbtTag::String(_) | NbtTag::Compound(_) | NbtTag::List(_) => {
+            Some(TextComponent::from_nbt(data))
+        }
+        _ => None,
+    }
+}
+
+/// Saves a text component the way vanilla does: a plain string when it has no style or children.
+fn write_text_component(text: &TextComponent) -> NbtTag {
+    text.to_nbt_tag_for_version(&JavaMinecraftVersion::V_26_3)
+}
+
 #[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub struct CustomNameImpl {
     pub name: TextComponent,
 }
 impl CustomNameImpl {
     pub fn read_data(data: &NbtTag) -> Option<Self> {
-        data.extract_string().map(|name| Self {
-            name: TextComponent::text(name.to_string()),
-        })
+        read_text_component(data).map(|name| Self { name })
     }
 }
 impl DataComponentImpl for CustomNameImpl {
     fn write_data(&self) -> NbtTag {
-        NbtTag::String(self.name.clone().get_text().into())
+        write_text_component(&self.name)
     }
     fn get_hash(&self) -> i32 {
         get_str_hash(self.name.clone().get_text().as_str()) as i32
@@ -191,22 +205,13 @@ impl LoreImpl {
         };
 
         Some(Self {
-            lines: lines
-                .iter()
-                .filter_map(NbtTag::extract_string)
-                .map(|line| TextComponent::text(line.to_owned()))
-                .collect(),
+            lines: lines.iter().filter_map(read_text_component).collect(),
         })
     }
 }
 impl DataComponentImpl for LoreImpl {
     fn write_data(&self) -> NbtTag {
-        NbtTag::List(
-            self.lines
-                .iter()
-                .map(|line| NbtTag::String(line.clone().get_text().into_boxed_str()))
-                .collect(),
-        )
+        NbtTag::List(self.lines.iter().map(write_text_component).collect())
     }
     default_impl!(Lore);
 }
