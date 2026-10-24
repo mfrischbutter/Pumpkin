@@ -8,7 +8,7 @@ use crate::{
             Dirtiable, FileIO, LoadedData,
             file_manager::{ChunkFileManager, LevelFileIO},
         },
-        palette::has_random_ticking_fluid,
+        palette::{has_plugin_random_ticks, has_random_ticking_fluid},
     },
     generation::get_world_gen_with_all_settings,
     tick::{OrderedTick, ScheduledTick, TickPriority, order},
@@ -125,6 +125,10 @@ pub struct TickData {
 #[derive(Clone, Copy)]
 pub struct RandomTickSample {
     pub position: BlockPos,
+    /// The state at `position` when it was sampled.
+    pub state_id: BlockStateId,
+    /// Whether vanilla random ticks the block. Samples of states only plugins made randomly
+    /// ticking have this and `tick_fluid` unset.
     pub tick_block: bool,
     pub tick_fluid: bool,
 }
@@ -577,13 +581,17 @@ impl Level {
                             let block_state_id = sections[i].get(x_offset, y_in_section, z_offset);
                             let tick_block = has_random_ticks(block_state_id);
                             let tick_fluid = has_random_ticking_fluid(block_state_id);
-                            if tick_block || tick_fluid {
+                            if tick_block
+                                || tick_fluid
+                                || has_plugin_random_ticks(block_state_id)
+                            {
                                 ticks.random_ticks.push(RandomTickSample {
                                     position: BlockPos::new(
                                         chunk_x_base + x_offset as i32,
                                         y_base + y_in_section as i32,
                                         chunk_z_base + z_offset as i32,
                                     ),
+                                    state_id: block_state_id,
                                     tick_block,
                                     tick_fluid,
                                 });
@@ -620,6 +628,21 @@ impl Level {
         ticks.fluid_ticks.sort_unstable();
 
         ticks
+    }
+
+    /// Recounts the random-ticking blocks of all loaded chunks, after
+    /// [`set_plugin_random_ticks`](crate::chunk::palette::set_plugin_random_ticks) changed the
+    /// randomly ticking states.
+    pub fn rebuild_random_tick_caches(&self) {
+        // Collect first so no map shard stays locked while the chunk locks are taken.
+        let chunks: Vec<SyncChunk> = self
+            .loaded_chunks
+            .iter()
+            .map(|entry| entry.value().clone())
+            .collect();
+        for chunk in chunks {
+            chunk.section.rebuild_random_tick_sections_cache();
+        }
     }
 
     pub fn clean_entity_chunk(self: &Arc<Self>, chunk: &Vector2<i32>) {
