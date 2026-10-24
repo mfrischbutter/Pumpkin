@@ -38,9 +38,22 @@ interface event {
         cancelled: bool
     }
 
+    /// Why a player left the server.
+    enum player-leave-reason {
+        /// The connection closed for any reason not listed here, usually because the client quit.
+        disconnected,
+        /// The server kicked the player.
+        kicked,
+        /// The client stopped answering keep-alives.
+        timed-out,
+        /// The server is shutting down.
+        server-stopping,
+    }
+
     record player-leave-event-data {
         player: player,
         leave-message: text-component,
+        reason: player-leave-reason,
         cancelled: bool
     }
 

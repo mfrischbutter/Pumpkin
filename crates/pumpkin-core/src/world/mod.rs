@@ -4923,7 +4923,8 @@ impl World {
                     [TextComponent::text(player.gameprofile.name.clone())],
                 )
                 .color_named(NamedColor::Yellow);
-                let mut event = PlayerLeaveEvent::new(player.clone(), msg_comp);
+                let mut event =
+                    PlayerLeaveEvent::new(player.clone(), msg_comp, player.leave_reason.load());
 
                 if let Some(server) = self.server.upgrade() {
                     server.plugin_manager.fire(&server, &mut event).await;
