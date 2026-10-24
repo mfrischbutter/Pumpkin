@@ -59,14 +59,19 @@ impl LpVector3d {
     }
 
     pub fn read<R: std::io::Read>(reader: &mut R) -> Result<Self, ReadingError> {
+        // A zero vector is the single byte `write` (and vanilla) sends for it.
         let mut low_16 = [0u8; 2];
         reader
-            .read_exact(&mut low_16)
+            .read_exact(&mut low_16[..1])
             .map_err(|e| ReadingError::Message(e.to_string()))?;
 
-        if low_16[0] == 0 && low_16[1] == 0 {
+        if low_16[0] == 0 {
             return Ok(Self(Vector3::new(0.0, 0.0, 0.0)));
         }
+
+        reader
+            .read_exact(&mut low_16[1..])
+            .map_err(|e| ReadingError::Message(e.to_string()))?;
 
         let mut mid_32 = [0u8; 4];
         reader
@@ -150,6 +155,22 @@ fn from_long(quantized: i64, scale: f64) -> f64 {
 mod tests {
     use super::{LpVector3d, encode_legacy_velocity_component};
     use pumpkin_util::math::vector3::Vector3;
+
+    #[test]
+    fn zero_vector_is_one_byte() -> Result<(), Box<dyn std::error::Error>> {
+        let mut buf = Vec::new();
+        LpVector3d(Vector3::new(0.0, 0.0, 0.0)).write(&mut buf)?;
+        assert_eq!(buf, vec![0x00]);
+
+        // The byte after the vector belongs to the next field.
+        let mut reader: &[u8] = &[0x00, 0x01];
+        assert_eq!(
+            LpVector3d::read(&mut reader)?,
+            LpVector3d(Vector3::new(0.0, 0.0, 0.0))
+        );
+        assert_eq!(reader, [0x01]);
+        Ok(())
+    }
 
     #[test]
     fn legacy_component_is_clamped_and_scaled() {
