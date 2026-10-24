@@ -7,6 +7,7 @@ use crate::{
         self,
         plugin::{
             command::Command,
+            common::NbtTree,
             context::{Context as WitContext, MarketplaceMetadata},
             event::{EventPriority, EventType},
             permission::{Permission, PermissionDefault, PermissionLevel},
@@ -1718,6 +1719,22 @@ impl pumpkin::plugin::context::HostContext for PluginHostState {
 
         let context_res = self.get(&context)?;
         Ok(context_res.register_permission(util_permission))
+    }
+
+    fn register_registry_entry(
+        &mut self,
+        context: Resource<WitContext>,
+        registry: String,
+        id: String,
+        data: NbtTree,
+    ) -> wasmtime::Result<Result<(), String>> {
+        let context = self.get(&context)?;
+        let data = match crate::common::from_wit_nbt_tree(&data) {
+            Ok(pumpkin_nbt::tag::NbtTag::Compound(compound)) => compound,
+            Ok(_) => return Ok(Err("Registry entry data must be an NBT compound".to_string())),
+            Err(error) => return Ok(Err(error)),
+        };
+        Ok(context.register_registry_entry(&registry, &id, data))
     }
 
     fn get_data_folder(&mut self, _context: Resource<WitContext>) -> wasmtime::Result<String> {
