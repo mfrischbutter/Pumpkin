@@ -744,6 +744,24 @@ impl HostEntity for PluginHostState {
         Ok(entity.get_mob().is_some())
     }
 
+    fn set_visible_by_default(
+        &mut self,
+        this: Resource<Entity>,
+        visible: bool,
+    ) -> wasmtime::Result<()> {
+        let entity = self.get(&this)?;
+        entity.get_entity().set_visible_by_default(visible);
+        Ok(())
+    }
+
+    fn is_visible_by_default(&mut self, this: Resource<Entity>) -> wasmtime::Result<bool> {
+        let entity = self.get(&this)?;
+        Ok(entity
+            .get_entity()
+            .visible_by_default
+            .load(std::sync::atomic::Ordering::Relaxed))
+    }
+
     fn drop(&mut self, rep: Resource<Entity>) -> wasmtime::Result<()> {
         self.drop(rep)
     }
