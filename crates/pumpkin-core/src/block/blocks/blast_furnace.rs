@@ -10,6 +10,7 @@ use pumpkin_data::{
 };
 use pumpkin_inventory::Inventory;
 use pumpkin_inventory::{
+    crafting::recipe_provider::RecipeProvider,
     furnace_like::furnace_like_screen_handler::FurnaceLikeScreenHandler,
     player::player_inventory::PlayerInventory,
     screen_handler::{InventoryPlayer, ScreenHandlerFactory, SharedScreenHandler},
@@ -28,6 +29,7 @@ struct BlastingFurnaceScreenFactory {
     inventory: Arc<dyn Inventory>,
     property_delegate: Arc<dyn PropertyDelegate>,
     experience_container: Arc<dyn ExperienceContainer>,
+    recipe_provider: Arc<dyn RecipeProvider>,
 }
 
 impl BlastingFurnaceScreenFactory {
@@ -35,11 +37,13 @@ impl BlastingFurnaceScreenFactory {
         inventory: Arc<dyn Inventory>,
         property_delegate: Arc<dyn PropertyDelegate>,
         experience_container: Arc<dyn ExperienceContainer>,
+        recipe_provider: Arc<dyn RecipeProvider>,
     ) -> Self {
         Self {
             inventory,
             property_delegate,
             experience_container,
+            recipe_provider,
         }
     }
 }
@@ -58,6 +62,7 @@ impl ScreenHandlerFactory for BlastingFurnaceScreenFactory {
             &self.property_delegate,
             self.experience_container.clone(),
             WindowType::BlastFurnace,
+            Some(self.recipe_provider.clone()),
         );
 
         let concrete_arc = Arc::new(Mutex::new(concrete_handler));
@@ -108,6 +113,7 @@ impl BlockBehaviour for BlastFurnaceBlock {
             inventory,
             property_delegate,
             experience_container,
+            args.server.recipe_manager.clone(),
         )))
     }
 

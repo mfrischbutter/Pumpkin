@@ -1,13 +1,13 @@
 use super::BlockEntity;
+use super::furnace_like_block_entity::CookingMatch;
 use crate::entity::Entity;
 use crate::entity::item::ItemEntity;
 use crate::world::World;
 use pumpkin_data::Block;
 use pumpkin_data::block_properties::CampfireLikeProperties;
 use pumpkin_data::entity::EntityType;
-use pumpkin_data::item::Item;
 use pumpkin_data::item_stack::ItemStack;
-use pumpkin_data::recipes::{CookingRecipeKind, get_cooking_recipe_with_ingredient};
+use pumpkin_data::recipes::CookingRecipeKind;
 use pumpkin_nbt::compound::NbtCompound;
 use pumpkin_nbt::tag::NbtTag;
 use pumpkin_util::math::position::BlockPos;
@@ -102,6 +102,7 @@ impl BlockEntity for CampfireBlockEntity {
 
         let mut changed = false;
         let mut completed = false;
+        let server = world.server.upgrade();
 
         for slot in 0..Self::SLOT_COUNT {
             let stack = self.items[slot]
@@ -112,9 +113,11 @@ impl BlockEntity for CampfireBlockEntity {
                 continue;
             }
 
-            let Some(recipe) =
-                get_cooking_recipe_with_ingredient(stack.item, CookingRecipeKind::CampfireCooking)
-            else {
+            let Some(recipe) = CookingMatch::find(
+                server.as_ref().map(|server| server.recipe_manager.as_ref()),
+                &stack,
+                &CookingRecipeKind::CampfireCooking,
+            ) else {
                 continue;
             };
 
@@ -123,7 +126,7 @@ impl BlockEntity for CampfireBlockEntity {
                     .lock()
                     .unwrap_or_else(std::sync::PoisonError::into_inner);
                 if *total <= 0 {
-                    let mut cooking_time = recipe.cookingtime;
+                    let mut cooking_time = recipe.cooking_time;
                     if let Some(server) = world.server.upgrade() {
                         let mut event = crate::plugin::api::events::block::campfire_start::CampfireStartEvent::new(
                             self.position,
@@ -156,11 +159,7 @@ impl BlockEntity for CampfireBlockEntity {
                 continue;
             }
 
-            let Some(result_item) = Item::from_registry_key(recipe.result.id) else {
-                continue;
-            };
-
-            let mut result = ItemStack::new(recipe.result.count, result_item);
+            let mut result = recipe.result;
             if let Some(server) = world.server.upgrade() {
                 let mut event = crate::plugin::api::events::block::block_cook::BlockCookEvent::new(
                     self.position,

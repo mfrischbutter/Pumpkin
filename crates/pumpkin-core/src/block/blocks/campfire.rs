@@ -5,7 +5,7 @@ use pumpkin_data::{
     data_component_impl::EquipmentSlot,
     effect::StatusEffect,
     fluid::Fluid,
-    recipes::{CookingRecipeKind, get_cooking_recipe_with_ingredient},
+    recipes::CookingRecipeKind,
 };
 use pumpkin_macros::pumpkin_block_from_tag;
 use pumpkin_world::tick::TickPriority;
@@ -35,10 +35,11 @@ impl BlockBehaviour for CampfireBlock {
             return BlockActionResult::PassToDefaultBlockAction;
         }
 
-        let Some(recipe) = get_cooking_recipe_with_ingredient(
-            args.item_stack.item,
-            CookingRecipeKind::CampfireCooking,
-        ) else {
+        let Some(recipe) = args
+            .server
+            .recipe_manager
+            .find_cooking_recipe(args.item_stack, &CookingRecipeKind::CampfireCooking)
+        else {
             return BlockActionResult::PassToDefaultBlockAction;
         };
 
@@ -65,7 +66,7 @@ impl BlockBehaviour for CampfireBlock {
                 .unwrap_or_else(std::sync::PoisonError::into_inner) = 0;
             *campfire.cooking_total_times[slot]
                 .lock()
-                .unwrap_or_else(std::sync::PoisonError::into_inner) = recipe.cookingtime;
+                .unwrap_or_else(std::sync::PoisonError::into_inner) = recipe.cooking_time;
             drop(stored);
 
             args.player.increment_stat(
