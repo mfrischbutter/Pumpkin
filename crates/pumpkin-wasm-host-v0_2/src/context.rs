@@ -1290,6 +1290,11 @@ fn register_block_event(
                 pumpkin_core::plugin::api::events::block::block_scheduled_tick::BlockScheduledTickEvent,
             >(resource, handler, priority, blocking);
         }
+        EventType::BlockRandomTickEvent => {
+            register_typed_event::<
+                pumpkin_core::plugin::api::events::block::block_random_tick::BlockRandomTickEvent,
+            >(resource, handler, priority, blocking);
+        }
 
         _ => {
             tracing::error!("non-block event should not be routed to register_block_event");
@@ -1634,7 +1639,8 @@ impl pumpkin::plugin::context::HostContext for PluginHostState {
             | EventType::SculkBloomEvent
             | EventType::VaultDisplayItemEvent
             | EventType::BlockShapeUpdateEvent
-            | EventType::BlockScheduledTickEvent) => {
+            | EventType::BlockScheduledTickEvent
+            | EventType::BlockRandomTickEvent) => {
                 register_block_event(ctx, &handler, priority, blocking, event_type);
             }
             event_type @ (EventType::InventoryOpenEvent
@@ -1797,6 +1803,16 @@ impl pumpkin::plugin::context::HostContext for PluginHostState {
     ) -> wasmtime::Result<()> {
         let states = block_states_from_wasm(&states);
         self.get(&context)?.watch_block_states(states);
+        Ok(())
+    }
+
+    fn watch_random_tick_states(
+        &mut self,
+        context: Resource<WitContext>,
+        states: Vec<u16>,
+    ) -> wasmtime::Result<()> {
+        let states = block_states_from_wasm(&states);
+        self.get(&context)?.watch_random_tick_states(states);
         Ok(())
     }
 
