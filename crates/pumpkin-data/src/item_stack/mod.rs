@@ -933,72 +933,45 @@ mod tests {
         assert_eq!(round_tripped.root_tag.get_string("after"), Some("sentinel"));
     }
 
+    /// Saves a disc whose `jukebox_playable` was read from `stored`; returns the saved value.
+    fn saved_jukebox_song(stored: NbtTag) -> Option<String> {
+        let parsed = JukeboxPlayableImpl::read_data(&stored).expect("jukebox_playable parses");
+        let mut stack = ItemStack::new(1, &Item::MUSIC_DISC_PIGSTEP);
+        stack
+            .patch
+            .push((DataComponent::JukeboxPlayable, Some(parsed.to_dyn())));
+
+        let mut item = NbtCompound::new();
+        stack.write_item_stack(&mut item);
+        item.get_compound("components")?
+            .get_string("minecraft:jukebox_playable")
+            .map(str::to_string)
+    }
+
     #[test]
-    fn jukebox_playable_song_survives_item_stack_nbt_roundtrip() {
+    fn jukebox_playable_is_saved_as_the_song_id() {
+        let saved = saved_jukebox_song(NbtTag::String("minecraft:pigstep".into()));
+        assert_eq!(saved.as_deref(), Some("minecraft:pigstep"));
+    }
+
+    #[test]
+    fn jukebox_playable_reads_the_old_compound_form() {
         let mut stored = NbtCompound::new();
         stored.put_string("song", "minecraft:pigstep".to_string());
-        let parsed = JukeboxPlayableImpl::read_data(&NbtTag::Compound(stored))
-            .expect("jukebox_playable parses");
-
-        let mut stack = ItemStack::new(1, &Item::MUSIC_DISC_PIGSTEP);
-        stack
-            .patch
-            .push((DataComponent::JukeboxPlayable, Some(parsed.to_dyn())));
-
-        let mut item = NbtCompound::new();
-        stack.write_item_stack(&mut item);
-
-        let written = item
-            .get_compound("components")
-            .and_then(|components| components.get_compound("minecraft:jukebox_playable"))
-            .expect("jukebox_playable is written back");
-
-        assert_eq!(written.get_string("song"), Some("minecraft:pigstep"));
+        let saved = saved_jukebox_song(NbtTag::Compound(stored));
+        assert_eq!(saved.as_deref(), Some("minecraft:pigstep"));
     }
 
     #[test]
-    fn jukebox_playable_with_unknown_song_is_not_written_back() {
-        let mut stored = NbtCompound::new();
-        stored.put_string("song", "modded:not_a_vanilla_disc".to_string());
-        let parsed = JukeboxPlayableImpl::read_data(&NbtTag::Compound(stored))
-            .expect("jukebox_playable parses");
-
-        let mut stack = ItemStack::new(1, &Item::MUSIC_DISC_PIGSTEP);
-        stack
-            .patch
-            .push((DataComponent::JukeboxPlayable, Some(parsed.to_dyn())));
-
-        let mut item = NbtCompound::new();
-        stack.write_item_stack(&mut item);
-
-        let components = item.get_compound("components").expect("components written");
-        assert_eq!(components.get("minecraft:jukebox_playable"), None);
+    fn jukebox_playable_keeps_a_song_that_is_not_vanilla() {
+        let saved = saved_jukebox_song(NbtTag::String("example:custom_disc".into()));
+        assert_eq!(saved.as_deref(), Some("example:custom_disc"));
     }
 
     #[test]
-    fn jukebox_playable_song_keeps_one_namespace_when_it_arrives_prefixed() {
-        // The generated item definitions store the id with its namespace,
-        // `read_data` stores it without.
-        let mut stack = ItemStack::new(1, &Item::MUSIC_DISC_PIGSTEP);
-        stack.patch.push((
-            DataComponent::JukeboxPlayable,
-            Some(
-                JukeboxPlayableImpl {
-                    song: "minecraft:pigstep",
-                }
-                .to_dyn(),
-            ),
-        ));
-
-        let mut item = NbtCompound::new();
-        stack.write_item_stack(&mut item);
-
-        let written = item
-            .get_compound("components")
-            .and_then(|components| components.get_compound("minecraft:jukebox_playable"))
-            .expect("jukebox_playable is written back");
-
-        assert_eq!(written.get_string("song"), Some("minecraft:pigstep"));
+    fn jukebox_playable_song_without_namespace_gets_one() {
+        let saved = saved_jukebox_song(NbtTag::String("pigstep".into()));
+        assert_eq!(saved.as_deref(), Some("minecraft:pigstep"));
     }
 
     /// Helper: creates a fresh Iron Sword (max_damage 250, damage 0).

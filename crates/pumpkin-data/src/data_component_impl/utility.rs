@@ -904,30 +904,28 @@ impl DataComponentImpl for ProfileImpl {
 
 #[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub struct JukeboxPlayableImpl {
-    pub song: &'static str,
+    /// The jukebox song's registry id, e.g. `minecraft:pigstep`.
+    pub song: Cow<'static, str>,
 }
 impl JukeboxPlayableImpl {
     pub fn read_data(data: &NbtTag) -> Option<Self> {
-        let compound = data.extract_compound()?;
-        let song = compound.get_string("song")?;
-        let static_song = crate::jukebox_song::JukeboxSong::from_name(
-            song.strip_prefix("minecraft:").unwrap_or(song),
-        )
-        .map_or("", |s| s.to_name());
-        Some(Self { song: static_song })
+        // Since 1.21.5 the component is the song id; older saves wrap it as `{song: <id>}`.
+        let song = data
+            .extract_string()
+            .or_else(|| data.extract_compound()?.get_string("song"))?;
+        let song = if song.contains(':') {
+            song.to_string()
+        } else {
+            format!("minecraft:{song}")
+        };
+        Some(Self {
+            song: Cow::Owned(song),
+        })
     }
 }
 impl DataComponentImpl for JukeboxPlayableImpl {
     fn write_data(&self) -> NbtTag {
-        // `read_data` leaves `song` empty for a non-vanilla id.
-        if self.song.is_empty() {
-            return NbtTag::End;
-        }
-        // The generated item definitions carry the namespace, `read_data` strips it.
-        let bare = self.song.strip_prefix("minecraft:").unwrap_or(self.song);
-        let mut compound = NbtCompound::new();
-        compound.put_string("song", format!("minecraft:{bare}"));
-        NbtTag::Compound(compound)
+        NbtTag::from(&*self.song)
     }
     default_impl!(JukeboxPlayable);
 }
