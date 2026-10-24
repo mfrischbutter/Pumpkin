@@ -25,7 +25,11 @@ impl JavaClient {
         );
         server.plugin_manager.fire_blocking(server, &mut event);
 
-        if server.advanced_config.resource_pack.java.force
+        // Only the server's own pack; plugins choose `forced` for the packs they push.
+        let resource_config = &server.advanced_config.resource_pack.java;
+        if resource_config.enabled
+            && resource_config.force
+            && packet.uuid == resource_config.uuid()
             && (result == PlayResourcePackResult::Declined
                 || result == PlayResourcePackResult::DownloadFail)
         {
