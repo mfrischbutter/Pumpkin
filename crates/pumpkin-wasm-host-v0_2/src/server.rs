@@ -395,6 +395,30 @@ impl pumpkin::plugin::server::HostServer for PluginHostState {
         Ok(())
     }
 
+    fn set_login_resource_packs(
+        &mut self,
+        _rep: Resource<Server>,
+        packs: Vec<pumpkin::plugin::player::JavaResourcePack>,
+    ) -> wasmtime::Result<()> {
+        let server = self.require_server().cloned()?;
+        let plugin = self
+            .name
+            .clone()
+            .ok_or_else(|| wasmtime::Error::msg("Plugin name not available"))?;
+        let mut converted = Vec::with_capacity(packs.len());
+        for pack in packs {
+            converted.push(pumpkin_core::server::LoginResourcePack {
+                uuid: WitUuid::from_wit(&pack.id),
+                url: pack.url,
+                hash: pack.hash,
+                forced: pack.forced,
+                prompt_message: pack.prompt_message.map(|t| self.take(t)).transpose()?,
+            });
+        }
+        server.set_login_resource_packs(&plugin, &converted);
+        Ok(())
+    }
+
     fn drop(&mut self, rep: Resource<Server>) -> wasmtime::Result<()> {
         self.drop(rep)
     }

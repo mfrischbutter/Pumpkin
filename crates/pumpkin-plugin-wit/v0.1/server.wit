@@ -1,5 +1,5 @@
 interface server {
-    use player.{player, ban-player-options, ban-ip-options, server-link, known-server-link, server-link-label};
+    use player.{player, ban-player-options, ban-ip-options, server-link, known-server-link, server-link-label, java-resource-pack};
     use common.{game-mode};
     use %world.{%world};
     use text.{text-component};
@@ -282,5 +282,11 @@ interface server {
 
         /// Broadcasts custom server links to all connected players (displayed in the client Esc pause menu in 1.21+).
         set-server-links: func(links: list<server-link>);
+
+        /// Sets the resource packs this plugin sends to Java players in the configuration phase of
+        /// later logins, after the pack from the server config. Replaces this plugin's previous list;
+        /// an empty list removes it. The login goes on once every pack has a final status, and the
+        /// player is kicked only when a `forced` pack is declined or fails to load.
+        set-login-resource-packs: func(packs: list<java-resource-pack>);
     }
 }
