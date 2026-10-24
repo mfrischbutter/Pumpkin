@@ -1063,6 +1063,42 @@ mod tests {
     }
 
     #[test]
+    fn styled_custom_name_and_lore_survive_item_stack_nbt_roundtrip() {
+        use pumpkin_util::text::TextComponent;
+        use pumpkin_util::text::color::{Color, NamedColor};
+
+        let mut name = TextComponent::text("Relic");
+        name.0.style.color = Some(Color::Named(NamedColor::Gold));
+        name.0.style.bold = Some(true);
+        let mut line = TextComponent::text("Found in a vault");
+        line.0.style.color = Some(Color::Named(NamedColor::Gray));
+        line.0.style.italic = Some(false);
+        let mut stack = ItemStack::new(1, &Item::WOODEN_AXE);
+        stack.patch.push((
+            DataComponent::CustomName,
+            Some(CustomNameImpl { name: name.clone() }.to_dyn()),
+        ));
+        stack.set_lore(vec![line.clone(), TextComponent::text("Plain line")]);
+
+        let mut compound = NbtCompound::new();
+        stack.write_item_stack(&mut compound);
+        let decoded = ItemStack::read_item_stack(&compound).expect("stack should decode");
+
+        let decoded_name = &decoded
+            .get_data_component::<CustomNameImpl>()
+            .expect("custom name should decode")
+            .name;
+        assert_eq!(decoded_name.0.style, name.0.style);
+        assert_eq!(decoded_name.clone().get_text(), "Relic");
+        let lore = decoded
+            .get_data_component::<LoreImpl>()
+            .expect("lore should decode");
+        assert_eq!(lore.lines.len(), 2);
+        assert_eq!(lore.lines[0].0.style, line.0.style);
+        assert_eq!(lore.lines[1].clone().get_text(), "Plain line");
+    }
+
+    #[test]
     fn custom_data_survives_item_stack_nbt_roundtrip() {
         let mut stack = ItemStack::new(1, &Item::WOODEN_AXE);
         stack.set_custom_data("test_plugin", "marker", NbtTag::Byte(1));
