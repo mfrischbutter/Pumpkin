@@ -82,6 +82,7 @@ pub fn build() -> TokenStream {
     let mut constants = Vec::new();
     let mut type_from_name = TokenStream::new();
     let mut type_from_id = TokenStream::new();
+    let mut type_to_name = TokenStream::new();
 
     for (id, (name, data)) in damage_types.iter().enumerate() {
         let const_ident = format_ident!("{}", name.to_shouty_snake_case());
@@ -94,6 +95,10 @@ pub fn build() -> TokenStream {
         let id_lit = LitInt::new(&id.to_string(), proc_macro2::Span::call_site());
         type_from_id.extend(quote! {
             #id_lit => Some(Self::#const_ident),
+        });
+        let full_name = format!("minecraft:{resource_name}");
+        type_to_name.extend(quote! {
+            #id_lit => Some(#full_name),
         });
 
         let data = data;
@@ -183,6 +188,14 @@ pub fn build() -> TokenStream {
             pub const fn from_id(id: u8) -> Option<Self> {
                 match id {
                     #type_from_id
+                    _ => None
+                }
+            }
+
+            #[doc = r" The resource location of a vanilla damage type; `None` for one added by a datapack."]
+            pub const fn to_name(&self) -> Option<&'static str> {
+                match self.id {
+                    #type_to_name
                     _ => None
                 }
             }
