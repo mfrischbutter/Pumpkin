@@ -275,7 +275,7 @@ impl ToTokens for ItemComponents {
             let song = LitStr::new(playable, Span::call_site());
             tokens.extend(quote! {
                 (JukeboxPlayable, &JukeboxPlayableImpl{
-                    song: #song,
+                    song: Cow::Borrowed(#song),
                 }),
             });
         }
