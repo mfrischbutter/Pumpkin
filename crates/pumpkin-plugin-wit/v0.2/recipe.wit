@@ -27,7 +27,7 @@ interface recipe {
         pattern: list<string>,
         /// Mapping of characters in the pattern to ingredients.
         key: list<tuple<string, ingredient>>,
-        /// The resulting item stack.
+        /// The resulting item stack, components included.
         output: item-stack,
         /// The recipe group (optional).
         group: option<string>,
@@ -41,7 +41,7 @@ interface recipe {
     record shapeless-recipe {
         /// The list of ingredients required.
         ingredients: list<ingredient>,
-        /// The resulting item stack.
+        /// The resulting item stack, components included.
         output: item-stack,
         /// The recipe group (optional).
         group: option<string>,
@@ -53,7 +53,7 @@ interface recipe {
     record cooking-recipe {
         /// The ingredient to cook.
         ingredient: ingredient,
-        /// The resulting item stack.
+        /// The resulting item stack, components included.
         output: item-stack,
         /// Experience points awarded.
         experience: f32,

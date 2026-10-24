@@ -71,6 +71,7 @@ fn parse_result(value: &Value) -> Option<OwnedRecipeResult> {
         Value::String(s) => Some(OwnedRecipeResult {
             item_id: normalize_id(s),
             count: 1,
+            components: Vec::new(),
         }),
         Value::Object(map) => {
             let id = map
@@ -85,6 +86,7 @@ fn parse_result(value: &Value) -> Option<OwnedRecipeResult> {
             Some(OwnedRecipeResult {
                 item_id: normalize_id(id),
                 count,
+                components: Vec::new(),
             })
         }
         _ => None,
