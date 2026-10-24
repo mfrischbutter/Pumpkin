@@ -180,6 +180,7 @@ use crate::block::{
 };
 use crate::entity::EntityBase;
 use crate::entity::player::Player;
+use crate::plugin::block_hooks::BlockStateHooks;
 use crate::server::Server;
 use crate::world::World;
 use pumpkin_data::BlockStateId;
@@ -514,6 +515,8 @@ pub struct BlockRegistry {
     block_indices: [u16; pumpkin_data::BlockId::COUNT as usize],
     behaviours: Vec<Arc<dyn BlockBehaviour>>,
     fluids: FxHashMap<u16, Arc<dyn FluidBehaviour>>,
+    /// Block states plugins hooked, checked on hot block paths.
+    pub plugin_hooks: BlockStateHooks,
 }
 
 impl Default for BlockRegistry {
@@ -522,6 +525,7 @@ impl Default for BlockRegistry {
             block_indices: [NO_BEHAVIOUR; pumpkin_data::BlockId::COUNT as usize],
             behaviours: Vec::new(),
             fluids: FxHashMap::default(),
+            plugin_hooks: BlockStateHooks::default(),
         }
     }
 }

@@ -52,6 +52,8 @@ pub mod block_place;
 pub mod block_receive_game;
 /// Block redstone signal event.
 pub mod block_redstone;
+/// Block shape update event.
+pub mod block_shape_update;
 /// Block shear entity event.
 pub mod block_shear_entity;
 /// Block spread event.
@@ -114,6 +116,7 @@ pub use block_piston::*;
 pub use block_place::*;
 pub use block_receive_game::*;
 pub use block_redstone::*;
+pub use block_shape_update::*;
 pub use block_shear_entity::*;
 pub use block_spread::*;
 pub use brewing_start::*;
