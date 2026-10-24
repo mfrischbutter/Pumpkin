@@ -441,7 +441,10 @@ pub trait EntityBase: Send + Sync + std::any::Any {
     /// Places `passenger` on this vehicle, like vanilla `Entity.positionRider`.
     fn position_rider(&self, passenger: &dyn EntityBase) {
         let vehicle = self.get_entity();
-        let seat = vehicle.pos.load().add(&vehicle.passenger_attachment_point());
+        let seat = vehicle
+            .pos
+            .load()
+            .add(&vehicle.passenger_attachment_point());
         passenger
             .get_entity()
             .set_pos(seat.sub(&passenger.vehicle_attachment_point()));
