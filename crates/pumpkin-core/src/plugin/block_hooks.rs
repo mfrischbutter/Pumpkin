@@ -5,7 +5,8 @@ use std::sync::{
     atomic::{AtomicU8, Ordering},
 };
 
-use pumpkin_data::BlockStateId;
+use pumpkin_data::{BlockStateId, block_properties::has_random_ticks};
+use pumpkin_world::chunk::palette::set_plugin_random_ticks;
 use rustc_hash::FxHashMap;
 
 /// What a plugin hooks a block state for.
@@ -16,6 +17,9 @@ pub enum BlockStateHook {
     ShapeUpdate = 1 << 0,
     /// Fire `BlockScheduledTickEvent` before a scheduled tick of the state runs.
     ScheduledTick = 1 << 1,
+    /// Fire `BlockRandomTickEvent` for random ticks of the state, and random tick it even if
+    /// vanilla does not.
+    RandomTick = 1 << 2,
 }
 
 /// The states each plugin registered, per hook.
@@ -30,7 +34,9 @@ impl BlockStateHook {
 /// Per-state flags for the hooks plugins registered.
 ///
 /// Lookups are relaxed atomic loads, so they can run for every block update on any thread.
-/// Changes take a lock and rebuild the flags from the sets of all plugins.
+/// Changes take a lock and rebuild the flags from the sets of all plugins. Changes also keep
+/// pumpkin-world's set of plugin random-ticking states up to date and return whether it changed,
+/// in which case loaded chunks need `Level::rebuild_random_tick_caches`.
 pub struct BlockStateHooks {
     flags: Box<[AtomicU8]>,
     /// Union of all flags, so hot paths skip the table while nothing is registered.
@@ -65,7 +71,7 @@ impl BlockStateHooks {
     }
 
     /// Replaces the states `plugin` registered for `hook`. An empty list removes them.
-    pub fn set(&self, plugin: &str, hook: BlockStateHook, states: Box<[BlockStateId]>) {
+    pub fn set(&self, plugin: &str, hook: BlockStateHook, states: Box<[BlockStateId]>) -> bool {
         let mut registrations = self
             .registrations
             .lock()
@@ -83,7 +89,7 @@ impl BlockStateHooks {
                 .or_default()
                 .insert(hook, states.into_vec());
         }
-        self.rebuild(&registrations);
+        self.rebuild(&registrations)
     }
 
     /// Adds `states` to the states `plugin` registered for `hook`.
@@ -92,7 +98,7 @@ impl BlockStateHooks {
         plugin: &str,
         hook: BlockStateHook,
         states: impl IntoIterator<Item = BlockStateId>,
-    ) {
+    ) -> bool {
         let mut registrations = self
             .registrations
             .lock()
@@ -105,21 +111,19 @@ impl BlockStateHooks {
         registered.extend(states);
         registered.sort_unstable();
         registered.dedup();
-        self.rebuild(&registrations);
+        self.rebuild(&registrations)
     }
 
     /// Removes every state `plugin` registered.
-    pub fn remove_plugin(&self, plugin: &str) {
+    pub fn remove_plugin(&self, plugin: &str) -> bool {
         let mut registrations = self
             .registrations
             .lock()
             .unwrap_or_else(std::sync::PoisonError::into_inner);
-        if registrations.remove(plugin).is_some() {
-            self.rebuild(&registrations);
-        }
+        registrations.remove(plugin).is_some() && self.rebuild(&registrations)
     }
 
-    fn rebuild(&self, registrations: &Registrations) {
+    fn rebuild(&self, registrations: &Registrations) -> bool {
         let mut flags = vec![0u8; self.flags.len()];
         let mut active = 0;
         for (hook, states) in registrations.values().flatten() {
@@ -128,10 +132,19 @@ impl BlockStateHooks {
             }
             active |= hook.bit();
         }
+        // Only the states vanilla does not tick need to be added to the random-ticking ones.
+        let plugin_random_ticks: Vec<BlockStateId> = flags
+            .iter()
+            .enumerate()
+            .filter(|(_, bits)| *bits & BlockStateHook::RandomTick.bit() != 0)
+            .filter_map(|(id, _)| BlockStateId::new(id as u16))
+            .filter(|&id| !has_random_ticks(id))
+            .collect();
         // Store each entry directly so other plugins' hooks never read as unset meanwhile.
         for (slot, value) in self.flags.iter().zip(flags) {
             slot.store(value, Ordering::Relaxed);
         }
         self.active.store(active, Ordering::Relaxed);
+        set_plugin_random_ticks(plugin_random_ticks)
     }
 }

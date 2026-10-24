@@ -16,13 +16,14 @@ use crate::{
         BlockExplodeEventData, BlockFadeEventData, BlockFertilizeEventData, BlockFormEventData,
         BlockFromToEventData, BlockGrowEventData, BlockIgniteEventData, BlockMultiPlaceEventData,
         BlockPhysicsEventData, BlockPistonExtendEventData, BlockPistonRetractEventData,
-        BlockPlaceEventData, BlockReceiveGameEventData, BlockRedstoneEventData,
-        BlockScheduledTickEventData, BlockShapeUpdateEventData, BlockShearEntityEventData,
-        BlockSpreadEventData, BrewingStartEventData, CampfireStartEventData,
-        CauldronLevelChangeEventData, CrafterCraftEventData, EntityBlockFormEventData, Event,
-        FluidLevelChangeEventData, InventoryBlockStartEventData, LeavesDecayEventData,
-        MoistureChangeEventData, NotePlayEventData, SculkBloomEventData, SignChangeEventData,
-        SpongeAbsorbEventData, TntPrimeEventData, VaultDisplayItemEventData,
+        BlockPlaceEventData, BlockRandomTick as WitBlockRandomTick, BlockRandomTickEventData,
+        BlockReceiveGameEventData, BlockRedstoneEventData, BlockScheduledTickEventData,
+        BlockShapeUpdateEventData, BlockShearEntityEventData, BlockSpreadEventData,
+        BrewingStartEventData, CampfireStartEventData, CauldronLevelChangeEventData,
+        CrafterCraftEventData, EntityBlockFormEventData, Event, FluidLevelChangeEventData,
+        InventoryBlockStartEventData, LeavesDecayEventData, MoistureChangeEventData,
+        NotePlayEventData, SculkBloomEventData, SignChangeEventData, SpongeAbsorbEventData,
+        TntPrimeEventData, VaultDisplayItemEventData,
     },
 };
 use pumpkin_core::plugin::block::{
@@ -51,6 +52,7 @@ use pumpkin_core::plugin::block::{
     block_physics::BlockPhysicsEvent,
     block_piston::{BlockPistonExtendEvent, BlockPistonRetractEvent},
     block_place::BlockPlaceEvent,
+    block_random_tick::{BlockRandomTick, BlockRandomTickEvent},
     block_receive_game::BlockReceiveGameEvent,
     block_redstone::BlockRedstoneEvent,
     block_scheduled_tick::BlockScheduledTickEvent,
@@ -1479,6 +1481,56 @@ impl ToFromWasmEvent for BlockScheduledTickEvent {
                 block_pos: from_wasm_block_position(data.block_pos),
                 state_id: BlockStateId::new_or_air(data.state_id),
                 cancelled: data.cancelled,
+            },
+            _ => panic!("unexpected event type"),
+        }
+    }
+}
+
+impl ToFromWasmEvent for BlockRandomTickEvent {
+    fn to_wasm_event(&self, state: &mut PluginHostState) -> Event {
+        let target_world = state
+            .add(self.world.clone())
+            .expect("failed to add world resource");
+        Event::BlockRandomTickEvent(BlockRandomTickEventData {
+            target_world,
+            ticks: self
+                .ticks
+                .iter()
+                .map(|tick| WitBlockRandomTick {
+                    block_pos: to_wasm_block_position(tick.block_pos),
+                    state_id: tick.state_id.as_u16(),
+                    cancelled: tick.cancelled,
+                })
+                .collect(),
+        })
+    }
+
+    fn apply_wasm_event(&mut self, event: Event, state: &mut PluginHostState) {
+        cleanup_event(&event, state);
+        if let Event::BlockRandomTickEvent(data) = event {
+            // Only the cancel flags are writable; a reordered or shortened list keeps the rest.
+            for (tick, returned) in self.ticks.iter_mut().zip(data.ticks) {
+                if from_wasm_block_position(returned.block_pos) == tick.block_pos {
+                    tick.cancelled = returned.cancelled;
+                }
+            }
+        }
+    }
+
+    fn from_wasm_event(event: Event, state: &mut PluginHostState) -> Self {
+        match event {
+            Event::BlockRandomTickEvent(data) => Self {
+                world: consume_world(state, &data.target_world),
+                ticks: data
+                    .ticks
+                    .into_iter()
+                    .map(|tick| BlockRandomTick {
+                        block_pos: from_wasm_block_position(tick.block_pos),
+                        state_id: BlockStateId::new_or_air(tick.state_id),
+                        cancelled: tick.cancelled,
+                    })
+                    .collect(),
             },
             _ => panic!("unexpected event type"),
         }
