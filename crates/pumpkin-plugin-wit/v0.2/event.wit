@@ -6,7 +6,7 @@ interface event {
     use screens.{screen};
     use player.{player};
     use text.{text-component};
-    use %world.{%world};
+    use %world.{%world, entity};
     use java-packets.{serverbound-packet as java-serverbound-packet, clientbound-packet as java-clientbound-packet};
     use bedrock-packets.{serverbound-packet as bedrock-serverbound-packet, clientbound-packet as bedrock-clientbound-packet};
     use uuid.{uuid};
@@ -1631,6 +1631,11 @@ interface event {
 
     record loot-generate-event-data {
         loot-table: string,
+        target-world: %world,
+        block-pos: option<block-pos>,
+        entity: option<entity>,
+        player: option<player>,
+        items: list<item-stack>,
         cancelled: bool
     }
 

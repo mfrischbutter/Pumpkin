@@ -317,7 +317,18 @@ pub fn cleanup_event(event: &Event, state: &mut PluginHostState) {
         Event::EntitiesLoadEvent(_) => {}
         Event::EntitiesUnloadEvent(_) => {}
         Event::GenericGameEvent(_) => {}
-        Event::LootGenerateEvent(_) => {}
+        Event::LootGenerateEvent(data) => {
+            cleanup_world(state, &data.target_world);
+            if let Some(res) = &data.entity {
+                cleanup_entity(state, res);
+            }
+            if let Some(res) = &data.player {
+                cleanup_player(state, res);
+            }
+            for res in &data.items {
+                cleanup_item_stack(state, res);
+            }
+        }
         Event::PortalCreateEvent(_) => {}
         Event::StructureGrowEvent(_) => {}
         Event::TimeSkipEvent(_) => {}

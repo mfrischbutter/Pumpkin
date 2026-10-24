@@ -214,6 +214,15 @@ fn get_chest_screen_handler_factory(
                         as f32,
                     ..Default::default()
                 },
+                |items| {
+                    args.world.fire_loot_generate(
+                        &loot_key,
+                        Some(entity.get_position()),
+                        None,
+                        Some(args.player.as_ref()),
+                        items,
+                    )
+                },
             );
             inv.mark_dirty();
         }
