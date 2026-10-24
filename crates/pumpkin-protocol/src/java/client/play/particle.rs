@@ -48,7 +48,7 @@ pub struct CParticle<'a> {
 /// a plain `SimpleParticleType`.
 ///
 /// Particles that take no options are spawned through [`CParticle`] with an empty `data`.
-#[derive(Clone, PartialEq)]
+#[derive(Clone)]
 pub enum ParticleOptions {
     /// Vanilla `BlockParticleOption`, read by `block`, `block_marker`, `falling_dust`,
     /// `dust_pillar` and `block_crumble`.
