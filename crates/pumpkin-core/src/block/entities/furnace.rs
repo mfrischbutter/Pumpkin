@@ -4,7 +4,7 @@ use std::{
     array::from_fn,
     collections::HashMap,
     sync::{
-        Arc, Mutex as StdMutex, RwLock,
+        Arc, Mutex as StdMutex, OnceLock, RwLock, Weak,
         atomic::{AtomicBool, AtomicU16, Ordering},
     },
 };
@@ -16,7 +16,7 @@ use crate::{
     block::entities::furnace_like_block_entity::CookingBlockEntityBase,
     impl_block_entity_for_cooking, impl_clearable_for_cooking, impl_cooking_block_entity_base,
     impl_experience_container_for_cooking, impl_inventory_for_cooking,
-    impl_property_delegate_for_cooking,
+    impl_property_delegate_for_cooking, server::RecipeManager,
 };
 
 pub struct FurnaceBlockEntity {
@@ -34,10 +34,14 @@ pub struct FurnaceBlockEntity {
     /// Tracks recipes used for XP calculation (vanilla `RecipesUsed` NBT format)
     /// Maps result item ID -> craft count
     pub recipes_used: StdMutex<HashMap<String, u32>>,
+
+    /// The server's recipe manager, attached on the first tick.
+    pub recipe_manager: OnceLock<Weak<RecipeManager>>,
 }
 
 impl FurnaceBlockEntity {
     pub const INVENTORY_SIZE: usize = 3;
+    pub const RECIPE_KIND: CookingRecipeKind = CookingRecipeKind::Smelting;
     pub const ID: &'static str = "minecraft:furnace";
 
     #[must_use]
@@ -52,12 +56,13 @@ impl FurnaceBlockEntity {
             lit_total_time: AtomicU16::new(0),
             lit_time_remaining: AtomicU16::new(0),
             recipes_used: StdMutex::new(HashMap::new()),
+            recipe_manager: OnceLock::new(),
         }
     }
 }
 
 impl_cooking_block_entity_base!(FurnaceBlockEntity);
-impl_block_entity_for_cooking!(FurnaceBlockEntity, CookingRecipeKind::Smelting);
+impl_block_entity_for_cooking!(FurnaceBlockEntity);
 impl_inventory_for_cooking!(FurnaceBlockEntity);
 impl_clearable_for_cooking!(FurnaceBlockEntity);
 impl_property_delegate_for_cooking!(FurnaceBlockEntity);
