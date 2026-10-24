@@ -1092,8 +1092,120 @@ pub fn serialize_java_packet(
                 .unwrap();
             Some(buf.into())
         }
+        // Written by hand (the codegen emits v0.2 only): fields with no plain WIT type are
+        // strings here, parsed by the helpers below.
+        ClientboundPacket::CMultiBlockUpdate(data) => {
+            let updates = data
+                .updates
+                .iter()
+                .map(|((x, y, z), state)| {
+                    Some((
+                        pumpkin_util::math::position::BlockPos::new(*x, *y, *z),
+                        block_state_from_wit(state)?,
+                    ))
+                })
+                .collect::<Option<Vec<_>>>()?;
+            let p = pumpkin_protocol::java::client::play::CMultiBlockUpdate::new_with_section(
+                pumpkin_util::math::vector3::Vector3::new(
+                    data.chunk_section.0.floor() as i32,
+                    data.chunk_section.1.floor() as i32,
+                    data.chunk_section.2.floor() as i32,
+                ),
+                data.suppress_light_updates,
+                updates,
+            );
+            write_hand_written_packet(&p, version)
+        }
+        ClientboundPacket::CSetEquipment(data) => {
+            if data.equipment.is_empty() {
+                return None;
+            }
+            let equipment = data
+                .equipment
+                .iter()
+                .map(|(slot, item)| Some((i8::try_from(*slot).ok()?, item_stack_from_wit(item)?)))
+                .collect::<Option<Vec<_>>>()?;
+            let p = pumpkin_protocol::java::client::play::CSetEquipment::new(
+                VarInt(data.entity_id),
+                equipment,
+            );
+            write_hand_written_packet(&p, version)
+        }
+        ClientboundPacket::CTeleportEntity(data) => {
+            let relatives = data
+                .relatives
+                .iter()
+                .map(String::as_str)
+                .map(position_flag_from_wit)
+                .collect::<Option<Vec<_>>>()?;
+            let p = pumpkin_protocol::java::client::play::CTeleportEntity::new(
+                VarInt(data.entity_id),
+                pumpkin_util::math::vector3::Vector3::new(
+                    data.position.0,
+                    data.position.1,
+                    data.position.2,
+                ),
+                pumpkin_util::math::vector3::Vector3::new(data.delta.0, data.delta.1, data.delta.2),
+                data.yaw,
+                data.pitch,
+                &relatives,
+                data.on_ground,
+            );
+            write_hand_written_packet(&p, version)
+        }
         _ => None,
     }
+}
+
+fn write_hand_written_packet<P: pumpkin_protocol::ClientPacket>(
+    packet: &P,
+    version: JavaMinecraftVersion,
+) -> Option<Bytes> {
+    let mut buf = Vec::new();
+    pumpkin_core::net::java::JavaClient::write_packet_for_version(packet, version, &mut buf)
+        .ok()?;
+    Some(buf.into())
+}
+
+/// A block state id, or a block name for its default state.
+fn block_state_from_wit(state: &str) -> Option<pumpkin_data::BlockStateId> {
+    if let Ok(id) = state.parse() {
+        return pumpkin_data::BlockStateId::new(id);
+    }
+    let block = pumpkin_data::Block::from_name(state)?;
+    Some(block.default_state.id)
+}
+
+/// An item registry key for a stack of one, or an empty string for no item.
+fn item_stack_from_wit(
+    key: &str,
+) -> Option<pumpkin_protocol::codec::item_stack_seralizer::ItemStackSerializer<'static>> {
+    use pumpkin_data::item_stack::ItemStack;
+    use pumpkin_protocol::codec::item_stack_seralizer::ItemStackSerializer;
+
+    if key.is_empty() {
+        return Some(ItemStackSerializer::from(None::<ItemStack>));
+    }
+    let item = pumpkin_data::item::Item::from_registry_key(key)?;
+    Some(ItemStackSerializer::from(ItemStack::new(1, item)))
+}
+
+/// A teleport flag by its kebab-case name.
+fn position_flag_from_wit(name: &str) -> Option<pumpkin_protocol::PositionFlag> {
+    use pumpkin_protocol::PositionFlag;
+
+    Some(match name {
+        "x" => PositionFlag::X,
+        "y" => PositionFlag::Y,
+        "z" => PositionFlag::Z,
+        "y-rot" => PositionFlag::YRot,
+        "x-rot" => PositionFlag::XRot,
+        "delta-x" => PositionFlag::DeltaX,
+        "delta-y" => PositionFlag::DeltaY,
+        "delta-z" => PositionFlag::DeltaZ,
+        "rotate-delta" => PositionFlag::RotateDelta,
+        _ => return None,
+    })
 }
 
 #[must_use]
