@@ -6361,7 +6361,10 @@ impl World {
         let Some(server) = self.server.upgrade() else {
             return Some(new_state_id);
         };
-        if !server.plugin_manager.has_handlers::<BlockShapeUpdateEvent>() {
+        if !server
+            .plugin_manager
+            .has_handlers::<BlockShapeUpdateEvent>()
+        {
             return Some(new_state_id);
         }
         let mut event = BlockShapeUpdateEvent::new(
