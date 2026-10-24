@@ -156,6 +156,20 @@ pub struct Server {
     // world stuff which maybe should be put into a struct
     pub level_info: Arc<ArcSwap<LevelData>>,
     world_info_writer: Arc<dyn WorldInfoWriter>,
+    /// Resource packs that plugins add to the configuration phase of Java logins, by plugin name.
+    pub login_resource_packs: ArcSwap<Vec<(String, Vec<LoginResourcePack>)>>,
+}
+
+/// A resource pack a plugin sends in the configuration phase of Java logins.
+#[derive(Clone)]
+pub struct LoginResourcePack {
+    pub uuid: uuid::Uuid,
+    pub url: String,
+    /// SHA-1 of the pack as 40 hex characters.
+    pub hash: String,
+    /// Kick the player when they decline the pack or it fails to load.
+    pub forced: bool,
+    pub prompt_message: Option<TextComponent>,
 }
 
 impl Server {
@@ -327,6 +341,7 @@ impl Server {
             world_info_writer: Arc::new(AnvilLevelInfo),
             level_info,
             management_hub,
+            login_resource_packs: ArcSwap::from_pointee(Vec::new()),
         };
         let server = Arc::new(server);
 
@@ -840,6 +855,24 @@ impl Server {
         for world in self.worlds.load().iter() {
             world.broadcast_packet_all(packet);
         }
+    }
+
+    /// Replaces the resource packs `plugin` adds to the configuration phase of later Java
+    /// logins. An empty list removes them.
+    pub fn set_login_resource_packs(&self, plugin: &str, packs: &[LoginResourcePack]) {
+        self.login_resource_packs.rcu(|current| {
+            let mut new_packs = (**current).clone();
+            if let Some(index) = new_packs.iter().position(|(name, _)| name == plugin) {
+                if packs.is_empty() {
+                    new_packs.remove(index);
+                } else {
+                    new_packs[index].1 = packs.to_vec();
+                }
+            } else if !packs.is_empty() {
+                new_packs.push((plugin.to_string(), packs.to_vec()));
+            }
+            Arc::new(new_packs)
+        });
     }
 
     /// Broadcasts custom server links to all players on the server.
