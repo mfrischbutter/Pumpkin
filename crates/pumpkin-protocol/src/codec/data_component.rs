@@ -10,7 +10,7 @@ use pumpkin_data::data_component_impl::*;
 
 use pumpkin_data::effect::StatusEffect;
 use pumpkin_data::entity::EntityType;
-use pumpkin_data::jukebox_song::JukeboxSong;
+use pumpkin_data::jukebox_song_registry::{get_jukebox_song, jukebox_song_id};
 use pumpkin_data::sound::Sound;
 use pumpkin_nbt::{serializer::NbtWriteHelperJava, tag::NbtTag};
 use pumpkin_util::version::JavaMinecraftVersion;
@@ -2768,15 +2768,12 @@ impl DataComponentCodec<Self> for OminousBottleAmplifierImpl {
 }
 
 impl DataComponentCodec<Self> for JukeboxPlayableImpl {
-    /// Writes the song as a registry holder (id plus one). Clients only know the vanilla songs,
-    /// so any other id cannot be written.
+    /// Writes the song as a registry holder (id plus one). Clients only know the vanilla songs
+    /// and the registered ones, so any other id cannot be written.
     fn serialize(&self, seq: &mut impl NetworkWriteExt) -> Result<(), WritingError> {
-        let song = self
-            .song
-            .strip_prefix("minecraft:")
-            .and_then(JukeboxSong::from_name)
+        let song = get_jukebox_song(&self.song)
             .ok_or_else(|| WritingError::Message(format!("Unknown jukebox song {}", self.song)))?;
-        seq.write_var_int(&VarInt(song.get_id() as i32 + 1))
+        seq.write_var_int(&VarInt(song.network_id as i32 + 1))
     }
 
     fn deserialize(seq: &mut impl NetworkReadExt) -> Result<Self, ReadingError> {
@@ -2786,10 +2783,10 @@ impl DataComponentCodec<Self> for JukeboxPlayableImpl {
             .0
             .checked_sub(1)
             .and_then(|id| u32::try_from(id).ok())
-            .and_then(JukeboxSong::from_id)
+            .and_then(jukebox_song_id)
             .ok_or_else(|| ReadingError::Message("Unsupported jukebox song".into()))?;
         Ok(Self {
-            song: Cow::Owned(format!("minecraft:{}", song.to_name())),
+            song: Cow::Owned(song),
         })
     }
 }

@@ -5,14 +5,20 @@ use std::{
 };
 
 use crate::{
-    LoggerOption, command::client_suggestions, net::ClientPlatform, plugin::PluginMetadata,
-    plugin_log,
+    LoggerOption, block::blocks::redstone::SIGNAL_MAX, command::client_suggestions,
+    data::datapack::JUKEBOX_SONG_REGISTRY, net::ClientPlatform, plugin::PluginMetadata, plugin_log,
 };
 use arc_swap::ArcSwap;
+use pumpkin_data::jukebox_song_registry::{
+    DynamicJukeboxSong, register_dynamic_jukebox_song, unregister_dynamic_jukebox_song,
+};
+use pumpkin_data::packet::CURRENT_MC_VERSION;
 use pumpkin_nbt::NbtCompound;
 use pumpkin_util::{
     PermissionLvl,
+    identifier::Identifier,
     permission::{Permission, PermissionManager},
+    text::TextComponent,
 };
 use tracing::{Level, warn};
 
@@ -312,6 +318,51 @@ impl Context {
         Ok(())
     }
 
+    /// Registers a jukebox song. Jukeboxes play discs whose `jukebox_playable` names `id`, with
+    /// this length and comparator signal, and clients show `description` as "now playing" and
+    /// in the disc's tooltip. The song is removed when this plugin unloads.
+    pub fn register_jukebox_song(
+        &self,
+        id: &str,
+        sound_event: &str,
+        description: &TextComponent,
+        length_in_seconds: f32,
+        comparator_output: u8,
+    ) -> Result<(), String> {
+        let sound_event = Identifier::parse(sound_event).map_err(|error| error.to_string())?;
+        // Vanilla's `JukeboxSong` codec takes a positive length and a signal from 0 to 15
+        // (from memory).
+        if !length_in_seconds.is_finite() || length_in_seconds <= 0.0 {
+            return Err(format!("Jukebox song length must be positive, got {length_in_seconds}"));
+        }
+        if comparator_output > SIGNAL_MAX {
+            return Err(format!(
+                "Jukebox song comparator output must be at most {SIGNAL_MAX}, got {comparator_output}"
+            ));
+        }
+        let mut data = NbtCompound::new();
+        data.put_string("sound_event", sound_event.to_string());
+        data.put("description", description.to_nbt_tag_for_version(&CURRENT_MC_VERSION));
+        data.put_float("length_in_seconds", length_in_seconds);
+        data.put_int("comparator_output", i32::from(comparator_output));
+
+        let id = self.server.datapack_manager.insert_plugin_registry_entry(
+            &self.metadata.name,
+            JUKEBOX_SONG_REGISTRY.to_string(),
+            id,
+            data,
+        )?;
+        register_dynamic_jukebox_song(
+            id.clone(),
+            DynamicJukeboxSong {
+                length_in_seconds,
+                comparator_output,
+            },
+        );
+        self.warn_if_players_online(&id);
+        Ok(())
+    }
+
     /// Players that already configured keep the registries they received.
     fn warn_if_players_online(&self, entry_id: &str) {
         if self.server.get_player_count() > 0 {
@@ -322,12 +373,17 @@ impl Context {
         }
     }
 
-    /// Removes the registry entries this plugin added.
+    /// Removes the registry entries this plugin added, and the server's model of them.
     pub(crate) fn unregister_registry_entries(&self) {
-        let _ = self
+        let removed = self
             .server
             .datapack_manager
             .remove_plugin_registry_entries(&self.metadata.name);
+        for (registry_id, entry_id) in removed {
+            if registry_id == JUKEBOX_SONG_REGISTRY {
+                unregister_dynamic_jukebox_song(&entry_id);
+            }
+        }
     }
 
     /// Check if a player has a permission
