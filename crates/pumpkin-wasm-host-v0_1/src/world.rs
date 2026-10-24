@@ -899,6 +899,39 @@ impl pumpkin::plugin::world::HostWorld for PluginHostState {
         Ok(())
     }
 
+    fn set_biome_by_name(
+        &mut self,
+        world: Resource<World>,
+        pos: WitBlockPos,
+        name: String,
+    ) -> wasmtime::Result<Result<(), String>> {
+        let world_ref = self.get(&world)?;
+        let key = name.strip_prefix("minecraft:").unwrap_or(&name);
+        let Some(biome) = pumpkin_data::biome::Biome::from_name(key) else {
+            return Ok(Err(format!("Unknown biome: {name}")));
+        };
+        let chunk_pos = pumpkin_util::math::vector2::Vector2::new(pos.x >> 4, pos.z >> 4);
+        let Some(chunk) = world_ref
+            .level
+            .loaded_chunks
+            .get(&chunk_pos)
+            .map(|c| c.value().clone())
+        else {
+            return Ok(Err(format!("Chunk {}, {} is not loaded", chunk_pos.x, chunk_pos.y)));
+        };
+        let (x, z) = ((pos.x & 15) as usize, (pos.z & 15) as usize);
+        if chunk
+            .section
+            .get_rough_biome_absolute_y(x, pos.y, z)
+            .is_none()
+        {
+            return Ok(Err(format!("Y {} lies outside the world's height", pos.y)));
+        }
+        chunk.section.set_biome_absolute_y(x, pos.y, z, biome.id);
+        chunk.mark_dirty(true);
+        Ok(Ok(()))
+    }
+
     fn refresh_biomes(
         &mut self,
         world: Resource<World>,
