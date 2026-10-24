@@ -6367,7 +6367,10 @@ impl World {
         let Some(server) = self.server.upgrade() else {
             return Some(new_state_id);
         };
-        if !server.plugin_manager.has_handlers::<BlockShapeUpdateEvent>() {
+        if !server
+            .plugin_manager
+            .has_handlers::<BlockShapeUpdateEvent>()
+        {
             return Some(new_state_id);
         }
         let mut event = BlockShapeUpdateEvent::new(
@@ -6395,7 +6398,10 @@ impl World {
         let Some(server) = self.server.upgrade() else {
             return false;
         };
-        if !server.plugin_manager.has_handlers::<BlockScheduledTickEvent>() {
+        if !server
+            .plugin_manager
+            .has_handlers::<BlockScheduledTickEvent>()
+        {
             return false;
         }
         let mut event = BlockScheduledTickEvent::new(self.clone(), *pos, state_id);
