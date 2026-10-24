@@ -10,3 +10,4 @@ pub mod plugin;
 pub mod scheduler;
 pub mod signature;
 pub mod state;
+pub mod worker;

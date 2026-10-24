@@ -12,6 +12,7 @@ use pumpkin_wasm_host_common::{
     scheduler::TaskScheduler,
     signature,
     state::PluginHostState,
+    worker::PluginWorker,
 };
 
 #[derive(Clone, Copy, Default)]
@@ -215,6 +216,7 @@ impl PluginRuntime {
             PluginApiVersion::V0_2 => return Err(PluginInitError::ApiMismatch(v0_2_disabled())),
         };
 
+        let worker = prepare_worker(engine, &component, api_version, &metadata.name);
         let store = concurrent_store::start_legacy_store(
             store,
             self.legacy_sync_reentry.clone(),
@@ -231,6 +233,7 @@ impl PluginRuntime {
             api_version,
             store,
             task_scheduler: Arc::clone(&self.task_scheduler),
+            worker,
         });
         let weak_plugin = Arc::downgrade(&wasm_plugin);
         wasm_plugin
@@ -350,6 +353,72 @@ fn setup_linker_v0_2(engine: &Engine) -> wasmtime::Result<Linker<PluginHostState
     wasmtime_wasi::p3::add_to_linker(&mut linker)?;
     wasmtime_wasi_http::p3::add_to_linker(&mut linker)?;
     pumpkin_wasm_host_v0_2::add_to_linker(&mut linker)?;
+    Ok(linker)
+}
+
+/// Prepares worker instances for a plugin whose component exports the `worker` interface.
+///
+/// A plugin without that export loads as before. If the worker instances cannot be prepared, the
+/// plugin still loads, only without worker jobs.
+fn prepare_worker(
+    engine: &Engine,
+    component: &Component,
+    api_version: PluginApiVersion,
+    plugin_name: &str,
+) -> Option<PluginWorker> {
+    let interface = match api_version {
+        PluginApiVersion::V0_1 => pumpkin_wasm_host_v0_1::WORKER_INTERFACE,
+        #[cfg(feature = "v0_2")]
+        PluginApiVersion::V0_2 => pumpkin_wasm_host_v0_2::WORKER_INTERFACE,
+        #[cfg(not(feature = "v0_2"))]
+        PluginApiVersion::V0_2 => return None,
+    };
+    if !PluginWorker::is_exported_by(component, interface) {
+        return None;
+    }
+    let worker = setup_worker_linker(engine, component, api_version)
+        .and_then(|linker| PluginWorker::new(&linker, component, interface));
+    match worker {
+        Ok(worker) => {
+            tracing::debug!(wasm_plugin = plugin_name, "Prepared Wasm plugin worker instances");
+            Some(worker)
+        }
+        Err(error) => {
+            tracing::warn!(
+                wasm_plugin = plugin_name,
+                %error,
+                "Wasm plugin worker instances could not be prepared; its worker jobs are disabled"
+            );
+            None
+        }
+    }
+}
+
+/// Builds the linker for worker instances of `component`.
+///
+/// Worker instances get WASI without any of the plugin's permissions (no file system, network or
+/// environment), the imports the plugin's API version keeps for workers, and a trap for every
+/// other import.
+fn setup_worker_linker(
+    engine: &Engine,
+    component: &Component,
+    api_version: PluginApiVersion,
+) -> wasmtime::Result<Linker<PluginHostState>> {
+    let mut linker = Linker::<PluginHostState>::new(engine);
+    wasmtime_wasi::p2::add_to_linker_async(&mut linker)?;
+    match api_version {
+        PluginApiVersion::V0_1 => {
+            pumpkin_wasm_host_v0_1::add_worker_imports_to_linker(&mut linker)?;
+        }
+        #[cfg(feature = "v0_2")]
+        PluginApiVersion::V0_2 => {
+            wasmtime_wasi::p3::add_to_linker(&mut linker)?;
+            pumpkin_wasm_host_v0_2::add_worker_imports_to_linker(&mut linker)?;
+        }
+        #[cfg(not(feature = "v0_2"))]
+        PluginApiVersion::V0_2 => return Err(v0_2_disabled()),
+    }
+    linker.define_unknown_imports_as_traps(component)?;
     Ok(linker)
 }
 

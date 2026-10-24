@@ -1,7 +1,7 @@
 use std::{any::Any, sync::Arc};
 use thiserror::Error;
 
-use crate::{concurrent_store::LegacyStore, scheduler::TaskScheduler};
+use crate::{concurrent_store::LegacyStore, scheduler::TaskScheduler, worker::PluginWorker};
 
 #[derive(Error, Debug)]
 pub enum PluginInitError {
@@ -106,6 +106,8 @@ pub struct WasmPlugin {
     pub api_version: PluginApiVersion,
     pub store: LegacyStore,
     pub task_scheduler: Arc<TaskScheduler>,
+    /// Runs the plugin's worker jobs, when its component exports the `worker` interface.
+    pub worker: Option<PluginWorker>,
 }
 
 impl WasmPlugin {
