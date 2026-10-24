@@ -490,7 +490,8 @@ impl World {
         }
         for change in self.level.loaded_chunk_changes() {
             match change {
-                pumpkin_world::level::LoadedChunkChange::Loaded(pos) => {
+                pumpkin_world::level::LoadedChunkChange::Loaded(pos)
+                | pumpkin_world::level::LoadedChunkChange::Generated(pos) => {
                     if active_chunks.contains(&pos)
                         && self.level.is_chunk_loaded(&pos)
                         && tracker.loaded_active_chunks.insert(pos)
@@ -1526,6 +1527,7 @@ impl World {
         self.flush_block_updates();
         self.flush_synced_block_events();
         self.update_active_chunks();
+        self.fire_chunk_lifecycle_events(server);
         self.tick_environment();
         let mut raids = {
             let mut guard = self
@@ -7257,20 +7259,53 @@ impl World {
             .is_some()
     }
 
-    pub fn populate_chunk(&self, chunk_pos: Vector2<i32>) {
-        let mut populate_event =
-            crate::plugin::api::events::world::chunk_populate::ChunkPopulateEvent::new(chunk_pos);
-        if let Some(server) = self.server.upgrade() {
+    /// Fires the chunk load, populate and unload events for the chunks the chunk system made
+    /// available or dropped since the last tick.
+    ///
+    /// Running here on the tick means a newly generated chunk is already loaded when its populate
+    /// event fires, so handlers can change its blocks through the world.
+    fn fire_chunk_lifecycle_events(self: &Arc<Self>, server: &Arc<Server>) {
+        use crate::plugin::api::events::world::chunk_load::ChunkLoad;
+        use pumpkin_world::level::LoadedChunkChange;
+
+        let fire_load = server.plugin_manager.has_handlers::<ChunkLoad>();
+        for change in self.level.chunk_lifecycle_changes() {
+            match change {
+                LoadedChunkChange::Loaded(pos) | LoadedChunkChange::Generated(pos) => {
+                    let is_new = matches!(change, LoadedChunkChange::Generated(_));
+                    if fire_load {
+                        let mut event = ChunkLoad::new(self.clone(), pos, is_new);
+                        server.plugin_manager.fire_blocking(server, &mut event);
+                    }
+                    if is_new {
+                        self.populate_chunk(pos);
+                    }
+                }
+                LoadedChunkChange::Unloaded(pos) => self.unload_chunk(pos),
+            }
+        }
+    }
+
+    pub fn populate_chunk(self: &Arc<Self>, chunk_pos: Vector2<i32>) {
+        use crate::plugin::api::events::world::chunk_populate::ChunkPopulateEvent;
+
+        if let Some(server) = self.server.upgrade()
+            && server.plugin_manager.has_handlers::<ChunkPopulateEvent>()
+        {
+            let mut populate_event = ChunkPopulateEvent::new(self.clone(), chunk_pos);
             server
                 .plugin_manager
                 .fire_blocking(&server, &mut populate_event);
         }
     }
 
-    pub fn unload_chunk(&self, chunk_pos: Vector2<i32>) {
-        let mut unload_event =
-            crate::plugin::api::events::world::chunk_unload::ChunkUnloadEvent::new(chunk_pos);
-        if let Some(server) = self.server.upgrade() {
+    pub fn unload_chunk(self: &Arc<Self>, chunk_pos: Vector2<i32>) {
+        use crate::plugin::api::events::world::chunk_unload::ChunkUnloadEvent;
+
+        if let Some(server) = self.server.upgrade()
+            && server.plugin_manager.has_handlers::<ChunkUnloadEvent>()
+        {
+            let mut unload_event = ChunkUnloadEvent::new(self.clone(), chunk_pos);
             server
                 .plugin_manager
                 .fire_blocking(&server, &mut unload_event);
