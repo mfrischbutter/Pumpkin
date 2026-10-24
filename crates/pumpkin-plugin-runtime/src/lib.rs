@@ -227,9 +227,7 @@ mod tests {
     async fn root_admission_lifecycle_scenario(mode: StoreMode) {
         let policy = LegacySyncReentry::new();
         let holding_store = legacy_store(test_store(mode), &policy, mode).await;
-        let first_store = legacy_store(test_store(mode), &policy, mode).await;
-        let second_store = legacy_store(test_store(mode), &policy, mode).await;
-        let third_store = legacy_store(test_store(mode), &policy, mode).await;
+        let other_store = legacy_store(test_store(mode), &policy, mode).await;
         let holding_started = Arc::new(Notify::new());
         let release_holding = Arc::new(Notify::new());
         let holding_completed = Arc::new(Notify::new());
@@ -262,8 +260,16 @@ mod tests {
                 .is_cancelled()
         );
 
+        timeout(
+            Duration::from_secs(2),
+            other_store.call_guest(|_| Box::pin(async { Ok(()) })),
+        )
+        .await
+        .expect("a root on another store must not wait for the busy store")
+        .expect("root on another store");
+
         let first_order = Arc::clone(&order);
-        let first = first_store.call_guest(move |_| {
+        let first = holding_store.call_guest(move |_| {
             Box::pin(async move {
                 first_order.lock().expect("order lock").push(1);
                 Ok(1)
@@ -277,7 +283,7 @@ mod tests {
         );
 
         let second_order = Arc::clone(&order);
-        let second = second_store.call_guest(move |_| {
+        let second = holding_store.call_guest(move |_| {
             Box::pin(async move {
                 second_order.lock().expect("order lock").push(2);
                 Ok(2)
@@ -291,7 +297,7 @@ mod tests {
         );
 
         let runtime = tokio::runtime::Handle::current();
-        let third_driver = third_store.clone();
+        let third_driver = holding_store.clone();
         let attempted = Arc::clone(&third_attempted);
         let entered = Arc::clone(&third_started);
         let third_order = Arc::clone(&order);
@@ -330,22 +336,14 @@ mod tests {
             .shutdown(|_| Box::pin(async move { Ok(()) }))
             .await
             .expect("shut down holding store");
-        first_store
+        other_store
             .shutdown(|_| Box::pin(async move { Ok(()) }))
             .await
-            .expect("shut down first store");
-        second_store
-            .shutdown(|_| Box::pin(async move { Ok(()) }))
-            .await
-            .expect("shut down second store");
-        third_store
-            .shutdown(|_| Box::pin(async move { Ok(()) }))
-            .await
-            .expect("shut down third store");
+            .expect("shut down other store");
     }
 
     #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
-    async fn legacy_root_admission_is_fifo_and_cancellation_safe_across_domains() {
+    async fn legacy_store_admission_is_per_store_fifo_and_cancellation_safe_across_domains() {
         for mode in MODES {
             timeout(
                 Duration::from_secs(10),
@@ -1101,6 +1099,9 @@ mod tests {
         assert_eq!(host_calls.load(Ordering::SeqCst), 2);
     }
 
+    /// Two plugins call into each other from opposing roots. With per-store admission both roots
+    /// run at once, so each root ends up waiting for the Store the other holds. The call that
+    /// closes the cycle joins the other Store's active reentry scope instead of waiting.
     #[allow(clippy::too_many_lines)]
     async fn opposing_plugin_roots_scenario() {
         let engine = test_engine(StoreMode::Sequential);
@@ -1112,19 +1113,19 @@ mod tests {
         let b_driver_slot = Arc::new(OnceLock::<TestStore>::new());
         let a_calls = Arc::new(AtomicUsize::new(0));
         let b_calls = Arc::new(AtomicUsize::new(0));
-        let trace = Arc::new(Mutex::new(Vec::new()));
         let first_root_entered = Arc::new(Notify::new());
         let release_first_root = Arc::new(Notify::new());
-        let second_root_started = Arc::new(Notify::new());
+        let second_root_entered = Arc::new(Notify::new());
+        let joined_calls = Arc::new(AtomicUsize::new(0));
 
         let mut a_linker = Linker::<TestHostState>::new(&engine);
         let a_driver_for_a = Arc::clone(&a_driver_slot);
         let b_driver_for_a = Arc::clone(&b_driver_slot);
         let b_run_for_a = Arc::clone(&b_run_slot);
         let a_calls_for_host = Arc::clone(&a_calls);
-        let trace_for_a = Arc::clone(&trace);
         let entered_for_a = Arc::clone(&first_root_entered);
         let release_for_a = Arc::clone(&release_first_root);
+        let joined_for_a = Arc::clone(&joined_calls);
         a_linker
             .root()
             .func_wrap_async("host", move |mut store, ()| {
@@ -1138,39 +1139,22 @@ mod tests {
                     .clone();
                 let b_run = *b_run_for_a.get().expect("B run initialized");
                 let calls = Arc::clone(&a_calls_for_host);
-                let trace = Arc::clone(&trace_for_a);
                 let entered = Arc::clone(&entered_for_a);
                 let release = Arc::clone(&release_for_a);
+                let joined = Arc::clone(&joined_for_a);
                 Box::new(async move {
-                    match calls.fetch_add(1, Ordering::SeqCst) {
-                        0 => {
-                            trace.lock().expect("trace lock").push("a:first-outer");
-                            entered.notify_one();
-                            a_driver
-                                .pump_reentry(&mut store, release.notified())
-                                .await?;
-                            let outbound = b_driver.call_guest(move |mut context| {
-                                assert!(
-                                    !context.is_reentrant(),
-                                    "first call into B must use its concurrent store path"
-                                );
-                                Box::pin(async move { context.call(b_run, ()).await })
-                            });
-                            a_driver.pump_reentry(&mut store, outbound).await??;
-                        }
-                        1 => trace.lock().expect("trace lock").push("a:first-inner"),
-                        2 => {
-                            trace.lock().expect("trace lock").push("a:second-middle");
-                            let outbound = b_driver.call_guest(move |mut context| {
-                                assert!(
-                                    context.is_reentrant(),
-                                    "A to B callback must use B's active store frame"
-                                );
-                                Box::pin(async move { context.call(b_run, ()).await })
-                            });
-                            a_driver.pump_reentry(&mut store, outbound).await??;
-                        }
-                        _ => return Err(wasmtime::Error::msg("unexpected extra call into A")),
+                    if calls.fetch_add(1, Ordering::SeqCst) == 0 {
+                        entered.notify_one();
+                        a_driver
+                            .pump_reentry(&mut store, release.notified())
+                            .await?;
+                        let outbound = b_driver.call_guest(move |mut context| {
+                            if context.is_reentrant() {
+                                joined.fetch_add(1, Ordering::SeqCst);
+                            }
+                            Box::pin(async move { context.call(b_run, ()).await })
+                        });
+                        a_driver.pump_reentry(&mut store, outbound).await??;
                     }
                     Ok(())
                 })
@@ -1182,7 +1166,8 @@ mod tests {
         let b_driver_for_b = Arc::clone(&b_driver_slot);
         let a_run_for_b = Arc::clone(&a_run_slot);
         let b_calls_for_host = Arc::clone(&b_calls);
-        let trace_for_b = Arc::clone(&trace);
+        let entered_for_b = Arc::clone(&second_root_entered);
+        let joined_for_b = Arc::clone(&joined_calls);
         b_linker
             .root()
             .func_wrap_async("host", move |mut store, ()| {
@@ -1196,42 +1181,18 @@ mod tests {
                     .clone();
                 let a_run = *a_run_for_b.get().expect("A run initialized");
                 let calls = Arc::clone(&b_calls_for_host);
-                let trace = Arc::clone(&trace_for_b);
+                let entered = Arc::clone(&entered_for_b);
+                let joined = Arc::clone(&joined_for_b);
                 Box::new(async move {
-                    match calls.fetch_add(1, Ordering::SeqCst) {
-                        0 => {
-                            trace
-                                .lock()
-                                .expect("trace lock")
-                                .push("b:first-middle");
-                            let outbound = a_driver.call_guest(move |mut context| {
-                                assert!(
-                                    context.is_reentrant(),
-                                    "B to A callback must use A's active store frame"
-                                );
-                                Box::pin(async move { context.call(a_run, ()).await })
-                            });
-                            b_driver.pump_reentry(&mut store, outbound).await??;
-                        }
-                        1 => {
-                            trace
-                                .lock()
-                                .expect("trace lock")
-                                .push("b:second-outer");
-                            let outbound = a_driver.call_guest(move |mut context| {
-                                assert!(
-                                    !context.is_reentrant(),
-                                    "first call into A from the second root must use its concurrent store path"
-                                );
-                                Box::pin(async move { context.call(a_run, ()).await })
-                            });
-                            b_driver.pump_reentry(&mut store, outbound).await??;
-                        }
-                        2 => trace
-                            .lock()
-                            .expect("trace lock")
-                            .push("b:second-inner"),
-                        _ => return Err(wasmtime::Error::msg("unexpected extra call into B")),
+                    if calls.fetch_add(1, Ordering::SeqCst) == 0 {
+                        entered.notify_one();
+                        let outbound = a_driver.call_guest(move |mut context| {
+                            if context.is_reentrant() {
+                                joined.fetch_add(1, Ordering::SeqCst);
+                            }
+                            Box::pin(async move { context.call(a_run, ()).await })
+                        });
+                        b_driver.pump_reentry(&mut store, outbound).await??;
                     }
                     Ok(())
                 })
@@ -1268,39 +1229,26 @@ mod tests {
         let first_root = tokio::spawn(async move {
             first_driver
                 .call_guest(move |mut context| {
-                    assert!(
-                        !context.is_reentrant(),
-                        "top-level call into A must use its concurrent store path"
-                    );
                     Box::pin(async move { context.call(a_run, ()).await })
                 })
                 .await
         });
         first_root_entered.notified().await;
 
-        let started = Arc::clone(&second_root_started);
-        let second_root = b_driver.call_guest(move |mut context| {
-            Box::pin(async move {
-                started.notify_one();
-                assert!(
-                    !context.is_reentrant(),
-                    "top-level call into B must use its concurrent store path"
-                );
-                context.call(b_run, ()).await
-            })
+        let second_driver = b_driver.clone();
+        let second_root = tokio::spawn(async move {
+            second_driver
+                .call_guest(move |mut context| {
+                    Box::pin(async move { context.call(b_run, ()).await })
+                })
+                .await
         });
-        tokio::pin!(second_root);
-        assert!(
-            timeout(Duration::from_millis(10), &mut second_root)
-                .await
-                .is_err()
-        );
-        assert!(
-            timeout(Duration::from_millis(100), second_root_started.notified())
-                .await
-                .is_err(),
-            "the opposing root entered B while the first root still held admission"
-        );
+        timeout(Duration::from_secs(2), second_root_entered.notified())
+            .await
+            .expect("a root on B must not wait for the root that holds A");
+        // Let the second root start waiting for A before the first root calls into B. The other
+        // order closes the same cycle from the other side.
+        tokio::time::sleep(Duration::from_millis(50)).await;
 
         release_first_root.notify_one();
         timeout(Duration::from_secs(2), async {
@@ -1308,23 +1256,20 @@ mod tests {
                 .await
                 .expect("first root task")
                 .expect("first root result");
-            second_root.await.expect("second root result");
+            second_root
+                .await
+                .expect("second root task")
+                .expect("second root result");
         })
         .await
-        .expect("opposing synchronous roots timed out");
+        .expect("opposing synchronous roots deadlocked");
 
-        assert_eq!(a_calls.load(Ordering::SeqCst), 3);
-        assert_eq!(b_calls.load(Ordering::SeqCst), 3);
+        assert_eq!(a_calls.load(Ordering::SeqCst), 2);
+        assert_eq!(b_calls.load(Ordering::SeqCst), 2);
         assert_eq!(
-            *trace.lock().expect("trace lock"),
-            [
-                "a:first-outer",
-                "b:first-middle",
-                "a:first-inner",
-                "b:second-outer",
-                "a:second-middle",
-                "b:second-inner"
-            ]
+            joined_calls.load(Ordering::SeqCst),
+            1,
+            "exactly the call that closed the cycle joins the other store's reentry scope"
         );
         a_driver
             .shutdown(|_| Box::pin(async move { Ok(()) }))
@@ -1420,6 +1365,10 @@ mod tests {
                         .call_guest(|_| Box::pin(async { Ok(()) }))
                         .await
                         .expect("depth failure must release root admission");
+                    driver
+                        .call_guest(|_| Box::pin(async { Ok(()) }))
+                        .await
+                        .expect("depth failure must release the store admission");
                     for store in [driver, unrelated] {
                         store
                             .shutdown(|_| Box::pin(async { Ok(()) }))

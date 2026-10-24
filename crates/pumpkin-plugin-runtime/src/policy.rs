@@ -1,6 +1,6 @@
 use std::future::Future;
 
-use crate::chain::{ReentryContext, RootAdmission, RootAdmissionGuard, scope};
+use crate::chain::{ChainAdmission, ReentryContext, RootAdmission, StoreAdmission, StoreGate, scope};
 
 mod sealed {
     pub trait StorePolicy {}
@@ -11,8 +11,12 @@ pub trait StorePolicy: sealed::StorePolicy + Clone + Send + Sync + 'static {
     const NAME: &'static str;
 }
 
-/// Serializes synchronous guest roots while allowing callbacks from the active
-/// causal chain to re-enter stores already on that chain.
+/// Admits one synchronous causal chain at a time into each Store while allowing callbacks from
+/// the active chain to re-enter Stores already on that chain.
+///
+/// Stores do not wait for each other: a busy Store only holds back the chains that call into it.
+/// A chain that would wait for a Store whose holder waits on that chain joins the Store's active
+/// reentry scope instead, so opposing calls between two plugins cannot deadlock.
 #[derive(Clone, Debug)]
 pub struct LegacySyncReentry {
     root_admission: RootAdmission,
@@ -22,7 +26,8 @@ impl LegacySyncReentry {
     pub const NAME: &'static str = "LegacySyncReentry";
 
     /// Creates one admission authority. Clone and share this policy across all
-    /// Stores that can participate in the same synchronous plugin call graph.
+    /// Stores that can participate in the same synchronous plugin call graph, so
+    /// they share causal chain ids and see each other's waits.
     #[must_use]
     pub fn new() -> Self {
         Self {
@@ -35,8 +40,16 @@ impl LegacySyncReentry {
         ReentryContext::current().filter(|context| self.root_admission.admits(*context))
     }
 
-    pub(crate) async fn acquire_root(&self) -> wasmtime::Result<RootAdmissionGuard> {
-        self.root_admission.acquire_root().await
+    pub(crate) async fn acquire_root(&self, gate: &StoreGate) -> wasmtime::Result<StoreAdmission> {
+        self.root_admission.acquire_root(gate).await
+    }
+
+    pub(crate) async fn admit_chain(
+        &self,
+        context: ReentryContext,
+        gate: &StoreGate,
+    ) -> wasmtime::Result<ChainAdmission> {
+        self.root_admission.admit_chain(context, gate).await
     }
 
     #[cfg(test)]
@@ -45,8 +58,11 @@ impl LegacySyncReentry {
         self.root_admission.root_context()
     }
 
-    /// Runs Store bootstrap work under the same admission authority used by
-    /// subsequent guest calls.
+    /// Runs Store bootstrap work in a causal chain of this admission authority, so
+    /// callbacks it causes in other Stores are admitted like those of later guest calls.
+    ///
+    /// The Store being set up has no gate yet and nothing can call into it, so the
+    /// bootstrap chain holds no Store and only waits for the Stores it calls into.
     pub async fn scope_bootstrap<T>(
         &self,
         future: impl Future<Output = wasmtime::Result<T>>,
@@ -56,16 +72,18 @@ impl LegacySyncReentry {
                 wasm_plugin_admission_id = context.admission_id,
                 wasm_plugin_chain_id = context.chain_id,
                 wasm_plugin_reentry_depth = context.depth,
-                "Inherited legacy Wasm plugin root admission"
+                "Inherited legacy Wasm plugin causal chain"
             );
             return scope(context, future).await;
         }
 
-        let admission = self.acquire_root().await?;
-        let context = admission.context();
-        let output = scope(context, future).await;
-        drop(admission);
-        output
+        let context = self.root_admission.root_context();
+        tracing::trace!(
+            wasm_plugin_admission_id = context.admission_id,
+            wasm_plugin_chain_id = context.chain_id,
+            "Started legacy Wasm plugin bootstrap chain"
+        );
+        scope(context, future).await
     }
 }
 
