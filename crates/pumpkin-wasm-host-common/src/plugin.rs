@@ -5,7 +5,7 @@ use std::{
 };
 use thiserror::Error;
 
-use crate::{concurrent_store::LegacyStore, scheduler::TaskScheduler};
+use crate::{concurrent_store::LegacyStore, scheduler::TaskScheduler, worker::PluginWorker};
 
 #[derive(Error, Debug)]
 pub enum PluginInitError {
@@ -112,6 +112,8 @@ pub struct WasmPlugin {
     pub task_scheduler: Arc<TaskScheduler>,
     /// Packet ids this plugin's `packet-sent-event` handlers get, `None` for all of them.
     pub packet_sent_filter: RwLock<Option<HashSet<i32>>>,
+    /// Runs the plugin's worker jobs, when its component exports the `worker` interface.
+    pub worker: Option<PluginWorker>,
 }
 
 impl WasmPlugin {

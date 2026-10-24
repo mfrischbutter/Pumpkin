@@ -8,9 +8,9 @@ use pumpkin_wasm_host_common::state::FromResource;
 use crate::bindings::PluginPre;
 use pumpkin_core::plugin::PluginMetadata;
 use pumpkin_wasm_host_common::{
-    concurrent_store::LegacySyncReentry, plugin::PluginInitError, state::PluginHostState,
+    concurrent_store::LegacySyncReentry, plugin::PluginInitError, state::PluginHostState, worker,
 };
-use wasmtime::component::{Accessor, HasSelf, InstancePre, Linker, Resource};
+use wasmtime::component::{Accessor, Func, HasSelf, Instance, InstancePre, Linker, Resource};
 use wasmtime::{Engine, Store};
 
 mod bindings;
@@ -50,6 +50,9 @@ pub mod uuid;
 pub mod world;
 
 pub use crate::bindings::{Plugin, pumpkin};
+
+/// The name of the optional `worker` interface export.
+pub const WORKER_INTERFACE: &str = "pumpkin:plugin/worker@0.2.0";
 
 fn active_plugin(
     accessor: &Accessor<PluginHostState, HasSelf<PluginHostState>>,
@@ -499,10 +502,40 @@ pub fn add_to_linker(linker: &mut Linker<PluginHostState>) -> wasmtime::Result<(
     Ok(())
 }
 
+/// Adds the imports that keep working on a worker instance: only `logging`.
+pub fn add_worker_imports_to_linker(linker: &mut Linker<PluginHostState>) -> wasmtime::Result<()> {
+    pumpkin::plugin::logging::add_to_linker::<_, HasSelf<_>>(
+        linker,
+        |state: &mut PluginHostState| state,
+    )
+}
+
 pub fn prepare_plugin(
     instance_pre: &InstancePre<PluginHostState>,
 ) -> wasmtime::Result<PluginPre<PluginHostState>> {
     PluginPre::new(instance_pre.clone())
+}
+
+/// The type of `worker.handle-job-result`, as the host calls it.
+pub(crate) type JobResultParams = (
+    u32,
+    Resource<pumpkin::plugin::server::Server>,
+    worker::JobOutcome,
+);
+
+/// Looks up the plugin's optional `worker.handle-job-result` export.
+fn worker_job_result_handler(
+    store: &mut Store<PluginHostState>,
+    instance: &Instance,
+) -> Option<Func> {
+    let handler = worker::job_result_handler(&mut *store, instance, WORKER_INTERFACE)?;
+    match handler.typed::<JobResultParams, ()>(&*store) {
+        Ok(_) => Some(handler),
+        Err(error) => {
+            tracing::warn!(%error, "Ignoring a `worker` export with an unexpected signature");
+            None
+        }
+    }
 }
 
 pub async fn init_plugin(
@@ -512,10 +545,13 @@ pub async fn init_plugin(
 ) -> Result<(Plugin, Store<PluginHostState>, PluginMetadata), PluginInitError> {
     let mut store = Store::new(engine, PluginHostState::new());
     store.limiter(|state| &mut state.limits);
-    let plugin = legacy_sync_reentry
-        .scope_bootstrap(plugin_pre.instantiate_async(&mut store))
+    let instance = legacy_sync_reentry
+        .scope_bootstrap(plugin_pre.instance_pre().instantiate_async(&mut store))
         .await
         .map_err(PluginInitError::InstantiationFailed)?;
+    let plugin = Plugin::new(&mut store, &instance)
+        .map_err(PluginInitError::InstantiationFailed)?;
+    store.data_mut().worker_job_result_handler = worker_job_result_handler(&mut store, &instance);
 
     store
         .run_concurrent(async |accessor| {
