@@ -1048,7 +1048,10 @@ impl pumpkin::plugin::world::HostWorld for PluginHostState {
             .get(&chunk_pos)
             .map(|c| c.value().clone())
         else {
-            return Ok(Err(format!("Chunk {}, {} is not loaded", chunk_pos.x, chunk_pos.y)));
+            return Ok(Err(format!(
+                "Chunk {}, {} is not loaded",
+                chunk_pos.x, chunk_pos.y
+            )));
         };
         let (x, z) = ((pos.x & 15) as usize, (pos.z & 15) as usize);
         if chunk

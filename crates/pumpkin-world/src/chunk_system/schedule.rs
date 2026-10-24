@@ -81,12 +81,7 @@ pub struct GenerationSchedule {
 }
 
 impl GenerationSchedule {
-    fn publish_chunk(
-        &self,
-        pos: ChunkPos,
-        chunk: SyncChunk,
-        generated: bool,
-    ) -> Option<SyncChunk> {
+    fn publish_chunk(&self, pos: ChunkPos, chunk: SyncChunk, generated: bool) -> Option<SyncChunk> {
         let previous = self.public_chunk_map.insert(pos, chunk);
         if previous.is_none() {
             self.push_loaded_chunk_change(if generated {

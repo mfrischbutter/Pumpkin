@@ -901,21 +901,6 @@ impl HostItemEntity for PluginHostState {
         Ok(())
     }
 
-    fn get_thrower(&mut self, item_entity: Resource<ItemEntity>) -> wasmtime::Result<Option<Uuid>> {
-        let thrower = self.get(&item_entity)?.get_thrower();
-        Ok(thrower.map(|thrower| Uuid::to_wit(&thrower)))
-    }
-
-    fn set_thrower(
-        &mut self,
-        item_entity: Resource<ItemEntity>,
-        thrower: Uuid,
-    ) -> wasmtime::Result<()> {
-        let thrower = Uuid::from_wit(&thrower);
-        self.get(&item_entity)?.set_thrower(thrower);
-        Ok(())
-    }
-
     fn drop(&mut self, rep: Resource<ItemEntity>) -> wasmtime::Result<()> {
         self.drop(rep)
     }

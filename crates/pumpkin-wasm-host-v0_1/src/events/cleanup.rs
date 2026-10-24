@@ -822,6 +822,7 @@ pub fn cleanup_event(event: &Event, state: &mut PluginHostState) {
             if let Some(res) = &data.new_item {
                 cleanup_item_stack(state, res);
             }
+        }
         Event::BlockShapeUpdateEvent(data) => {
             cleanup_world(state, &data.target_world);
         }

@@ -1835,7 +1835,11 @@ impl pumpkin::plugin::context::HostContext for PluginHostState {
 
 /// Converts plugin-supplied block state ids, skipping ids that are no block state.
 fn block_states_from_wasm(states: &[u16]) -> Box<[BlockStateId]> {
-    let valid: Box<[BlockStateId]> = states.iter().copied().filter_map(BlockStateId::new).collect();
+    let valid: Box<[BlockStateId]> = states
+        .iter()
+        .copied()
+        .filter_map(BlockStateId::new)
+        .collect();
     if valid.len() != states.len() {
         tracing::warn!(
             "Ignoring {} invalid block state ids from a plugin",

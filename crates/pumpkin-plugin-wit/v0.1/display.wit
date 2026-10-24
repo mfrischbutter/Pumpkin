@@ -192,7 +192,5 @@ interface display {
         set-never-despawn: func(never-despawn: bool);
 
         /// The entity that dropped or threw the item.
-        get-thrower: func() -> option<uuid>;
-        set-thrower: func(thrower: uuid);
     }
 }

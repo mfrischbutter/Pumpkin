@@ -174,14 +174,6 @@ impl ItemEntity {
         self.on_count_changed();
     }
 
-    pub fn get_thrower(&self) -> Option<uuid::Uuid> {
-        self.thrower.load()
-    }
-
-    pub fn set_thrower(&self, uuid: uuid::Uuid) {
-        self.thrower.store(Some(uuid));
-    }
-
     pub fn get_pickup_delay(&self) -> u8 {
         self.pickup_delay.load(Ordering::Relaxed)
     }
