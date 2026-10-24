@@ -38,7 +38,9 @@ use pumpkin_data::screen::WindowType;
 use pumpkin_data::statistic::StatisticCategory;
 use pumpkin_data::tag;
 use pumpkin_data::tag::Taggable;
-use pumpkin_protocol::codec::recipe::{DynamicRecipe, OwnedCraftingRecipe, OwnedRecipeResult};
+use pumpkin_protocol::codec::recipe::{
+    DynamicRecipe, OwnedCraftingRecipe, OwnedRecipeIngredient, OwnedRecipeResult,
+};
 
 /// The result slot in a crafting screen.
 pub struct ResultSlot {
@@ -336,7 +338,7 @@ fn recipe_matches(
                         matched = false;
                         break 'outer;
                     };
-                    if !ingredient.match_item(slot.item) {
+                    if !ingredient.match_stack(&slot) {
                         matched = false;
                         break 'outer;
                     }
@@ -352,24 +354,46 @@ fn recipe_matches(
             if count != ingredients.len() {
                 return None;
             }
-            let mut ingredient_used = vec![false; ingredients.len()];
-            'next_slot: for i in 0..inventory.size() {
-                let slot = inventory.get_stack(i);
-                if slot.is_empty() {
-                    continue 'next_slot;
-                }
-                for i in 0..ingredients.len() {
-                    if !ingredient_used[i] && ingredients[i].match_item(slot.item) {
-                        ingredient_used[i] = true;
-                        continue 'next_slot;
-                    }
-                }
-                return None;
-            }
-            Some(RecipeResult::from_dynamic(result))
+            let stacks: Vec<ItemStack> = (0..inventory.size())
+                .map(|i| inventory.get_stack(i))
+                .filter(|stack| !stack.is_empty())
+                .collect();
+            // A greedy pick fails once a stack ingredient and a plain one accept the same item
+            // (a custom item and its base item), so assign stacks to ingredients as a matching.
+            let mut owners = vec![None; ingredients.len()];
+            let all_assigned = (0..stacks.len()).all(|slot| {
+                let mut visited = vec![false; ingredients.len()];
+                assign_ingredient(slot, &stacks, ingredients, &mut visited, &mut owners)
+            });
+            all_assigned.then(|| RecipeResult::from_dynamic(result))
         }
         _ => None,
     }
+}
+
+/// Finds an ingredient for the stack at `slot`, moving earlier stacks to other ingredients when
+/// needed (augmenting path). `owners` holds the stack index each ingredient is assigned to.
+fn assign_ingredient(
+    slot: usize,
+    stacks: &[ItemStack],
+    ingredients: &[OwnedRecipeIngredient],
+    visited: &mut [bool],
+    owners: &mut [Option<usize>],
+) -> bool {
+    for (i, ingredient) in ingredients.iter().enumerate() {
+        if visited[i] || !ingredient.match_stack(&stacks[slot]) {
+            continue;
+        }
+        visited[i] = true;
+        let current = owners[i];
+        if current
+            .is_none_or(|owner| assign_ingredient(owner, stacks, ingredients, visited, owners))
+        {
+            owners[i] = Some(slot);
+            return true;
+        }
+    }
+    false
 }
 
 #[must_use]
@@ -401,40 +425,43 @@ pub fn match_crafting_recipe(
     let input_width = bottom_x + 1 - top_x;
     let input_height = bottom_y + 1 - top_y;
 
-    for recipe in RECIPES_CRAFTING {
-        if let Some(result) = recipe_matches(
-            GenericRecipe::Vanilla(recipe),
+    let dynamic = provider.map(RecipeProvider::get_dynamic_recipes);
+    let crafting = || {
+        dynamic.iter().flatten().filter_map(|recipe| {
+            if let DynamicRecipe::Crafting(crafting) = recipe {
+                Some(crafting)
+            } else {
+                None
+            }
+        })
+    };
+    let try_match = |recipe| {
+        recipe_matches(
+            recipe,
             input_height,
             input_width,
             top_x,
             top_y,
             count,
             inventory,
-        ) {
-            return Some(result);
-        }
-    }
+        )
+    };
 
-    if let Some(provider) = provider {
-        let dynamic = provider.get_dynamic_recipes();
-        for recipe in &dynamic {
-            if let DynamicRecipe::Crafting(crafting) = recipe
-                && let Some(result) = recipe_matches(
-                    GenericRecipe::Dynamic(crafting),
-                    input_height,
-                    input_width,
-                    top_x,
-                    top_y,
-                    count,
-                    inventory,
-                )
-            {
-                return Some(result);
-            }
-        }
-    }
-
-    None
+    // Recipes that look at stack components come first, so a stack a plugin recipe claims
+    // does not craft as its plain item through a vanilla recipe.
+    crafting()
+        .filter(|recipe| recipe.has_stack_ingredients())
+        .find_map(|recipe| try_match(GenericRecipe::Dynamic(recipe)))
+        .or_else(|| {
+            RECIPES_CRAFTING
+                .iter()
+                .find_map(|recipe| try_match(GenericRecipe::Vanilla(recipe)))
+        })
+        .or_else(|| {
+            crafting()
+                .filter(|recipe| !recipe.has_stack_ingredients())
+                .find_map(|recipe| try_match(GenericRecipe::Dynamic(recipe)))
+        })
 }
 
 impl ResultSlot {
