@@ -932,6 +932,17 @@ interface %world {
         /// done.
         set-biome: func(pos: block-pos, biome: biome);
 
+        /// Sets the biome at the specified position by its registry name, such as
+        /// `minecraft:plains` (the `minecraft:` namespace may be left out).
+        ///
+        /// Biomes are stored per 4x4x4 cell, so this changes the whole cell that
+        /// contains the position. Fails when the biome is unknown, the chunk is not
+        /// loaded or the position lies outside the world's height.
+        ///
+        /// Players are not told; call `refresh-biomes` once a batch of changes is
+        /// done.
+        set-biome-by-name: func(pos: block-pos, name: string) -> result<_, string>;
+
         /// Sends the current biomes of the given loaded chunks, as chunk x and z,
         /// to every player who has them loaded.
         refresh-biomes: func(chunks: list<tuple<s32, s32>>);
