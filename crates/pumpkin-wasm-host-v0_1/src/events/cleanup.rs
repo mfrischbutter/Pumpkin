@@ -284,7 +284,9 @@ pub fn cleanup_event(event: &Event, state: &mut PluginHostState) {
             cleanup_player(state, &data.player);
         }
         Event::BlockIgniteEvent(_) => {}
-        Event::BlockFromToEvent(_) => {}
+        Event::BlockFromToEvent(data) => {
+            cleanup_world(state, &data.target_world);
+        }
         Event::BlockFormEvent(_) => {}
         Event::BlockFadeEvent(_) => {}
         Event::BlockDispenseEvent(_) => {}
