@@ -82,6 +82,7 @@ bindgen!({
         "pumpkin:plugin/boss-bar@0.1.0.[method]boss-bar.set-metadata": async | trappable,
         "pumpkin:plugin/boss-bar@0.1.0.[method]boss-bar.set-title": async | trappable,
         "pumpkin:plugin/display@0.1.0.[method]item-display-entity.set-item": async | trappable,
+        "pumpkin:plugin/display@0.1.0.[method]item-entity.set-item": async | trappable,
         "pumpkin:plugin/enchantments@0.1.0.[method]enchantment-manager.get-all-enchantment-ids": async | trappable,
         "pumpkin:plugin/enchantments@0.1.0.[method]enchantment-manager.get-enchantment": async | trappable,
         "pumpkin:plugin/enchantments@0.1.0.[method]enchantment-manager.has-enchantment": async | trappable,

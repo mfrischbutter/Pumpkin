@@ -141,8 +141,8 @@ pub use datapack::{DatapackInfo, DatapackManager, EnablePosition};
 pub use display::{
     BillboardMode, BlockDisplayEntity, DisplayEntity, DisplayEntityExt, DisplayTransformation,
     EntityDisplayExt, InteractionEntity, ItemDisplayEntity, ItemDisplayEntityExt, ItemDisplayMode,
-    Quaternionf, TextAlignment, TextDisplayEntity, TextDisplayEntityExt, TransformationBuilder,
-    Vector3f,
+    ItemEntity, Quaternionf, TextAlignment, TextDisplayEntity, TextDisplayEntityExt,
+    TransformationBuilder, Vector3f,
 };
 pub use enchantment::{
     AttributeModifierSlot, CustomEnchantment, CustomEnchantmentValue, Enchantment,
