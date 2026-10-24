@@ -17,7 +17,7 @@ use crate::net::bedrock::{
     nethernet::{NetherNetListener, load_or_create_identity_key},
     status::{IceSocket, StatusResponder},
 };
-use crate::net::java::JavaClient;
+use crate::net::java::{JavaClient, PlayPhaseEnd};
 use crate::net::java::pending::PendingConnection;
 use crate::net::java::play::resource_pack_response::fire_configuration_resource_pack_statuses;
 use crate::net::{ClientPlatform, DisconnectReason, PacketHandlerResult, PacketRateLimiter};
@@ -597,9 +597,13 @@ impl PumpkinServer {
                                      let resource_pack_statuses = std::mem::take(&mut pending.resource_pack_statuses);
                                      let mut java_client = JavaClient::from_pending(pending, profile.clone(), config.clone());
                                      java_client.start_outgoing_packet_task();
+                                     let client_platform = Arc::new(ClientPlatform::Java(java_client));
+                                     let mut config = config;
 
-                                     if let Some((player, world)) = server_clone
-                                         .add_player(Arc::new(ClientPlatform::Java(java_client)), profile, Some(config))
+                                     // A reconfiguration takes the player out and creates it again
+                                     // from its saved data, like vanilla `placeNewPlayer`.
+                                     while let Some((player, world)) = server_clone
+                                         .add_player(client_platform.clone(), profile.clone(), Some(config.clone()))
                                  {
 
                                      if let ClientPlatform::Java(client) = player.client.as_ref() {
@@ -615,14 +619,19 @@ impl PumpkinServer {
                                      )
                                      .await;
 
-                                     if let ClientPlatform::Java(client) = player.client.as_ref() {
-                                         client.progress_player_packets(&player, &server_clone).await;
-
+                                     let reconfigure = match player.client.as_ref() {
+                                         ClientPlatform::Java(client) => {
+                                             client.progress_player_packets(&player, &server_clone).await
+                                                 == PlayPhaseEnd::Reconfigure
+                                         }
+                                         ClientPlatform::Bedrock(_) => false,
+                                     };
+                                     if !reconfigure && let ClientPlatform::Java(client) = player.client.as_ref() {
                                          // Close when done
                                          client.close();
                                          client.await_tasks().await;
                                      }
-                                     player.remove().await;
+                                     player.remove_from_world(!reconfigure).await;
                                      server_clone.remove_player(&player);
                                     if let Err(e) = server_clone
                                         .player_data_storage
@@ -635,7 +644,19 @@ impl PumpkinServer {
                                         .await {
                                             error!("Failed to save player advancement on disconnect: {e}");
                                         }
+
+                                     let Some(client) = client_platform.java() else {
+                                         break;
+                                     };
+                                     if !reconfigure || !client.reconfigure(&server_clone).await {
+                                         break;
+                                     }
+                                     config = (**player.config.load()).clone();
                                     }
+                                     if let Some(client) = client_platform.java() {
+                                         client.close();
+                                         client.await_tasks().await;
+                                     }
                                 },
                             }
                         });

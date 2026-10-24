@@ -1221,6 +1221,12 @@ impl Player {
 
     /// Removes the [`Player`] out of the current [`World`].
     pub async fn remove(self: &Arc<Self>) {
+        self.remove_from_world(true).await;
+    }
+
+    /// Removes the [`Player`] out of the current [`World`]. `fire_leave_event` is `false` when
+    /// the connection stays open, like vanilla `removePlayerFromWorld` on a reconfiguration.
+    pub async fn remove_from_world(self: &Arc<Self>, fire_leave_event: bool) {
         if !self
             .current_screen_handler
             .lock()
@@ -1253,7 +1259,7 @@ impl Player {
             .unwrap_or_else(std::sync::PoisonError::into_inner)
             .increment_custom(statistics::CustomStatistic::LeaveGame, 1);
         let world = self.world();
-        world.remove_player(self, true).await;
+        world.remove_player(self, fire_leave_event).await;
 
         let cylindrical = self.watched_section.load();
         if let Ok(mut sender) = self.chunk_sender.lock() {
@@ -4574,6 +4580,16 @@ impl Player {
     #[must_use]
     pub fn may_build(&self) -> bool {
         self.abilities.lock().is_ok_and(|a| a.allow_modify_world)
+    }
+
+    /// Sends a Java player back to the configuration phase to resend registries and tags, like
+    /// vanilla `/debugconfig config`. The player leaves the world and is created again from its
+    /// saved data. Returns `false` for Bedrock players and when the client cannot be
+    /// reconfigured right now.
+    pub fn reconfigure(&self) -> bool {
+        self.client
+            .java()
+            .is_some_and(crate::net::java::JavaClient::request_reconfiguration)
     }
 
     pub fn kick(&self, reason: DisconnectReason, message: &TextComponent) {
