@@ -2639,6 +2639,35 @@ impl pumpkin::plugin::player::HostPlayer for PluginHostState {
 }
 
 impl pumpkin::plugin::player::HostPlayerWithStore<PluginHostState> for HasSelf<PluginHostState> {
+    async fn spawn_particles_with_data(
+        accessor: &Accessor<PluginHostState, Self>,
+        player: Resource<Player>,
+        particle: pumpkin::plugin::particles::Particle,
+        pos: pumpkin::plugin::common::Position,
+        count: u32,
+        offset: pumpkin::plugin::common::Position,
+        max_speed: f32,
+        data: pumpkin::plugin::world::ParticleData,
+    ) -> wasmtime::Result<bool> {
+        let Some(options) = super::world::to_particle_options(accessor, particle, data).await?
+        else {
+            return Ok(false);
+        };
+        let player = accessor.get_res(&player)?;
+        player.spawn_particle_with_options(
+            pumpkin_util::math::vector3::Vector3::new(pos.0, pos.1, pos.2),
+            pumpkin_util::math::vector3::Vector3::new(
+                offset.0 as f32,
+                offset.1 as f32,
+                offset.2 as f32,
+            ),
+            max_speed,
+            count as i32,
+            &options,
+        );
+        Ok(true)
+    }
+
     async fn set_item_in_hand(
         accessor: &Accessor<PluginHostState, Self>,
         player: Resource<Player>,
