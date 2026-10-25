@@ -20,6 +20,8 @@ interface command {
         then: func(node: command-node);
         execute-with-handler-id: func(handler-id: u32);
         suggest-with-handler-id: func(handler-id: u32);
+        /// Limits the node to senders for whom `handle-command` with this handler id
+        /// returns a non-zero value; nodes a sender fails are left out of its command tree.
         require-with-handler-id: func(handler-id: u32);
     }
 

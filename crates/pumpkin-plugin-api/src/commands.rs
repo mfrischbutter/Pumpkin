@@ -96,6 +96,30 @@ pub trait CommandSuggestionHandler: Send + Sync {
     ) -> CommandSuggestions;
 }
 
+/// Decides whether a sender may use a command node.
+///
+/// A node whose requirement fails is left out of the sender's command tree, so
+/// clients neither complete nor run it.
+pub trait CommandRequirementHandler: Send + Sync {
+    /// Returns whether `sender` may use the node.
+    fn check(&self, sender: CommandSender, server: Server) -> bool;
+}
+
+/// The host asks requirements through the `handle-command` export: a non-zero
+/// result allows the sender.
+struct CommandRequirementAdapter<H>(H);
+
+impl<H: CommandRequirementHandler> CommandHandler for CommandRequirementAdapter<H> {
+    fn handle(
+        &self,
+        sender: CommandSender,
+        server: Server,
+        _args: ConsumedArgs,
+    ) -> Result<i32, CommandError> {
+        Ok(i32::from(self.0.check(sender, server)))
+    }
+}
+
 impl Command {
     /// Attaches an execution handler to this command.
     ///
@@ -144,6 +168,21 @@ impl CommandNode {
             .insert(id, Arc::new(handler));
 
         self.suggest_with_handler_id(id)
+    }
+
+    /// Attaches a requirement to this command node.
+    ///
+    /// The node and everything below it is only available to senders for whom
+    /// `handler` returns `true`.
+    pub fn requires<H: CommandRequirementHandler + 'static>(self, handler: H) -> Self {
+        let id = NEXT_COMMAND_ID.fetch_add(1, Ordering::Relaxed);
+
+        COMMAND_HANDLERS
+            .lock()
+            .unwrap_or_else(|e| e.into_inner())
+            .insert(id, Arc::new(CommandRequirementAdapter(handler)));
+
+        self.require_with_handler_id(id)
     }
 }
 
