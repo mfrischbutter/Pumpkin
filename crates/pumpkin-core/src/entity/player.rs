@@ -528,6 +528,10 @@ pub struct Player {
     pub per_player_time: AtomicCell<Option<(u64, bool)>>,
     pub per_player_weather: AtomicCell<Option<PlayerWeather>>,
     pub custom_scoreboard: std::sync::Mutex<Option<CustomScoreboard>>,
+    /// Whether the client got its initial scoreboard state ([`Self::send_scoreboard`]).
+    /// Until then, changes to the player's own scoreboard are only stored: the initial
+    /// state carries them, and sending them earlier as well adds objectives twice.
+    pub scoreboard_sent: AtomicBool,
     pub compass_target: AtomicCell<Option<pumpkin_util::math::position::BlockPos>>,
     pub respawn_location: AtomicCell<Option<pumpkin_util::math::position::BlockPos>>,
     pub hidden_players: Mutex<std::collections::HashSet<uuid::Uuid>>,
@@ -726,6 +730,8 @@ impl Player {
             ClientPlatform::Bedrock(_) => true,
         };
         let initially_loaded = !supports_player_loaded;
+        // Bedrock players get no initial scoreboard state when they spawn.
+        let scoreboard_sent = matches!(client.as_ref(), ClientPlatform::Bedrock(_));
 
         Self {
             living_entity,
@@ -833,6 +839,7 @@ impl Player {
             per_player_time: AtomicCell::new(None),
             per_player_weather: AtomicCell::new(None),
             custom_scoreboard: std::sync::Mutex::new(None),
+            scoreboard_sent: AtomicBool::new(scoreboard_sent),
             compass_target: AtomicCell::new(None),
             respawn_location: AtomicCell::new(None),
             hidden_players: Mutex::new(std::collections::HashSet::new()),
@@ -3835,6 +3842,8 @@ impl Player {
             .custom_scoreboard
             .lock()
             .unwrap_or_else(std::sync::PoisonError::into_inner);
+        // Under the lock: a concurrent change is either in this state or sent after it.
+        self.scoreboard_sent.store(true, Ordering::Relaxed);
         match guard.as_ref() {
             Some(CustomScoreboard::Java(custom))
                 if matches!(self.client.as_ref(), ClientPlatform::Java(_)) =>

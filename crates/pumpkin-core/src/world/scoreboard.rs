@@ -1,3 +1,5 @@
+use std::sync::atomic::Ordering;
+
 use rustc_hash::FxHashMap;
 
 use pumpkin_data::scoreboard::ScoreboardDisplaySlot;
@@ -77,11 +79,16 @@ impl ScoreboardTarget for Player {
         je_packet: &J,
         be_packet: &B,
     ) {
-        self.try_enqueue_packet_editioned(je_packet, be_packet);
+        // Before the initial scoreboard state, the change only goes into that state.
+        if self.scoreboard_sent.load(Ordering::Relaxed) {
+            self.try_enqueue_packet_editioned(je_packet, be_packet);
+        }
     }
 
     fn send_je<J: ClientPacket + Sync>(&self, je_packet: &J) {
-        self.try_send_client_packet(je_packet);
+        if self.scoreboard_sent.load(Ordering::Relaxed) {
+            self.try_send_client_packet(je_packet);
+        }
     }
 }
 
@@ -91,11 +98,16 @@ impl ScoreboardTarget for std::sync::Arc<Player> {
         je_packet: &J,
         be_packet: &B,
     ) {
-        self.try_enqueue_packet_editioned(je_packet, be_packet);
+        // Before the initial scoreboard state, the change only goes into that state.
+        if self.scoreboard_sent.load(Ordering::Relaxed) {
+            self.try_enqueue_packet_editioned(je_packet, be_packet);
+        }
     }
 
     fn send_je<J: ClientPacket + Sync>(&self, je_packet: &J) {
-        self.try_send_client_packet(je_packet);
+        if self.scoreboard_sent.load(Ordering::Relaxed) {
+            self.try_send_client_packet(je_packet);
+        }
     }
 }
 
