@@ -58,10 +58,13 @@ pub fn send_c_commands_packet(
                     .map(|id| VarInt((id.0.get() - 1) as i32))
                     .collect()
             }
+            // Like vanilla `Commands.fillUsableCommands`, leave out every child
+            // the player cannot use, not only top-level commands.
             _ => node
                 .children_ref()
                 .values()
                 .copied()
+                .filter(|id| dispatcher.tree.can_use(*id, source))
                 .map(|id| VarInt((id.0.get() - 1) as i32))
                 .collect(),
         };
