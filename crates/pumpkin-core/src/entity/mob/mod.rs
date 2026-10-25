@@ -1572,9 +1572,6 @@ pub trait Mob: EntityBase + Send + Sync {
         let mob = self.get_mob_entity();
         let target = self.as_valid_target(target);
         let target_id = target.as_ref().map(|t| t.get_entity().entity_id);
-        *mob.target
-            .lock()
-            .unwrap_or_else(std::sync::PoisonError::into_inner) = target;
         let world = mob.living_entity.entity.world.load_full();
         let entity_id = mob.living_entity.entity.entity_id;
         if let Some(server) = world.server.upgrade() {
@@ -1583,7 +1580,14 @@ pub trait Mob: EntityBase + Send + Sync {
                     entity_id, target_id,
                 );
             server.plugin_manager.fire_blocking(&server, &mut event);
+            // A cancelled event keeps the current target.
+            if event.cancelled {
+                return;
+            }
         }
+        *mob.target
+            .lock()
+            .unwrap_or_else(std::sync::PoisonError::into_inner) = target;
     }
 
     fn mob_interact(&self, player: &Arc<Player>, item_stack: &mut ItemStack) -> bool {
