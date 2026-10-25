@@ -10,13 +10,22 @@ use bytes::Bytes;
 use pumpkin_protocol::{
     ClientPacket,
     codec::var_int::VarInt,
-    java::client::play::{CResetScore, CUpdateObjectives, CUpdateScore},
+    java::client::play::{
+        CPlayerInfoUpdate, CResetScore, CUpdateObjectives, CUpdateScore, InitChat, Player,
+        PlayerAction,
+    },
 };
 use pumpkin_util::{text::TextComponent, version::JavaMinecraftVersion};
 
-use crate::pumpkin::plugin::java_packets::ClientboundPacket;
+use crate::{
+    pumpkin::plugin::{
+        java_packets::{self, ClientboundPacket},
+        uuid::Uuid,
+    },
+    uuid::UuidExt,
+};
 
-/// Serializes the packets the generated mapping skips. Text fields are plain text, like in the
+/// Serializes the packets the generated mapping skips. Score texts are plain text, like in the
 /// generated mapping. `number-format` has no WIT type here, so scores use the default format.
 #[must_use]
 pub fn serialize_java_packet(
@@ -48,6 +57,7 @@ pub fn serialize_java_packet(
             &CResetScore::new(data.entity_name.clone(), data.objective_name.clone()),
             version,
         ),
+        ClientboundPacket::CPlayerInfoUpdate(data) => player_info_update(data, version),
         _ => None,
     }
 }
@@ -68,6 +78,86 @@ pub fn warn_unsupported(packet: &ClientboundPacket) {
             "Wasm plugin sent a Java packet the host cannot serialize; it was dropped"
         );
     }
+}
+
+/// Display names are read as JSON text, the format the generated mapping gives plugins for text
+/// fields and `text.from-json` takes; any other string is plain text. `add-player` sends no
+/// properties: its WIT `property` record is the attribute one and has no profile fields.
+fn player_info_update(
+    data: &java_packets::CPlayerInfoUpdate,
+    version: JavaMinecraftVersion,
+) -> Option<Bytes> {
+    use java_packets::PlayerAction as WitPlayerAction;
+
+    // The protocol actions borrow their display names, so those are built first.
+    let display_names: Vec<Vec<Option<TextComponent>>> = data
+        .players
+        .iter()
+        .map(|player| {
+            player
+                .actions
+                .iter()
+                .map(|action| match action {
+                    WitPlayerAction::UpdateDisplayName(name) => name.as_deref().map(text_from_json),
+                    _ => None,
+                })
+                .collect()
+        })
+        .collect();
+    let actions: Vec<Vec<PlayerAction>> = data
+        .players
+        .iter()
+        .zip(&display_names)
+        .map(|(player, names)| {
+            player
+                .actions
+                .iter()
+                .zip(names)
+                .map(|(action, display_name)| match action {
+                    WitPlayerAction::AddPlayer(add) => PlayerAction::AddPlayer {
+                        name: &add.name,
+                        properties: &[],
+                    },
+                    WitPlayerAction::InitializeChat(chat) => {
+                        PlayerAction::InitializeChat(chat.as_ref().map(|chat| InitChat {
+                            session_id: Uuid::from_wit(&chat.session_id),
+                            expires_at: chat.expires_at,
+                            public_key: chat.public_key.clone().into_boxed_slice(),
+                            signature: chat.signature.clone().into_boxed_slice(),
+                        }))
+                    }
+                    WitPlayerAction::UpdateGameMode(game_mode) => {
+                        PlayerAction::UpdateGameMode(VarInt(*game_mode))
+                    }
+                    WitPlayerAction::UpdateListed(listed) => PlayerAction::UpdateListed(*listed),
+                    WitPlayerAction::UpdateLatency(latency) => {
+                        PlayerAction::UpdateLatency(VarInt(*latency))
+                    }
+                    WitPlayerAction::UpdateDisplayName(_) => {
+                        PlayerAction::UpdateDisplayName(display_name.as_ref())
+                    }
+                    WitPlayerAction::UpdateListOrder(order) => {
+                        PlayerAction::UpdateListOrder(VarInt(*order))
+                    }
+                    WitPlayerAction::UpdateHat(show_hat) => PlayerAction::UpdateHat(*show_hat),
+                })
+                .collect()
+        })
+        .collect();
+    let players: Vec<Player> = data
+        .players
+        .iter()
+        .zip(&actions)
+        .map(|(player, actions)| Player {
+            uuid: Uuid::from_wit(&player.uuid),
+            actions,
+        })
+        .collect();
+    write(&CPlayerInfoUpdate::new(data.actions, &players), version)
+}
+
+fn text_from_json(text: &str) -> TextComponent {
+    serde_json::from_str(text).unwrap_or_else(|_| TextComponent::text(text.to_owned()))
 }
 
 fn write<P: ClientPacket>(packet: &P, version: JavaMinecraftVersion) -> Option<Bytes> {
