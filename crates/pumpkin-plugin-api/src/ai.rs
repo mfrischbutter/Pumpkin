@@ -25,18 +25,29 @@ pub trait AiGoal: Send + Sync {
     fn stop(&self, server: Server, entity: Entity) {}
 }
 
+/// Registers a custom AI goal and returns the id to pass to a mob's `add_custom_ai_goal`.
+///
+/// ```rust,ignore
+/// let goal_id = pumpkin_plugin_api::ai::register_ai_goal(MyGoal);
+/// mob.add_custom_ai_goal(4, goal_id);
+/// ```
+pub fn register_ai_goal<G: AiGoal + 'static>(goal: G) -> u32 {
+    AI_GOAL_HANDLERS
+        .lock()
+        .unwrap_or_else(|e| e.into_inner())
+        .register(Box::new(goal))
+}
+
 pub(crate) static AI_GOAL_HANDLERS: Mutex<LazyAiGoalHandlers> = Mutex::new(LazyAiGoalHandlers {
     handlers: BTreeMap::new(),
     next_id: 0,
 });
 
-#[allow(dead_code)]
 pub(crate) struct LazyAiGoalHandlers {
     pub handlers: BTreeMap<u32, Arc<dyn AiGoal>>,
     pub next_id: u32,
 }
 
-#[allow(dead_code)]
 impl LazyAiGoalHandlers {
     #[must_use]
     pub fn register(&mut self, goal: Box<dyn AiGoal>) -> u32 {
