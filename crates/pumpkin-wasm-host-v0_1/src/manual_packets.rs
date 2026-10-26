@@ -8,7 +8,7 @@ use std::{
 
 use bytes::Bytes;
 use pumpkin_protocol::{
-    ClientPacket, NumberFormat,
+    ClientPacket, NumberFormat, Property,
     codec::var_int::VarInt,
     java::client::play::{
         CPlayerInfoUpdate, CResetScore, CUpdateObjectives, CUpdateScore, InitChat, Player,
@@ -85,16 +85,16 @@ fn fixed_number_format(text: &str) -> NumberFormat {
 }
 
 /// Display names are read as JSON text, the format the generated mapping gives plugins for text
-/// fields and `text.from-json` takes; any other string is plain text. `add-player` sends no
-/// properties: its WIT `property` record is the attribute one and has no profile fields.
+/// fields and `text.from-json` takes; any other string is plain text.
 fn player_info_update(
     data: &java_packets::CPlayerInfoUpdate,
     version: JavaMinecraftVersion,
 ) -> Option<Bytes> {
     use java_packets::PlayerAction as WitPlayerAction;
 
-    // The protocol actions borrow their display names, so those are built first.
-    let display_names: Vec<Vec<Option<TextComponent>>> = data
+    // The protocol actions borrow their display names and profile properties, so those are
+    // built first.
+    let owned: Vec<Vec<(Option<TextComponent>, Vec<Property>)>> = data
         .players
         .iter()
         .map(|player| {
@@ -102,8 +102,13 @@ fn player_info_update(
                 .actions
                 .iter()
                 .map(|action| match action {
-                    WitPlayerAction::UpdateDisplayName(name) => name.as_deref().map(text_from_json),
-                    _ => None,
+                    WitPlayerAction::AddPlayer(add) => {
+                        (None, add.properties.iter().map(profile_property).collect())
+                    }
+                    WitPlayerAction::UpdateDisplayName(name) => {
+                        (name.as_deref().map(text_from_json), Vec::new())
+                    }
+                    _ => (None, Vec::new()),
                 })
                 .collect()
         })
@@ -111,16 +116,16 @@ fn player_info_update(
     let actions: Vec<Vec<PlayerAction>> = data
         .players
         .iter()
-        .zip(&display_names)
-        .map(|(player, names)| {
+        .zip(&owned)
+        .map(|(player, owned)| {
             player
                 .actions
                 .iter()
-                .zip(names)
-                .map(|(action, display_name)| match action {
+                .zip(owned)
+                .map(|(action, (display_name, properties))| match action {
                     WitPlayerAction::AddPlayer(add) => PlayerAction::AddPlayer {
                         name: &add.name,
-                        properties: &[],
+                        properties,
                     },
                     WitPlayerAction::InitializeChat(chat) => {
                         PlayerAction::InitializeChat(chat.as_ref().map(|chat| InitChat {
@@ -158,6 +163,14 @@ fn player_info_update(
         })
         .collect();
     write(&CPlayerInfoUpdate::new(data.actions, &players), version)
+}
+
+fn profile_property(property: &java_packets::ProfileProperty) -> Property {
+    Property {
+        name: property.name.as_str().into(),
+        value: property.value.as_str().into(),
+        signature: property.signature.as_deref().map(Into::into),
+    }
 }
 
 fn text_from_json(text: &str) -> TextComponent {
