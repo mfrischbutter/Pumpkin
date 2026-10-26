@@ -312,6 +312,7 @@ use crate::plugin::player::player_armor_change::PlayerArmorChangeEvent;
 use crate::plugin::player::player_change_world::PlayerChangeWorldEvent;
 use crate::plugin::player::player_gamemode_change::PlayerGamemodeChangeEvent;
 use crate::plugin::player::player_hide_entity::PlayerHideEntityEvent;
+use crate::plugin::player::player_leave::PlayerLeaveReason;
 use crate::plugin::player::player_permission_check::PlayerPermissionCheckEvent;
 use crate::plugin::player::player_show_entity::PlayerShowEntityEvent;
 use crate::plugin::player::player_teleport::PlayerTeleportEvent;
@@ -496,6 +497,8 @@ pub struct Player {
     pub watched_section: AtomicCell<Cylindrical>,
     /// The last time the player performed an action (for idle timeout).
     pub last_action_time: AtomicCell<Instant>,
+    /// Why the player is leaving, reported in `PlayerLeaveEvent`. The first reason set wins.
+    pub leave_reason: AtomicCell<PlayerLeaveReason>,
     /// The ping in millis.
     pub ping: AtomicU32,
     /// The amount of ticks since the player's last attack.
@@ -814,6 +817,7 @@ impl Player {
                 NonZero::new(1).unwrap_or(NonZero::<u8>::MIN),
             )),
             last_action_time: AtomicCell::new(std::time::Instant::now()),
+            leave_reason: AtomicCell::new(PlayerLeaveReason::Disconnected),
             ping: AtomicU32::new(0),
             last_attacked_ticks: AtomicU32::new(0),
             client_loaded: AtomicBool::new(initially_loaded),
@@ -4597,7 +4601,19 @@ impl Player {
                 return;
             }
         }
+        self.set_leave_reason(if matches!(reason, DisconnectReason::Shutdown) {
+            PlayerLeaveReason::ServerStopping
+        } else {
+            PlayerLeaveReason::Kicked
+        });
         self.client.try_kick(reason, message);
+    }
+
+    /// Records why the player is leaving, unless a reason was already recorded.
+    pub fn set_leave_reason(&self, reason: PlayerLeaveReason) {
+        let _ = self
+            .leave_reason
+            .compare_exchange(PlayerLeaveReason::Disconnected, reason);
     }
 
     /// Updates the last action time to now. Call this on player actions like movement, chat, etc.

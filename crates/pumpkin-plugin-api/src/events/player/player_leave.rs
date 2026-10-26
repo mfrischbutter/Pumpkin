@@ -4,7 +4,7 @@ use super::super::FromIntoEvent;
 
 /// An event that occurs when a player leaves the server.
 ///
-/// The associated [`PlayerLeaveEventData`] contains the player and a leave message
+/// The associated [`PlayerLeaveEventData`] contains the player, why they left and a leave message
 /// that can be modified or suppressed. This event is cancellable.
 pub struct PlayerLeaveEvent;
 impl FromIntoEvent for PlayerLeaveEvent {

@@ -73,6 +73,7 @@ use crate::net::{
 };
 use crate::plugin::api::events::world::chunk_send::ChunkSend;
 use crate::plugin::player::player_custom_payload::PlayerCustomPayloadEvent;
+use crate::plugin::player::player_leave::PlayerLeaveReason;
 use crate::plugin::server::packet::PacketSentEvent;
 use crate::{error::PumpkinError, server::Server};
 
@@ -240,6 +241,7 @@ impl JavaClient {
                       || (self.last_packet_time.load().elapsed() > timeout_duration);
 
                     if has_timed_out {
+                        player.set_leave_reason(PlayerLeaveReason::TimedOut);
                         self.kick(pumpkin_macros::translate_cross!(translation::java::DISCONNECT_TIMEOUT, translation::bedrock::DISCONNECT_TIMEOUT)).await;
                         break;
                     }
