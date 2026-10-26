@@ -100,5 +100,16 @@ interface item-stack {
         set-component: async func(component: data-component, value: list<u8>);
         /// Removes a data component from this item stack.
         remove-component: async func(component: data-component);
+        /// Returns the serialized value of a data component on this item stack, falling back to
+        /// the item's default components when the stack does not change it.
+        get-component: async func(component: data-component) -> option<list<u8>>;
+        /// Sets a data component on this item stack. Fails without changing the stack when the
+        /// value cannot be decoded as that component or has bytes left over.
+        try-set-component: async func(component: data-component, value: list<u8>) -> result<_, string>;
+
+        /// Returns the maximum damage of this item stack, if it has one.
+        get-max-damage: async func() -> option<s32>;
+        /// Returns the damage of this item stack, or 0 if it has none.
+        get-damage: async func() -> s32;
     }
 }

@@ -203,6 +203,23 @@ impl ItemStack {
         false
     }
 
+    /// Returns the component with the given ID from the patch, or from the item's defaults when
+    /// the patch does not change it.
+    #[must_use]
+    pub fn get_data_component_by_id(
+        &self,
+        to_get_id: DataComponent,
+    ) -> Option<&dyn DataComponentImpl> {
+        if let Some((_, component)) = self.patch.iter().find(|(id, _)| *id == to_get_id) {
+            return component.as_deref();
+        }
+        self.item
+            .components
+            .iter()
+            .find(|(id, _)| *id == to_get_id)
+            .map(|(_, component)| *component)
+    }
+
     pub fn has_enchantments(&self) -> bool {
         self.get_data_component::<EnchantmentsImpl>()
             .is_some_and(|e| !e.enchantment.is_empty())
