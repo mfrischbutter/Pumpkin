@@ -1,0 +1,27 @@
+/// Jobs that run in a worker instance of the plugin, submitted with `scheduler.submit-worker-job`.
+///
+/// Exporting this interface is optional. The host looks it up by name when it loads the plugin,
+/// and only plugins that export it can submit worker jobs.
+interface worker {
+    use server.{server};
+
+    /// Runs one job on a worker instance of the plugin.
+    ///
+    /// The host calls `init-plugin` on a fresh worker instance first, but never `on-load`. Only
+    /// `logging` and the WASI clocks, random numbers and standard output work there; every other
+    /// Pumpkin import traps. The instance has no network or environment access. If the plugin may
+    /// read or write its data folder, the worker sees that folder read-only at the path
+    /// `context.get-data-folder` returns; otherwise it has no file system access.
+    ///
+    /// * `kind`: The kind given to `scheduler.submit-worker-job`.
+    /// * `input`: The input given to `scheduler.submit-worker-job`.
+    ///
+    /// Returns the job's output, or an error that is passed on to `handle-job-result`.
+    run-job: func(kind: string, input: list<u8>) -> result<list<u8>, string>;
+
+    /// Receives the outcome of a job this instance submitted.
+    ///
+    /// * `job-id`: The ID `scheduler.submit-worker-job` returned.
+    /// * `result`: The output of `run-job`, or why the job failed, including a trap.
+    handle-job-result: func(job-id: u32, server: server, %result: result<list<u8>, string>);
+}

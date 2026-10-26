@@ -1,5 +1,6 @@
 use std::{
     future::Future,
+    path::PathBuf,
     sync::{Arc, Weak},
 };
 
@@ -135,6 +136,9 @@ pub struct ChunkBuffer {
     pub proto_chunk: Arc<std::sync::Mutex<pumpkin_world::ProtoChunk>>,
 }
 
+/// Where a plugin sees its data folder inside the WASI sandbox.
+pub const DATA_FOLDER_GUEST_PATH: &str = "data";
+
 pub struct PluginHostState {
     pub wasi_ctx: WasiCtx,
     pub wasi_http_ctx: WasiHttpCtx,
@@ -146,6 +150,10 @@ pub struct PluginHostState {
     pub permissions: Vec<String>,
     pub name: Option<String>,
     pub marketplace_metadata: Option<crate::signature::PumpkinMetadata>,
+    /// The plugin's `worker.handle-job-result` export, when it exports the `worker` interface.
+    pub worker_job_result_handler: Option<wasmtime::component::Func>,
+    /// The host path of the plugin's data folder, when the plugin may read or write it.
+    pub data_folder: Option<PathBuf>,
 }
 
 impl Default for PluginHostState {
@@ -172,6 +180,8 @@ impl PluginHostState {
             permissions: Vec::new(),
             name: None,
             marketplace_metadata: None,
+            worker_job_result_handler: None,
+            data_folder: None,
         }
     }
 

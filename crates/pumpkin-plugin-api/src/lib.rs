@@ -205,7 +205,7 @@ pub mod wit {
     wit_bindgen::generate!({
         skip: ["init-plugin"],
         path: "../pumpkin-plugin-wit/v0.1",
-        world: "plugin",
+        world: "plugin-with-worker",
         chainable_methods: [
             "pumpkin:plugin/command@0.1.0#command",
             "pumpkin:plugin/command@0.1.0#command-node",
@@ -247,6 +247,18 @@ impl wit::exports::pumpkin::plugin::metadata::Guest for Component {
             dependencies: metadata.dependencies,
             permissions: metadata.permissions,
         }
+    }
+}
+
+impl wit::exports::pumpkin::plugin::worker::Guest for Component {
+    /// WIT entry point — runs a worker job on a worker instance, see [`Plugin::run_worker_job`].
+    fn run_job(kind: String, input: Vec<u8>) -> Result<Vec<u8>, String> {
+        plugin().run_worker_job(&kind, input)
+    }
+
+    /// WIT entry point — hands a finished worker job to its callback.
+    fn handle_job_result(job_id: u32, server: Server, result: Result<Vec<u8>, String>) {
+        scheduler::finish_worker_job(job_id, server, result);
     }
 }
 
@@ -472,6 +484,16 @@ pub trait Plugin: Send + Sync {
         _message: wit::IpcMessage,
     ) -> Result<wit::IpcMessage, String> {
         Err("This plugin cannot receive messages.".to_string())
+    }
+
+    /// Runs a job submitted with [`scheduler::submit_worker_job`].
+    ///
+    /// Called on a worker instance of the plugin, which got [`Plugin::new`] but never
+    /// [`on_load`](Plugin::on_load). Only logging works among the host APIs there; every other
+    /// host call fails the job. The plugin's data folder is readable there (read-only) when the
+    /// plugin has a data folder permission. Returns the job's output for the submitter's callback.
+    fn run_worker_job(&self, kind: &str, _input: Vec<u8>) -> Result<Vec<u8>, String> {
+        Err(format!("This plugin has no worker job `{kind}`."))
     }
 }
 

@@ -11,7 +11,8 @@ use pumpkin_wasm_host_common::{
     plugin::{PluginApiVersion, PluginInitError, WasmPlugin, scan_component_names},
     scheduler::TaskScheduler,
     signature,
-    state::PluginHostState,
+    state::{DATA_FOLDER_GUEST_PATH, PluginHostState},
+    worker::PluginWorker,
 };
 
 #[derive(Clone, Copy, Default)]
@@ -140,6 +141,7 @@ impl PluginRuntime {
         }
     }
 
+    #[expect(clippy::too_many_lines)]
     pub async fn init_plugin<P: AsRef<Path>>(
         &self,
         path: P,
@@ -215,6 +217,7 @@ impl PluginRuntime {
             PluginApiVersion::V0_2 => return Err(PluginInitError::ApiMismatch(v0_2_disabled())),
         };
 
+        let worker = prepare_worker(engine, &component, api_version, &metadata.name);
         let store = concurrent_store::start_legacy_store(
             store,
             self.legacy_sync_reentry.clone(),
@@ -232,6 +235,7 @@ impl PluginRuntime {
             store,
             task_scheduler: Arc::clone(&self.task_scheduler),
             packet_sent_filter: std::sync::RwLock::default(),
+            worker,
         });
         let weak_plugin = Arc::downgrade(&wasm_plugin);
         wasm_plugin
@@ -354,6 +358,75 @@ fn setup_linker_v0_2(engine: &Engine) -> wasmtime::Result<Linker<PluginHostState
     Ok(linker)
 }
 
+/// Prepares worker instances for a plugin whose component exports the `worker` interface.
+///
+/// A plugin without that export loads as before. If the worker instances cannot be prepared, the
+/// plugin still loads, only without worker jobs.
+fn prepare_worker(
+    engine: &Engine,
+    component: &Component,
+    api_version: PluginApiVersion,
+    plugin_name: &str,
+) -> Option<PluginWorker> {
+    let interface = match api_version {
+        PluginApiVersion::V0_1 => pumpkin_wasm_host_v0_1::WORKER_INTERFACE,
+        #[cfg(feature = "v0_2")]
+        PluginApiVersion::V0_2 => pumpkin_wasm_host_v0_2::WORKER_INTERFACE,
+        #[cfg(not(feature = "v0_2"))]
+        PluginApiVersion::V0_2 => return None,
+    };
+    if !PluginWorker::is_exported_by(component, interface) {
+        return None;
+    }
+    let worker = setup_worker_linker(engine, component, api_version)
+        .and_then(|linker| PluginWorker::new(&linker, component, interface));
+    match worker {
+        Ok(worker) => {
+            tracing::debug!(
+                wasm_plugin = plugin_name,
+                "Prepared Wasm plugin worker instances"
+            );
+            Some(worker)
+        }
+        Err(error) => {
+            tracing::warn!(
+                wasm_plugin = plugin_name,
+                %error,
+                "Wasm plugin worker instances could not be prepared; its worker jobs are disabled"
+            );
+            None
+        }
+    }
+}
+
+/// Builds the linker for worker instances of `component`.
+///
+/// Worker instances get WASI without any of the plugin's permissions (no file system, network or
+/// environment), the imports the plugin's API version keeps for workers, and a trap for every
+/// other import.
+fn setup_worker_linker(
+    engine: &Engine,
+    component: &Component,
+    api_version: PluginApiVersion,
+) -> wasmtime::Result<Linker<PluginHostState>> {
+    let mut linker = Linker::<PluginHostState>::new(engine);
+    wasmtime_wasi::p2::add_to_linker_async(&mut linker)?;
+    match api_version {
+        PluginApiVersion::V0_1 => {
+            pumpkin_wasm_host_v0_1::add_worker_imports_to_linker(&mut linker)?;
+        }
+        #[cfg(feature = "v0_2")]
+        PluginApiVersion::V0_2 => {
+            wasmtime_wasi::p3::add_to_linker(&mut linker)?;
+            pumpkin_wasm_host_v0_2::add_worker_imports_to_linker(&mut linker)?;
+        }
+        #[cfg(not(feature = "v0_2"))]
+        PluginApiVersion::V0_2 => return Err(v0_2_disabled()),
+    }
+    linker.define_unknown_imports_as_traps(component)?;
+    Ok(linker)
+}
+
 fn load_component(
     engine: &Engine,
     wasm_bytes: &[u8],
@@ -462,10 +535,11 @@ pub async fn on_load(
 
     let may_write_data = has_permission(permissions::FS_WRITE_DATA);
     let may_read_data = has_permission(permissions::FS_READ_DATA);
-    if may_read_data || may_write_data {
+    let data_folder = (may_read_data || may_write_data).then(|| context.get_data_folder());
+    if let Some(data_folder) = &data_folder {
         builder.preopened_dir(
-            context.get_data_folder(),
-            "data",
+            data_folder,
+            DATA_FOLDER_GUEST_PATH,
             if may_write_data {
                 FsPerms::ReadWrite
             } else {
@@ -497,6 +571,7 @@ pub async fn on_load(
 
                     store.data_mut().permissions = filtered_permissions;
                     store.data_mut().wasi_ctx = wasi_ctx;
+                    store.data_mut().data_folder = data_folder;
                     store.data_mut().wasi_http_hooks.allow_outbound = allow_http_outbound;
                     store.data_mut().server = Some(server);
                     store.data_mut().name = Some(name);
