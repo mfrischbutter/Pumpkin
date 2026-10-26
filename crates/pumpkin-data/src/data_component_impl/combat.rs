@@ -4,6 +4,7 @@ use crate::Enchantment;
 use crate::attributes::Attributes;
 use crate::damage::DamageType;
 use crate::data_component_impl::basic::SoundEvent;
+use crate::data_component_impl::food::ConsumeEffect;
 use crate::data_component_impl::{
     DataComponentImpl, EquipmentSlot, IDSet, IdOr, get_f32_hash, get_i32_hash, get_idor,
     get_idor_hash, get_idset_hash, get_str_hash, put_idor,
@@ -15,6 +16,8 @@ use crate::sound::Sound;
 use crate::tag::Taggable;
 use pumpkin_nbt::compound::NbtCompound;
 use pumpkin_nbt::tag::NbtTag;
+use pumpkin_util::text::TextComponent;
+use pumpkin_util::version::JavaMinecraftVersion;
 use std::borrow::Cow;
 use std::hash::Hash;
 
@@ -24,14 +27,155 @@ pub enum Operation {
     AddMultipliedBase,
     AddMultipliedTotal,
 }
+impl Operation {
+    #[must_use]
+    pub const fn to_name(self) -> &'static str {
+        match self {
+            Self::AddValue => "add_value",
+            Self::AddMultipliedBase => "add_multiplied_base",
+            Self::AddMultipliedTotal => "add_multiplied_total",
+        }
+    }
+
+    #[must_use]
+    pub fn from_name(name: &str) -> Option<Self> {
+        match name {
+            "add_value" => Some(Self::AddValue),
+            "add_multiplied_base" => Some(Self::AddMultipliedBase),
+            "add_multiplied_total" => Some(Self::AddMultipliedTotal),
+            _ => None,
+        }
+    }
+
+    #[must_use]
+    pub const fn from_id(id: i32) -> Option<Self> {
+        match id {
+            0 => Some(Self::AddValue),
+            1 => Some(Self::AddMultipliedBase),
+            2 => Some(Self::AddMultipliedTotal),
+            _ => None,
+        }
+    }
+}
+
+/// Vanilla's `EquipmentSlotGroup` names and network ids.
+impl crate::AttributeModifierSlot {
+    #[must_use]
+    pub const fn to_name(&self) -> &'static str {
+        match self {
+            Self::Any => "any",
+            Self::MainHand => "mainhand",
+            Self::OffHand => "offhand",
+            Self::Hand => "hand",
+            Self::Feet => "feet",
+            Self::Legs => "legs",
+            Self::Chest => "chest",
+            Self::Head => "head",
+            Self::Armor => "armor",
+            Self::Body => "body",
+            Self::Saddle => "saddle",
+        }
+    }
+
+    #[must_use]
+    pub fn from_name(name: &str) -> Option<Self> {
+        match name {
+            "any" => Some(Self::Any),
+            "mainhand" => Some(Self::MainHand),
+            "offhand" => Some(Self::OffHand),
+            "hand" => Some(Self::Hand),
+            "feet" => Some(Self::Feet),
+            "legs" => Some(Self::Legs),
+            "chest" => Some(Self::Chest),
+            "head" => Some(Self::Head),
+            "armor" => Some(Self::Armor),
+            "body" => Some(Self::Body),
+            "saddle" => Some(Self::Saddle),
+            _ => None,
+        }
+    }
+
+    #[must_use]
+    pub const fn to_id(&self) -> i32 {
+        match self {
+            Self::Any => 0,
+            Self::MainHand => 1,
+            Self::OffHand => 2,
+            Self::Hand => 3,
+            Self::Feet => 4,
+            Self::Legs => 5,
+            Self::Chest => 6,
+            Self::Head => 7,
+            Self::Armor => 8,
+            Self::Body => 9,
+            Self::Saddle => 10,
+        }
+    }
+
+    #[must_use]
+    pub const fn from_id(id: i32) -> Option<Self> {
+        match id {
+            0 => Some(Self::Any),
+            1 => Some(Self::MainHand),
+            2 => Some(Self::OffHand),
+            3 => Some(Self::Hand),
+            4 => Some(Self::Feet),
+            5 => Some(Self::Legs),
+            6 => Some(Self::Chest),
+            7 => Some(Self::Head),
+            8 => Some(Self::Armor),
+            9 => Some(Self::Body),
+            10 => Some(Self::Saddle),
+            _ => None,
+        }
+    }
+}
+
+/// How a modifier shows in the item tooltip, vanilla's `ItemAttributeModifiers.Display`.
+#[derive(Clone, Debug, Hash, PartialEq)]
+pub enum ModifierDisplay {
+    Default,
+    Hidden,
+    OverrideText(TextComponent),
+}
+impl ModifierDisplay {
+    fn read(data: &NbtTag) -> Option<Self> {
+        let compound = data.extract_compound()?;
+        match compound.get_string("type")? {
+            "default" => Some(Self::Default),
+            "hidden" => Some(Self::Hidden),
+            "override" => Some(Self::OverrideText(TextComponent::from_nbt(
+                compound.get("value")?,
+            ))),
+            _ => None,
+        }
+    }
+
+    fn write(&self) -> NbtTag {
+        let mut compound = NbtCompound::new();
+        match self {
+            Self::Default => compound.put_string("type", "default".to_string()),
+            Self::Hidden => compound.put_string("type", "hidden".to_string()),
+            Self::OverrideText(text) => {
+                compound.put_string("type", "override".to_string());
+                compound.put(
+                    "value",
+                    text.to_nbt_tag_for_version(&JavaMinecraftVersion::V_26_3),
+                );
+            }
+        }
+        NbtTag::Compound(compound)
+    }
+}
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct Modifier {
     pub r#type: &'static Attributes,
-    pub id: &'static str,
+    pub id: Cow<'static, str>,
     pub amount: f64,
     pub operation: Operation,
     pub slot: crate::AttributeModifierSlot,
+    pub display: ModifierDisplay,
 }
 impl Hash for Modifier {
     fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
@@ -40,6 +184,44 @@ impl Hash for Modifier {
         unsafe { (*(&raw const self.amount).cast::<u64>()).hash(state) };
         self.operation.hash(state);
         self.slot.hash(state);
+        self.display.hash(state);
+    }
+}
+impl Modifier {
+    fn read(data: &NbtTag) -> Option<Self> {
+        let compound = data.extract_compound()?;
+        let attribute = compound.get_string("type")?;
+        let attribute = attribute.strip_prefix("minecraft:").unwrap_or(attribute);
+        let r#type = Attributes::ALL
+            .iter()
+            .find(|candidate| candidate.name.strip_prefix("minecraft:") == Some(attribute))?;
+        Some(Self {
+            r#type,
+            id: Cow::Owned(compound.get_string("id")?.to_string()),
+            amount: compound.get_numeric_double("amount")?,
+            operation: Operation::from_name(compound.get_string("operation")?)?,
+            slot: match compound.get_string("slot") {
+                Some(slot) => crate::AttributeModifierSlot::from_name(slot)?,
+                None => crate::AttributeModifierSlot::Any,
+            },
+            display: match compound.get("display") {
+                Some(display) => ModifierDisplay::read(display)?,
+                None => ModifierDisplay::Default,
+            },
+        })
+    }
+
+    fn write(&self) -> NbtTag {
+        let mut compound = NbtCompound::new();
+        compound.put_string("type", self.r#type.name.to_string());
+        compound.put_string("id", self.id.to_string());
+        compound.put_double("amount", self.amount);
+        compound.put_string("operation", self.operation.to_name().to_string());
+        compound.put_string("slot", self.slot.to_name().to_string());
+        if self.display != ModifierDisplay::Default {
+            compound.put("display", self.display.write());
+        }
+        NbtTag::Compound(compound)
     }
 }
 
@@ -48,13 +230,27 @@ pub struct AttributeModifiersImpl {
     pub attribute_modifiers: Cow<'static, [Modifier]>,
 }
 impl AttributeModifiersImpl {
-    pub const fn read_data(_data: &NbtTag) -> Option<Self> {
+    /// Reads the entry list; an entry that does not parse is dropped instead of losing the stack.
+    pub fn read_data(data: &NbtTag) -> Option<Self> {
+        let modifiers = data
+            .extract_list()?
+            .iter()
+            .filter_map(Modifier::read)
+            .collect();
         Some(Self {
-            attribute_modifiers: Cow::Borrowed(&[]),
+            attribute_modifiers: Cow::Owned(modifiers),
         })
     }
 }
 impl DataComponentImpl for AttributeModifiersImpl {
+    fn write_data(&self) -> NbtTag {
+        NbtTag::List(
+            self.attribute_modifiers
+                .iter()
+                .map(Modifier::write)
+                .collect(),
+        )
+    }
     default_impl!(AttributeModifiers);
 }
 
@@ -794,25 +990,221 @@ impl DataComponentImpl for GliderImpl {
     default_impl!(Glider);
 }
 
-#[derive(Clone, Debug, Hash, PartialEq, Eq)]
-pub struct DeathProtectionImpl;
+#[derive(Clone, Debug, Hash, PartialEq)]
+pub struct DeathProtectionImpl {
+    pub death_effects: Cow<'static, [ConsumeEffect]>,
+}
 impl DeathProtectionImpl {
-    pub const fn read_data(_data: &NbtTag) -> Option<Self> {
-        Some(Self)
+    pub fn read_data(data: &NbtTag) -> Option<Self> {
+        let death_effects = data
+            .extract_compound()
+            .and_then(|compound| compound.get_list("death_effects"))
+            .map(|effects| {
+                effects
+                    .iter()
+                    .filter_map(ConsumeEffect::read_data)
+                    .collect()
+            })
+            .unwrap_or_default();
+        Some(Self { death_effects })
     }
 }
 impl DataComponentImpl for DeathProtectionImpl {
+    fn write_data(&self) -> NbtTag {
+        let mut compound = NbtCompound::new();
+        let effects = self
+            .death_effects
+            .iter()
+            .map(ConsumeEffect::as_nbt)
+            .collect();
+        compound.put_list("death_effects", effects);
+        NbtTag::Compound(compound)
+    }
     default_impl!(DeathProtection);
 }
 
-#[derive(Clone, Debug, Hash, PartialEq, Eq)]
-pub struct BlocksAttacksImpl;
+/// A set of damage types, vanilla's `HolderSet<DamageType>`.
+#[derive(Clone, Debug, PartialEq)]
+pub enum DamageTypeSet {
+    /// A damage type tag, without the leading `#`.
+    Tag(Cow<'static, str>),
+    Direct(Cow<'static, [DamageType]>),
+}
+impl DamageTypeSet {
+    /// Reads `#tag`, a single damage type id or a list of ids.
+    pub fn read(data: &NbtTag) -> Option<Self> {
+        match data {
+            NbtTag::String(name) => {
+                if let Some(tag) = name.strip_prefix('#') {
+                    Some(Self::Tag(Cow::Owned(tag.to_string())))
+                } else {
+                    Some(Self::Direct(Cow::Owned(vec![damage_type_from_name(name)?])))
+                }
+            }
+            NbtTag::List(names) => Some(Self::Direct(Cow::Owned(
+                names
+                    .iter()
+                    .filter_map(NbtTag::extract_string)
+                    .filter_map(damage_type_from_name)
+                    .collect(),
+            ))),
+            _ => None,
+        }
+    }
+
+    pub fn write(&self) -> NbtTag {
+        match self {
+            Self::Tag(tag) => NbtTag::String(format!("#{tag}").into()),
+            Self::Direct(types) => NbtTag::List(
+                types
+                    .iter()
+                    .filter_map(DamageType::to_name)
+                    .map(NbtTag::from)
+                    .collect(),
+            ),
+        }
+    }
+}
+
+fn damage_type_from_name(name: &str) -> Option<DamageType> {
+    DamageType::from_name(name.strip_prefix("minecraft:").unwrap_or(name))
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub struct DamageReduction {
+    pub horizontal_blocking_angle: f32,
+    pub r#type: Option<DamageTypeSet>,
+    pub base: f32,
+    pub factor: f32,
+}
+impl DamageReduction {
+    fn read(data: &NbtTag) -> Option<Self> {
+        let compound = data.extract_compound()?;
+        Some(Self {
+            horizontal_blocking_angle: compound
+                .get_numeric_float("horizontal_blocking_angle")
+                .unwrap_or(90.0),
+            r#type: compound.get("type").and_then(DamageTypeSet::read),
+            base: compound.get_numeric_float("base")?,
+            factor: compound.get_numeric_float("factor")?,
+        })
+    }
+
+    fn write(&self) -> NbtTag {
+        let mut compound = NbtCompound::new();
+        compound.put_float("horizontal_blocking_angle", self.horizontal_blocking_angle);
+        if let Some(r#type) = &self.r#type {
+            compound.put("type", r#type.write());
+        }
+        compound.put_float("base", self.base);
+        compound.put_float("factor", self.factor);
+        NbtTag::Compound(compound)
+    }
+}
+
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub struct ItemDamageFunction {
+    pub threshold: f32,
+    pub base: f32,
+    pub factor: f32,
+}
+impl ItemDamageFunction {
+    pub const DEFAULT: Self = Self {
+        threshold: 1.0,
+        base: 0.0,
+        factor: 1.0,
+    };
+
+    fn read(compound: &NbtCompound) -> Option<Self> {
+        Some(Self {
+            threshold: compound.get_numeric_float("threshold")?,
+            base: compound.get_numeric_float("base")?,
+            factor: compound.get_numeric_float("factor")?,
+        })
+    }
+
+    fn write(&self) -> NbtTag {
+        let mut compound = NbtCompound::new();
+        compound.put_float("threshold", self.threshold);
+        compound.put_float("base", self.base);
+        compound.put_float("factor", self.factor);
+        NbtTag::Compound(compound)
+    }
+}
+
+#[derive(Clone, Debug, PartialEq)]
+pub struct BlocksAttacksImpl {
+    pub block_delay_seconds: f32,
+    pub disable_cooldown_scale: f32,
+    pub damage_reductions: Cow<'static, [DamageReduction]>,
+    pub item_damage: ItemDamageFunction,
+    pub bypassed_by: Option<DamageTypeSet>,
+    pub block_sound: Option<IdOr<SoundEvent>>,
+    pub disabled_sound: Option<IdOr<SoundEvent>>,
+}
 impl BlocksAttacksImpl {
-    pub const fn read_data(_data: &NbtTag) -> Option<Self> {
-        Some(Self)
+    /// Used when `damage_reductions` is absent: all damage from the front 90 degrees is blocked.
+    pub const DEFAULT_DAMAGE_REDUCTIONS: &'static [DamageReduction] = &[DamageReduction {
+        horizontal_blocking_angle: 90.0,
+        r#type: None,
+        base: 0.0,
+        factor: 1.0,
+    }];
+
+    pub fn read_data(data: &NbtTag) -> Option<Self> {
+        let compound = data.extract_compound()?;
+        let damage_reductions = match compound.get_list("damage_reductions") {
+            Some(reductions) => Cow::Owned(
+                reductions
+                    .iter()
+                    .map(DamageReduction::read)
+                    .collect::<Option<Vec<_>>>()?,
+            ),
+            None => Cow::Borrowed(Self::DEFAULT_DAMAGE_REDUCTIONS),
+        };
+        let item_damage = match compound.get_compound("item_damage") {
+            Some(item_damage) => ItemDamageFunction::read(item_damage)?,
+            None => ItemDamageFunction::DEFAULT,
+        };
+        Some(Self {
+            block_delay_seconds: compound
+                .get_numeric_float("block_delay_seconds")
+                .unwrap_or(0.0),
+            disable_cooldown_scale: compound
+                .get_numeric_float("disable_cooldown_scale")
+                .unwrap_or(1.0),
+            damage_reductions,
+            item_damage,
+            bypassed_by: compound.get("bypassed_by").and_then(DamageTypeSet::read),
+            block_sound: get_optional_idor(compound, "block_sound"),
+            disabled_sound: get_optional_idor(compound, "disabled_sound"),
+        })
     }
 }
 impl DataComponentImpl for BlocksAttacksImpl {
+    fn write_data(&self) -> NbtTag {
+        let mut compound = NbtCompound::new();
+        compound.put_float("block_delay_seconds", self.block_delay_seconds);
+        compound.put_float("disable_cooldown_scale", self.disable_cooldown_scale);
+        compound.put_list(
+            "damage_reductions",
+            self.damage_reductions
+                .iter()
+                .map(DamageReduction::write)
+                .collect(),
+        );
+        compound.put("item_damage", self.item_damage.write());
+        if let Some(bypassed_by) = &self.bypassed_by {
+            compound.put("bypassed_by", bypassed_by.write());
+        }
+        put_optional_idor(&mut compound, "block_sound", self.block_sound.as_ref());
+        put_optional_idor(
+            &mut compound,
+            "disabled_sound",
+            self.disabled_sound.as_ref(),
+        );
+        NbtTag::Compound(compound)
+    }
     default_impl!(BlocksAttacks);
 }
 

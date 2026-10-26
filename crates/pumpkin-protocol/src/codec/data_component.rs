@@ -10,6 +10,7 @@ use pumpkin_data::data_component_impl::*;
 
 use pumpkin_data::effect::StatusEffect;
 use pumpkin_data::entity::EntityType;
+use pumpkin_data::jukebox_song::JukeboxSong;
 use pumpkin_data::sound::Sound;
 use pumpkin_nbt::{serializer::NbtWriteHelperJava, tag::NbtTag};
 use pumpkin_util::version::JavaMinecraftVersion;
@@ -1743,47 +1744,74 @@ impl DataComponentCodec<Self> for CanBreakImpl {
 
 impl DataComponentCodec<Self> for AttributeModifiersImpl {
     fn serialize(&self, seq: &mut impl NetworkWriteExt) -> Result<(), WritingError> {
-        seq.write_var_int(&VarInt::from(self.attribute_modifiers.len() as i32))?;
-        for modifier in self.attribute_modifiers.iter() {
-            seq.write_var_int(&VarInt::from(modifier.r#type.id as i32))?;
-            seq.write_string(modifier.id)?;
-            seq.write_f64(modifier.amount)?;
-            seq.write_var_int(&VarInt::from(modifier.operation as i32))?;
-            let slot_id = match modifier.slot {
-                pumpkin_data::enchantment::AttributeModifierSlot::Any => 0,
-                pumpkin_data::enchantment::AttributeModifierSlot::MainHand => 1,
-                pumpkin_data::enchantment::AttributeModifierSlot::OffHand => 2,
-                pumpkin_data::enchantment::AttributeModifierSlot::Hand => 3,
-                pumpkin_data::enchantment::AttributeModifierSlot::Feet => 4,
-                pumpkin_data::enchantment::AttributeModifierSlot::Legs => 5,
-                pumpkin_data::enchantment::AttributeModifierSlot::Chest => 6,
-                pumpkin_data::enchantment::AttributeModifierSlot::Head => 7,
-                pumpkin_data::enchantment::AttributeModifierSlot::Armor => 8,
-                pumpkin_data::enchantment::AttributeModifierSlot::Body => 9,
-                pumpkin_data::enchantment::AttributeModifierSlot::Saddle => 10,
-            };
-            seq.write_var_int(&VarInt(slot_id))?;
-            seq.write_var_int(&VarInt(0))?;
-        }
-        Ok(())
+        seq.write_list(&self.attribute_modifiers, |w, modifier| {
+            w.write_var_int(&VarInt::from(i32::from(modifier.r#type.id)))?;
+            w.write_string(&modifier.id)?;
+            w.write_f64(modifier.amount)?;
+            w.write_var_int(&VarInt::from(modifier.operation as i32))?;
+            w.write_var_int(&VarInt(modifier.slot.to_id()))?;
+            serialize_modifier_display(&modifier.display, w)
+        })
     }
 
     fn deserialize(seq: &mut impl NetworkReadExt) -> Result<Self, ReadingError> {
-        let len = seq.get_var_int()?.0 as usize;
-        for _ in 0..len {
-            let _attr_id = seq.get_var_int()?;
-            let _id = seq.get_str()?;
-            let _amount = seq.get_f64()?;
-            let _operation = seq.get_var_int()?;
-            let _slot = seq.get_var_int()?;
-            let display_type = seq.get_var_int()?.0;
-            if display_type == 2 {
-                let _ = seq.get_nbt_with_version(&JavaMinecraftVersion::V_26_2)?;
-            }
-        }
+        let modifiers = seq.get_list(|r| {
+            let attribute_id = r.get_var_int()?.0;
+            let r#type = pumpkin_data::attributes::Attributes::ALL
+                .iter()
+                .find(|attribute| i32::from(attribute.id) == attribute_id)
+                .ok_or_else(|| ReadingError::Message("Invalid attribute id".into()))?;
+            let id = r.get_str()?;
+            let amount = r.get_f64()?;
+            // Vanilla's `ByIdMap` reads an out-of-range id as the first value.
+            let operation = Operation::from_id(r.get_var_int()?.0).unwrap_or(Operation::AddValue);
+            let slot = pumpkin_data::AttributeModifierSlot::from_id(r.get_var_int()?.0)
+                .unwrap_or(pumpkin_data::AttributeModifierSlot::Any);
+            Ok(Modifier {
+                r#type,
+                id: Cow::Owned(id.into()),
+                amount,
+                operation,
+                slot,
+                display: deserialize_modifier_display(r)?,
+            })
+        })?;
         Ok(Self {
-            attribute_modifiers: Cow::Borrowed(&[]),
+            attribute_modifiers: Cow::Owned(modifiers),
         })
+    }
+}
+
+/// Writes `ItemAttributeModifiers.Display`: its type id, then the text for an override.
+fn serialize_modifier_display(
+    display: &ModifierDisplay,
+    seq: &mut impl NetworkWriteExt,
+) -> Result<(), WritingError> {
+    match display {
+        ModifierDisplay::Default => seq.write_var_int(&VarInt(0)),
+        ModifierDisplay::Hidden => seq.write_var_int(&VarInt(1)),
+        ModifierDisplay::OverrideText(text) => {
+            seq.write_var_int(&VarInt(2))?;
+            seq.write_slice(&text.encode_for_version(&JavaMinecraftVersion::V_26_2))
+        }
+    }
+}
+
+/// Reads `ItemAttributeModifiers.Display`; like vanilla, an unknown type id reads as the default.
+fn deserialize_modifier_display(
+    seq: &mut impl NetworkReadExt,
+) -> Result<ModifierDisplay, ReadingError> {
+    match seq.get_var_int()?.0 {
+        1 => Ok(ModifierDisplay::Hidden),
+        2 => {
+            let tag = seq.get_nbt_with_version(&JavaMinecraftVersion::V_26_2)?;
+            let text = tag.as_ref().map_or_else(
+                pumpkin_util::text::TextComponent::empty,
+                pumpkin_util::text::TextComponent::from_nbt,
+            );
+            Ok(ModifierDisplay::OverrideText(text))
+        }
+        _ => Ok(ModifierDisplay::Default),
     }
 }
 
@@ -1840,17 +1868,30 @@ impl DataComponentCodec<Self> for CustomModelDataImpl {
 
 impl DataComponentCodec<Self> for TooltipDisplayImpl {
     fn serialize(&self, seq: &mut impl NetworkWriteExt) -> Result<(), WritingError> {
-        seq.write_bool(false)?;
-        seq.write_var_int(&VarInt(0))
+        seq.write_bool(self.hide_tooltip)?;
+        seq.write_list(&self.hidden_components, |w, component| {
+            w.write_var_int(&VarInt(i32::from(component.to_id())))
+        })
     }
 
     fn deserialize(seq: &mut impl NetworkReadExt) -> Result<Self, ReadingError> {
-        let _hide_tooltip = seq.get_bool()?;
-        let len = seq.get_var_int()?.0 as usize;
-        for _ in 0..len {
-            let _comp_id = seq.get_var_int()?;
+        let hide_tooltip = seq.get_bool()?;
+        let ids = seq.get_list(NetworkReadExt::get_var_int)?;
+        let mut hidden_components = Vec::with_capacity(ids.len());
+        for VarInt(id) in ids {
+            let component = u8::try_from(id)
+                .ok()
+                .and_then(DataComponent::try_from_id)
+                .ok_or_else(|| ReadingError::Message("Invalid data component id".into()))?;
+            // Vanilla collects these into a set.
+            if !hidden_components.contains(&component) {
+                hidden_components.push(component);
+            }
         }
-        Ok(Self)
+        Ok(Self {
+            hide_tooltip,
+            hidden_components: Cow::Owned(hidden_components),
+        })
     }
 }
 
@@ -2072,71 +2113,148 @@ impl DataComponentCodec<Self> for TooltipStyleImpl {
 
 impl DataComponentCodec<Self> for DeathProtectionImpl {
     fn serialize(&self, seq: &mut impl NetworkWriteExt) -> Result<(), WritingError> {
-        seq.write_var_int(&VarInt(0))
+        seq.write_var_int(&VarInt(self.death_effects.len() as i32))?;
+        for effect in self.death_effects.iter() {
+            serialize_consume_effect(effect, seq)?;
+        }
+        Ok(())
     }
 
     fn deserialize(seq: &mut impl NetworkReadExt) -> Result<Self, ReadingError> {
-        let len = seq.get_var_int()?.0 as usize;
-        for _ in 0..len {
-            let _ = deserialize_consume_effect(seq)?;
+        const MAX_DEATH_EFFECTS: i32 = 256;
+
+        let len = seq.get_var_int()?.0;
+        if !(0..=MAX_DEATH_EFFECTS).contains(&len) {
+            return Err(ReadingError::Message("Invalid death effect count".into()));
         }
-        Ok(Self)
+        let mut death_effects = Vec::with_capacity(len as usize);
+        for _ in 0..len {
+            death_effects.push(deserialize_consume_effect(seq)?);
+        }
+        Ok(Self {
+            death_effects: Cow::Owned(death_effects),
+        })
     }
 }
 
 impl DataComponentCodec<Self> for BlocksAttacksImpl {
     fn serialize(&self, seq: &mut impl NetworkWriteExt) -> Result<(), WritingError> {
-        seq.write_f32(0.0)?;
-        seq.write_f32(1.0)?;
-        seq.write_var_int(&VarInt(0))?;
-        seq.write_var_int(&VarInt(0))?;
-        seq.write_bool(false)?;
-        seq.write_bool(false)?;
-        seq.write_bool(false)
+        seq.write_f32(self.block_delay_seconds)?;
+        seq.write_f32(self.disable_cooldown_scale)?;
+        seq.write_list(&self.damage_reductions, |w, reduction| {
+            w.write_f32(reduction.horizontal_blocking_angle)?;
+            w.write_option(&reduction.r#type, |w, set| {
+                serialize_damage_type_set(set, w)
+            })?;
+            w.write_f32(reduction.base)?;
+            w.write_f32(reduction.factor)
+        })?;
+        seq.write_f32(self.item_damage.threshold)?;
+        seq.write_f32(self.item_damage.base)?;
+        seq.write_f32(self.item_damage.factor)?;
+        seq.write_option(&self.bypassed_by, |w, set| {
+            serialize_damage_type_set(set, w)
+        })?;
+        serialize_optional_sound(self.block_sound.as_ref(), seq)?;
+        serialize_optional_sound(self.disabled_sound.as_ref(), seq)
     }
 
     fn deserialize(seq: &mut impl NetworkReadExt) -> Result<Self, ReadingError> {
-        let _block_delay = seq.get_f32()?;
-        let _disable_scale = seq.get_f32()?;
-        let red_len = seq.get_var_int()?.0 as usize;
-        for _ in 0..red_len {
-            let _ = seq.get_f32()?;
-            if seq.get_bool()? {
-                let id_type = seq.get_var_int()?.0;
-                if id_type == 0 {
-                    let _ = seq.get_str()?;
-                } else if id_type > 0 {
-                    for _ in 0..(id_type - 1) {
-                        let _ = seq.get_var_int()?;
-                    }
-                }
-            }
-            let _ = seq.get_f32()?;
-            let _ = seq.get_f32()?;
-        }
-        let item_damage_type = seq.get_var_int()?.0;
-        if item_damage_type == 1 {
-            let _ = seq.get_f32()?;
-            let _ = seq.get_f32()?;
-        }
-        if seq.get_bool()? {
-            let id_type = seq.get_var_int()?.0;
-            if id_type == 0 {
-                let _ = seq.get_str()?;
-            } else if id_type > 0 {
-                for _ in 0..(id_type - 1) {
-                    let _ = seq.get_var_int()?;
-                }
-            }
-        }
-        if seq.get_bool()? {
-            let _ = seq.get_var_int()?;
-        }
-        if seq.get_bool()? {
-            let _ = seq.get_var_int()?;
-        }
-        Ok(Self)
+        let block_delay_seconds = seq.get_f32()?;
+        let disable_cooldown_scale = seq.get_f32()?;
+        let damage_reductions = seq.get_list(|r| {
+            Ok(DamageReduction {
+                horizontal_blocking_angle: r.get_f32()?,
+                r#type: r.get_option(deserialize_damage_type_set)?,
+                base: r.get_f32()?,
+                factor: r.get_f32()?,
+            })
+        })?;
+        let item_damage = ItemDamageFunction {
+            threshold: seq.get_f32()?,
+            base: seq.get_f32()?,
+            factor: seq.get_f32()?,
+        };
+        Ok(Self {
+            block_delay_seconds,
+            disable_cooldown_scale,
+            damage_reductions: Cow::Owned(damage_reductions),
+            item_damage,
+            bypassed_by: seq.get_option(deserialize_damage_type_set)?,
+            block_sound: deserialize_optional_sound(seq)?,
+            disabled_sound: deserialize_optional_sound(seq)?,
+        })
     }
+}
+
+/// Writes a damage type `HolderSet`: `0` and a tag name, or the count plus one and registry ids.
+fn serialize_damage_type_set(
+    set: &DamageTypeSet,
+    seq: &mut impl NetworkWriteExt,
+) -> Result<(), WritingError> {
+    match set {
+        DamageTypeSet::Tag(tag) => {
+            seq.write_var_int(&VarInt(0))?;
+            seq.write_string(tag)
+        }
+        DamageTypeSet::Direct(damage_types) => {
+            seq.write_var_int(&VarInt(damage_types.len() as i32 + 1))?;
+            for damage_type in damage_types.iter() {
+                seq.write_var_int(&VarInt(i32::from(damage_type.id)))?;
+            }
+            Ok(())
+        }
+    }
+}
+
+fn deserialize_damage_type_set(
+    seq: &mut impl NetworkReadExt,
+) -> Result<DamageTypeSet, ReadingError> {
+    let id_type = usize::try_from(seq.get_var_int()?.0)
+        .map_err(|_| ReadingError::Message("Negative damage type count".into()))?;
+    if id_type == 0 {
+        return Ok(DamageTypeSet::Tag(Cow::Owned(seq.get_str()?.into())));
+    }
+    // Each id is at least one byte, so the vector only grows with the data actually sent.
+    let mut damage_types = Vec::new();
+    for _ in 1..id_type {
+        let id = seq.get_var_int()?.0;
+        let damage_type = u8::try_from(id)
+            .ok()
+            .and_then(pumpkin_data::damage::DamageType::from_id)
+            .ok_or_else(|| ReadingError::Message("Invalid damage type id".into()))?;
+        damage_types.push(damage_type);
+    }
+    Ok(DamageTypeSet::Direct(Cow::Owned(damage_types)))
+}
+
+fn serialize_optional_sound(
+    sound: Option<&IdOr<SoundEvent>>,
+    seq: &mut impl NetworkWriteExt,
+) -> Result<(), WritingError> {
+    let Some(sound) = sound else {
+        return seq.write_bool(false);
+    };
+    seq.write_bool(true)?;
+    data_to_proto_sound(sound).write(seq, |w, e| {
+        w.write_string(&e.sound_name)?;
+        w.write_option(&e.range, |w, range| w.write_f32(*range))
+    })
+}
+
+/// Reads an optional sound holder; an unknown registry id reads as no sound.
+fn deserialize_optional_sound(
+    seq: &mut impl NetworkReadExt,
+) -> Result<Option<IdOr<SoundEvent>>, ReadingError> {
+    if !seq.get_bool()? {
+        return Ok(None);
+    }
+    let proto = crate::IdOr::<crate::SoundEvent>::read(seq, |r| {
+        let sound_name = r.get_str()?.to_string();
+        let range = r.get_option(NetworkReadExt::get_f32)?;
+        Ok(crate::SoundEvent { sound_name, range })
+    })?;
+    Ok(proto_to_data_sound(&proto))
 }
 
 impl DataComponentCodec<Self> for PiercingWeaponImpl {
@@ -2647,14 +2765,29 @@ impl DataComponentCodec<Self> for OminousBottleAmplifierImpl {
 }
 
 impl DataComponentCodec<Self> for JukeboxPlayableImpl {
+    /// Writes the song as a registry holder (id plus one). Clients only know the vanilla songs,
+    /// so any other id cannot be written.
     fn serialize(&self, seq: &mut impl NetworkWriteExt) -> Result<(), WritingError> {
-        let song_id = Sound::from_name(self.song).map_or(0, |s| s as i32);
-        seq.write_var_int(&VarInt::from(song_id))
+        let song = self
+            .song
+            .strip_prefix("minecraft:")
+            .and_then(JukeboxSong::from_name)
+            .ok_or_else(|| WritingError::Message(format!("Unknown jukebox song {}", self.song)))?;
+        seq.write_var_int(&VarInt(song.get_id() as i32 + 1))
     }
 
     fn deserialize(seq: &mut impl NetworkReadExt) -> Result<Self, ReadingError> {
-        let _ = seq.get_var_int()?;
-        Ok(Self { song: "" })
+        // Id 0 is an inline song definition, which vanilla cannot save either.
+        let song = seq
+            .get_var_int()?
+            .0
+            .checked_sub(1)
+            .and_then(|id| u32::try_from(id).ok())
+            .and_then(JukeboxSong::from_id)
+            .ok_or_else(|| ReadingError::Message("Unsupported jukebox song".into()))?;
+        Ok(Self {
+            song: Cow::Owned(format!("minecraft:{}", song.to_name())),
+        })
     }
 }
 
@@ -3560,6 +3693,60 @@ mod tests {
 
         let min_holder = [0x80, 0x80, 0x80, 0x80, 0x08];
         assert!(PaintingVariantImpl::deserialize(&mut min_holder.as_slice()).is_err());
+    }
+
+    #[test]
+    fn attribute_modifiers_round_trip_with_display() {
+        let sturdy = pumpkin_util::text::TextComponent::text("Sturdy");
+        let modifiers = AttributeModifiersImpl {
+            attribute_modifiers: Cow::Owned(vec![
+                Modifier {
+                    r#type: &pumpkin_data::attributes::Attributes::ATTACK_DAMAGE,
+                    id: Cow::Borrowed("minecraft:base_attack_damage"),
+                    amount: 7.0,
+                    operation: Operation::AddValue,
+                    slot: pumpkin_data::AttributeModifierSlot::MainHand,
+                    display: ModifierDisplay::Hidden,
+                },
+                Modifier {
+                    r#type: &pumpkin_data::attributes::Attributes::ARMOR,
+                    id: Cow::Owned("example:armor".to_string()),
+                    amount: 2.5,
+                    operation: Operation::AddMultipliedBase,
+                    slot: pumpkin_data::AttributeModifierSlot::Armor,
+                    display: ModifierDisplay::OverrideText(sturdy),
+                },
+            ]),
+        };
+        let mut encoded = Vec::new();
+        modifiers.serialize(&mut encoded).unwrap();
+        let mut slice = encoded.as_slice();
+        let decoded = AttributeModifiersImpl::deserialize(&mut slice).unwrap();
+        assert!(slice.is_empty());
+        assert_eq!(
+            decoded.attribute_modifiers[0],
+            modifiers.attribute_modifiers[0]
+        );
+        assert_eq!(decoded.attribute_modifiers[1].id, "example:armor");
+        assert!(matches!(
+            &decoded.attribute_modifiers[1].display,
+            ModifierDisplay::OverrideText(text) if text.clone().get_text() == "Sturdy"
+        ));
+    }
+
+    #[test]
+    fn shield_blocks_attacks_round_trips() {
+        let shield = pumpkin_data::item::Item::SHIELD
+            .components
+            .iter()
+            .find(|(id, _)| *id == DataComponent::BlocksAttacks)
+            .map(|(_, value)| get::<BlocksAttacksImpl>(*value))
+            .unwrap();
+        let mut encoded = Vec::new();
+        shield.serialize(&mut encoded).unwrap();
+        let mut slice = encoded.as_slice();
+        assert_eq!(&BlocksAttacksImpl::deserialize(&mut slice).unwrap(), shield);
+        assert!(slice.is_empty());
     }
 
     #[test]

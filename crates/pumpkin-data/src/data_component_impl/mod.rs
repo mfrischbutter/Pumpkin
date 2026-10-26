@@ -955,6 +955,95 @@ mod tests {
     }
 
     #[test]
+    fn attribute_modifiers_round_trip() {
+        assert_round_trip(
+            AttributeModifiersImpl {
+                attribute_modifiers: Cow::Owned(vec![
+                    Modifier {
+                        r#type: &crate::attributes::Attributes::ATTACK_DAMAGE,
+                        id: Cow::Borrowed("minecraft:base_attack_damage"),
+                        amount: 7.0,
+                        operation: Operation::AddValue,
+                        slot: crate::AttributeModifierSlot::MainHand,
+                        display: ModifierDisplay::Default,
+                    },
+                    Modifier {
+                        r#type: &crate::attributes::Attributes::MOVEMENT_SPEED,
+                        id: Cow::Owned("example:boots_speed".to_string()),
+                        amount: 0.1,
+                        operation: Operation::AddMultipliedTotal,
+                        slot: crate::AttributeModifierSlot::Feet,
+                        display: ModifierDisplay::Hidden,
+                    },
+                ]),
+            },
+            AttributeModifiersImpl::read_data,
+        );
+    }
+
+    #[test]
+    fn attribute_modifier_amount_reads_any_number_and_slot_defaults_to_any() {
+        let mut entry = NbtCompound::new();
+        entry.put_string("type", "minecraft:armor".to_string());
+        entry.put_string("id", "example:armor".to_string());
+        entry.put_int("amount", 3);
+        entry.put_string("operation", "add_value".to_string());
+        let list = NbtTag::List(vec![NbtTag::Compound(entry)]);
+        let modifiers = AttributeModifiersImpl::read_data(&list).unwrap();
+        assert_eq!(modifiers.attribute_modifiers.len(), 1);
+        assert_eq!(modifiers.attribute_modifiers[0].amount, 3.0);
+        assert_eq!(
+            modifiers.attribute_modifiers[0].slot,
+            crate::AttributeModifierSlot::Any
+        );
+    }
+
+    #[test]
+    fn tooltip_display_round_trip() {
+        assert_round_trip(
+            TooltipDisplayImpl {
+                hide_tooltip: false,
+                hidden_components: Cow::Owned(vec![
+                    DataComponent::AttributeModifiers,
+                    DataComponent::Enchantments,
+                ]),
+            },
+            TooltipDisplayImpl::read_data,
+        );
+        assert_round_trip(TooltipDisplayImpl::DEFAULT, TooltipDisplayImpl::read_data);
+    }
+
+    #[test]
+    fn blocks_attacks_round_trip() {
+        assert_round_trip(
+            BlocksAttacksImpl {
+                block_delay_seconds: 0.25,
+                disable_cooldown_scale: 2.0,
+                damage_reductions: Cow::Owned(vec![DamageReduction {
+                    horizontal_blocking_angle: 45.0,
+                    r#type: Some(DamageTypeSet::Direct(Cow::Owned(vec![
+                        crate::damage::DamageType::ARROW,
+                        crate::damage::DamageType::TRIDENT,
+                    ]))),
+                    base: 1.0,
+                    factor: 0.5,
+                }]),
+                item_damage: ItemDamageFunction {
+                    threshold: 3.0,
+                    base: 1.0,
+                    factor: 1.0,
+                },
+                bypassed_by: Some(DamageTypeSet::Tag(Cow::Borrowed(
+                    "minecraft:bypasses_shield",
+                ))),
+                block_sound: Some(IdOr::Id(Sound::ItemShieldBlock)),
+                disabled_sound: None,
+            },
+            BlocksAttacksImpl::read_data,
+        );
+    }
+
+    #[test]
     fn equal_with_different_types_returns_false() {
         let enc = EnchantmentsImpl {
             enchantment: Cow::Borrowed(&[(&crate::Enchantment::SHARPNESS, 2)]),

@@ -275,7 +275,7 @@ impl ToTokens for ItemComponents {
             let song = LitStr::new(playable, Span::call_site());
             tokens.extend(quote! {
                 (JukeboxPlayable, &JukeboxPlayableImpl{
-                    song: #song,
+                    song: Cow::Borrowed(#song),
                 }),
             });
         }
@@ -327,14 +327,19 @@ impl ToTokens for ItemComponents {
                 let amount = modifier.amount;
                 let operation = Ident::new(&format!("{:?}", modifier.operation), Span::call_site());
                 let slot = modifier.slot.to_tokens();
+                let display = match modifier.display {
+                    None | Some(ModifierDisplay::Default) => quote! { ModifierDisplay::Default },
+                    Some(ModifierDisplay::Hidden) => quote! { ModifierDisplay::Hidden },
+                };
 
                 quote! {
                     Modifier {
                         r#type: &Attributes::#r#type,
-                        id: #id,
+                        id: Cow::Borrowed(#id),
                         amount: #amount,
                         operation: Operation::#operation,
                         slot: #slot,
+                        display: #display,
                     }
                 }
             });
@@ -463,81 +468,9 @@ impl ToTokens for ItemComponents {
                     .unwrap()
                     .to_pascal_case()
             );
-            let effects: Vec<ConsumeEffect> =
-                consumable.on_consume_effects.clone().unwrap_or(vec![]);
-            let mut effect_tokens = TokenStream::new();
-
-            for effect in effects {
-                match effect.r#type.as_str() {
-                    "minecraft:clear_all_effects" => {
-                        effect_tokens.extend(quote! { ConsumeEffect::ClearAllEffects, });
-                    }
-                    "minecraft:teleport_randomly" => {
-                        let diameter = effect.diameter.unwrap_or(16.);
-                        effect_tokens
-                            .extend(quote! { ConsumeEffect::TeleportRandomly(#diameter), });
-                    }
-                    "minecraft:play_sound" => {
-                        let sound = format_ident!(
-                            "{}",
-                            effect
-                                .sound
-                                .unwrap()
-                                .strip_prefix("minecraft:")
-                                .unwrap()
-                                .to_pascal_case()
-                        );
-                        effect_tokens
-                            .extend(quote! { ConsumeEffect::PlaySound(IdOr::Id(Sound::#sound)), });
-                    }
-                    "minecraft:apply_effects" => {
-                        let probability = effect.probability.unwrap_or(1.);
-                        if let StringOrStatusEffects::Effects(status_effect_instances) =
-                            effect.effects.unwrap()
-                        {
-                            let mut status_tokens = TokenStream::new();
-
-                            for status in status_effect_instances {
-                                let effect_id = status.id;
-                                let amplifier = status.amplifier.unwrap_or(0);
-                                let duration = status.duration.unwrap_or(1);
-                                let ambient = status.ambient.unwrap_or(false);
-                                let show_particles = status.show_particles.unwrap_or(true);
-                                let show_icon = status.show_icon.unwrap_or(true);
-                                status_tokens.extend(quote! {
-                                    StatusEffectInstance {
-                                        effect_id: Cow::Borrowed(#effect_id),
-                                        amplifier: #amplifier,
-                                        duration: #duration,
-                                        ambient: #ambient,
-                                        show_particles: #show_particles,
-                                        show_icon: #show_icon
-                                    },
-                                });
-                            }
-                            effect_tokens.extend(quote! {
-                                ConsumeEffect::ApplyEffects((Cow::Borrowed(&[#status_tokens]), #probability)),
-                            });
-                        }
-                    }
-                    "minecraft:remove_effects" => {
-                        if let StringOrStatusEffects::String(id) = effect.effects.unwrap() {
-                            let effect_id = format_ident!(
-                                "{}",
-                                id.strip_prefix("minecraft:")
-                                    .unwrap()
-                                    .to_pascal_case()
-                                    .to_uppercase()
-                            );
-
-                            effect_tokens.extend(quote! {
-                                ConsumeEffect::RemoveEffects(IDSet::IDs(Cow::Borrowed(&[&StatusEffect::#effect_id]))),
-                            });
-                        }
-                    }
-                    _ => println!("Unknown CustomEffect type: {}", effect.r#type),
-                }
-            }
+            let effect_tokens = consume_effects_tokens(
+                consumable.on_consume_effects.as_deref().unwrap_or_default(),
+            );
 
             tokens.extend(quote! { (Consumable, &ConsumableImpl {
                 consume_seconds: #consume_seconds,
@@ -548,12 +481,69 @@ impl ToTokens for ItemComponents {
             }), });
         }
 
-        if self.blocks_attacks.is_some() {
-            tokens.extend(quote! { (BlocksAttacks, &BlocksAttacksImpl), });
+        if let Some(blocks_attacks) = &self.blocks_attacks {
+            let block_delay_seconds = float_literal(blocks_attacks.block_delay_seconds);
+            let disable_cooldown_scale = float_literal(blocks_attacks.disable_cooldown_scale);
+            let damage_reductions = match &blocks_attacks.damage_reductions {
+                None => quote! { Cow::Borrowed(BlocksAttacksImpl::DEFAULT_DAMAGE_REDUCTIONS) },
+                Some(reductions) => {
+                    let reductions = reductions.iter().map(|reduction| {
+                        let angle = float_literal(reduction.horizontal_blocking_angle);
+                        let damage_types =
+                            optional_damage_type_set_tokens(reduction.r#type.as_ref());
+                        let base = float_literal(reduction.base);
+                        let factor = float_literal(reduction.factor);
+                        quote! {
+                            DamageReduction {
+                                horizontal_blocking_angle: #angle,
+                                r#type: #damage_types,
+                                base: #base,
+                                factor: #factor,
+                            }
+                        }
+                    });
+                    quote! { Cow::Borrowed(&[#(#reductions),*]) }
+                }
+            };
+            let item_damage = match &blocks_attacks.item_damage {
+                None => quote! { ItemDamageFunction::DEFAULT },
+                Some(item_damage) => {
+                    let threshold = float_literal(item_damage.threshold);
+                    let base = float_literal(item_damage.base);
+                    let factor = float_literal(item_damage.factor);
+                    quote! {
+                        ItemDamageFunction {
+                            threshold: #threshold,
+                            base: #base,
+                            factor: #factor,
+                        }
+                    }
+                }
+            };
+            let bypassed_by = optional_damage_type_set_tokens(blocks_attacks.bypassed_by.as_ref());
+            let block_sound = optional_sound_tokens(blocks_attacks.block_sound.as_deref());
+            let disabled_sound = optional_sound_tokens(blocks_attacks.disabled_sound.as_deref());
+            tokens.extend(quote! {
+                (
+                    BlocksAttacks,
+                    &BlocksAttacksImpl {
+                        block_delay_seconds: #block_delay_seconds,
+                        disable_cooldown_scale: #disable_cooldown_scale,
+                        damage_reductions: #damage_reductions,
+                        item_damage: #item_damage,
+                        bypassed_by: #bypassed_by,
+                        block_sound: #block_sound,
+                        disabled_sound: #disabled_sound,
+                    },
+                ),
+            });
         }
 
-        if self.death_protection.is_some() {
-            tokens.extend(quote! { (DeathProtection, &DeathProtectionImpl), });
+        if let Some(death_protection) = &self.death_protection {
+            let effect_tokens = consume_effects_tokens(&death_protection.death_effects);
+            tokens.extend(quote! { (DeathProtection, &DeathProtectionImpl {
+                death_effects: Cow::Borrowed(&[#effect_tokens])
+            }), });
         }
 
         if let Some(weapon) = &self.weapon {
@@ -1250,7 +1240,7 @@ impl ToTokens for ItemComponents {
             });
         }
         if self.tooltip_display.is_some() {
-            tokens.extend(quote! { (TooltipDisplay, &TooltipDisplayImpl), });
+            tokens.extend(quote! { (TooltipDisplay, &TooltipDisplayImpl::DEFAULT), });
         }
         if let Some(use_effects) = &self.use_effects {
             let can_sprint = LitBool::new(use_effects.can_sprint, Span::call_site());
@@ -1369,6 +1359,16 @@ pub struct Modifier {
     // TODO: Make this an enum
     /// Equipment slot in which this modifier is active.
     pub slot: AttributeModifierSlot,
+    /// How the modifier shows in the tooltip; `None` is the default display.
+    pub display: Option<ModifierDisplay>,
+}
+
+/// Deserialized tooltip display of an attribute modifier; an `override` text cannot be `const`.
+#[derive(Deserialize, Clone)]
+#[serde(tag = "type", rename_all = "snake_case")]
+pub enum ModifierDisplay {
+    Default,
+    Hidden,
 }
 
 /// Serde default helper returning `true`.
@@ -1409,10 +1409,11 @@ pub enum StringOrStatusEffects {
     Effects(Vec<StatusEffectInstance>),
 }
 
-/// Deserialized death-protection component (e.g., totem of undying); fields are unimplemented.
+/// Deserialized death-protection component (e.g., totem of undying).
 #[derive(Deserialize, Clone)]
 pub struct DeathProtection {
-    // TODO
+    #[serde(default)]
+    death_effects: Vec<ConsumeEffect>,
 }
 
 /// Deserialized attack-blocking component (e.g., shield); fields are unimplemented.
@@ -1492,6 +1493,83 @@ pub struct PiercingWeaponComponent {
     pub hit_sound: Option<String>,
 }
 
+/// Generates the `ConsumeEffect` list shared by the `consumable` and `death_protection` components.
+fn consume_effects_tokens(effects: &[ConsumeEffect]) -> TokenStream {
+    let mut effect_tokens = TokenStream::new();
+
+    for effect in effects {
+        match effect.r#type.as_str() {
+            "minecraft:clear_all_effects" => {
+                effect_tokens.extend(quote! { ConsumeEffect::ClearAllEffects, });
+            }
+            "minecraft:teleport_randomly" => {
+                let diameter = effect.diameter.unwrap_or(16.);
+                effect_tokens.extend(quote! { ConsumeEffect::TeleportRandomly(#diameter), });
+            }
+            "minecraft:play_sound" => {
+                let sound = format_ident!(
+                    "{}",
+                    effect
+                        .sound
+                        .as_deref()
+                        .unwrap()
+                        .strip_prefix("minecraft:")
+                        .unwrap()
+                        .to_pascal_case()
+                );
+                effect_tokens.extend(quote! { ConsumeEffect::PlaySound(IdOr::Id(Sound::#sound)), });
+            }
+            "minecraft:apply_effects" => {
+                let probability = effect.probability.unwrap_or(1.);
+                if let StringOrStatusEffects::Effects(status_effect_instances) =
+                    effect.effects.as_ref().unwrap()
+                {
+                    let mut status_tokens = TokenStream::new();
+
+                    for status in status_effect_instances {
+                        let effect_id = &status.id;
+                        let amplifier = status.amplifier.unwrap_or(0);
+                        let duration = status.duration.unwrap_or(1);
+                        let ambient = status.ambient.unwrap_or(false);
+                        let show_particles = status.show_particles.unwrap_or(true);
+                        let show_icon = status.show_icon.unwrap_or(true);
+                        status_tokens.extend(quote! {
+                            StatusEffectInstance {
+                                effect_id: Cow::Borrowed(#effect_id),
+                                amplifier: #amplifier,
+                                duration: #duration,
+                                ambient: #ambient,
+                                show_particles: #show_particles,
+                                show_icon: #show_icon
+                            },
+                        });
+                    }
+                    effect_tokens.extend(quote! {
+                        ConsumeEffect::ApplyEffects((Cow::Borrowed(&[#status_tokens]), #probability)),
+                    });
+                }
+            }
+            "minecraft:remove_effects" => {
+                if let StringOrStatusEffects::String(id) = effect.effects.as_ref().unwrap() {
+                    let effect_id = format_ident!(
+                        "{}",
+                        id.strip_prefix("minecraft:")
+                            .unwrap()
+                            .to_pascal_case()
+                            .to_uppercase()
+                    );
+
+                    effect_tokens.extend(quote! {
+                        ConsumeEffect::RemoveEffects(IDSet::IDs(Cow::Borrowed(&[&StatusEffect::#effect_id]))),
+                    });
+                }
+            }
+            _ => println!("Unknown CustomEffect type: {}", effect.r#type),
+        }
+    }
+    effect_tokens
+}
+
 fn float_literal(value: f32) -> LitFloat {
     LitFloat::new(&format!("{value:?}f32"), Span::call_site())
 }
@@ -1531,9 +1609,62 @@ fn kinetic_condition_tokens(condition: Option<&KineticConditionComponent>) -> To
     )
 }
 
+/// Deserialized attack-blocking component (e.g., shield).
 #[derive(Deserialize, Clone)]
 pub struct BlocksAttacks {
-    // TODO
+    #[serde(default)]
+    block_delay_seconds: f32,
+    #[serde(default = "return_1f32")]
+    disable_cooldown_scale: f32,
+    damage_reductions: Option<Vec<DamageReduction>>,
+    item_damage: Option<ItemDamageFunction>,
+    bypassed_by: Option<StringOrList>,
+    block_sound: Option<String>,
+    disabled_sound: Option<String>,
+}
+
+#[derive(Deserialize, Clone)]
+pub struct DamageReduction {
+    #[serde(default = "default_horizontal_blocking_angle")]
+    horizontal_blocking_angle: f32,
+    r#type: Option<StringOrList>,
+    base: f32,
+    factor: f32,
+}
+
+const fn default_horizontal_blocking_angle() -> f32 {
+    90.0
+}
+
+#[derive(Deserialize, Clone)]
+pub struct ItemDamageFunction {
+    threshold: f32,
+    base: f32,
+    factor: f32,
+}
+
+/// Generates an `Option<DamageTypeSet>` from a damage type holder set (`#tag`, id or id list).
+fn optional_damage_type_set_tokens(set: Option<&StringOrList>) -> TokenStream {
+    let damage_type_tokens = |name: &str| {
+        let name = name.strip_prefix("minecraft:").unwrap_or(name);
+        let ident = format_ident!("{}", name.to_shouty_snake_case());
+        quote! { crate::damage::DamageType::#ident }
+    };
+    match set {
+        None => quote! { None },
+        Some(StringOrList::String(name)) => {
+            if let Some(tag) = name.strip_prefix('#') {
+                quote! { Some(DamageTypeSet::Tag(Cow::Borrowed(#tag))) }
+            } else {
+                let damage_type = damage_type_tokens(name);
+                quote! { Some(DamageTypeSet::Direct(Cow::Borrowed(&[#damage_type]))) }
+            }
+        }
+        Some(StringOrList::List(names)) => {
+            let damage_types = names.iter().map(|name| damage_type_tokens(name));
+            quote! { Some(DamageTypeSet::Direct(Cow::Borrowed(&[#(#damage_types),*]))) }
+        }
+    }
 }
 
 /// Deserialized damage-resistance component indicating which damage types the item resists.
