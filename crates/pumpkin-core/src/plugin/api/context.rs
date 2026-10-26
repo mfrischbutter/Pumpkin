@@ -12,7 +12,7 @@ use crate::{
     plugin_log,
 };
 use arc_swap::ArcSwap;
-use pumpkin_data::BlockStateId;
+use pumpkin_data::{Block, BlockStateId};
 use pumpkin_util::{
     PermissionLvl,
     permission::{Permission, PermissionManager},
@@ -259,6 +259,13 @@ impl Context {
     pub fn watch_block_states(&self, states: Box<[BlockStateId]>) {
         let hooks = &self.server.block_registry.plugin_hooks;
         hooks.set(&self.metadata.name, BlockStateHook::ShapeUpdate, states);
+    }
+
+    /// Fires `BlockScheduledTickEvent` before each scheduled tick of `block` runs.
+    pub fn register_scheduled_tick_hook(&self, block: &Block) {
+        let states = block.states.iter().map(|state| state.id);
+        let hooks = &self.server.block_registry.plugin_hooks;
+        hooks.add(&self.metadata.name, BlockStateHook::ScheduledTick, states);
     }
 
     pub(crate) fn unregister_block_hooks(&self) {
