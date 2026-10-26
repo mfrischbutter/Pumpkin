@@ -184,6 +184,7 @@ interface server {
         get-all-worlds: func() -> list<%world>;
 
         /// Gets a world by its dimension name (e.g., "minecraft:overworld") or custom world name (e.g., "world", "arena_1").
+        /// A level name matches each of its dimensions; the first loaded match is returned.
         get-world-by-name: func(name: string) -> option<%world>;
 
         /// Checks if a world exists by name or dimension.
