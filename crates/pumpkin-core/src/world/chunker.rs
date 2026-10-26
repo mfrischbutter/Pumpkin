@@ -82,6 +82,12 @@ pub fn update_position(player: &Arc<Player>) {
     let loading_chunks: Vec<_> = loading_iter.collect();
     let unloading_chunks: Vec<_> = unloading_iter.collect();
 
+    // The old tickets go below, and the chunk system drops a chunk that is not dirty without
+    // saving it, so write the live block entities back first.
+    for pos in &unloading_chunks {
+        world.save_block_entities(*pos);
+    }
+
     let level = &world.level;
     let mut held_tickets = player
         .held_chunk_tickets
