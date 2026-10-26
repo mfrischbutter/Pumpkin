@@ -1,9 +1,11 @@
 use pumpkin_data::block_properties::NoteblockInstrument as InternalNoteblockInstrument;
 use pumpkin_data::block_state::PistonBehavior;
 use pumpkin_data::{BlockDirection as InternalBlockDirection, BlockId, BlockStateId};
+use pumpkin_protocol::java::client::play::ParticleOptions;
 use pumpkin_util::math::position::BlockPos;
 use pumpkin_world::chunk::ChunkHeightmapType;
 use pumpkin_world::chunk::io::Dirtiable;
+use pumpkin_world::tick::TickPriority;
 use pumpkin_world::world::BlockFlags;
 use std::sync::{Arc, Mutex as StdMutex};
 use wasmtime::component::{Access, HasSelf, Resource};
@@ -180,6 +182,45 @@ async fn load_chunk_held(
         loading.send_change();
     });
     chunk
+}
+
+/// Converts plugin particle data to the options vanilla reads for `particle`.
+///
+/// Returns `None` if the data does not fit the particle, since clients cannot decode that.
+pub(crate) async fn to_particle_options(
+    host: &mut PluginHostState,
+    particle: pumpkin::plugin::particles::Particle,
+    data: pumpkin::plugin::world::ParticleData,
+) -> wasmtime::Result<Option<ParticleOptions>> {
+    use pumpkin::plugin::world::ParticleData;
+
+    let id = particle as u16;
+    let particle = pumpkin_data::particle::Particle::from_id(id)
+        .ok_or_else(|| wasmtime::Error::msg(format!("Unknown particle ID: {id}")))?;
+    let options = match data {
+        ParticleData::BlockState(state) => {
+            let Some(state) = BlockStateId::new(state) else {
+                return Ok(None);
+            };
+            ParticleOptions::Block { particle, state }
+        }
+        ParticleData::Item(item) => ParticleOptions::Item(host.take(item)?.lock().await.clone()),
+        ParticleData::Dust(dust) => ParticleOptions::Dust {
+            color: dust.color as i32,
+            scale: dust.scale,
+        },
+        ParticleData::DustColorTransition(dust) => ParticleOptions::DustColorTransition {
+            from_color: dust.from_color as i32,
+            to_color: dust.to_color as i32,
+            scale: dust.scale,
+        },
+        ParticleData::Color(color) => ParticleOptions::Color {
+            particle,
+            color: color as i32,
+        },
+        ParticleData::Raw(data) => ParticleOptions::Raw { particle, data },
+    };
+    Ok((options.particle() == particle && options.is_valid()).then_some(options))
 }
 
 async fn set_block_state_with_store(
@@ -846,6 +887,34 @@ impl pumpkin::plugin::world::HostWorld for PluginHostState {
         Ok(())
     }
 
+    async fn spawn_particle_with_data(
+        &mut self,
+        world: Resource<World>,
+        particle: pumpkin::plugin::particles::Particle,
+        pos: pumpkin::plugin::common::Position,
+        offset: pumpkin::plugin::common::Position,
+        max_speed: f32,
+        count: i32,
+        data: pumpkin::plugin::world::ParticleData,
+    ) -> wasmtime::Result<bool> {
+        let Some(options) = to_particle_options(self, particle, data).await? else {
+            return Ok(false);
+        };
+        let world_ref = self.get(&world)?;
+        world_ref.spawn_particle_with_options(
+            pumpkin_util::math::vector3::Vector3::new(pos.0, pos.1, pos.2),
+            pumpkin_util::math::vector3::Vector3::new(
+                offset.0 as f32,
+                offset.1 as f32,
+                offset.2 as f32,
+            ),
+            max_speed,
+            count,
+            &options,
+        );
+        Ok(true)
+    }
+
     fn get_sea_level(&mut self, world: Resource<World>) -> wasmtime::Result<i32> {
         Ok(self.get(&world)?.sea_level)
     }
@@ -860,6 +929,24 @@ impl pumpkin::plugin::world::HostWorld for PluginHostState {
 
     fn get_logical_height(&mut self, world: Resource<World>) -> wasmtime::Result<i32> {
         Ok(self.get(&world)?.dimension.logical_height)
+    }
+
+    fn schedule_block_tick(
+        &mut self,
+        world: Resource<World>,
+        pos: WitBlockPos,
+        block: String,
+        delay: u32,
+    ) -> wasmtime::Result<bool> {
+        let Some(block) = pumpkin_data::Block::from_name(&block) else {
+            return Ok(false);
+        };
+        // The tick scheduler keeps at most 255 ticks of delay.
+        let delay = u8::try_from(delay).unwrap_or(u8::MAX);
+        let pos = BlockPos::new(pos.x, pos.y, pos.z);
+        self.get(&world)?
+            .schedule_block_tick(block, pos, delay, TickPriority::Normal);
+        Ok(true)
     }
 
     fn get_sky_light(&mut self, world: Resource<World>, pos: WitBlockPos) -> wasmtime::Result<u8> {
@@ -943,6 +1030,42 @@ impl pumpkin::plugin::world::HostWorld for PluginHostState {
         Ok(())
     }
 
+    fn set_biome_by_name(
+        &mut self,
+        world: Resource<World>,
+        pos: WitBlockPos,
+        name: String,
+    ) -> wasmtime::Result<Result<(), String>> {
+        let world_ref = self.get(&world)?;
+        let key = name.strip_prefix("minecraft:").unwrap_or(&name);
+        let Some(biome) = pumpkin_data::biome::Biome::from_name(key) else {
+            return Ok(Err(format!("Unknown biome: {name}")));
+        };
+        let chunk_pos = pumpkin_util::math::vector2::Vector2::new(pos.x >> 4, pos.z >> 4);
+        let Some(chunk) = world_ref
+            .level
+            .loaded_chunks
+            .get(&chunk_pos)
+            .map(|c| c.value().clone())
+        else {
+            return Ok(Err(format!(
+                "Chunk {}, {} is not loaded",
+                chunk_pos.x, chunk_pos.y
+            )));
+        };
+        let (x, z) = ((pos.x & 15) as usize, (pos.z & 15) as usize);
+        if chunk
+            .section
+            .get_rough_biome_absolute_y(x, pos.y, z)
+            .is_none()
+        {
+            return Ok(Err(format!("Y {} lies outside the world's height", pos.y)));
+        }
+        chunk.section.set_biome_absolute_y(x, pos.y, z, biome.id);
+        chunk.mark_dirty(true);
+        Ok(Ok(()))
+    }
+
     fn refresh_biomes(
         &mut self,
         world: Resource<World>,
@@ -964,6 +1087,27 @@ impl pumpkin::plugin::world::HostWorld for PluginHostState {
                 &pumpkin_core::net::java::chunk_data::CChunksBiomes(&[&*chunk]),
             );
         }
+        Ok(())
+    }
+
+    fn set_client_biome(
+        &mut self,
+        world: Resource<World>,
+        pos: WitBlockPos,
+        biome: String,
+    ) -> wasmtime::Result<Result<(), String>> {
+        let world = self.get(&world)?;
+        let owner = self.name.as_deref().unwrap_or_default();
+        Ok(world.set_client_biome(&BlockPos::new(pos.x, pos.y, pos.z), &biome, owner))
+    }
+
+    fn clear_client_biome(
+        &mut self,
+        world: Resource<World>,
+        pos: WitBlockPos,
+    ) -> wasmtime::Result<()> {
+        self.get(&world)?
+            .clear_client_biome(&BlockPos::new(pos.x, pos.y, pos.z));
         Ok(())
     }
 
@@ -1228,6 +1372,10 @@ impl pumpkin::plugin::world::HostWorld for PluginHostState {
 
     fn get_name(&mut self, world: Resource<World>) -> wasmtime::Result<String> {
         Ok(self.get(&world)?.get_world_name().to_string())
+    }
+
+    fn get_seed(&mut self, world: Resource<World>) -> wasmtime::Result<u64> {
+        Ok(self.get(&world)?.level.seed.0)
     }
 
     fn set_custom_data(
@@ -1563,6 +1711,51 @@ impl pumpkin::plugin::world::HostChunk for PluginHostState {
             }
         }
         Ok(Some(states))
+    }
+
+    fn get_section_palette(
+        &mut self,
+        chunk: Resource<WitChunk>,
+        section_y: i32,
+    ) -> wasmtime::Result<Option<Vec<u16>>> {
+        let chunk_res = self.get(&chunk)?;
+        let (_, chunk_data) = &chunk_res;
+        let Some(chunk_data) = chunk_data.upgrade() else {
+            return Err(wasmtime::Error::msg("Chunk unloaded"));
+        };
+        Ok(chunk_data
+            .section
+            .section_block_states(section_y)
+            .map(|states| states.into_iter().map(BlockStateId::as_u16).collect()))
+    }
+
+    fn find_states(
+        &mut self,
+        chunk: Resource<WitChunk>,
+        states: Vec<u16>,
+    ) -> wasmtime::Result<Vec<WitBlockPos>> {
+        let chunk_res = self.get(&chunk)?;
+        let (_, chunk_data) = &chunk_res;
+        let Some(chunk_data) = chunk_data.upgrade() else {
+            return Err(wasmtime::Error::msg("Chunk unloaded"));
+        };
+        let mut wanted: Vec<BlockStateId> =
+            states.into_iter().filter_map(BlockStateId::new).collect();
+        if wanted.is_empty() {
+            return Ok(Vec::new());
+        }
+        wanted.sort_unstable();
+        wanted.dedup();
+        Ok(chunk_data
+            .section
+            .find_blocks_matching(|state| wanted.binary_search(&state).is_ok())
+            .into_iter()
+            .map(|(x, y, z)| WitBlockPos {
+                x: x as i32,
+                y,
+                z: z as i32,
+            })
+            .collect())
     }
 
     fn get_block_state(

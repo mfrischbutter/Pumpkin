@@ -402,6 +402,40 @@ interface %world {
         id: u16,
     }
 
+    /// Options of the `dust` particle.
+    record dust-options {
+        /// The color as `0xRRGGBB`.
+        color: u32,
+        /// The size, clamped by the client to 0.01 to 4.0.
+        scale: f32,
+    }
+
+    /// Options of the `dust-color-transition` particle.
+    record dust-color-transition-options {
+        /// The start color as `0xRRGGBB`.
+        from-color: u32,
+        /// The end color as `0xRRGGBB`.
+        to-color: u32,
+        /// The size, clamped by the client to 0.01 to 4.0.
+        scale: f32,
+    }
+
+    /// Data that some particles carry. Each case fits only the particles it names.
+    variant particle-data {
+        /// A block state ID, for `block`, `block-marker`, `falling-dust`, `dust-pillar` and `block-crumble`.
+        block-state(u16),
+        /// The item stack, for `item`.
+        item(item-stack),
+        /// For `dust`.
+        dust(dust-options),
+        /// For `dust-color-transition`.
+        dust-color-transition(dust-color-transition-options),
+        /// A color as `0xAARRGGBB`, for `entity-effect` and `tinted-leaves`.
+        color(u32),
+        /// The encoded payload, sent as it is. A payload the client cannot decode disconnects it.
+        raw(list<u8>),
+    }
+
     resource entity {
         get-id: func() -> u32;
         get-uuid: func() -> uuid;
@@ -886,6 +920,10 @@ interface %world {
 
         /// Spawns particles at the specified position.
         spawn-particle: func(particle: particle, pos: position, offset: position, max-speed: f32, count: s32);
+
+        /// Spawns particles that carry data, such as the block of `block` or the color of `dust`.
+        /// Returns false and sends nothing if the data does not fit the particle.
+        spawn-particle-with-data: async func(particle: particle, pos: position, offset: position, max-speed: f32, count: s32, data: particle-data) -> bool;
 
         /// Creates an explosion at the specified position.
         create-explosion: async func(pos: position, power: f32, create-fire: bool, interaction: explosion-interaction);
