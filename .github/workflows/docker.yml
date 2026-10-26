@@ -10,12 +10,12 @@ on:
     branches:
       - "master"
     tags:
-      - "anvil-*"
+      - "cubeattack-*"
   workflow_dispatch:
 
 jobs:
   docker-build-deploy:
-    if: github.repository == 'Pumpkin-MC/Pumpkin' || startsWith(github.ref, 'refs/tags/anvil-')
+    if: github.repository == 'Pumpkin-MC/Pumpkin' || startsWith(github.ref, 'refs/tags/cubeattack-')
     permissions:
       contents: read
       packages: write
@@ -66,7 +66,7 @@ jobs:
         uses: docker/build-push-action@v7
         with:
           context: .
-          file: ${{ startsWith(github.ref, 'refs/tags/anvil-') && 'Dockerfile.anvil' || 'Dockerfile' }}
+          file: ${{ startsWith(github.ref, 'refs/tags/cubeattack-') && 'Dockerfile.cubeattack' || 'Dockerfile' }}
           platforms: ${{ matrix.platform }}
           labels: ${{ steps.meta.outputs.labels }}
           tags: ${{ env.REGISTRY }}/${{ env.REGISTRY_IMAGE }}
@@ -87,7 +87,7 @@ jobs:
           retention-days: 1
 
   merge:
-    if: github.repository == 'Pumpkin-MC/Pumpkin' || startsWith(github.ref, 'refs/tags/anvil-')
+    if: github.repository == 'Pumpkin-MC/Pumpkin' || startsWith(github.ref, 'refs/tags/cubeattack-')
     permissions:
       contents: read
       packages: write
@@ -138,12 +138,12 @@ jobs:
           flavor: latest=false
           tags: |
             type=ref,event=tag
-            type=ref,event=branch,enable=${{ !startsWith(github.ref, 'refs/tags/anvil-') }}
-            type=raw,value=latest,enable=${{ !startsWith(github.ref, 'refs/tags/anvil-') }}
-            type=sha,enable=${{ !startsWith(github.ref, 'refs/tags/anvil-') }}
-            type=raw,value=mc${{ env.MC_VERSION }},enable=${{ !startsWith(github.ref, 'refs/tags/anvil-') }}
-            type=raw,value=${{ env.PUMPKIN_VERSION }},enable=${{ !startsWith(github.ref, 'refs/tags/anvil-') }}
-            type=raw,value=mc${{ env.MC_VERSION }}-${{ env.PUMPKIN_VERSION }},enable=${{ !startsWith(github.ref, 'refs/tags/anvil-') }}
+            type=ref,event=branch,enable=${{ !startsWith(github.ref, 'refs/tags/cubeattack-') }}
+            type=raw,value=latest,enable=${{ !startsWith(github.ref, 'refs/tags/cubeattack-') }}
+            type=sha,enable=${{ !startsWith(github.ref, 'refs/tags/cubeattack-') }}
+            type=raw,value=mc${{ env.MC_VERSION }},enable=${{ !startsWith(github.ref, 'refs/tags/cubeattack-') }}
+            type=raw,value=${{ env.PUMPKIN_VERSION }},enable=${{ !startsWith(github.ref, 'refs/tags/cubeattack-') }}
+            type=raw,value=mc${{ env.MC_VERSION }}-${{ env.PUMPKIN_VERSION }},enable=${{ !startsWith(github.ref, 'refs/tags/cubeattack-') }}
 
       - name: Create manifest list and push
         working-directory: ${{ runner.temp }}/digests
