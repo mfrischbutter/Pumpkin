@@ -2360,6 +2360,7 @@ impl Entity {
                 let portal_type = portal_processor.portal_type;
                 let dest_world_opt = portal_processor.destination_world.clone();
                 let src_portal = portal_processor.source_portal.clone();
+                let entry_pos = portal_processor.entry_position;
                 let entity_id = self.entity_id;
                 let yaw = self.yaw.load();
 
@@ -2380,7 +2381,32 @@ impl Entity {
                         let dest_world = transition.new_world.clone();
                         let yaw_val = transition.yaw;
                         let pitch = transition.pitch;
-                        let teleport_pos = transition.position;
+                        let mut teleport_pos = transition.position;
+
+                        if let Some(player) = world_clone.get_player_by_id(entity_id)
+                            && let Some(server) = world_clone.server.upgrade()
+                        {
+                            let to_pos = BlockPos::floored_v(teleport_pos);
+                            let mut event =
+                                crate::plugin::api::events::player::player_portal::PlayerPortalEvent::new(
+                                    player,
+                                    entry_pos,
+                                    Some(to_pos),
+                                );
+                            server.plugin_manager.fire_blocking(&server, &mut event);
+                            if event.cancelled {
+                                return;
+                            }
+                            if let Some(new_pos) = event.to_pos
+                                && new_pos != to_pos
+                            {
+                                teleport_pos = Vector3::new(
+                                    f64::from(new_pos.0.x) + 0.5,
+                                    f64::from(new_pos.0.y),
+                                    f64::from(new_pos.0.z) + 0.5,
+                                );
+                            }
+                        }
 
                         // Teleport the main entity
                         entity_arc.teleport(teleport_pos, yaw_val, pitch, dest_world.clone());
