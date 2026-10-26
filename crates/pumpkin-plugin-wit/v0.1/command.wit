@@ -23,6 +23,10 @@ interface command {
         /// Limits the node to senders for whom `handle-command` with this handler id
         /// returns a non-zero value; nodes a sender fails are left out of its command tree.
         require-with-handler-id: func(handler-id: u32);
+        /// Limits the node to senders with the permission `node` (a full node such as
+        /// `my-plugin:admin`), checked by the server without calling the plugin; nodes a
+        /// sender lacks are left out of its command tree.
+        require-permission: func(node: string);
     }
 
     record suggestion-request {

@@ -648,6 +648,17 @@ impl pumpkin::plugin::command::HostCommandNode for PluginHostState {
         Ok(())
     }
 
+    fn require_permission(
+        &mut self,
+        node: Resource<CommandNode>,
+        permission: String,
+    ) -> wasmtime::Result<()> {
+        let resource = self.get_mut(&node)?;
+        let builder = std::mem::replace(resource, WasmCommandNode::Literal(literal("")));
+        *resource = builder.requires(permission);
+        Ok(())
+    }
+
     fn drop(&mut self, rep: Resource<CommandNode>) -> wasmtime::Result<()> {
         self.drop(rep)
     }
