@@ -50,6 +50,10 @@ interface context {
         /// Registers a permission node with the server.
         register-permission: func(permission: permission) -> result<_, string>;
 
+        /// Limits this plugin's `packet-sent-event` handlers to packets with these ids, so other
+        /// packets are not copied into the plugin. An empty list removes the limit (the default).
+        set-packet-sent-filter: func(ids: list<s32>);
+
         /// Returns the path to the plugin's private data folder.
         get-data-folder: func() -> string;
 

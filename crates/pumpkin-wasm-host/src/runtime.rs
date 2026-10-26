@@ -231,6 +231,7 @@ impl PluginRuntime {
             api_version,
             store,
             task_scheduler: Arc::clone(&self.task_scheduler),
+            packet_sent_filter: std::sync::RwLock::default(),
         });
         let weak_plugin = Arc::downgrade(&wasm_plugin);
         wasm_plugin
