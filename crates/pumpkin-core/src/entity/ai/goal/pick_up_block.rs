@@ -80,6 +80,7 @@ impl Goal for PickUpBlockGoal {
         let default_state_id = block.default_state.id;
         let mut event =
             crate::plugin::api::events::entity::entity_change_block::EntityChangeBlockEvent::new(
+                world.clone(),
                 entity.entity_id,
                 target_pos,
                 "minecraft:air".to_string(),

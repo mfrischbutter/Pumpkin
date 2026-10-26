@@ -4,16 +4,20 @@ use pumpkin_util::math::position::BlockPos;
 use std::sync::Arc;
 
 use crate::entity::player::Player;
+use crate::world::World;
 
 use super::BlockEvent;
 
 /// An event that occurs when a block is placed.
 ///
-/// This event contains information about the player placing the block, the block being placed,
+/// This event contains information about the world, the player placing the block, the block being placed,
 /// the block being placed against, and whether the player can build.
 #[cancellable]
 #[derive(Event, Clone)]
 pub struct BlockPlaceEvent {
+    /// The world the block is placed in.
+    pub world: Arc<World>,
+
     /// The player placing the block.
     pub player: Arc<Player>,
 
@@ -33,6 +37,7 @@ pub struct BlockPlaceEvent {
 impl BlockPlaceEvent {
     #[must_use]
     pub const fn new(
+        world: Arc<World>,
         player: Arc<Player>,
         block_placed: &'static Block,
         block_placed_against: &'static Block,
@@ -40,6 +45,7 @@ impl BlockPlaceEvent {
         can_build: bool,
     ) -> Self {
         Self {
+            world,
             player,
             block_placed,
             block_placed_against,

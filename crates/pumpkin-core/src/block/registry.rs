@@ -850,6 +850,7 @@ impl BlockRegistry {
         }
 
         let mut event = crate::plugin::block::block_place::BlockPlaceEvent::new(
+            world.clone(),
             player.clone(),
             placed_block,
             clicked_block,

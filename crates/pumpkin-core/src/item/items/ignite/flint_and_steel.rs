@@ -41,6 +41,7 @@ impl ItemBehaviour for FlintAndSteelItem {
         if let Some(server_ref) = server_ref {
             let player_arc = world.get_player_by_uuid(player.gameprofile.id);
             let mut event = crate::plugin::api::events::block::block_ignite::BlockIgniteEvent::new(
+                world.clone(),
                 location,
                 &pumpkin_data::Block::FIRE,
                 player_arc,

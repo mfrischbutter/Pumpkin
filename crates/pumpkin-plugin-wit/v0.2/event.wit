@@ -242,6 +242,7 @@ interface event {
         block-pos: block-pos,
         exp: u32,
         should-drop: bool,
+        target-world: %world,
         cancelled: bool
     }
 
@@ -277,6 +278,7 @@ interface event {
         block-placed-against: string,
         block-pos: block-pos,
         can-build: bool,
+        target-world: %world,
         cancelled: bool
     }
 
@@ -572,6 +574,7 @@ interface event {
         entity-id: s32,
         block-pos: block-pos,
         new-block: string,
+        target-world: %world,
         cancelled: bool
     }
 
@@ -1279,6 +1282,7 @@ interface event {
 
     record block-ignite-event-data {
         block-pos: block-pos,
+        target-world: %world,
         cancelled: bool
     }
 
@@ -1314,18 +1318,21 @@ interface event {
     record block-physics-event-data {
         block-pos: block-pos,
         changed-pos: block-pos,
+        target-world: %world,
         cancelled: bool
     }
 
     record block-piston-extend-event-data {
         block-pos: block-pos,
         direction: string,
+        target-world: %world,
         cancelled: bool
     }
 
     record block-piston-retract-event-data {
         block-pos: block-pos,
         direction: string,
+        target-world: %world,
         cancelled: bool
     }
 
@@ -1351,6 +1358,7 @@ interface event {
     record tnt-prime-event-data {
         block-pos: block-pos,
         prime-reason: string,
+        target-world: %world,
         cancelled: bool
     }
 

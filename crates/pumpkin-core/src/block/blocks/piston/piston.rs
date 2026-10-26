@@ -159,6 +159,7 @@ impl PistonBlock {
         if r#type == 0 {
             let mut event =
                 crate::plugin::api::events::block::block_piston::BlockPistonExtendEvent::new(
+                    world.clone(),
                     *pos,
                     format!("{dir:?}"),
                 );
@@ -193,6 +194,7 @@ impl PistonBlock {
 
         let mut event =
             crate::plugin::api::events::block::block_piston::BlockPistonRetractEvent::new(
+                world.clone(),
                 *pos,
                 format!("{dir:?}"),
             );
