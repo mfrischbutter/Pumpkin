@@ -8,6 +8,7 @@ use crate::{
         from_wasm_block_name, from_wasm_block_position, from_wasm_hand, to_wasm_block_name,
         to_wasm_block_position, to_wasm_hand,
     },
+    mob::{from_wit_block_direction, to_wit_block_direction},
     pumpkin::plugin::event::{
         BellResonateEventData, BellRingEventData, BlockBreakEventData, BlockBrushEventData,
         BlockBurnEventData, BlockCanBuildEventData, BlockCookEventData, BlockDamageAbortEventData,
@@ -17,11 +18,12 @@ use crate::{
         BlockFromToEventData, BlockGrowEventData, BlockIgniteEventData, BlockMultiPlaceEventData,
         BlockPhysicsEventData, BlockPistonExtendEventData, BlockPistonRetractEventData,
         BlockPlaceEventData, BlockReceiveGameEventData, BlockRedstoneEventData,
-        BlockShearEntityEventData, BlockSpreadEventData, BrewingStartEventData,
-        CampfireStartEventData, CauldronLevelChangeEventData, CrafterCraftEventData,
-        EntityBlockFormEventData, Event, FluidLevelChangeEventData, InventoryBlockStartEventData,
-        LeavesDecayEventData, MoistureChangeEventData, NotePlayEventData, SculkBloomEventData,
-        SignChangeEventData, SpongeAbsorbEventData, TntPrimeEventData, VaultDisplayItemEventData,
+        BlockShapeUpdateEventData, BlockShearEntityEventData, BlockSpreadEventData,
+        BrewingStartEventData, CampfireStartEventData, CauldronLevelChangeEventData,
+        CrafterCraftEventData, EntityBlockFormEventData, Event, FluidLevelChangeEventData,
+        InventoryBlockStartEventData, LeavesDecayEventData, MoistureChangeEventData,
+        NotePlayEventData, SculkBloomEventData, SignChangeEventData, SpongeAbsorbEventData,
+        TntPrimeEventData, VaultDisplayItemEventData,
     },
 };
 use pumpkin_core::plugin::block::{
@@ -52,6 +54,7 @@ use pumpkin_core::plugin::block::{
     block_place::BlockPlaceEvent,
     block_receive_game::BlockReceiveGameEvent,
     block_redstone::BlockRedstoneEvent,
+    block_shape_update::BlockShapeUpdateEvent,
     block_shear_entity::BlockShearEntityEvent,
     block_spread::BlockSpreadEvent,
     brewing_start::BrewingStartEvent,
@@ -1519,6 +1522,49 @@ impl ToFromWasmEvent for VaultDisplayItemEvent {
             Event::VaultDisplayItemEvent(_) => {
                 panic!("Cannot construct VaultDisplayItemEvent from WASM")
             }
+            _ => panic!("unexpected event type"),
+        }
+    }
+}
+
+impl ToFromWasmEvent for BlockShapeUpdateEvent {
+    fn to_wasm_event(&self, state: &mut PluginHostState) -> Event {
+        let target_world = state
+            .add(self.world.clone())
+            .expect("failed to add world resource");
+        Event::BlockShapeUpdateEvent(BlockShapeUpdateEventData {
+            target_world,
+            block_pos: to_wasm_block_position(self.block_pos),
+            old_state_id: self.old_state_id.as_u16(),
+            new_state_id: self.new_state_id.as_u16(),
+            direction: to_wit_block_direction(self.direction),
+            neighbor_pos: to_wasm_block_position(self.neighbor_pos),
+            cancelled: self.cancelled,
+        })
+    }
+
+    fn apply_wasm_event(&mut self, event: Event, state: &mut PluginHostState) {
+        cleanup_event(&event, state);
+        if let Event::BlockShapeUpdateEvent(data) = event {
+            // An id that is no block state keeps the vanilla result instead of turning into air.
+            if let Some(new_state_id) = BlockStateId::new(data.new_state_id) {
+                self.new_state_id = new_state_id;
+            }
+            self.cancelled = data.cancelled;
+        }
+    }
+
+    fn from_wasm_event(event: Event, state: &mut PluginHostState) -> Self {
+        match event {
+            Event::BlockShapeUpdateEvent(data) => Self {
+                world: consume_world(state, &data.target_world),
+                block_pos: from_wasm_block_position(data.block_pos),
+                old_state_id: BlockStateId::new_or_air(data.old_state_id),
+                new_state_id: BlockStateId::new_or_air(data.new_state_id),
+                direction: from_wit_block_direction(data.direction),
+                neighbor_pos: from_wasm_block_position(data.neighbor_pos),
+                cancelled: data.cancelled,
+            },
             _ => panic!("unexpected event type"),
         }
     }

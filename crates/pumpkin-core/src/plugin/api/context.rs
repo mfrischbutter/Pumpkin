@@ -5,10 +5,14 @@ use std::{
 };
 
 use crate::{
-    LoggerOption, command::client_suggestions, net::ClientPlatform, plugin::PluginMetadata,
+    LoggerOption,
+    command::client_suggestions,
+    net::ClientPlatform,
+    plugin::{PluginMetadata, block_hooks::BlockStateHook},
     plugin_log,
 };
 use arc_swap::ArcSwap;
+use pumpkin_data::BlockStateId;
 use pumpkin_util::{
     PermissionLvl,
     permission::{Permission, PermissionManager},
@@ -247,6 +251,21 @@ impl Context {
         });
 
         self.reload_commands_for_everyone();
+    }
+
+    /// Fires `BlockShapeUpdateEvent` for shape updates that would change one of `states`.
+    ///
+    /// Replaces the states this plugin watched before; an empty slice stops watching.
+    pub fn watch_block_states(&self, states: Box<[BlockStateId]>) {
+        let hooks = &self.server.block_registry.plugin_hooks;
+        hooks.set(&self.metadata.name, BlockStateHook::ShapeUpdate, states);
+    }
+
+    pub(crate) fn unregister_block_hooks(&self) {
+        self.server
+            .block_registry
+            .plugin_hooks
+            .remove_plugin(&self.metadata.name);
     }
 
     /// Reloads (resends) all commands for all currently online players.

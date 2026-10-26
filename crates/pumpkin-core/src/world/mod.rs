@@ -54,7 +54,8 @@ use crate::{
     error::PumpkinError,
     net::{ClientPlatform, bedrock::BedrockClient, java::JavaClient},
     plugin::{
-        block::block_break::BlockBreakEvent,
+        block::{block_break::BlockBreakEvent, block_shape_update::BlockShapeUpdateEvent},
+        block_hooks::BlockStateHook,
         player::{
             player_change_world::PlayerChangeWorldEvent, player_join::PlayerJoinEvent,
             player_leave::PlayerLeaveEvent, player_respawn::PlayerRespawnEvent,
@@ -6647,12 +6648,59 @@ impl World {
         );
 
         if new_state_id != block_state_id {
+            let Some(new_state_id) = self.fire_block_shape_update(
+                block_pos,
+                block_state_id,
+                new_state_id,
+                direction,
+                neighbor_pos,
+            ) else {
+                return;
+            };
             if is_air(new_state_id) {
                 self.break_block(block_pos, None, flags | BlockFlags::NOTIFY_ALL);
             } else {
                 self.set_block_state(block_pos, new_state_id, flags);
             }
         }
+    }
+
+    /// Lets plugins cancel or replace a shape update of a watched state. Returns the state to
+    /// set, or `None` to keep the current one.
+    fn fire_block_shape_update(
+        self: &Arc<Self>,
+        block_pos: &BlockPos,
+        old_state_id: BlockStateId,
+        new_state_id: BlockStateId,
+        direction: BlockDirection,
+        neighbor_pos: &BlockPos,
+    ) -> Option<BlockStateId> {
+        if !self
+            .block_registry
+            .plugin_hooks
+            .contains(BlockStateHook::ShapeUpdate, old_state_id)
+        {
+            return Some(new_state_id);
+        }
+        let Some(server) = self.server.upgrade() else {
+            return Some(new_state_id);
+        };
+        if !server
+            .plugin_manager
+            .has_handlers::<BlockShapeUpdateEvent>()
+        {
+            return Some(new_state_id);
+        }
+        let mut event = BlockShapeUpdateEvent::new(
+            self.clone(),
+            *block_pos,
+            old_state_id,
+            new_state_id,
+            direction,
+            *neighbor_pos,
+        );
+        server.plugin_manager.fire_blocking(&server, &mut event);
+        (!event.cancelled && event.new_state_id != old_state_id).then_some(event.new_state_id)
     }
 
     /// Returns whether monsters can be spawned in the world
