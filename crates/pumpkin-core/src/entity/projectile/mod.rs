@@ -1,4 +1,5 @@
 use super::{Entity, EntityBase, living::LivingEntity};
+use crate::plugin::api::events::entity::projectile_hit::ProjectileHitEvent;
 use pumpkin_data::BlockDirection;
 use pumpkin_data::entity::EntityType;
 use pumpkin_protocol::java::client::play::CEntityVelocity;
@@ -235,6 +236,10 @@ impl ThrownItemEntity {
 
         // Handle hit or continue
         if let Some(h) = hit {
+            if !fire_projectile_hit_event(caller, &h) {
+                return;
+            }
+
             // Ensure hit is only processed once per projectile
             if self.has_hit.swap(true, Ordering::SeqCst) {
                 return;
@@ -294,6 +299,36 @@ impl ThrownItemEntity {
     const fn get_gravity(&self) -> f64 {
         self.gravity
     }
+}
+
+/// Fires [`ProjectileHitEvent`] for a projectile about to process `hit`.
+///
+/// Returns `false` when a plugin cancelled it; the caller then skips the hit and the projectile
+/// flies on.
+#[must_use]
+pub fn fire_projectile_hit_event(projectile: &dyn EntityBase, hit: &ProjectileHit) -> bool {
+    let entity = projectile.get_entity();
+    let world = entity.world.load_full();
+    let Some(server) = world.server.upgrade() else {
+        return true;
+    };
+    if !server.plugin_manager.has_handlers::<ProjectileHitEvent>() {
+        return true;
+    }
+
+    let hit_entity_id = match hit {
+        ProjectileHit::Block { .. } => None,
+        ProjectileHit::Entity { entity: target, .. } => Some(target.get_entity().entity_id),
+    };
+    let mut event = ProjectileHitEvent::new(
+        entity.entity_id,
+        hit.hit_pos(),
+        hit_entity_id,
+        projectile.get_projectile_item(),
+        world,
+    );
+    server.plugin_manager.fire_blocking(&server, &mut event);
+    !event.cancelled
 }
 
 /// Ray intersection algorithm for AABBs, returning a t value

@@ -58,6 +58,7 @@ impl ItemBehaviour for EnderPearlItem {
 
         let entity = Entity::new(world.clone(), position, &EntityType::ENDER_PEARL);
         let pearl = EnderPearlEntity::new_shot(entity, player.get_entity());
+        pearl.set_item_stack(stack.copy_with_count(1));
         pearl
             .thrown
             .set_velocity_from(pitch, yaw, ROLL, POWER, DIVERGENCE);
