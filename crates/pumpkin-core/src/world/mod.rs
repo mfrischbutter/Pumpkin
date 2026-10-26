@@ -3451,11 +3451,14 @@ impl World {
     }
 
     #[expect(clippy::too_many_lines)]
+    /// `rejoin` is set when the player comes back from a reconfiguration: the join event and the
+    /// join message are skipped, as the leave event was when it went into the configuration phase.
     pub async fn spawn_java_player(
         &self,
         base_config: &BasicConfiguration,
         player: &Arc<Player>,
         server: &Arc<Server>,
+        rejoin: bool,
     ) {
         let dimensions: Vec<ResourceLocation> = server
             .dimensions
@@ -3996,6 +3999,9 @@ impl World {
             if let Ok(data) = java_client.serialize_packet(&add_packet) {
                 java_client.send_packet_now(data).await;
             }
+        }
+        if rejoin {
+            return;
         }
         let msg_comp = TextComponent::translate_cross(
             translation::java::MULTIPLAYER_PLAYER_JOINED,

@@ -3437,6 +3437,14 @@ impl pumpkin::plugin::player::HostJavaPlayer for PluginHostState {
         Ok(())
     }
 
+    fn reconfigure(
+        &mut self,
+        player: Resource<pumpkin::plugin::player::JavaPlayer>,
+    ) -> wasmtime::Result<bool> {
+        let player = self.get(&player)?.clone();
+        Ok(player.reconfigure())
+    }
+
     fn drop(&mut self, rep: Resource<pumpkin::plugin::player::JavaPlayer>) -> wasmtime::Result<()> {
         self.drop(rep)
     }
