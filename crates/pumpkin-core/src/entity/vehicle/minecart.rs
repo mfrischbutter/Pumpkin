@@ -132,6 +132,9 @@ impl EntityBase for MinecartEntity {
         }
     }
 
+    // The minecart's own tick places its riders.
+    fn position_rider(&self, _passenger: &dyn EntityBase) {}
+
     #[allow(clippy::too_many_lines)]
     fn tick(&self, caller: &dyn EntityBase, _server: &Server) {
         self.vehicle.tick();
