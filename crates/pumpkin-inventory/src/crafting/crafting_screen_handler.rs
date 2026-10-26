@@ -16,7 +16,7 @@
 
 use std::any::Any;
 use std::sync::atomic::{AtomicU8, Ordering};
-use std::sync::{Arc, Mutex};
+use std::sync::{Arc, Mutex, Weak};
 
 use super::recipe_provider::{GenericRecipe, RecipeProvider};
 use super::recipes::{RecipeFinderScreenHandler, RecipeInputInventory};
@@ -28,14 +28,19 @@ use crate::screen_handler::{
 use crate::slot::{NormalSlot, Slot};
 
 use crate::inventory::Inventory;
-use pumpkin_data::data_component_impl::{PotDecorationsImpl, ProvidesPotteryPatternImpl};
+use pumpkin_data::data_component::DataComponent;
+use pumpkin_data::data_component_impl::{
+    DataComponentImpl, PotDecorationsImpl, ProvidesPotteryPatternImpl,
+};
 use pumpkin_data::item_stack::ItemStack;
-use pumpkin_data::recipes::{CraftingRecipeTypes, RECIPES_CRAFTING};
+use pumpkin_data::recipes::{CraftingRecipeTypes, RECIPES_CRAFTING, RecipeResultStruct};
 use pumpkin_data::screen::WindowType;
 use pumpkin_data::statistic::StatisticCategory;
 use pumpkin_data::tag;
 use pumpkin_data::tag::Taggable;
-use pumpkin_protocol::codec::recipe::{DynamicRecipe, OwnedCraftingRecipe};
+use pumpkin_protocol::codec::recipe::{
+    DynamicRecipe, OwnedCraftingRecipe, OwnedRecipeIngredient, OwnedRecipeResult,
+};
 
 /// The result slot in a crafting screen.
 pub struct ResultSlot {
@@ -47,15 +52,41 @@ pub struct ResultSlot {
     pub result: Arc<Mutex<ItemStack>>,
     /// Provider for dynamic recipes.
     pub recipe_provider: Option<Arc<dyn RecipeProvider>>,
+    /// The player using the grid, known once a sync handler is attached.
+    player: Mutex<Option<Weak<dyn InventoryPlayer>>>,
 }
 
 pub struct RecipeResult {
     pub item_id: String,
     pub count: u8,
     pub pot_decorations: Option<[u16; 4]>,
+    /// Component patch of the result, set by plugin recipes.
+    pub components: Vec<(DataComponent, Option<Box<dyn DataComponentImpl>>)>,
+    /// The id of the matched plugin or datapack recipe; built-in vanilla recipes have none.
+    pub recipe_id: Option<String>,
 }
 
 impl RecipeResult {
+    fn from_vanilla(result: &RecipeResultStruct) -> Self {
+        Self {
+            item_id: result.id.to_string(),
+            count: result.count,
+            pot_decorations: None,
+            components: Vec::new(),
+            recipe_id: None,
+        }
+    }
+
+    fn from_dynamic(recipe_id: Option<&str>, result: &OwnedRecipeResult) -> Self {
+        Self {
+            item_id: result.item_id.clone(),
+            count: result.count,
+            pot_decorations: None,
+            components: result.components.clone(),
+            recipe_id: recipe_id.map(str::to_string),
+        }
+    }
+
     #[must_use]
     pub fn to_item_stack(&self) -> ItemStack {
         let key = self
@@ -64,7 +95,7 @@ impl RecipeResult {
             .unwrap_or(&self.item_id);
         let item = pumpkin_data::item::Item::from_registry_key(key)
             .unwrap_or(&pumpkin_data::item::Item::AIR);
-        let mut stack = ItemStack::new(self.count, item);
+        let mut stack = ItemStack::new_with_component(self.count, item, self.components.clone());
         if let Some(sherds) = self.pot_decorations {
             let sherd_names = sherds
                 .into_iter()
@@ -201,11 +232,7 @@ fn recipe_matches(
                 }
             }
 
-            matched.then_some(RecipeResult {
-                item_id: result.id.to_string(),
-                count: result.count,
-                pot_decorations: None,
-            })
+            matched.then(|| RecipeResult::from_vanilla(result))
         }
         GenericRecipe::Vanilla(CraftingRecipeTypes::CraftingShapeless {
             ingredients,
@@ -229,11 +256,7 @@ fn recipe_matches(
                 }
                 return None;
             }
-            Some(RecipeResult {
-                item_id: result.id.to_string(),
-                count: result.count,
-                pot_decorations: None,
-            })
+            Some(RecipeResult::from_vanilla(result))
         }
         GenericRecipe::Vanilla(CraftingRecipeTypes::CraftingTransmute {
             input,
@@ -253,11 +276,7 @@ fn recipe_matches(
                     return None;
                 }
             }
-            Some(RecipeResult {
-                item_id: result.id.to_string(),
-                count: result.count,
-                pot_decorations: None,
-            })
+            Some(RecipeResult::from_vanilla(result))
         }
         GenericRecipe::Vanilla(CraftingRecipeTypes::CraftingDecoratedPot { .. }) => {
             if count != 4 || inventory.get_width() != 3 || inventory.get_height() != 3 {
@@ -282,9 +301,12 @@ fn recipe_matches(
                 item_id: "minecraft:decorated_pot".to_string(),
                 count: 1,
                 pot_decorations: Some(sherds),
+                components: Vec::new(),
+                recipe_id: None,
             })
         }
         GenericRecipe::Dynamic(OwnedCraftingRecipe::Shaped {
+            recipe_id,
             pattern,
             key,
             result,
@@ -324,19 +346,16 @@ fn recipe_matches(
                         matched = false;
                         break 'outer;
                     };
-                    if !ingredient.match_item(slot.item) {
+                    if !ingredient.match_stack(&slot) {
                         matched = false;
                         break 'outer;
                     }
                 }
             }
-            matched.then_some(RecipeResult {
-                item_id: result.item_id.clone(),
-                count: result.count,
-                pot_decorations: None,
-            })
+            matched.then(|| RecipeResult::from_dynamic(recipe_id.as_deref(), result))
         }
         GenericRecipe::Dynamic(OwnedCraftingRecipe::Shapeless {
+            recipe_id,
             ingredients,
             result,
             ..
@@ -344,28 +363,46 @@ fn recipe_matches(
             if count != ingredients.len() {
                 return None;
             }
-            let mut ingredient_used = vec![false; ingredients.len()];
-            'next_slot: for i in 0..inventory.size() {
-                let slot = inventory.get_stack(i);
-                if slot.is_empty() {
-                    continue 'next_slot;
-                }
-                for i in 0..ingredients.len() {
-                    if !ingredient_used[i] && ingredients[i].match_item(slot.item) {
-                        ingredient_used[i] = true;
-                        continue 'next_slot;
-                    }
-                }
-                return None;
-            }
-            Some(RecipeResult {
-                item_id: result.item_id.clone(),
-                count: result.count,
-                pot_decorations: None,
-            })
+            let stacks: Vec<ItemStack> = (0..inventory.size())
+                .map(|i| inventory.get_stack(i))
+                .filter(|stack| !stack.is_empty())
+                .collect();
+            // A greedy pick fails once a stack ingredient and a plain one accept the same item
+            // (a custom item and its base item), so assign stacks to ingredients as a matching.
+            let mut owners = vec![None; ingredients.len()];
+            let all_assigned = (0..stacks.len()).all(|slot| {
+                let mut visited = vec![false; ingredients.len()];
+                assign_ingredient(slot, &stacks, ingredients, &mut visited, &mut owners)
+            });
+            all_assigned.then(|| RecipeResult::from_dynamic(recipe_id.as_deref(), result))
         }
         _ => None,
     }
+}
+
+/// Finds an ingredient for the stack at `slot`, moving earlier stacks to other ingredients when
+/// needed (augmenting path). `owners` holds the stack index each ingredient is assigned to.
+fn assign_ingredient(
+    slot: usize,
+    stacks: &[ItemStack],
+    ingredients: &[OwnedRecipeIngredient],
+    visited: &mut [bool],
+    owners: &mut [Option<usize>],
+) -> bool {
+    for (i, ingredient) in ingredients.iter().enumerate() {
+        if visited[i] || !ingredient.match_stack(&stacks[slot]) {
+            continue;
+        }
+        visited[i] = true;
+        let current = owners[i];
+        if current
+            .is_none_or(|owner| assign_ingredient(owner, stacks, ingredients, visited, owners))
+        {
+            owners[i] = Some(slot);
+            return true;
+        }
+    }
+    false
 }
 
 #[must_use]
@@ -397,40 +434,43 @@ pub fn match_crafting_recipe(
     let input_width = bottom_x + 1 - top_x;
     let input_height = bottom_y + 1 - top_y;
 
-    for recipe in RECIPES_CRAFTING {
-        if let Some(result) = recipe_matches(
-            GenericRecipe::Vanilla(recipe),
+    let dynamic = provider.map(RecipeProvider::get_dynamic_recipes);
+    let crafting = || {
+        dynamic.iter().flatten().filter_map(|recipe| {
+            if let DynamicRecipe::Crafting(crafting) = recipe {
+                Some(crafting)
+            } else {
+                None
+            }
+        })
+    };
+    let try_match = |recipe| {
+        recipe_matches(
+            recipe,
             input_height,
             input_width,
             top_x,
             top_y,
             count,
             inventory,
-        ) {
-            return Some(result);
-        }
-    }
+        )
+    };
 
-    if let Some(provider) = provider {
-        let dynamic = provider.get_dynamic_recipes();
-        for recipe in &dynamic {
-            if let DynamicRecipe::Crafting(crafting) = recipe
-                && let Some(result) = recipe_matches(
-                    GenericRecipe::Dynamic(crafting),
-                    input_height,
-                    input_width,
-                    top_x,
-                    top_y,
-                    count,
-                    inventory,
-                )
-            {
-                return Some(result);
-            }
-        }
-    }
-
-    None
+    // Recipes that look at stack components come first, so a stack a plugin recipe claims
+    // does not craft as its plain item through a vanilla recipe.
+    crafting()
+        .filter(|recipe| recipe.has_stack_ingredients())
+        .find_map(|recipe| try_match(GenericRecipe::Dynamic(recipe)))
+        .or_else(|| {
+            RECIPES_CRAFTING
+                .iter()
+                .find_map(|recipe| try_match(GenericRecipe::Vanilla(recipe)))
+        })
+        .or_else(|| {
+            crafting()
+                .filter(|recipe| !recipe.has_stack_ingredients())
+                .find_map(|recipe| try_match(GenericRecipe::Dynamic(recipe)))
+        })
 }
 
 impl ResultSlot {
@@ -443,6 +483,7 @@ impl ResultSlot {
             id: AtomicU8::new(0),
             result: Arc::new(Mutex::new(ItemStack::EMPTY.clone())),
             recipe_provider: provider,
+            player: Mutex::new(None),
         }
     }
 
@@ -450,11 +491,22 @@ impl ResultSlot {
         match_crafting_recipe(&*self.inventory, self.recipe_provider.as_deref())
     }
 
+    // CraftingMenu.slotChangedCraftingGrid
     fn refill_output(&self) -> ItemStack {
-        let result = self.match_recipe().map_or_else(
-            || ItemStack::EMPTY.clone(),
-            |matched| matched.to_item_stack(),
-        );
+        let matched = self.match_recipe();
+        let mut result = matched
+            .as_ref()
+            .map_or_else(|| ItemStack::EMPTY.clone(), RecipeResult::to_item_stack);
+        let player = self
+            .player
+            .lock()
+            .unwrap_or_else(std::sync::PoisonError::into_inner)
+            .as_ref()
+            .and_then(Weak::upgrade);
+        if let Some(player) = player {
+            let recipe_id = matched.as_ref().and_then(|m| m.recipe_id.as_deref());
+            player.fire_prepare_item_craft_event(&*self.inventory, recipe_id, &mut result);
+        }
         *self
             .result
             .lock()
@@ -545,6 +597,16 @@ impl ScreenHandlerListener for ResultSlot {
         if (0..=(self.inventory.get_width() * self.inventory.get_height()))
             .contains(&(slot as usize))
         {
+            if let Some(player) = screen_handler
+                .sync_handler
+                .as_ref()
+                .and_then(|sync_handler| sync_handler.player())
+            {
+                self.player
+                    .lock()
+                    .unwrap_or_else(std::sync::PoisonError::into_inner)
+                    .replace(Arc::downgrade(&player));
+            }
             let result = self.refill_output();
             let next_revision = screen_handler.next_revision();
             if let Some(sync_handler) = screen_handler.sync_handler.as_ref() {

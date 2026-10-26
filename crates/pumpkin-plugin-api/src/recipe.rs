@@ -75,6 +75,8 @@
 
 use std::collections::HashMap;
 
+use crate::wit::pumpkin::plugin::data_components::DataComponent;
+use crate::wit::pumpkin::plugin::recipe::CustomDataIngredient;
 pub use crate::wit::pumpkin::plugin::recipe::{
     CookingRecipe, CookingType, Ingredient as WitIngredient, RecipeCategory, RecipeManager,
     ShapedRecipe, ShapelessRecipe,
@@ -87,6 +89,8 @@ use crate::{Context, ItemStack, Server};
 /// - A specific item ID (e.g. `"minecraft:diamond"` or `"diamond"`).
 /// - A tag representing a group of items (e.g. `"#minecraft:logs"` or `"#logs"`).
 /// - One of multiple specific items.
+/// - A stack with exactly the given item and components.
+/// - An item carrying a custom data key.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum Ingredient {
     /// A specific item by registry key (e.g., `"minecraft:diamond"`).
@@ -95,6 +99,51 @@ pub enum Ingredient {
     Tag(String),
     /// One of multiple specific items.
     OneOf(Vec<String>),
+    /// A stack with the same item and components; the count is ignored.
+    Exact(ExactStack),
+    /// An item whose custom data has `key` in `namespace`, holding the string `value` if given.
+    CustomData {
+        /// The item's registry key (e.g., `"minecraft:diamond"`).
+        item: String,
+        /// The custom data namespace.
+        namespace: String,
+        /// The key that must be present in the namespace.
+        key: String,
+        /// The string the key must hold; `None` only requires the key to be present.
+        value: Option<String>,
+    },
+}
+
+/// The item and components of a stack, as compared by [`Ingredient::Exact`].
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct ExactStack {
+    /// The item's registry key.
+    pub item: String,
+    /// The serialized components set on the stack, as returned by `ItemStack::get_components`.
+    pub components: Vec<(DataComponent, Vec<u8>)>,
+}
+
+impl ExactStack {
+    /// Copies the item and components of `stack`.
+    #[must_use]
+    pub fn of(stack: &ItemStack) -> Self {
+        Self {
+            item: stack.get_registry_key(),
+            components: stack
+                .get_components()
+                .into_iter()
+                .map(|value| (value.component, value.value))
+                .collect(),
+        }
+    }
+
+    fn to_stack(&self) -> ItemStack {
+        let stack = ItemStack::new(&self.item, 1);
+        for (component, value) in &self.components {
+            stack.set_component(*component, value);
+        }
+        stack
+    }
 }
 
 impl Ingredient {
@@ -103,13 +152,7 @@ impl Ingredient {
     /// If no namespace is provided (e.g., `"diamond"`), `"minecraft:"` is prepended.
     #[must_use]
     pub fn item(id: impl AsRef<str>) -> Self {
-        let s = id.as_ref();
-        let normalized = if s.contains(':') {
-            s.to_string()
-        } else {
-            format!("minecraft:{s}")
-        };
-        Self::Item(normalized)
+        Self::Item(namespaced(id.as_ref()))
     }
 
     /// Creates an ingredient matching a tag group of items.
@@ -157,6 +200,57 @@ impl Ingredient {
         S: AsRef<str>,
     {
         Self::one_of(items)
+    }
+
+    /// Creates an ingredient matching stacks with the same item and components as `stack`.
+    #[must_use]
+    pub fn exact(stack: &ItemStack) -> Self {
+        Self::Exact(ExactStack::of(stack))
+    }
+
+    /// Creates an ingredient matching an item whose custom data has `key` in `namespace`.
+    ///
+    /// If the item has no namespace (e.g., `"diamond"`), `"minecraft:"` is prepended.
+    #[must_use]
+    pub fn custom_data(
+        item: impl AsRef<str>,
+        namespace: impl Into<String>,
+        key: impl Into<String>,
+    ) -> Self {
+        Self::CustomData {
+            item: namespaced(item.as_ref()),
+            namespace: namespace.into(),
+            key: key.into(),
+            value: None,
+        }
+    }
+
+    /// Creates an ingredient matching an item whose custom data holds the string `value` under
+    /// `key` in `namespace` (e.g. a plugin's item id).
+    ///
+    /// If the item has no namespace (e.g., `"diamond"`), `"minecraft:"` is prepended.
+    #[must_use]
+    pub fn custom_data_value(
+        item: impl AsRef<str>,
+        namespace: impl Into<String>,
+        key: impl Into<String>,
+        value: impl Into<String>,
+    ) -> Self {
+        Self::CustomData {
+            item: namespaced(item.as_ref()),
+            namespace: namespace.into(),
+            key: key.into(),
+            value: Some(value.into()),
+        }
+    }
+}
+
+/// Prepends `minecraft:` to an id without a namespace.
+fn namespaced(id: &str) -> String {
+    if id.contains(':') {
+        id.to_string()
+    } else {
+        format!("minecraft:{id}")
     }
 }
 
@@ -224,6 +318,18 @@ impl From<Ingredient> for WitIngredient {
             Ingredient::Item(id) => Self::Item(id),
             Ingredient::Tag(tag) => Self::Tag(tag),
             Ingredient::OneOf(items) => Self::OneOf(items),
+            Ingredient::Exact(stack) => Self::Exact(stack.to_stack()),
+            Ingredient::CustomData {
+                item,
+                namespace,
+                key,
+                value,
+            } => Self::CustomData(CustomDataIngredient {
+                item,
+                namespace,
+                key,
+                value,
+            }),
         }
     }
 }
@@ -234,6 +340,13 @@ impl From<WitIngredient> for Ingredient {
             WitIngredient::Item(id) => Self::Item(id),
             WitIngredient::Tag(tag) => Self::Tag(tag),
             WitIngredient::OneOf(items) => Self::OneOf(items),
+            WitIngredient::Exact(stack) => Self::Exact(ExactStack::of(&stack)),
+            WitIngredient::CustomData(ing) => Self::CustomData {
+                item: ing.item,
+                namespace: ing.namespace,
+                key: ing.key,
+                value: ing.value,
+            },
         }
     }
 }

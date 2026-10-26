@@ -73,6 +73,15 @@ impl SyncHandler {
             .replace(player);
     }
 
+    /// Returns the attached player, if any.
+    #[must_use]
+    pub fn player(&self) -> Option<Arc<dyn InventoryPlayer>> {
+        self.player
+            .lock()
+            .unwrap_or_else(std::sync::PoisonError::into_inner)
+            .clone()
+    }
+
     /// Sends a full container content update.
     ///
     /// This sends all slots, the cursor item, and properties to the client.

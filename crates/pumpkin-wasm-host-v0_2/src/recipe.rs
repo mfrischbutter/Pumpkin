@@ -7,6 +7,7 @@ use crate::pumpkin::plugin::recipe::{
     RecipeManager as WitRecipeManager, ShapedRecipe as WitShapedRecipe,
     ShapelessRecipe as WitShapelessRecipe,
 };
+use pumpkin_data::item_stack::ItemStack;
 use pumpkin_data::recipes::RecipeCategoryTypes;
 use pumpkin_protocol::codec::recipe::{
     DynamicRecipe, OwnedCookingRecipe, OwnedCookingRecipeType, OwnedCraftingRecipe,
@@ -30,6 +31,11 @@ impl HostRecipeManagerWithStore<PluginHostState> for HasSelf<PluginHostState> {
         id: String,
         recipe: WitShapedRecipe,
     ) -> wasmtime::Result<()> {
+        let mut key = Vec::with_capacity(recipe.key.len());
+        for (symbol, ing) in recipe.key {
+            let ingredient = to_owned_ingredient(accessor, ing).await?;
+            key.push((symbol.chars().next().unwrap_or(' '), ingredient));
+        }
         let result_stack = accessor.take_res(recipe.output)?;
         let result_stack = result_stack.lock().await;
 
@@ -42,16 +48,9 @@ impl HostRecipeManagerWithStore<PluginHostState> for HasSelf<PluginHostState> {
             category,
             group: recipe.group,
             show_notification: recipe.show_notification.unwrap_or(true),
-            key: recipe
-                .key
-                .into_iter()
-                .map(|(k, ing)| (k.chars().next().unwrap_or(' '), to_owned_ingredient(ing)))
-                .collect(),
+            key,
             pattern: recipe.pattern,
-            result: OwnedRecipeResult {
-                item_id: result_stack.item.registry_key.to_string(),
-                count: result_stack.item_count,
-            },
+            result: to_owned_result(&result_stack),
         };
 
         let server = accessor.server()?;
@@ -67,6 +66,10 @@ impl HostRecipeManagerWithStore<PluginHostState> for HasSelf<PluginHostState> {
         id: String,
         recipe: WitShapelessRecipe,
     ) -> wasmtime::Result<()> {
+        let mut ingredients = Vec::with_capacity(recipe.ingredients.len());
+        for ing in recipe.ingredients {
+            ingredients.push(to_owned_ingredient(accessor, ing).await?);
+        }
         let result_stack = accessor.take_res(recipe.output)?;
         let result_stack = result_stack.lock().await;
 
@@ -78,15 +81,8 @@ impl HostRecipeManagerWithStore<PluginHostState> for HasSelf<PluginHostState> {
             recipe_id: Some(id),
             category,
             group: recipe.group,
-            ingredients: recipe
-                .ingredients
-                .into_iter()
-                .map(to_owned_ingredient)
-                .collect(),
-            result: OwnedRecipeResult {
-                item_id: result_stack.item.registry_key.to_string(),
-                count: result_stack.item_count,
-            },
+            ingredients,
+            result: to_owned_result(&result_stack),
         };
 
         let server = accessor.server()?;
@@ -103,6 +99,7 @@ impl HostRecipeManagerWithStore<PluginHostState> for HasSelf<PluginHostState> {
         station_type: WitCookingType,
         recipe: WitCookingRecipe,
     ) -> wasmtime::Result<()> {
+        let ingredient = to_owned_ingredient(accessor, recipe.ingredient).await?;
         let result_stack = accessor.take_res(recipe.output)?;
         let result_stack = result_stack.lock().await;
 
@@ -114,13 +111,10 @@ impl HostRecipeManagerWithStore<PluginHostState> for HasSelf<PluginHostState> {
             recipe_id: id,
             category,
             group: recipe.group,
-            ingredient: to_owned_ingredient(recipe.ingredient),
+            ingredient,
             cooking_time: recipe.cooking_time as i32,
             experience: recipe.experience,
-            result: OwnedRecipeResult {
-                item_id: result_stack.item.registry_key.to_string(),
-                count: result_stack.item_count,
-            },
+            result: to_owned_result(&result_stack),
         };
 
         let dynamic_recipe = match station_type {
@@ -155,12 +149,33 @@ const fn to_data_category(cat: WitRecipeCategory) -> RecipeCategoryTypes {
     }
 }
 
-fn to_owned_ingredient(ing: WitIngredient) -> OwnedRecipeIngredient {
-    match ing {
+fn to_owned_result(stack: &ItemStack) -> OwnedRecipeResult {
+    OwnedRecipeResult {
+        item_id: stack.item.registry_key.to_string(),
+        count: stack.item_count,
+        components: stack.patch.clone(),
+    }
+}
+
+/// Converts a WIT ingredient, taking the stack of an `exact` ingredient from the table.
+async fn to_owned_ingredient(
+    accessor: &Accessor<PluginHostState, HasSelf<PluginHostState>>,
+    ing: WitIngredient,
+) -> wasmtime::Result<OwnedRecipeIngredient> {
+    Ok(match ing {
         WitIngredient::Item(id) => OwnedRecipeIngredient::Simple(id),
         WitIngredient::Tag(tag) => OwnedRecipeIngredient::Tagged(tag),
         WitIngredient::OneOf(items) => OwnedRecipeIngredient::OneOf(items),
-    }
+        WitIngredient::Exact(stack) => {
+            OwnedRecipeIngredient::Exact(accessor.take_res(stack)?.lock().await.clone())
+        }
+        WitIngredient::CustomData(ing) => OwnedRecipeIngredient::CustomData {
+            item: ing.item,
+            namespace: ing.namespace,
+            key: ing.key,
+            value: ing.value,
+        },
+    })
 }
 
 #[cfg(test)]

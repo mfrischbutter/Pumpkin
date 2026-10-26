@@ -46,6 +46,16 @@ pub struct ItemStack {
     pub uid: NonZero<i32>,
 }
 
+impl std::fmt::Debug for ItemStack {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("ItemStack")
+            .field("item_count", &self.item_count)
+            .field("item", &self.item.registry_key)
+            .field("patch", &self.patch)
+            .finish_non_exhaustive()
+    }
+}
+
 // impl Hash for ItemStack {
 //     fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
 //         self.item_count.hash(state);
