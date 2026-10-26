@@ -780,5 +780,14 @@ pub fn cleanup_event(event: &Event, state: &mut PluginHostState) {
         Event::RaidStopEvent(_) => {}
         Event::RaidTriggerEvent(_) => {}
         Event::LightningStrikeEvent(_) => {}
+        Event::PlayerArmorChangeEvent(data) => {
+            cleanup_player(state, &data.player);
+            if let Some(res) = &data.old_item {
+                cleanup_item_stack(state, res);
+            }
+            if let Some(res) = &data.new_item {
+                cleanup_item_stack(state, res);
+            }
+        }
     }
 }

@@ -11,17 +11,18 @@ use crate::{
         to_wasm_position,
     },
     gui::{from_wit_screen, to_wit_screen},
+    living_entity::to_wit_equipment_slot,
     mob::{from_wit_block_direction, to_wit_block_direction},
     pumpkin::plugin::{
         event::{
             AsyncPlayerChatEventData, AsyncPlayerPreLoginEventData, BedrockFormResponseEventData,
             Event, InteractAction as WasmInteractAction, InventoryClickEventData,
             InventoryCloseEventData, PlayerAdvancementDoneEventData, PlayerAnimationEventData,
-            PlayerArmorStandManipulateEventData, PlayerBedEnterEventData, PlayerBedLeaveEventData,
-            PlayerBucketEmptyEventData, PlayerBucketEntityEventData, PlayerBucketFillEventData,
-            PlayerChangeWorldEventData, PlayerChangedMainHandEventData,
-            PlayerChangedWorldEventData, PlayerChannelEventData, PlayerChatEventData,
-            PlayerCommandPreprocessEventData, PlayerCommandSendEventData,
+            PlayerArmorChangeEventData, PlayerArmorStandManipulateEventData,
+            PlayerBedEnterEventData, PlayerBedLeaveEventData, PlayerBucketEmptyEventData,
+            PlayerBucketEntityEventData, PlayerBucketFillEventData, PlayerChangeWorldEventData,
+            PlayerChangedMainHandEventData, PlayerChangedWorldEventData, PlayerChannelEventData,
+            PlayerChatEventData, PlayerCommandPreprocessEventData, PlayerCommandSendEventData,
             PlayerCustomPayloadEventData, PlayerDropItemEventData, PlayerEditBookEventData,
             PlayerEggThrowEventData, PlayerElytraBoostEventData, PlayerExpChangeEventData,
             PlayerExpCooldownChangeEventData, PlayerFishEventData,
@@ -32,19 +33,20 @@ use crate::{
             PlayerItemBreakEventData, PlayerItemConsumeEventData, PlayerItemDamageEventData,
             PlayerItemHeldEventData, PlayerItemMendEventData, PlayerJoinEventData,
             PlayerKickEventData, PlayerLeashEntityEventData, PlayerLeaveEventData,
-            PlayerLevelChangeEventData, PlayerLinksSendEventData, PlayerLocaleChangeEventData,
-            PlayerLoginEventData, PlayerMoveEventData, PlayerNameEntityEventData,
-            PlayerOpenSignEventData, PlayerPermissionCheckEventData, PlayerPickBlockEventData,
-            PlayerPickEntityEventData, PlayerPickupArrowEventData, PlayerPortalEventData,
-            PlayerPreLoginEventData, PlayerRecipeBookClickEventData,
-            PlayerRecipeBookSettingsChangeEventData, PlayerRecipeDiscoverEventData,
-            PlayerRegisterChannelEventData, PlayerResourcePackStatusEventData,
-            PlayerRespawnEventData, PlayerRiptideEventData, PlayerShearEntityEventData,
-            PlayerShowEntityEventData, PlayerSpawnChangeEventData, PlayerSpawnLocationEventData,
-            PlayerStatisticIncrementEventData, PlayerSwapHandsEventData,
-            PlayerTakeLecternBookEventData, PlayerTeleportEventData, PlayerToggleFlightEventData,
-            PlayerToggleSneakEventData, PlayerToggleSprintEventData, PlayerUnleashEntityEventData,
-            PlayerUnregisterChannelEventData, PlayerVelocityEventData,
+            PlayerLeaveReason as WasmPlayerLeaveReason, PlayerLevelChangeEventData,
+            PlayerLinksSendEventData, PlayerLocaleChangeEventData, PlayerLoginEventData,
+            PlayerMoveEventData, PlayerNameEntityEventData, PlayerOpenSignEventData,
+            PlayerPermissionCheckEventData, PlayerPickBlockEventData, PlayerPickEntityEventData,
+            PlayerPickupArrowEventData, PlayerPortalEventData, PlayerPreLoginEventData,
+            PlayerRecipeBookClickEventData, PlayerRecipeBookSettingsChangeEventData,
+            PlayerRecipeDiscoverEventData, PlayerRegisterChannelEventData,
+            PlayerResourcePackStatusEventData, PlayerRespawnEventData, PlayerRiptideEventData,
+            PlayerShearEntityEventData, PlayerShowEntityEventData, PlayerSpawnChangeEventData,
+            PlayerSpawnLocationEventData, PlayerStatisticIncrementEventData,
+            PlayerSwapHandsEventData, PlayerTakeLecternBookEventData, PlayerTeleportEventData,
+            PlayerToggleFlightEventData, PlayerToggleSneakEventData, PlayerToggleSprintEventData,
+            PlayerUnleashEntityEventData, PlayerUnregisterChannelEventData,
+            PlayerVelocityEventData,
         },
         uuid::Uuid as WitUuid,
     },
@@ -64,6 +66,7 @@ use pumpkin_core::plugin::player::{
     item_held::PlayerItemHeldEvent,
     player_advancement_done::PlayerAdvancementDoneEvent,
     player_animation::{PlayerAnimationEvent, PlayerAnimationType},
+    player_armor_change::PlayerArmorChangeEvent,
     player_armor_stand_manipulate::PlayerArmorStandManipulateEvent,
     player_bucket_entity::PlayerBucketEntityEvent,
     player_change_world::PlayerChangeWorldEvent,
@@ -89,7 +92,7 @@ use pumpkin_core::plugin::player::{
     player_join::PlayerJoinEvent,
     player_kick::PlayerKickEvent,
     player_leash_entity::PlayerLeashEntityEvent,
-    player_leave::PlayerLeaveEvent,
+    player_leave::{PlayerLeaveEvent, PlayerLeaveReason},
     player_level_change::PlayerLevelChangeEvent,
     player_links_send::PlayerLinksSendEvent,
     player_locale_change::PlayerLocaleChangeEvent,
@@ -247,6 +250,24 @@ impl ToFromWasmEvent for PlayerJoinEvent {
     }
 }
 
+const fn to_wasm_leave_reason(reason: PlayerLeaveReason) -> WasmPlayerLeaveReason {
+    match reason {
+        PlayerLeaveReason::Disconnected => WasmPlayerLeaveReason::Disconnected,
+        PlayerLeaveReason::Kicked => WasmPlayerLeaveReason::Kicked,
+        PlayerLeaveReason::TimedOut => WasmPlayerLeaveReason::TimedOut,
+        PlayerLeaveReason::ServerStopping => WasmPlayerLeaveReason::ServerStopping,
+    }
+}
+
+const fn from_wasm_leave_reason(reason: WasmPlayerLeaveReason) -> PlayerLeaveReason {
+    match reason {
+        WasmPlayerLeaveReason::Disconnected => PlayerLeaveReason::Disconnected,
+        WasmPlayerLeaveReason::Kicked => PlayerLeaveReason::Kicked,
+        WasmPlayerLeaveReason::TimedOut => PlayerLeaveReason::TimedOut,
+        WasmPlayerLeaveReason::ServerStopping => PlayerLeaveReason::ServerStopping,
+    }
+}
+
 impl ToFromWasmEvent for PlayerLeaveEvent {
     fn to_wasm_event(&self, state: &mut PluginHostState) -> Event {
         let player = state
@@ -259,6 +280,7 @@ impl ToFromWasmEvent for PlayerLeaveEvent {
         Event::PlayerLeaveEvent(PlayerLeaveEventData {
             player,
             leave_message,
+            reason: to_wasm_leave_reason(self.reason),
             cancelled: self.cancelled,
         })
     }
@@ -268,6 +290,7 @@ impl ToFromWasmEvent for PlayerLeaveEvent {
             Event::PlayerLeaveEvent(data) => Self {
                 player: consume_player(state, &data.player),
                 leave_message: consume_text_component(state, &data.leave_message),
+                reason: from_wasm_leave_reason(data.reason),
                 cancelled: data.cancelled,
             },
             _ => panic!("unexpected event type"),
@@ -655,6 +678,16 @@ impl ToFromWasmEvent for PlayerFishEvent {
             .add(self.player.clone())
             .expect("failed to add player resource");
 
+        let caught_items = self
+            .caught_items
+            .iter()
+            .map(|i| {
+                state
+                    .add(Arc::new(Mutex::new(i.clone())))
+                    .expect("failed to add item stack resource")
+            })
+            .collect();
+
         Event::PlayerFishEvent(PlayerFishEventData {
             player,
             caught_uuid: self.caught_uuid.as_ref().map(WitUuid::to_wit),
@@ -663,6 +696,7 @@ impl ToFromWasmEvent for PlayerFishEvent {
             state: to_wasm_fish_state(self.state),
             hand: to_wasm_hand(self.hand),
             exp_to_drop: self.exp_to_drop,
+            caught_items,
             cancelled: self.cancelled,
         })
     }
@@ -677,6 +711,11 @@ impl ToFromWasmEvent for PlayerFishEvent {
                 state: from_wasm_fish_state(data.state),
                 hand: from_wasm_hand(data.hand),
                 exp_to_drop: data.exp_to_drop,
+                caught_items: data
+                    .caught_items
+                    .iter()
+                    .map(|stack| consume_item_stack(state, stack))
+                    .collect(),
                 cancelled: data.cancelled,
             },
             _ => panic!("unexpected event type"),
@@ -1102,10 +1141,22 @@ impl ToFromWasmEvent
             .add(self.player.clone())
             .expect("failed to add player resource");
 
+        let item = state
+            .add(Arc::new(Mutex::new(self.item.clone())))
+            .expect("failed to add item stack resource");
+        let result = self.result.as_ref().map(|stack| {
+            state
+                .add(Arc::new(Mutex::new(stack.clone())))
+                .expect("failed to add item stack resource")
+        });
+
         Event::PlayerBucketEmptyEvent(PlayerBucketEmptyEventData {
             player,
             block_pos: to_wasm_block_position(self.block_pos),
             bucket: self.bucket.clone(),
+            hand: to_wasm_hand(self.hand),
+            item,
+            result,
             cancelled: self.cancelled,
         })
     }
@@ -1116,6 +1167,9 @@ impl ToFromWasmEvent
                 player: consume_player(state, &data.player),
                 block_pos: from_wasm_block_position(data.block_pos),
                 bucket: data.bucket,
+                hand: from_wasm_hand(data.hand),
+                item: consume_item_stack(state, &data.item),
+                result: data.result.map(|stack| consume_item_stack(state, &stack)),
                 cancelled: data.cancelled,
             },
             _ => panic!("unexpected event type"),
@@ -1131,10 +1185,22 @@ impl ToFromWasmEvent
             .add(self.player.clone())
             .expect("failed to add player resource");
 
+        let item = state
+            .add(Arc::new(Mutex::new(self.item.clone())))
+            .expect("failed to add item stack resource");
+        let result = self.result.as_ref().map(|stack| {
+            state
+                .add(Arc::new(Mutex::new(stack.clone())))
+                .expect("failed to add item stack resource")
+        });
+
         Event::PlayerBucketFillEvent(PlayerBucketFillEventData {
             player,
             block_pos: to_wasm_block_position(self.block_pos),
             bucket: self.bucket.clone(),
+            hand: to_wasm_hand(self.hand),
+            item,
+            result,
             cancelled: self.cancelled,
         })
     }
@@ -1145,6 +1211,9 @@ impl ToFromWasmEvent
                 player: consume_player(state, &data.player),
                 block_pos: from_wasm_block_position(data.block_pos),
                 bucket: data.bucket,
+                hand: from_wasm_hand(data.hand),
+                item: consume_item_stack(state, &data.item),
+                result: data.result.map(|stack| consume_item_stack(state, &stack)),
                 cancelled: data.cancelled,
             },
             _ => panic!("unexpected event type"),
@@ -1263,6 +1332,43 @@ impl ToFromWasmEvent for PlayerAdvancementDoneEvent {
                 advancement_id: data.advancement_id,
                 cancelled: data.cancelled,
             },
+            _ => panic!("unexpected event type"),
+        }
+    }
+}
+
+impl ToFromWasmEvent for PlayerArmorChangeEvent {
+    fn to_wasm_event(&self, state: &mut PluginHostState) -> Event {
+        let player = state
+            .add(self.player.clone())
+            .expect("failed to add player resource");
+        let old_item = (!self.old_item.is_empty()).then(|| {
+            state
+                .add(Arc::new(Mutex::new(self.old_item.clone())))
+                .expect("failed to add item stack resource")
+        });
+        let new_item = (!self.new_item.is_empty()).then(|| {
+            state
+                .add(Arc::new(Mutex::new(self.new_item.clone())))
+                .expect("failed to add item stack resource")
+        });
+        Event::PlayerArmorChangeEvent(PlayerArmorChangeEventData {
+            player,
+            slot: to_wit_equipment_slot(&self.slot),
+            old_item,
+            new_item,
+        })
+    }
+
+    fn apply_wasm_event(&mut self, event: Event, state: &mut PluginHostState) {
+        cleanup_event(&event, state);
+    }
+
+    fn from_wasm_event(event: Event, _state: &mut PluginHostState) -> Self {
+        match event {
+            Event::PlayerArmorChangeEvent(_) => {
+                panic!("Cannot construct PlayerArmorChangeEvent from WASM")
+            }
             _ => panic!("unexpected event type"),
         }
     }

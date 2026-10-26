@@ -305,6 +305,7 @@ use crate::net::{ClientPlatform, GameProfile};
 use crate::net::{DisconnectReason, PlayerConfig};
 use crate::plugin::player::exp_change::PlayerExpChangeEvent;
 use crate::plugin::player::inventory_interact::InventoryClickEvent;
+use crate::plugin::player::player_armor_change::PlayerArmorChangeEvent;
 use crate::plugin::player::player_change_world::PlayerChangeWorldEvent;
 use crate::plugin::player::player_gamemode_change::PlayerGamemodeChangeEvent;
 use crate::plugin::player::player_permission_check::PlayerPermissionCheckEvent;
@@ -405,6 +406,14 @@ pub enum SpamType {
 
 /// Center chunk and levels of the view and simulation tickets a player holds.
 pub type HeldChunkTickets = (Vector2<i32>, Option<i8>, Option<i8>);
+
+/// The slots watched for [`PlayerArmorChangeEvent`], in vanilla's `EquipmentSlot` order.
+const ARMOR_SLOTS: [EquipmentSlot; 4] = [
+    EquipmentSlot::FEET,
+    EquipmentSlot::LEGS,
+    EquipmentSlot::CHEST,
+    EquipmentSlot::HEAD,
+];
 
 #[repr(C)]
 pub struct Player {
@@ -552,6 +561,8 @@ pub struct Player {
     pub post_effects: std::sync::Mutex<Vec<String>>,
     /// Inbound packets waiting to be processed during player tick.
     pub inbound_packets: SegQueue<RawPacket>,
+    /// The armor stacks seen by the last armor change check, in [`ARMOR_SLOTS`] order.
+    last_armor: std::sync::Mutex<[ItemStack; 4]>,
 }
 
 use base64::prelude::*;
@@ -859,6 +870,7 @@ impl Player {
             spawn_extra_particles_on_fall: AtomicBool::new(false),
             post_effects: std::sync::Mutex::new(Vec::new()),
             inbound_packets: SegQueue::new(),
+            last_armor: std::sync::Mutex::new(std::array::from_fn(|_| ItemStack::EMPTY.clone())),
         }
     }
 
@@ -3034,6 +3046,7 @@ impl Player {
         self.last_attacked_ticks.fetch_add(1, Ordering::Relaxed);
 
         self.living_entity.tick(self, server);
+        self.detect_armor_changes();
 
         self.breath_manager.tick(self);
 
@@ -3100,6 +3113,55 @@ impl Player {
                     ),
                 );
             }
+        }
+    }
+
+    /// Fires a [`PlayerArmorChangeEvent`] for every armor slot whose stack changed since the last
+    /// tick, like vanilla's `LivingEntity.detectEquipmentUpdates`.
+    fn detect_armor_changes(&self) {
+        let changes: Vec<(EquipmentSlot, ItemStack, ItemStack)> = {
+            let equipment = self
+                .living_entity
+                .entity_equipment
+                .lock()
+                .unwrap_or_else(std::sync::PoisonError::into_inner);
+            let mut last_armor = self
+                .last_armor
+                .lock()
+                .unwrap_or_else(std::sync::PoisonError::into_inner);
+            ARMOR_SLOTS
+                .iter()
+                .zip(last_armor.iter_mut())
+                .filter_map(|(slot, last)| {
+                    let current = equipment.equipment.get(slot).unwrap_or(ItemStack::EMPTY);
+                    if (last.is_empty() && current.is_empty()) || last.are_equal(current) {
+                        return None;
+                    }
+                    let old = std::mem::replace(last, current.clone());
+                    Some((slot.clone(), old, current.clone()))
+                })
+                .collect()
+        };
+        if changes.is_empty() {
+            return;
+        }
+
+        let world = self.world();
+        let Some(server) = world.server.upgrade() else {
+            return;
+        };
+        if !server
+            .plugin_manager
+            .has_handlers::<PlayerArmorChangeEvent>()
+        {
+            return;
+        }
+        let Some(player) = world.get_player_by_uuid(self.gameprofile.id) else {
+            return;
+        };
+        for (slot, old_item, new_item) in changes {
+            let mut event = PlayerArmorChangeEvent::new(player.clone(), slot, old_item, new_item);
+            server.plugin_manager.fire_blocking(&server, &mut event);
         }
     }
 
