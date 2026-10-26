@@ -4,6 +4,8 @@ interface context {
     use event.{event-type, event-priority};
     use command.{command};
     use permission.{permission};
+    use common.{nbt-tree};
+    use text.{text-component};
 
     /// Verified marketplace metadata for signed plugins.
     record marketplace-metadata {
@@ -29,6 +31,24 @@ interface context {
         issued-at: string,
     }
 
+    /// How a biome registered with `register-biome` looks. Colors are RGB, `0xRRGGBB`; a color
+    /// left out keeps the base biome's.
+    record biome-effects {
+        /// The color of water.
+        water-color: u32,
+        /// The color of the fog seen under water.
+        water-fog-color: u32,
+        /// The color of grass. Setting it also drops the base biome's grass color modifier
+        /// (swamp, dark forest).
+        grass-color: option<u32>,
+        /// The color of leaves and vines.
+        foliage-color: option<u32>,
+        /// The color of the sky.
+        sky-color: option<u32>,
+        /// The color of the fog in the distance.
+        fog-color: option<u32>,
+    }
+
     /// A contextual handle for plugin-related operations.
     resource context {
         /// Registers a handler for a specific event.
@@ -51,6 +71,47 @@ interface context {
         /// Limits this plugin's `packet-sent-event` handlers to packets with these ids, so other
         /// packets are not copied into the plugin. An empty list removes the limit (the default).
         set-packet-sent-filter: func(ids: list<s32>);
+        /// Registers a loot table from its JSON definition, in the format of a datapack's
+        /// `data/<namespace>/loot_table/<path>.json`. It replaces a vanilla table with the same id,
+        /// while a datapack table with the same id still wins. The table stays registered across
+        /// `/reload` until the plugin unloads.
+        register-loot-table: func(id: string, json: string) -> result<_, string>;
+        /// Adds an entry to a synced registry, such as `minecraft:chat_type` or
+        /// `minecraft:wolf_variant`.
+        ///
+        /// * `registry`: The registry id; `minecraft:` may be left out.
+        /// * `id`: The namespaced entry id. The `minecraft` namespace is refused.
+        /// * `data`: The entry as an NBT compound, in the form a datapack defines it.
+        ///
+        /// Players receive the entry from their next configuration on, so register entries
+        /// while the plugin loads. The entry is removed when the plugin unloads. Registries the
+        /// server simulates itself (damage types, enchantments, jukebox songs, biomes) are refused.
+        register-registry-entry: func(registry: string, id: string, data: nbt-tree) -> result<_, string>;
+
+        /// Registers a jukebox song. Jukeboxes play discs whose `jukebox_playable` component
+        /// names `id`, for `length-seconds`, with `comparator-output` (0 to 15) as the comparator
+        /// signal; clients show `description` while it plays and in the disc's tooltip.
+        ///
+        /// * `id`: The namespaced song id. The `minecraft` namespace is refused.
+        /// * `sound-event`: The sound to play, e.g. a sound from a resource pack.
+        ///
+        /// Like `register-registry-entry`, players receive the song from their next
+        /// configuration on, and it is removed when the plugin unloads.
+        register-jukebox-song: func(id: string, sound-event: string, description: text-component, length-seconds: f32, comparator-output: u8) -> result<_, string>;
+
+        /// Registers a biome for clients. Players are shown it only where a plugin sets it with
+        /// `world.set-client-biome`; the server keeps storing, saving and simulating the biome that
+        /// is actually there.
+        ///
+        /// * `id`: The namespaced biome id. The `minecraft` namespace is refused.
+        /// * `base`: The vanilla biome whose climate, sounds and particles it copies, such as
+        ///   `minecraft:plains`.
+        /// * `effects`: Its colors.
+        ///
+        /// Like `register-registry-entry`, players receive the biome from their next
+        /// configuration on, and it is removed when the plugin unloads. Clients take at most 128
+        /// biomes, vanilla ones included.
+        register-biome: func(id: string, base: string, effects: biome-effects) -> result<_, string>;
 
         /// Returns the path to the plugin's private data folder.
         get-data-folder: func() -> string;
@@ -60,6 +121,27 @@ interface context {
 
         /// Returns verified marketplace metadata if this plugin binary is signed, or none if unsigned.
         get-marketplace-metadata: func() -> option<marketplace-metadata>;
+
+        /// Fires `block-shape-update-event` for shape updates that would change one of
+        /// `states` (block state ids).
+        ///
+        /// Replaces the states this plugin watched before; an empty list stops watching.
+        /// Ids that are not block states are ignored.
+        watch-block-states: func(states: list<u16>);
+
+        /// Fires `block-scheduled-tick-event` before each scheduled tick of `block`
+        /// (a namespaced block name such as "minecraft:fire") runs.
+        ///
+        /// Returns false if the block is unknown.
+        register-scheduled-tick-hook: func(block: string) -> bool;
+
+        /// Fires `block-random-tick-event` for random ticks of `states` (block state ids).
+        /// States vanilla never random ticks start getting random ticks at the vanilla rate;
+        /// those ticks only reach plugins.
+        ///
+        /// Replaces the states this plugin watched before; an empty list stops watching.
+        /// Ids that are not block states are ignored.
+        watch-random-tick-states: func(states: list<u16>);
     }
 }
 

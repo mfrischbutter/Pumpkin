@@ -430,13 +430,16 @@ fn place_items_in_chest(
     }
 }
 
+/// Fills `inventory` with loot from `handle`. `on_generated` gets the generated items and returns
+/// the items to place.
 pub fn fill_chest_inventory_handle(
     inventory: &std::sync::Arc<dyn pumpkin_inventory::Inventory>,
     handle: &LootTableHandle,
     seed: i64,
     params: &LootContextParameters<'_>,
+    on_generated: impl FnOnce(Vec<ItemStack>) -> Vec<ItemStack>,
 ) {
-    let items_to_place = generate_loot_from_handle(handle, seed, params);
+    let items_to_place = on_generated(generate_loot_from_handle(handle, seed, params));
     place_items_in_chest(inventory, items_to_place, seed);
 }
 

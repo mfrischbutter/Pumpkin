@@ -1,9 +1,10 @@
 use std::sync::Arc;
+use tokio::sync::Mutex;
 
 use crate::{
     events::{
-        ToFromWasmEvent, cleanup_event, consume_entity, consume_world, from_wasm_block_position,
-        to_wasm_block_position,
+        ToFromWasmEvent, cleanup_event, consume_entity, consume_item_stack, consume_world,
+        from_wasm_block_position, to_wasm_block_position,
     },
     pumpkin::plugin::event::{
         ChunkLoadEventData, ChunkSaveEventData, ChunkSendEventData, Event, SpawnChangeEventData,
@@ -55,48 +56,21 @@ impl ToFromWasmEvent for ChunkLoad {
             .add(self.world.clone())
             .expect("failed to add world resource");
 
-        let (chunk_x, chunk_z) = self
-            .chunk
-            .try_read()
-            .map_or((0, 0), |guard| (guard.x, guard.z));
         Event::ChunkLoadEvent(ChunkLoadEventData {
             target_world,
-            chunk_x,
-            chunk_z,
-            cancelled: self.cancelled,
+            chunk_x: self.chunk_pos.x,
+            chunk_z: self.chunk_pos.y,
+            is_new: self.is_new,
         })
     }
 
     fn from_wasm_event(event: Event, state: &mut PluginHostState) -> Self {
         match event {
-            Event::ChunkLoadEvent(data) => {
-                let world = consume_world(state, &data.target_world);
-                let chunk_data = pumpkin_world::chunk::ChunkData {
-                    section: pumpkin_world::chunk::ChunkSections::new(24, -64),
-                    heightmap: std::sync::Mutex::new(
-                        pumpkin_world::chunk::ChunkHeightmaps::default(),
-                    ),
-                    x: data.chunk_x,
-                    z: data.chunk_z,
-                    block_ticks: pumpkin_world::tick::scheduler::ChunkTickScheduler::default(),
-                    fluid_ticks: pumpkin_world::tick::scheduler::ChunkTickScheduler::default(),
-                    pending_block_entities: std::sync::Mutex::new(
-                        std::collections::HashMap::default(),
-                    ),
-                    light_engine: std::sync::Mutex::new(pumpkin_world::chunk::ChunkLight::default()),
-                    light_populated: std::sync::atomic::AtomicBool::new(false),
-                    status: pumpkin_data::chunk::ChunkStatus::Empty,
-                    blending_data: None,
-                    dirty: std::sync::atomic::AtomicBool::new(false),
-                    inhabited_time: std::sync::atomic::AtomicU64::new(0),
-                    custom_data: std::sync::Mutex::new(pumpkin_nbt::compound::NbtCompound::new()),
-                };
-                Self {
-                    world,
-                    chunk: Arc::new(tokio::sync::RwLock::new(chunk_data)),
-                    cancelled: data.cancelled,
-                }
-            }
+            Event::ChunkLoadEvent(data) => Self {
+                world: consume_world(state, &data.target_world),
+                chunk_pos: pumpkin_util::math::vector2::Vector2::new(data.chunk_x, data.chunk_z),
+                is_new: data.is_new,
+            },
             _ => panic!("unexpected event type"),
         }
     }
@@ -369,55 +343,49 @@ impl ToFromWasmEvent
 impl ToFromWasmEvent
     for pumpkin_core::plugin::api::events::world::chunk_populate::ChunkPopulateEvent
 {
-    fn to_wasm_event(&self, _state: &mut PluginHostState) -> Event {
+    fn to_wasm_event(&self, state: &mut PluginHostState) -> Event {
+        let target_world = state
+            .add(self.world.clone())
+            .expect("failed to add world resource");
+
         Event::ChunkPopulateEvent(crate::pumpkin::plugin::event::ChunkPopulateEventData {
+            target_world,
             chunk_x: self.chunk_pos.x,
             chunk_z: self.chunk_pos.y,
-            cancelled: self.cancelled,
         })
     }
 
-    fn from_wasm_event(event: Event, _state: &mut PluginHostState) -> Self {
+    fn from_wasm_event(event: Event, state: &mut PluginHostState) -> Self {
         match event {
             Event::ChunkPopulateEvent(data) => Self {
+                world: consume_world(state, &data.target_world),
                 chunk_pos: pumpkin_util::math::vector2::Vector2::new(data.chunk_x, data.chunk_z),
-                cancelled: data.cancelled,
             },
             _ => panic!("unexpected event type"),
-        }
-    }
-
-    fn apply_wasm_event(&mut self, event: Event, state: &mut PluginHostState) {
-        cleanup_event(&event, state);
-        if let Event::ChunkPopulateEvent(data) = event {
-            self.cancelled = data.cancelled;
         }
     }
 }
 
 impl ToFromWasmEvent for pumpkin_core::plugin::api::events::world::chunk_unload::ChunkUnloadEvent {
-    fn to_wasm_event(&self, _state: &mut PluginHostState) -> Event {
+    fn to_wasm_event(&self, state: &mut PluginHostState) -> Event {
+        let target_world = state
+            .add(self.world.clone())
+            .expect("failed to add world resource");
+
         Event::ChunkUnloadEvent(crate::pumpkin::plugin::event::ChunkUnloadEventData {
+            target_world,
             chunk_x: self.chunk_pos.x,
             chunk_z: self.chunk_pos.y,
-            cancelled: self.cancelled,
         })
     }
 
-    fn from_wasm_event(event: Event, _state: &mut PluginHostState) -> Self {
+    fn from_wasm_event(event: Event, state: &mut PluginHostState) -> Self {
         match event {
             Event::ChunkUnloadEvent(data) => Self {
+                world: consume_world(state, &data.target_world),
                 chunk_pos: pumpkin_util::math::vector2::Vector2::new(data.chunk_x, data.chunk_z),
-                cancelled: data.cancelled,
             },
             _ => panic!("unexpected event type"),
-        }
-    }
-
-    fn apply_wasm_event(&mut self, event: Event, state: &mut PluginHostState) {
-        cleanup_event(&event, state);
-        if let Event::ChunkUnloadEvent(data) = event {
-            self.cancelled = data.cancelled;
         }
     }
 }
@@ -559,28 +527,56 @@ impl ToFromWasmEvent for pumpkin_core::plugin::api::events::world::generic_game:
 impl ToFromWasmEvent
     for pumpkin_core::plugin::api::events::world::loot_generate::LootGenerateEvent
 {
-    fn to_wasm_event(&self, _state: &mut PluginHostState) -> Event {
+    fn to_wasm_event(&self, state: &mut PluginHostState) -> Event {
+        let target_world = state
+            .add(self.world.clone())
+            .expect("failed to add world resource");
+        let entity = self.entity.as_ref().map(|entity| {
+            state
+                .add(entity.clone())
+                .expect("failed to add entity resource")
+        });
+        let player = self
+            .player
+            .as_ref()
+            .map(|p| state.add(p.clone()).expect("failed to add player resource"));
+        let items = self
+            .items
+            .iter()
+            .map(|i| {
+                state
+                    .add(Arc::new(Mutex::new(i.clone())))
+                    .expect("failed to add item stack resource")
+            })
+            .collect();
         Event::LootGenerateEvent(crate::pumpkin::plugin::event::LootGenerateEventData {
             loot_table: self.loot_table.clone(),
+            target_world,
+            block_pos: self.block_pos.map(to_wasm_block_position),
+            entity,
+            player,
+            items,
             cancelled: self.cancelled,
         })
     }
 
     fn from_wasm_event(event: Event, _state: &mut PluginHostState) -> Self {
         match event {
-            Event::LootGenerateEvent(data) => Self {
-                loot_table: data.loot_table,
-                cancelled: data.cancelled,
-            },
+            Event::LootGenerateEvent(_) => panic!("Cannot construct LootGenerateEvent from WASM"),
             _ => panic!("unexpected event type"),
         }
     }
 
     fn apply_wasm_event(&mut self, event: Event, state: &mut PluginHostState) {
-        cleanup_event(&event, state);
-        if let Event::LootGenerateEvent(data) = event {
+        if let Event::LootGenerateEvent(data) = &event {
+            self.items = data
+                .items
+                .iter()
+                .map(|stack| consume_item_stack(state, stack))
+                .collect();
             self.cancelled = data.cancelled;
         }
+        cleanup_event(&event, state);
     }
 }
 

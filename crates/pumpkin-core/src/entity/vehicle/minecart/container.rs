@@ -87,8 +87,12 @@ impl MinecartInventory {
             .is_some()
     }
 
+    /// Fills the inventory from its loot table. `minecart` and `player` go into the
+    /// `LootGenerateEvent`; without `minecart` no event is fired.
     pub(super) fn unpack_loot(
         self: &Arc<Self>,
+        minecart: Option<&Entity>,
+        player: Option<&Player>,
         params: &crate::world::loot::LootContextParameters<'_>,
     ) {
         let loot_table = self
@@ -108,7 +112,24 @@ impl MinecartInventory {
         };
 
         let inventory: Arc<dyn Inventory> = self.clone();
-        crate::world::loot::fill_chest_inventory_handle(&inventory, &table, seed, params);
+        crate::world::loot::fill_chest_inventory_handle(
+            &inventory,
+            &table,
+            seed,
+            params,
+            |items| {
+                let Some(minecart) = minecart else {
+                    return items;
+                };
+                minecart.world.load().fire_loot_generate(
+                    &loot_table,
+                    None,
+                    Some(minecart.entity_id),
+                    player,
+                    items,
+                )
+            },
+        );
     }
 }
 
@@ -211,16 +232,20 @@ pub(super) fn open(
 ) -> bool {
     if !player.is_spectator() {
         let world = entity.world.load();
-        inventory.unpack_loot(&crate::world::loot::LootContextParameters {
-            world: Some(&world),
-            position: Some(entity.pos.load()),
-            this_entity: Some(player.as_ref()),
-            luck: player
-                .living_entity
-                .get_attribute_value(&pumpkin_data::attributes::Attributes::LUCK)
-                as f32,
-            ..Default::default()
-        });
+        inventory.unpack_loot(
+            Some(entity),
+            Some(player.as_ref()),
+            &crate::world::loot::LootContextParameters {
+                world: Some(&world),
+                position: Some(entity.pos.load()),
+                this_entity: Some(player.as_ref()),
+                luck: player
+                    .living_entity
+                    .get_attribute_value(&pumpkin_data::attributes::Attributes::LUCK)
+                    as f32,
+                ..Default::default()
+            },
+        );
     }
 
     player
@@ -307,7 +332,11 @@ mod tests {
         assert_eq!(deferred.get_long("LootTableSeed"), Some(1234));
         assert!(deferred.get_list("Items").is_none());
 
-        inventory.unpack_loot(&crate::world::loot::LootContextParameters::default());
+        inventory.unpack_loot(
+            None,
+            None,
+            &crate::world::loot::LootContextParameters::default(),
+        );
         assert!(!inventory.is_empty());
 
         let mut unpacked = NbtCompound::new();

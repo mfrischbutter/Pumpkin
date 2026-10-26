@@ -80,6 +80,9 @@ pub struct DatapackManager {
     context_float_providers: RwLock<ContextProviderRegistry>,
     damage_types: RwLock<DamageTypeRegistry>,
     loot_tables: RwLock<HashMap<String, Arc<DynamicLootTable>>>,
+    /// Loot tables registered by plugins, by id, with the name of the plugin that owns each.
+    /// Kept apart from `loot_tables` so they survive a datapack reload.
+    plugin_loot_tables: RwLock<HashMap<String, (String, Arc<DynamicLootTable>)>>,
     dynamic_registries: RwLock<HashMap<String, HashMap<String, RegistryEntryData>>>,
     trade_registry: RwLock<TradeRegistry>,
 }
@@ -111,6 +114,7 @@ impl DatapackManager {
             context_float_providers: RwLock::new(HashMap::new()),
             damage_types: RwLock::new(HashMap::new()),
             loot_tables: RwLock::new(HashMap::new()),
+            plugin_loot_tables: RwLock::new(HashMap::new()),
             dynamic_registries: RwLock::new(HashMap::new()),
             trade_registry: RwLock::new(TradeRegistry::new()),
         }
@@ -324,10 +328,20 @@ impl DatapackManager {
         if let Some(table) = guard.get(&full_key).or_else(|| guard.get(key)) {
             return Some(LootTableHandle::Dynamic(table.clone()));
         }
+        drop(guard);
 
-        pumpkin_data::loot_table::get_loot_table(key)
-            .or_else(|| pumpkin_data::loot_table::get_loot_table(&full_key))
-            .map(LootTableHandle::Static)
+        let plugin_table = self
+            .plugin_loot_tables
+            .read()
+            .unwrap_or_else(std::sync::PoisonError::into_inner)
+            .get(&full_key)
+            .map(|(_, table)| LootTableHandle::Dynamic(table.clone()));
+
+        plugin_table.or_else(|| {
+            pumpkin_data::loot_table::get_loot_table(key)
+                .or_else(|| pumpkin_data::loot_table::get_loot_table(&full_key))
+                .map(LootTableHandle::Static)
+        })
     }
 
     #[must_use]
@@ -337,7 +351,16 @@ impl DatapackManager {
             .read()
             .unwrap_or_else(std::sync::PoisonError::into_inner);
         let mut names: Vec<_> = guard.keys().cloned().collect();
+        drop(guard);
+        names.extend(
+            self.plugin_loot_tables
+                .read()
+                .unwrap_or_else(std::sync::PoisonError::into_inner)
+                .keys()
+                .cloned(),
+        );
         names.sort_unstable();
+        names.dedup();
         names
     }
 
@@ -346,6 +369,29 @@ impl DatapackManager {
             .write()
             .unwrap_or_else(std::sync::PoisonError::into_inner)
             .insert(key, table);
+    }
+
+    /// Registers a loot table owned by `plugin`. It replaces a vanilla table with the same id,
+    /// while a datapack table with the same id still wins. It stays registered across datapack
+    /// reloads until [`Self::remove_plugin_loot_tables`] is called for the plugin.
+    pub fn insert_plugin_loot_table(&self, plugin: &str, id: &str, table: Arc<DynamicLootTable>) {
+        let full_id = if id.contains(':') {
+            id.to_string()
+        } else {
+            format!("minecraft:{id}")
+        };
+        self.plugin_loot_tables
+            .write()
+            .unwrap_or_else(std::sync::PoisonError::into_inner)
+            .insert(full_id, (plugin.to_string(), table));
+    }
+
+    /// Removes every loot table `plugin` registered.
+    pub fn remove_plugin_loot_tables(&self, plugin: &str) {
+        self.plugin_loot_tables
+            .write()
+            .unwrap_or_else(std::sync::PoisonError::into_inner)
+            .retain(|_, (owner, _)| owner != plugin);
     }
 
     #[must_use]

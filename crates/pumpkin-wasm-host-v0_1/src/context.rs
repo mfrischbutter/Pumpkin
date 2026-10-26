@@ -7,15 +7,18 @@ use crate::{
         self,
         plugin::{
             command::Command,
-            context::{Context as WitContext, MarketplaceMetadata},
+            common::NbtTree,
+            context::{BiomeEffects, Context as WitContext, MarketplaceMetadata},
             event::{EventPriority, EventType},
             permission::{Permission, PermissionDefault, PermissionLevel},
             server::Server,
+            text::TextComponent,
         },
     },
 };
 use pumpkin_core::plugin::Context;
-use pumpkin_wasm_host_common::state::PluginHostState;
+use pumpkin_data::BlockStateId;
+use pumpkin_wasm_host_common::state::{DATA_FOLDER_GUEST_PATH, PluginHostState};
 
 fn register_typed_event<E: pumpkin_core::plugin::Payload + ToFromWasmEvent + Clone + 'static>(
     ctx: &Context,
@@ -1279,6 +1282,21 @@ fn register_block_event(
                 pumpkin_core::plugin::api::events::block::vault_display_item::VaultDisplayItemEvent,
             >(resource, handler, priority, blocking);
         }
+        EventType::BlockShapeUpdateEvent => {
+            register_typed_event::<
+                pumpkin_core::plugin::api::events::block::block_shape_update::BlockShapeUpdateEvent,
+            >(resource, handler, priority, blocking);
+        }
+        EventType::BlockScheduledTickEvent => {
+            register_typed_event::<
+                pumpkin_core::plugin::api::events::block::block_scheduled_tick::BlockScheduledTickEvent,
+            >(resource, handler, priority, blocking);
+        }
+        EventType::BlockRandomTickEvent => {
+            register_typed_event::<
+                pumpkin_core::plugin::api::events::block::block_random_tick::BlockRandomTickEvent,
+            >(resource, handler, priority, blocking);
+        }
 
         _ => {
             tracing::error!("non-block event should not be routed to register_block_event");
@@ -1621,7 +1639,10 @@ impl pumpkin::plugin::context::HostContext for PluginHostState {
             | EventType::LeavesDecayEvent
             | EventType::MoistureChangeEvent
             | EventType::SculkBloomEvent
-            | EventType::VaultDisplayItemEvent) => {
+            | EventType::VaultDisplayItemEvent
+            | EventType::BlockShapeUpdateEvent
+            | EventType::BlockScheduledTickEvent
+            | EventType::BlockRandomTickEvent) => {
                 register_block_event(ctx, &handler, priority, blocking, event_type);
             }
             event_type @ (EventType::InventoryOpenEvent
@@ -1748,8 +1769,79 @@ impl pumpkin::plugin::context::HostContext for PluginHostState {
         Ok(())
     }
 
+    fn register_loot_table(
+        &mut self,
+        context: Resource<WitContext>,
+        id: String,
+        json: String,
+    ) -> wasmtime::Result<Result<(), String>> {
+        Ok(self.get(&context)?.register_loot_table(&id, &json))
+    }
+
+    fn register_registry_entry(
+        &mut self,
+        context: Resource<WitContext>,
+        registry: String,
+        id: String,
+        data: NbtTree,
+    ) -> wasmtime::Result<Result<(), String>> {
+        let context = self.get(&context)?;
+        let data = match crate::common::from_wit_nbt_tree(&data) {
+            Ok(pumpkin_nbt::tag::NbtTag::Compound(compound)) => compound,
+            Ok(_) => {
+                return Ok(Err(
+                    "Registry entry data must be an NBT compound".to_string()
+                ));
+            }
+            Err(error) => return Ok(Err(error)),
+        };
+        Ok(context.register_registry_entry(&registry, &id, data))
+    }
+
+    fn register_jukebox_song(
+        &mut self,
+        context: Resource<WitContext>,
+        id: String,
+        sound_event: String,
+        description: Resource<TextComponent>,
+        length_seconds: f32,
+        comparator_output: u8,
+    ) -> wasmtime::Result<Result<(), String>> {
+        let description = self.take(description)?;
+        let context = self.get(&context)?;
+        Ok(context.register_jukebox_song(
+            &id,
+            &sound_event,
+            &description,
+            length_seconds,
+            comparator_output,
+        ))
+    }
+
+    fn register_biome(
+        &mut self,
+        context: Resource<WitContext>,
+        id: String,
+        base: String,
+        effects: BiomeEffects,
+    ) -> wasmtime::Result<Result<(), String>> {
+        let context = self.get(&context)?;
+        Ok(context.register_biome(
+            &id,
+            &base,
+            &pumpkin_core::world::client_biome::BiomeEffects {
+                water_color: effects.water_color,
+                water_fog_color: effects.water_fog_color,
+                grass_color: effects.grass_color,
+                foliage_color: effects.foliage_color,
+                sky_color: effects.sky_color,
+                fog_color: effects.fog_color,
+            },
+        ))
+    }
+
     fn get_data_folder(&mut self, _context: Resource<WitContext>) -> wasmtime::Result<String> {
-        Ok("data".to_string())
+        Ok(DATA_FOLDER_GUEST_PATH.to_owned())
     }
 
     fn get_server(&mut self, context: Resource<WitContext>) -> wasmtime::Result<Resource<Server>> {
@@ -1777,7 +1869,55 @@ impl pumpkin::plugin::context::HostContext for PluginHostState {
             }))
     }
 
+    fn watch_block_states(
+        &mut self,
+        context: Resource<WitContext>,
+        states: Vec<u16>,
+    ) -> wasmtime::Result<()> {
+        let states = block_states_from_wasm(&states);
+        self.get(&context)?.watch_block_states(states);
+        Ok(())
+    }
+
+    fn watch_random_tick_states(
+        &mut self,
+        context: Resource<WitContext>,
+        states: Vec<u16>,
+    ) -> wasmtime::Result<()> {
+        let states = block_states_from_wasm(&states);
+        self.get(&context)?.watch_random_tick_states(states);
+        Ok(())
+    }
+
+    fn register_scheduled_tick_hook(
+        &mut self,
+        context: Resource<WitContext>,
+        block: String,
+    ) -> wasmtime::Result<bool> {
+        let Some(block) = pumpkin_data::Block::from_name(&block) else {
+            return Ok(false);
+        };
+        self.get(&context)?.register_scheduled_tick_hook(block);
+        Ok(true)
+    }
+
     fn drop(&mut self, rep: Resource<WitContext>) -> wasmtime::Result<()> {
         self.drop(rep)
     }
+}
+
+/// Converts plugin-supplied block state ids, skipping ids that are no block state.
+fn block_states_from_wasm(states: &[u16]) -> Box<[BlockStateId]> {
+    let valid: Box<[BlockStateId]> = states
+        .iter()
+        .copied()
+        .filter_map(BlockStateId::new)
+        .collect();
+    if valid.len() != states.len() {
+        tracing::warn!(
+            "Ignoring {} invalid block state ids from a plugin",
+            states.len() - valid.len()
+        );
+    }
+    valid
 }
