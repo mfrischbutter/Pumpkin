@@ -371,29 +371,18 @@ impl DataComponentCodec<Self> for LoreImpl {
 
 impl DataComponentCodec<Self> for ItemNameImpl {
     fn serialize(&self, seq: &mut impl NetworkWriteExt) -> Result<(), WritingError> {
-        let mut name = pumpkin_nbt::compound::NbtCompound::new();
-        name.put_string("translate", self.name.to_string());
-        let mut bytes = Vec::new();
-        NbtTag::Compound(name)
-            .serialize(&mut NbtWriteHelperJava::new(&mut bytes))
-            .map_err(|error| WritingError::Message(error.to_string()))?;
-        seq.write_slice(&bytes)
+        let name = self.name.to_text_component();
+        seq.write_slice(&name.encode_for_version(&JavaMinecraftVersion::V_26_2))
     }
 
     fn deserialize(seq: &mut impl NetworkReadExt) -> Result<Self, ReadingError> {
         let tag = seq.get_nbt_with_version(&pumpkin_util::version::JavaMinecraftVersion::V_26_2)?;
-        let name = match tag {
-            Some(NbtTag::Compound(c)) => c
-                .get_string("translate")
-                .or_else(|| c.get_string("text"))
-                .unwrap_or("")
-                .to_string(),
-            Some(NbtTag::String(s)) => s.to_string(),
-            Some(t) => pumpkin_util::text::TextComponent::from_nbt(&t).get_text(),
-            None => String::new(),
-        };
+        let name = tag.as_ref().map_or_else(
+            pumpkin_util::text::TextComponent::empty,
+            pumpkin_util::text::TextComponent::from_nbt,
+        );
         Ok(Self {
-            name: Cow::Owned(name),
+            name: ItemNameText::from_component(name),
         })
     }
 }
@@ -3589,6 +3578,20 @@ mod tests {
         let decoded = CustomNameImpl::deserialize(&mut encoded.as_slice())?;
         assert_eq!(decoded.name.0.style, component.name.0.style);
         assert_eq!(decoded.name.get_text(), "Styled item");
+        Ok(())
+    }
+
+    #[test]
+    fn styled_item_name_round_trips_on_wire() -> Result<(), Box<dyn std::error::Error>> {
+        let mut text = pumpkin_util::text::TextComponent::text("Wand");
+        text.0.style.bold = Some(true);
+        let component = ItemNameImpl {
+            name: ItemNameText::Text(text),
+        };
+        let mut bytes = Vec::new();
+        component.serialize(&mut bytes)?;
+        let decoded = ItemNameImpl::deserialize(&mut bytes.as_slice())?;
+        assert_eq!(decoded, component);
         Ok(())
     }
 
