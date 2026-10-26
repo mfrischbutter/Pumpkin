@@ -1,6 +1,13 @@
-use pumpkin_data::{item_stack::ItemStack, recipes::CookingRecipe};
+use std::sync::Arc;
+
+use pumpkin_data::{
+    item_stack::ItemStack,
+    recipes::{CookingRecipe, CookingRecipeKind},
+};
+use pumpkin_protocol::codec::recipe::OwnedCookingRecipe;
 
 use crate::block::entities::{BlockEntity, PropertyDelegate};
+use crate::server::RecipeManager;
 pub use pumpkin_inventory::ExperienceContainer;
 use pumpkin_inventory::{Clearable, Inventory};
 
@@ -15,7 +22,7 @@ pub trait CookingBlockEntityBase:
 
     /// Track that a recipe was used (for XP calculation on extraction)
     /// Uses the result item ID as the recipe identifier
-    fn add_recipe_used(&self, recipe: &CookingRecipe);
+    fn add_recipe_used(&self, recipe: &CookingMatch);
     /// Extract and reset accumulated experience, returning the total as an integer
     /// Calculates XP from tracked recipes and clears the `recipes_used` map
     fn extract_experience_from_recipes(&self) -> i32;
@@ -31,9 +38,73 @@ pub trait CookingBlockEntityBase:
 
     fn is_burning(&self) -> bool;
     fn can_accept_recipe_output(&self, result: Option<&ItemStack>, max_count: u8) -> bool;
-    fn craft_recipe(&self, recipe: Option<&CookingRecipe>, result: &ItemStack) -> bool;
+    fn craft_recipe(&self, recipe: Option<&CookingMatch>, result: &ItemStack) -> bool;
     /// Whether the input slot is filled and the output slot is not full.
     fn output_has_room(&self) -> bool;
+
+    /// Remembers the server's recipe manager for the lookups that have no world at hand
+    /// (inventory changes and experience).
+    fn attach_recipe_manager(&self, recipe_manager: &Arc<RecipeManager>);
+    /// Finds the recipe this block entity cooks `input` with.
+    fn find_recipe(&self, input: &ItemStack) -> Option<CookingMatch>;
+}
+
+/// A cooking recipe that matched an input: a generated vanilla one, or one from a plugin or a
+/// datapack.
+#[derive(Clone)]
+pub struct CookingMatch {
+    /// The recipe id, as `RecipesUsed` stores it.
+    pub recipe_id: String,
+    pub cooking_time: i32,
+    pub experience: f32,
+    /// The stack the recipe puts into the output slot.
+    pub result: ItemStack,
+}
+
+impl CookingMatch {
+    #[must_use]
+    pub fn from_vanilla(recipe: &CookingRecipe) -> Option<Self> {
+        Some(Self {
+            recipe_id: recipe.recipe_id.to_string(),
+            cooking_time: recipe.cookingtime,
+            experience: recipe.experience,
+            result: cooking_recipe_result(recipe)?,
+        })
+    }
+
+    #[must_use]
+    pub fn from_dynamic(recipe: &OwnedCookingRecipe) -> Self {
+        Self {
+            recipe_id: recipe.recipe_id.clone(),
+            cooking_time: recipe.cooking_time,
+            experience: recipe.experience,
+            result: recipe.result.to_item_stack(),
+        }
+    }
+
+    /// Finds the recipe `kind` cooks `input` with. Without a recipe manager only the generated
+    /// vanilla recipes are searched.
+    #[must_use]
+    pub fn find(
+        recipe_manager: Option<&RecipeManager>,
+        input: &ItemStack,
+        kind: &CookingRecipeKind,
+    ) -> Option<Self> {
+        recipe_manager.map_or_else(
+            || Self::find_vanilla(input, kind),
+            |recipe_manager| recipe_manager.find_cooking_recipe(input, kind),
+        )
+    }
+
+    /// Finds the generated vanilla recipe `kind` cooks `input` with.
+    #[must_use]
+    pub fn find_vanilla(input: &ItemStack, kind: &CookingRecipeKind) -> Option<Self> {
+        if input.is_empty() {
+            return None;
+        }
+        pumpkin_data::recipes::get_cooking_recipe_with_ingredient(input.item, kind.clone())
+            .and_then(Self::from_vanilla)
+    }
 }
 
 /// Builds the stack a cooking recipe puts into the output slot.
@@ -114,9 +185,12 @@ macro_rules! impl_cooking_block_entity_base {
                 self.get_lit_time_remaining() > 0
             }
 
-            fn add_recipe_used(&self, recipe: &pumpkin_data::recipes::CookingRecipe) {
+            fn add_recipe_used(
+                &self,
+                recipe: &$crate::block::entities::furnace_like_block_entity::CookingMatch,
+            ) {
                 // Track recipe usage by recipe ID for XP calculation
-                let recipe_id = recipe.recipe_id.to_string();
+                let recipe_id = recipe.recipe_id.clone();
                 let mut recipes = self
                     .recipes_used
                     .lock()
@@ -126,14 +200,19 @@ macro_rules! impl_cooking_block_entity_base {
 
             fn extract_experience_from_recipes(&self) -> i32 {
                 // Calculate total XP from tracked recipes and clear the map (vanilla behavior)
+                let recipe_manager = self.recipe_manager.get().and_then(std::sync::Weak::upgrade);
                 let mut recipes = self
                     .recipes_used
                     .lock()
                     .unwrap_or_else(std::sync::PoisonError::into_inner);
                 let mut total_xp: f32 = 0.0;
                 for (recipe_id, count) in recipes.iter() {
-                    // Look up the recipe's XP value
-                    if let Some(xp) = pumpkin_data::recipes::get_recipe_experience(recipe_id) {
+                    // Plugin and datapack recipes are only known to the recipe manager
+                    let xp = recipe_manager.as_ref().map_or_else(
+                        || pumpkin_data::recipes::get_recipe_experience(recipe_id),
+                        |recipe_manager| recipe_manager.cooking_experience(recipe_id),
+                    );
+                    if let Some(xp) = xp {
                         total_xp += xp * (*count as f32);
                     }
                 }
@@ -177,7 +256,7 @@ macro_rules! impl_cooking_block_entity_base {
             }
             fn craft_recipe(
                 &self,
-                recipe: Option<&pumpkin_data::recipes::CookingRecipe>,
+                recipe: Option<&$crate::block::entities::furnace_like_block_entity::CookingMatch>,
                 result: &ItemStack,
             ) -> bool {
                 let Some(recipe) = recipe else { return false };
@@ -209,6 +288,29 @@ macro_rules! impl_cooking_block_entity_base {
 
                 items[0].decrement(1);
                 true
+            }
+
+            fn attach_recipe_manager(
+                &self,
+                recipe_manager: &std::sync::Arc<$crate::server::RecipeManager>,
+            ) {
+                if self.recipe_manager.get().is_none() {
+                    let _ = self
+                        .recipe_manager
+                        .set(std::sync::Arc::downgrade(recipe_manager));
+                }
+            }
+
+            fn find_recipe(
+                &self,
+                input: &ItemStack,
+            ) -> Option<$crate::block::entities::furnace_like_block_entity::CookingMatch> {
+                let recipe_manager = self.recipe_manager.get().and_then(std::sync::Weak::upgrade);
+                $crate::block::entities::furnace_like_block_entity::CookingMatch::find(
+                    recipe_manager.as_deref(),
+                    input,
+                    &Self::RECIPE_KIND,
+                )
             }
         }
     };
@@ -335,14 +437,10 @@ macro_rules! impl_inventory_for_cooking {
                 items[slot] = stack.clone();
 
                 if slot == 0 && !is_same_item {
-                    if let Some(recipe) = pumpkin_data::recipes::get_cooking_recipe_with_ingredient(
-                        stack.item,
-                        CookingRecipeKind::Smelting,
-                    ) {
-                        self.set_cooking_total_time(recipe.cookingtime as u16);
-                    } else {
-                        self.set_cooking_total_time(0);
-                    }
+                    let cooking_time = self
+                        .find_recipe(&stack)
+                        .map_or(0, |recipe| recipe.cooking_time);
+                    self.set_cooking_total_time(cooking_time as u16);
                     self.set_cooking_time_spent(0);
                 }
 
@@ -364,7 +462,7 @@ macro_rules! impl_inventory_for_cooking {
 
 #[macro_export]
 macro_rules! impl_block_entity_for_cooking {
-    ($struct_name:ty,$recipe_kind:expr) => {
+    ($struct_name:ty) => {
         impl $crate::block::entities::BlockEntity for $struct_name {
             #[expect(clippy::too_many_lines)]
             fn tick(
@@ -385,13 +483,11 @@ macro_rules! impl_block_entity_for_cooking {
 
                 let is_top_items_empty = top_item.is_empty();
 
-                let furnace_recipe = pumpkin_data::recipes::get_cooking_recipe_with_ingredient(
-                    top_item.item,
-                    $recipe_kind,
-                );
-                let recipe_result = furnace_recipe.and_then(
-                    $crate::block::entities::furnace_like_block_entity::cooking_recipe_result,
-                );
+                if let Some(server) = world.server.upgrade() {
+                    self.attach_recipe_manager(&server.recipe_manager);
+                }
+                let furnace_recipe = self.find_recipe(&top_item);
+                let recipe_result = furnace_recipe.as_ref().map(|recipe| recipe.result.clone());
 
                 // The output slot may hold what a plugin gave for an earlier smelt instead of the
                 // vanilla result; then the smelt event decides, and `craft_recipe` checks the
@@ -411,7 +507,7 @@ macro_rules! impl_block_entity_for_cooking {
                 if self.is_burning() || !bottom_items_is_empty && !is_top_items_empty {
                     if !self.is_burning() && can_accept_output {
                         let is_fast = matches!(
-                            $recipe_kind,
+                            Self::RECIPE_KIND,
                             CookingRecipeKind::Blasting | CookingRecipeKind::Smoking
                         );
                         let fuel_component = bottom_item
@@ -479,6 +575,12 @@ macro_rules! impl_block_entity_for_cooking {
                     if self.is_burning() && can_accept_output {
                         let mut start_cancelled = false;
                         if self.get_cooking_time_spent() == 0 {
+                            // An input set before the recipe manager was known got no cook time
+                            if self.get_cooking_total_time() == 0
+                                && let Some(recipe) = &furnace_recipe
+                            {
+                                self.set_cooking_total_time(recipe.cooking_time as u16);
+                            }
                             if let Some(server) = world.server.upgrade() {
                                 let mut start_event = $crate::plugin::api::events::inventory::furnace_start_smelt::FurnaceStartSmeltEvent::new(
                                     self.position,
@@ -502,7 +604,7 @@ macro_rules! impl_block_entity_for_cooking {
                                 if let Some(cooking_recipe) = furnace_recipe
                                     && let Some(mut result) = recipe_result
                                 {
-                                    let cooking_total_time = cooking_recipe.cookingtime;
+                                    let cooking_total_time = cooking_recipe.cooking_time;
                                     self.set_cooking_total_time(cooking_total_time as u16);
 
                                     let mut smelt_cancelled = false;
@@ -510,7 +612,10 @@ macro_rules! impl_block_entity_for_cooking {
                                         let mut smelt_event = $crate::plugin::api::events::inventory::furnace_smelt::FurnaceSmeltEvent::new(
                                             self.position,
                                             top_item.item.registry_key.to_string(),
-                                            cooking_recipe.result.id.to_string(),
+                                            format!(
+                                                "minecraft:{}",
+                                                cooking_recipe.result.item.registry_key
+                                            ),
                                             top_item,
                                             result,
                                         );
@@ -521,7 +626,7 @@ macro_rules! impl_block_entity_for_cooking {
                                         result = smelt_event.result;
                                     }
                                     if !smelt_cancelled {
-                                        self.craft_recipe(Some(cooking_recipe), &result);
+                                        self.craft_recipe(Some(&cooking_recipe), &result);
                                         is_dirty = true;
                                     }
                                 }
@@ -611,6 +716,7 @@ macro_rules! impl_block_entity_for_cooking {
                     lit_total_time,
                     lit_time_remaining,
                     recipes_used: std::sync::Mutex::new(recipes_used_map),
+                    recipe_manager: std::sync::OnceLock::new(),
                 };
                 pumpkin_inventory::sync_read_items_from_nbt(nbt, furnace.items.get_mut().unwrap_or_else(std::sync::PoisonError::into_inner));
 
@@ -696,7 +802,7 @@ macro_rules! impl_block_entity_for_cooking {
             }
 
             fn bedrock_block_actor_data(&self, _state_id: pumpkin_data::BlockStateId) -> Option<pumpkin_nbt::compound::NbtCompound> {
-                let bedrock_id = match $recipe_kind {
+                let bedrock_id = match Self::RECIPE_KIND {
                     pumpkin_data::recipes::CookingRecipeKind::Smelting => "Furnace",
                     pumpkin_data::recipes::CookingRecipeKind::Blasting => "BlastFurnace",
                     pumpkin_data::recipes::CookingRecipeKind::Smoking => "Smoker",

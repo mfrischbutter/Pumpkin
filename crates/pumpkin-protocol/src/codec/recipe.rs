@@ -1,4 +1,4 @@
-use pumpkin_data::recipes::RecipeCategoryTypes;
+use pumpkin_data::recipes::{CookingRecipeKind, RecipeCategoryTypes};
 
 use pumpkin_data::data_component::DataComponent;
 use pumpkin_data::data_component_impl::DataComponentImpl;
@@ -142,6 +142,31 @@ pub enum OwnedCookingRecipeType {
     Smelting(OwnedCookingRecipe),
     Smoking(OwnedCookingRecipe),
     CampfireCooking(OwnedCookingRecipe),
+}
+
+impl OwnedCookingRecipeType {
+    /// The recipe, whatever station cooks it.
+    #[must_use]
+    pub const fn recipe(&self) -> &OwnedCookingRecipe {
+        match self {
+            Self::Blasting(recipe)
+            | Self::Smelting(recipe)
+            | Self::Smoking(recipe)
+            | Self::CampfireCooking(recipe) => recipe,
+        }
+    }
+
+    /// The recipe if `kind` cooks it.
+    #[must_use]
+    pub const fn of_kind(&self, kind: &CookingRecipeKind) -> Option<&OwnedCookingRecipe> {
+        match (self, kind) {
+            (Self::Blasting(recipe), CookingRecipeKind::Blasting)
+            | (Self::Smelting(recipe), CookingRecipeKind::Smelting)
+            | (Self::Smoking(recipe), CookingRecipeKind::Smoking)
+            | (Self::CampfireCooking(recipe), CookingRecipeKind::CampfireCooking) => Some(recipe),
+            _ => None,
+        }
+    }
 }
 
 #[derive(Clone, Debug)]
