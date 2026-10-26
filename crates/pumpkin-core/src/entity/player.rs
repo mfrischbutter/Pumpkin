@@ -5927,13 +5927,13 @@ impl Player {
             self.close_handled_screen();
         }
 
-        let server = self.world().server.upgrade();
-        if let Some(server) = server
-            && let Some(player_arc) = self.world().get_player_by_uuid(self.gameprofile.id)
+        let world = self.world();
+        if let Some(server) = world.server.upgrade()
+            && let Some(player_arc) = world.get_player_by_uuid(self.gameprofile.id)
         {
             let mut event =
                 crate::plugin::api::events::inventory::inventory_open::InventoryOpenEvent::new(
-                    player_arc,
+                    player_arc, world, block_pos,
                 );
             server.plugin_manager.fire_blocking(&server, &mut event);
             if event.cancelled {
