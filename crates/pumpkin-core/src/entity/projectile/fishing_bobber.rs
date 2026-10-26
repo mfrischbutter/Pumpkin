@@ -4,6 +4,7 @@ use std::sync::atomic::{AtomicBool, AtomicI32, Ordering};
 use crate::entity::experience_orb::ExperienceOrbEntity;
 use crate::entity::item::ItemEntity;
 use crate::entity::projectile::{ProjectileHit, is_projectile};
+use crate::plugin::api::events::player::fish::{PlayerFishEvent, PlayerFishState};
 use crate::world::loot::{LootContextParameters, LootTableHandle, generate_loot_from_handle};
 use crate::{
     entity::{Entity, EntityBase, living::LivingEntity, player::Player},
@@ -14,6 +15,7 @@ use pumpkin_data::entity::{EntityStatus, EntityType};
 use pumpkin_data::item_stack::ItemStack;
 use pumpkin_data::sound::{Sound, SoundCategory};
 use pumpkin_data::tag::Taggable;
+use pumpkin_util::Hand;
 use pumpkin_util::math::boundingbox::BoundingBox;
 use pumpkin_util::math::vector3::Vector3;
 use rand::RngExt;
@@ -55,7 +57,8 @@ impl FishingBobberEntity {
         }
     }
 
-    pub fn reel_in(&self, player: &Player, rod: &ItemStack) -> i32 {
+    #[expect(clippy::too_many_lines)]
+    pub fn reel_in(&self, player: &Player, rod: &ItemStack, hand: Hand) -> i32 {
         let world = self.entity.world.load();
         let hooked_id = self.hooked_entity_id.load(Ordering::Relaxed);
         let mut dmg = 0;
@@ -63,6 +66,14 @@ impl FishingBobberEntity {
         if hooked_id != 0
             && let Some(hooked) = world.get_entity_by_id(hooked_id)
         {
+            let caught = Some(hooked.get_entity());
+            let state = PlayerFishState::CaughtEntity;
+            if self
+                .fire_fish_event(player, hand, state, caught, Vec::new(), 0)
+                .is_none()
+            {
+                return 0;
+            }
             let player_pos = player.get_entity().pos.load();
             let bobber_pos = self.entity.pos.load();
             let delta = player_pos - bobber_pos;
@@ -101,7 +112,17 @@ impl FishingBobberEntity {
                 .unwrap_or(LootTableHandle::Static(
                     &pumpkin_data::loot_table::GAMEPLAY_FISHING,
                 ));
-            let items = generate_loot_from_handle(&handle, 0, &params);
+            let items = generate_loot_from_handle(&handle, 0, &params)
+                .into_iter()
+                .filter(|item_stack| !item_stack.is_empty())
+                .collect();
+            let xp_amount = rand::rng().random_range(1..=6);
+            let state = PlayerFishState::CaughtFish;
+            let Some((items, xp_amount)) =
+                self.fire_fish_event(player, hand, state, None, items, xp_amount)
+            else {
+                return 0;
+            };
             let delta = player_pos - bobber_pos;
             let vy = delta.y * 0.1 + delta.length().sqrt() * 0.08;
 
@@ -133,8 +154,13 @@ impl FishingBobberEntity {
                 world.spawn_entity(Arc::new(item_entity));
             }
 
-            let xp_amount = rand::rng().random_range(1..=6);
-            ExperienceOrbEntity::spawn(&world, player_pos.add_raw(0.0, 0.5, 0.5), xp_amount);
+            if xp_amount > 0 {
+                ExperienceOrbEntity::spawn(
+                    &world,
+                    player_pos.add_raw(0.0, 0.5, 0.5),
+                    xp_amount as u32,
+                );
+            }
             dmg = 1;
         }
 
@@ -143,6 +169,44 @@ impl FishingBobberEntity {
         }
 
         dmg
+    }
+
+    /// Fires a `PlayerFishEvent` for what the hook caught. Returns the caught items and the
+    /// experience to drop, or `None` if a plugin cancelled the event.
+    fn fire_fish_event(
+        &self,
+        player: &Player,
+        hand: Hand,
+        state: PlayerFishState,
+        caught: Option<&Entity>,
+        caught_items: Vec<ItemStack>,
+        exp_to_drop: i32,
+    ) -> Option<(Vec<ItemStack>, i32)> {
+        let world = self.entity.world.load();
+        let Some(server) = world
+            .server
+            .upgrade()
+            .filter(|server| server.plugin_manager.has_handlers::<PlayerFishEvent>())
+        else {
+            return Some((caught_items, exp_to_drop));
+        };
+        let Some(player) = world.get_player_by_uuid(player.gameprofile.id) else {
+            return Some((caught_items, exp_to_drop));
+        };
+        let mut event = PlayerFishEvent::new(
+            player,
+            caught.map(|entity| entity.entity_uuid),
+            self.entity.entity_uuid,
+            caught.map_or_else(String::new, |entity| {
+                format!("minecraft:{}", entity.entity_type.resource_name)
+            }),
+            state,
+            hand,
+            exp_to_drop,
+        )
+        .with_caught_items(caught_items);
+        server.plugin_manager.fire_blocking(&server, &mut event);
+        (!event.cancelled).then_some((event.caught_items, event.exp_to_drop))
     }
 
     #[expect(clippy::too_many_lines)]
