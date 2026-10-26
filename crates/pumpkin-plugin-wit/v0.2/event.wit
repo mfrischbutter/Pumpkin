@@ -6,7 +6,7 @@ interface event {
     use screens.{screen};
     use player.{player};
     use text.{text-component};
-    use %world.{%world};
+    use %world.{%world, block-direction};
     use java-packets.{serverbound-packet as java-serverbound-packet, clientbound-packet as java-clientbound-packet};
     use bedrock-packets.{serverbound-packet as bedrock-serverbound-packet, clientbound-packet as bedrock-clientbound-packet};
     use uuid.{uuid};
@@ -182,6 +182,10 @@ interface event {
         action: interact-action,
         clicked-pos: option<block-pos>,
         block: string,
+        hand: option<hand>,
+        item: option<item-stack>,
+        face: option<block-direction>,
+        cursor: option<position>,
         cancelled: bool
     }
 
@@ -279,6 +283,9 @@ interface event {
         block-pos: block-pos,
         can-build: bool,
         target-world: %world,
+        placed-state: u16,
+        hand: option<hand>,
+        item: option<item-stack>,
         cancelled: bool
     }
 

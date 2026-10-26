@@ -3,14 +3,15 @@ use tokio::sync::Mutex;
 
 use crate::{
     events::{
-        ToFromWasmEvent, cleanup_event, consume_player, consume_text_component, consume_world,
-        from_wasm_block_name, from_wasm_block_position, from_wasm_click_type,
+        ToFromWasmEvent, cleanup_event, consume_item_stack, consume_player, consume_text_component,
+        consume_world, from_wasm_block_name, from_wasm_block_position, from_wasm_click_type,
         from_wasm_entity_interaction_action, from_wasm_entity_type, from_wasm_game_mode,
         from_wasm_hand, from_wasm_position, to_wasm_block_position, to_wasm_click_type,
         to_wasm_entity_interaction_action, to_wasm_entity_type, to_wasm_game_mode, to_wasm_hand,
         to_wasm_position,
     },
     gui::{from_wit_screen, to_wit_screen},
+    mob::{from_wit_block_direction, to_wit_block_direction},
     pumpkin::plugin::{
         event::{
             AsyncPlayerChatEventData, AsyncPlayerPreLoginEventData, BedrockFormResponseEventData,
@@ -767,6 +768,14 @@ impl ToFromWasmEvent for PlayerInteractEvent {
             action: to_wasm_interact_action(&self.action),
             clicked_pos: self.clicked_pos.map(to_wasm_block_position),
             block: self.block.name.to_string(),
+            hand: self.hand.map(to_wasm_hand),
+            item: self.item.as_ref().map(|stack| {
+                state
+                    .add(Arc::new(Mutex::new(stack.clone())))
+                    .expect("failed to add item stack resource")
+            }),
+            face: self.face.map(to_wit_block_direction),
+            cursor: self.cursor.map(to_wasm_position),
             cancelled: self.cancelled,
         })
     }
@@ -778,6 +787,10 @@ impl ToFromWasmEvent for PlayerInteractEvent {
                 action: from_wasm_interact_action(data.action),
                 clicked_pos: data.clicked_pos.map(from_wasm_block_position),
                 block: from_wasm_block_name(&data.block),
+                hand: data.hand.map(from_wasm_hand),
+                item: data.item.map(|item| consume_item_stack(state, &item)),
+                face: data.face.map(from_wit_block_direction),
+                cursor: data.cursor.map(from_wasm_position),
                 cancelled: data.cancelled,
             },
             _ => panic!("unexpected event type"),
