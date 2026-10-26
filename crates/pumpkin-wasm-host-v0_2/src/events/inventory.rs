@@ -1,10 +1,11 @@
+use pumpkin_data::item_stack::ItemStack;
 use std::sync::Arc;
 use tokio::sync::Mutex;
 
 use crate::{
     events::{
-        ToFromWasmEvent, consume_item_stack, consume_player, consume_world, from_wasm_block_position,
-        to_wasm_block_position,
+        ToFromWasmEvent, consume_item_stack, consume_player, consume_world,
+        from_wasm_block_position, to_wasm_block_position,
     },
     pumpkin::plugin::event::{
         BrewEventData, BrewingStandFuelEventData, CraftItemEventData, Event, FurnaceBurnEventData,
@@ -400,10 +401,30 @@ impl ToFromWasmEvent for PrepareAnvilEvent {
             .add(self.player.clone())
             .expect("failed to add player resource");
 
+        let left = (!self.left.is_empty()).then(|| {
+            state
+                .add(Arc::new(Mutex::new(self.left.clone())))
+                .expect("failed to add item stack resource")
+        });
+        let right = (!self.right.is_empty()).then(|| {
+            state
+                .add(Arc::new(Mutex::new(self.right.clone())))
+                .expect("failed to add item stack resource")
+        });
+        let result = self.result.as_ref().map(|stack| {
+            state
+                .add(Arc::new(Mutex::new(stack.clone())))
+                .expect("failed to add item stack resource")
+        });
+
         Event::PrepareAnvilEvent(PrepareAnvilEventData {
             player,
+            left,
+            right,
+            result,
             rename_text: self.rename_text.clone(),
             repair_cost: self.repair_cost,
+            repair_item_count: self.repair_item_count,
         })
     }
 
@@ -411,8 +432,21 @@ impl ToFromWasmEvent for PrepareAnvilEvent {
         match event {
             Event::PrepareAnvilEvent(data) => Self {
                 player: consume_player(state, &data.player),
+                left: data.left.as_ref().map_or_else(
+                    || ItemStack::EMPTY.clone(),
+                    |stack| consume_item_stack(state, stack),
+                ),
+                right: data.right.as_ref().map_or_else(
+                    || ItemStack::EMPTY.clone(),
+                    |stack| consume_item_stack(state, stack),
+                ),
+                result: data
+                    .result
+                    .as_ref()
+                    .map(|stack| consume_item_stack(state, stack)),
                 rename_text: data.rename_text,
                 repair_cost: data.repair_cost,
+                repair_item_count: data.repair_item_count,
             },
             _ => panic!("unexpected event type"),
         }
@@ -471,9 +505,28 @@ impl ToFromWasmEvent for PrepareItemCraftEvent {
             .add(self.player.clone())
             .expect("failed to add player resource");
 
+        let matrix = self
+            .matrix
+            .iter()
+            .map(|stack| {
+                stack.as_ref().map(|stack| {
+                    state
+                        .add(Arc::new(Mutex::new(stack.clone())))
+                        .expect("failed to add item stack resource")
+                })
+            })
+            .collect();
+        let result = self.result.as_ref().map(|stack| {
+            state
+                .add(Arc::new(Mutex::new(stack.clone())))
+                .expect("failed to add item stack resource")
+        });
+
         Event::PrepareItemCraftEvent(PrepareItemCraftEventData {
             player,
             recipe_id: self.recipe_id.clone(),
+            matrix,
+            result,
             cancelled: self.cancelled,
         })
     }
@@ -483,6 +536,15 @@ impl ToFromWasmEvent for PrepareItemCraftEvent {
             Event::PrepareItemCraftEvent(data) => Self {
                 player: consume_player(state, &data.player),
                 recipe_id: data.recipe_id,
+                matrix: data
+                    .matrix
+                    .iter()
+                    .map(|stack| stack.as_ref().map(|stack| consume_item_stack(state, stack)))
+                    .collect(),
+                result: data
+                    .result
+                    .as_ref()
+                    .map(|stack| consume_item_stack(state, stack)),
                 cancelled: data.cancelled,
             },
             _ => panic!("unexpected event type"),

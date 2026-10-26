@@ -12,6 +12,7 @@ use std::time::{Duration, Instant};
 
 use crate::entity::attributes::{Modifier, ModifierOperation};
 use crate::plugin::api::events::enchantment::{EnchantItemEvent, PrepareItemEnchantEvent};
+use crate::plugin::api::events::inventory::PrepareAnvilEvent;
 use crate::world::scoreboard::{BedrockScoreboard, Scoreboard};
 use advancement::PlayerAdvancement;
 use arc_swap::ArcSwap;
@@ -6070,18 +6071,6 @@ impl Player {
     pub fn on_rename_item(self: &Arc<Self>, packet: &SRenameItem<'_>) {
         self.update_last_action_time();
 
-        let mut prepare_event =
-            crate::plugin::api::events::inventory::prepare_anvil::PrepareAnvilEvent::new(
-                self.clone(),
-                packet.item_name.to_string(),
-                1,
-            );
-        if let Some(server) = self.world().server.upgrade() {
-            server
-                .plugin_manager
-                .fire_blocking(&server, &mut prepare_event);
-        }
-
         let screen_handler_arc = self
             .current_screen_handler
             .lock()
@@ -6095,7 +6084,7 @@ impl Player {
             .as_any_mut()
             .downcast_mut::<pumpkin_inventory::anvil::AnvilScreenHandler>()
         {
-            anvil_handler.set_item_name(packet.item_name, self.has_infinite_materials());
+            anvil_handler.set_item_name(packet.item_name, &**self);
         }
     }
 
@@ -8315,6 +8304,40 @@ impl InventoryPlayer for Player {
         }
         *enchantments_to_add = event.enchantments_to_add;
         false
+    }
+
+    fn fire_prepare_anvil_event(
+        &self,
+        left: &ItemStack,
+        right: &ItemStack,
+        result: &mut ItemStack,
+        repair_cost: &mut i32,
+        repair_item_count: &mut i32,
+        rename_text: Option<&str>,
+    ) -> bool {
+        let Some(server) = self.world().server.upgrade() else {
+            return false;
+        };
+        if !server.plugin_manager.has_handlers::<PrepareAnvilEvent>() {
+            return false;
+        }
+        let Some(player_arc) = self.world().get_player_by_uuid(self.gameprofile.id) else {
+            return false;
+        };
+        let mut event = PrepareAnvilEvent::new(
+            player_arc,
+            left.clone(),
+            right.clone(),
+            (!result.is_empty()).then(|| result.clone()),
+            rename_text.unwrap_or_default().to_string(),
+            (*repair_cost).max(0) as u32,
+            (*repair_item_count).max(0) as u32,
+        );
+        server.plugin_manager.fire_blocking(&server, &mut event);
+        *result = event.result.unwrap_or_else(|| ItemStack::EMPTY.clone());
+        *repair_cost = event.repair_cost.min(i32::MAX as u32) as i32;
+        *repair_item_count = event.repair_item_count.min(i32::MAX as u32) as i32;
+        true
     }
 
     fn close_screen_handler(&self) {
