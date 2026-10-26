@@ -18,8 +18,9 @@ use pumpkin_protocol::{
         packet_decoder::TCPNetworkDecoder,
         packet_encoder::TCPNetworkEncoder,
         server::config::{
-            SAcceptCodeOfConduct, SAcknowledgeFinishConfig, SClientInformationConfig,
-            SConfigCookieResponse, SConfigPong, SConfigResourcePack, SKnownPacks, SPluginMessage,
+            ResourcePackResponseResult, SAcceptCodeOfConduct, SAcknowledgeFinishConfig,
+            SClientInformationConfig, SConfigCookieResponse, SConfigPong, SConfigResourcePack,
+            SKnownPacks, SPluginMessage,
         },
     },
     packet::MultiVersionJavaPacket,
@@ -35,6 +36,7 @@ use tokio::{
 };
 use tokio_util::sync::CancellationToken;
 use tracing::{debug, error, warn};
+use uuid::Uuid;
 
 use crate::{
     entity::player::ChatMode,
@@ -60,6 +62,25 @@ const BRAND_CHANNEL_PREFIX: &str = "minecraft:brand";
 /// on every packet, so a slow but progressing login is never cut off.
 const HANDSHAKE_IDLE_TIMEOUT: std::time::Duration = std::time::Duration::from_secs(30);
 
+/// [`HANDSHAKE_IDLE_TIMEOUT`] while a resource pack sent in the configuration phase has no
+/// final status yet.
+///
+/// The client sends nothing while it shows the pack prompt, downloads the pack and reloads its
+/// resources, which can take minutes for a large pack on a slow machine. Vanilla has no idle
+/// limit there because it keeps the connection alive with configuration keep-alives; Pumpkin
+/// sends none before play, so this only bounds how long a dead peer can hold the socket.
+const RESOURCE_PACK_IDLE_TIMEOUT: std::time::Duration = std::time::Duration::from_secs(600);
+
+/// A resource pack sent in the configuration phase that has no final status yet.
+pub struct PendingResourcePack {
+    pub uuid: Uuid,
+    /// Kick when the client declines the pack or fails to load it.
+    pub forced: bool,
+    /// The `[resource_pack.java]` pack, which kicks on an invalid URL or a failed reload
+    /// even when it is not forced.
+    pub from_config: bool,
+}
+
 pub struct PendingConnection {
     pub id: u64,
     pub address: SocketAddr,
@@ -81,6 +102,12 @@ pub struct PendingConnection {
     /// Whether `CLoginSuccess` has been sent, mirroring vanilla's
     /// `State::PROTOCOL_SWITCHING`. Login acknowledgement is only valid after it.
     pub login_success_sent: bool,
+    /// Resource packs of the configuration phase without a final status. The phase goes on
+    /// once this is empty, like vanilla `ServerResourcePackConfigurationTask`.
+    pub pending_resource_packs: Vec<PendingResourcePack>,
+    /// Resource pack statuses of the configuration phase, fired as
+    /// `PlayerResourcePackStatusEvent` once the player exists.
+    pub resource_pack_statuses: Vec<(Uuid, ResourcePackResponseResult)>,
     /// For the connection packet events.
     server: Weak<Server>,
 }
@@ -110,6 +137,8 @@ impl PendingConnection {
             packet_limiter,
             login_started: false,
             login_success_sent: false,
+            pending_resource_packs: Vec::new(),
+            resource_pack_statuses: Vec::new(),
             verify_token: None,
             vine_challenge: None,
             server,
@@ -155,16 +184,21 @@ impl PendingConnection {
 
     pub async fn get_packet(&mut self) -> Option<RawPacket> {
         let close_token = self.close_token.clone();
+        let idle_timeout = if self.pending_resource_packs.is_empty() {
+            HANDSHAKE_IDLE_TIMEOUT
+        } else {
+            RESOURCE_PACK_IDLE_TIMEOUT
+        };
         let packet_result = tokio::select! {
             () = close_token.cancelled() => {
                 debug!("Canceling pending connection packet processing");
                 return None;
             },
-            () = tokio::time::sleep(HANDSHAKE_IDLE_TIMEOUT) => {
+            () = tokio::time::sleep(idle_timeout) => {
                 debug!(
                     "Client {} sent nothing for {}s before finishing login, dropping it",
                     self.id,
-                    HANDSHAKE_IDLE_TIMEOUT.as_secs()
+                    idle_timeout.as_secs()
                 );
                 return None;
             },
@@ -608,42 +642,52 @@ impl PendingConnection {
         server: &Server,
         packet: SConfigResourcePack,
     ) {
-        let resource_config = &server.advanced_config.resource_pack.java;
-        if resource_config.enabled {
-            use pumpkin_protocol::java::server::config::ResourcePackResponseResult;
-            match packet.response_result() {
-                ResourcePackResponseResult::Downloaded
-                | ResourcePackResponseResult::DownloadSuccess
-                | ResourcePackResponseResult::Discarded
-                | ResourcePackResponseResult::Unknown(_) => {
-                    self.send_known_packs(server).await;
-                }
-                ResourcePackResponseResult::Accepted => {}
-                ResourcePackResponseResult::Declined => {
-                    if resource_config.force {
-                        self.kick(TextComponent::text("Required resource pack was declined"))
-                            .await;
-                    } else {
-                        self.send_known_packs(server).await;
-                    }
-                }
-                ResourcePackResponseResult::DownloadFail => {
-                    if resource_config.force {
-                        self.kick(TextComponent::text("Failed to download resource pack"))
-                            .await;
-                    } else {
-                        self.send_known_packs(server).await;
-                    }
-                }
-                ResourcePackResponseResult::InvalidUrl => {
-                    self.kick(TextComponent::text("Invalid resource pack URL"))
-                        .await;
-                }
-                ResourcePackResponseResult::ReloadFailed => {
-                    self.kick(TextComponent::text("Failed to reload resource pack"))
-                        .await;
-                }
+        let result = packet.response_result();
+        let Some(index) = self
+            .pending_resource_packs
+            .iter()
+            .position(|pack| pack.uuid == packet.uuid)
+        else {
+            debug!(
+                "Ignoring resource pack response from client {} for pack {}",
+                self.id, packet.uuid
+            );
+            return;
+        };
+        // Repeats are dropped, so a client cannot grow the list.
+        let status = (packet.uuid, result);
+        if !self.resource_pack_statuses.contains(&status) {
+            self.resource_pack_statuses.push(status);
+        }
+        let pack = &self.pending_resource_packs[index];
+        let kick_reason = match result {
+            // Not final yet: vanilla `ServerboundResourcePackPacket.Action.isTerminal`.
+            ResourcePackResponseResult::Accepted | ResourcePackResponseResult::Downloaded => {
+                return;
             }
+            ResourcePackResponseResult::DownloadSuccess
+            | ResourcePackResponseResult::Discarded
+            | ResourcePackResponseResult::Unknown(_) => None,
+            ResourcePackResponseResult::Declined => {
+                pack.forced.then_some("Required resource pack was declined")
+            }
+            ResourcePackResponseResult::DownloadFail => {
+                pack.forced.then_some("Failed to download resource pack")
+            }
+            ResourcePackResponseResult::InvalidUrl => {
+                (pack.forced || pack.from_config).then_some("Invalid resource pack URL")
+            }
+            ResourcePackResponseResult::ReloadFailed => {
+                (pack.forced || pack.from_config).then_some("Failed to reload resource pack")
+            }
+        };
+        if let Some(reason) = kick_reason {
+            self.kick(TextComponent::text(reason)).await;
+            return;
+        }
+        self.pending_resource_packs.remove(index);
+        if self.pending_resource_packs.is_empty() {
+            self.send_known_packs(server).await;
         }
     }
 

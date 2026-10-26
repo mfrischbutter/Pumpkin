@@ -1,5 +1,7 @@
 #[allow(clippy::wildcard_imports)]
 use super::*;
+use crate::net::java::pending::PendingResourcePack;
+use crate::server::LoginResourcePack;
 
 impl PendingConnection {
     pub async fn handle_login_acknowledged(
@@ -79,27 +81,57 @@ impl PendingConnection {
             self.send_packet_now(&CConfigServerLinks::new(&links)).await;
         }
 
-        let resource_config = &server.advanced_config.resource_pack.java;
-        if resource_config.enabled {
-            let uuid = Uuid::new_v3(&uuid::Uuid::NAMESPACE_DNS, resource_config.url.as_bytes());
-            let resource_pack = CConfigAddResourcePack::new(
-                &uuid,
-                &resource_config.url,
-                &resource_config.sha1,
-                resource_config.force,
-                if resource_config.prompt_message.is_empty() {
-                    None
-                } else {
-                    Some(TextComponent::text(resource_config.prompt_message.clone()))
-                },
-            );
-
-            self.send_packet_now(&resource_pack).await;
-        } else {
+        let packs = Self::configuration_resource_packs(server);
+        if packs.is_empty() {
             self.send_known_packs(server).await;
+        }
+        for (pack, from_config) in packs {
+            self.send_packet_now(&CConfigAddResourcePack::new(
+                &pack.uuid,
+                &pack.url,
+                &pack.hash,
+                pack.forced,
+                pack.prompt_message,
+            ))
+            .await;
+            self.pending_resource_packs.push(PendingResourcePack {
+                uuid: pack.uuid,
+                forced: pack.forced,
+                from_config,
+            });
         }
         debug!("login acknowledged");
         None
+    }
+
+    /// The `[resource_pack.java]` pack, then the packs plugins set, each paired with whether it
+    /// comes from the config. A UUID that is already taken is sent once.
+    fn configuration_resource_packs(server: &Server) -> Vec<(LoginResourcePack, bool)> {
+        let mut packs = Vec::new();
+        let resource_config = &server.advanced_config.resource_pack.java;
+        if resource_config.enabled {
+            let config_pack = LoginResourcePack {
+                uuid: resource_config.uuid(),
+                url: resource_config.url.clone(),
+                hash: resource_config.sha1.clone(),
+                forced: resource_config.force,
+                prompt_message: (!resource_config.prompt_message.is_empty())
+                    .then(|| TextComponent::text(resource_config.prompt_message.clone())),
+            };
+            packs.push((config_pack, true));
+        }
+        let plugin_packs = server.login_resource_packs.load_full();
+        for pack in plugin_packs.iter().flat_map(|(_, list)| list) {
+            if packs.iter().any(|(sent, _)| sent.uuid == pack.uuid) {
+                debug!(
+                    "Skipping login resource pack {}: UUID already sent",
+                    pack.uuid
+                );
+                continue;
+            }
+            packs.push((pack.clone(), false));
+        }
+        packs
     }
 
     pub async fn send_known_packs(&mut self, server: &Server) {
