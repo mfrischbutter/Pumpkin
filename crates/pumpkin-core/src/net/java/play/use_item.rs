@@ -28,6 +28,7 @@ impl JavaClient {
             crate::plugin::api::events::player::player_item_consume::PlayerItemConsumeEvent::new(
                 player.clone(),
                 item_in_hand.item.registry_key.to_string(),
+                item_in_hand.clone(),
             );
         server
             .plugin_manager

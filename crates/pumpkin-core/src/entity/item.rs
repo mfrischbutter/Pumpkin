@@ -738,6 +738,22 @@ impl EntityBase for ItemEntity {
             return;
         }
 
+        // Fire the pickup event before the stack moves, so a cancel leaves it on the ground.
+        let offered = self
+            .item_stack
+            .lock()
+            .unwrap_or_else(std::sync::PoisonError::into_inner)
+            .clone();
+        if (player.is_creative() || player.inventory.can_insert_stack_anywhere(&offered))
+            && !player.living_entity.fire_pickup_event(
+                &self.entity,
+                Some(&offered),
+                offered.item_count.into(),
+            )
+        {
+            return;
+        }
+
         let (item_id, count_before) = {
             let stack = self
                 .item_stack
@@ -791,7 +807,7 @@ impl EntityBase for ItemEntity {
 
             player
                 .living_entity
-                .pickup(&self.entity, amount_picked_up.into());
+                .send_pickup_animation(&self.entity, amount_picked_up.into());
 
             player
                 .current_screen_handler

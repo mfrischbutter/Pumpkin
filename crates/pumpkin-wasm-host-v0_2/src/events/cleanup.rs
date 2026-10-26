@@ -256,7 +256,11 @@ pub fn cleanup_event(event: &Event, state: &mut PluginHostState) {
         Event::EntityEnterLoveModeEvent(_) => {}
         Event::EntityExplodeEvent(_) => {}
         Event::EntityMountEvent(_) => {}
-        Event::EntityPickupItemEvent(_) => {}
+        Event::EntityPickupItemEvent(data) => {
+            if let Some(res) = &data.item {
+                cleanup_item_stack(state, res);
+            }
+        }
         Event::EntityPortalEvent(_) => {}
         Event::EntityResurrectEvent(_) => {}
         Event::EntityShootBowEvent(_) => {}
@@ -269,12 +273,14 @@ pub fn cleanup_event(event: &Event, state: &mut PluginHostState) {
         Event::EntityTransformEvent(_) => {}
         Event::PlayerItemConsumeEvent(data) => {
             cleanup_player(state, &data.player);
+            cleanup_item_stack(state, &data.item);
         }
         Event::PlayerItemDamageEvent(data) => {
             cleanup_player(state, &data.player);
         }
         Event::PlayerDropItemEvent(data) => {
             cleanup_player(state, &data.player);
+            cleanup_item_stack(state, &data.item);
         }
         Event::PlayerBedEnterEvent(data) => {
             cleanup_player(state, &data.player);

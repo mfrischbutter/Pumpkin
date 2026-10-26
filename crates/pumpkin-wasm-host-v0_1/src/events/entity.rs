@@ -423,23 +423,32 @@ impl ToFromWasmEvent for pumpkin_core::plugin::api::events::entity::entity_mount
 impl ToFromWasmEvent
     for pumpkin_core::plugin::api::events::entity::entity_pickup_item::EntityPickupItemEvent
 {
-    fn to_wasm_event(&self, _state: &mut PluginHostState) -> Event {
+    fn to_wasm_event(&self, state: &mut PluginHostState) -> Event {
         Event::EntityPickupItemEvent(EntityPickupItemEventData {
             entity_id: self.entity_id,
             item_name: self.item_name.clone(),
             count: self.count,
+            item: self.item.as_ref().map(|stack| {
+                state
+                    .add(Arc::new(Mutex::new(stack.clone())))
+                    .expect("failed to add item stack resource")
+            }),
             cancelled: self.cancelled,
         })
     }
 
+    fn apply_wasm_event(&mut self, event: Event, state: &mut PluginHostState) {
+        cleanup_event(&event, state);
+        if let Event::EntityPickupItemEvent(data) = event {
+            self.cancelled = data.cancelled;
+        }
+    }
+
     fn from_wasm_event(event: Event, _state: &mut PluginHostState) -> Self {
         match event {
-            Event::EntityPickupItemEvent(data) => Self {
-                entity_id: data.entity_id,
-                item_name: data.item_name,
-                count: data.count,
-                cancelled: data.cancelled,
-            },
+            Event::EntityPickupItemEvent(_) => {
+                panic!("Cannot construct EntityPickupItemEvent from WASM")
+            }
             _ => panic!("unexpected event type"),
         }
     }
