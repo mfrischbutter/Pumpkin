@@ -613,6 +613,14 @@ where
         self.shared.lifecycle.state()
     }
 
+    /// Whether the Store can no longer run guest calls: its driver stopped or failed, or a guest
+    /// call failed and poisoned it. Callers that run on every event or tick can skip such a Store
+    /// instead of logging the same failure again.
+    #[must_use]
+    pub fn is_closed(&self) -> bool {
+        self.state().is_terminal() || self.shared.guest_call_failure.message().is_some()
+    }
+
     #[must_use]
     pub fn driver_join(&self) -> DriverJoin {
         self.shared.lifecycle.subscribe()

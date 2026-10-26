@@ -246,17 +246,6 @@ pub(super) fn consume_world(
         .expect("invalid world resource handle")
 }
 
-pub(super) fn consume_item_stack(
-    state: &mut PluginHostState,
-    item: &Resource<pumpkin::plugin::item_stack::ItemStack>,
-) -> ItemStack {
-    let mutex = state
-        .resource_table
-        .delete::<Arc<Mutex<ItemStack>>>(Resource::new_own(item.rep()))
-        .expect("invalid item stack resource handle");
-    mutex.try_lock().expect("lock item stack").clone()
-}
-
 type WasmEvent = crate::pumpkin::plugin::event::Event;
 
 /// An event crossing into a guest handler and back, with its type erased.
@@ -354,7 +343,7 @@ impl WasmPluginEventHandler {
 impl<E: Payload + ToFromWasmEvent + Clone + 'static> EventHandler<E> for WasmPluginEventHandler {
     fn handle<'a>(&'a self, server: &'a Arc<Server>, event: &'a E) -> BoxFuture<'a, ()> {
         Box::pin(async {
-            if !event.wanted_by(&self.plugin) {
+            if self.plugin.store.is_closed() || !event.wanted_by(&self.plugin) {
                 return;
             }
             let pending = Box::new(NotifiedEvent(event.clone()));
@@ -370,7 +359,7 @@ impl<E: Payload + ToFromWasmEvent + Clone + 'static> EventHandler<E> for WasmPlu
         event: &'a mut E,
     ) -> BoxFuture<'a, ()> {
         Box::pin(async {
-            if !event.wanted_by(&self.plugin) {
+            if self.plugin.store.is_closed() || !event.wanted_by(&self.plugin) {
                 return;
             }
             let pending = Box::new(BlockingEvent(event.clone()));
