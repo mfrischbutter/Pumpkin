@@ -8,7 +8,7 @@ on:
       - "!nightly*"
       - "!canary"
       - "!canary*"
-      - "!anvil-*"
+      - "!cubeattack-*"
   workflow_dispatch:
     inputs:
       tag_name:

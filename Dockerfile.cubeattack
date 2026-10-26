@@ -1,4 +1,4 @@
-# Image for the fork's anvil-* tags. Upstream's Dockerfile downloads the
+# Image for the fork's cubeattack-* tags. Upstream's Dockerfile downloads the
 # prebuilt nightly binary, which has none of our patches, so this one builds
 # the checked-out source the same way upstream builds its musl release.
 FROM rust:1-bookworm AS builder
@@ -24,8 +24,8 @@ RUN case "${TARGETARCH}" in \
 FROM alpine:3.24
 
 # Marks an image built from source by this file. Images from upstream's
-# Dockerfile lack it, and the Anvil pin script refuses those.
-LABEL dev.anvil.build=source
+# Dockerfile lack it, and the CubeAttack pin script refuses those.
+LABEL net.cubeattack.build=source
 
 COPY --from=builder /pumpkin.release /usr/local/bin/pumpkin
 
