@@ -476,6 +476,7 @@ interface %world {
         get-eye-height: func() -> f32;
         get-eye-position: func() -> position;
 
+        /// Returns entities and players within x, y and z blocks of this entity, excluding itself.
         get-nearby-entities: func(x: f64, y: f64, z: f64) -> list<entity>;
 
         get-vehicle: func() -> option<entity>;
@@ -490,7 +491,7 @@ interface %world {
         is-in-water: func() -> bool;
         is-in-lava: func() -> bool;
 
-        remove: func();
+        remove: async func();
 
         /// Performs a raycast from the entity's eye position in its looking direction.
         raycast: func(max-distance: f64, fluid-handling: bool) -> option<raycast-result>;
@@ -939,6 +940,12 @@ interface %world {
 
         /// Returns a list of all entities in this world.
         get-entities: func() -> list<entity>;
+
+        /// Returns the entity or player with the given entity id in this world, if any.
+        get-entity-by-id: func(id: s32) -> option<entity>;
+
+        /// Returns the entity or player with the given UUID in this world, if any.
+        get-entity-by-uuid: func(id: uuid) -> option<entity>;
 
         /// Spawns a lightning bolt at the specified position.
         strike-lightning: async func(pos: position, effect-only: bool);

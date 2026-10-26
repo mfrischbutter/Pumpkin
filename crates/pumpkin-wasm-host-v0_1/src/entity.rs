@@ -389,7 +389,7 @@ impl HostEntity for PluginHostState {
             Vector3::new(pos.x + x, pos.y + y, pos.z + z),
         );
         let world = entity.get_entity().world.load_full();
-        let entities = world.get_entities_at_box(&box_range);
+        let entities = world.get_all_at_box(&box_range);
 
         let mut result = Vec::new();
         for e in entities {
@@ -571,12 +571,6 @@ impl HostEntity for PluginHostState {
         Ok(pumpkin_core::entity::breath::MAX_AIR)
     }
 
-    fn remove(&mut self, entity: Resource<Entity>) -> wasmtime::Result<()> {
-        let entity = self.get(&entity)?;
-        entity.get_entity().remove();
-        Ok(())
-    }
-
     fn raycast(
         &mut self,
         entity: Resource<Entity>,
@@ -752,6 +746,20 @@ impl HostEntity for PluginHostState {
 impl crate::pumpkin::plugin::world::HostEntityWithStore<PluginHostState>
     for HasSelf<PluginHostState>
 {
+    async fn remove(
+        mut host: Access<'_, PluginHostState, Self>,
+        entity: Resource<Entity>,
+    ) -> wasmtime::Result<()> {
+        let (entity, plugin) = {
+            let state = host.get();
+            (state.get(&entity)?.clone(), active_plugin(state)?)
+        };
+        plugin
+            .store
+            .pump_blocking(&mut host, move || entity.get_entity().remove())
+            .await
+    }
+
     async fn teleport(
         mut host: Access<'_, PluginHostState, Self>,
         entity: Resource<Entity>,

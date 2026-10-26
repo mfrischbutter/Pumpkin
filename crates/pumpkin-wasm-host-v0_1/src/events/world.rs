@@ -2,7 +2,7 @@ use std::sync::Arc;
 
 use crate::{
     events::{
-        ToFromWasmEvent, cleanup_event, consume_world, from_wasm_block_position,
+        ToFromWasmEvent, cleanup_event, consume_entity, consume_world, from_wasm_block_position,
         to_wasm_block_position,
     },
     pumpkin::plugin::event::{
@@ -425,20 +425,41 @@ impl ToFromWasmEvent for pumpkin_core::plugin::api::events::world::chunk_unload:
 impl ToFromWasmEvent
     for pumpkin_core::plugin::api::events::world::entities_load::EntitiesLoadEvent
 {
-    fn to_wasm_event(&self, _state: &mut PluginHostState) -> Event {
+    fn to_wasm_event(&self, state: &mut PluginHostState) -> Event {
+        let target_world = state
+            .add(self.world.clone())
+            .expect("failed to add world resource");
+        let entities = self
+            .entities
+            .iter()
+            .map(|entity| {
+                state
+                    .add(entity.clone())
+                    .expect("failed to add entity resource")
+            })
+            .collect();
+
         Event::EntitiesLoadEvent(crate::pumpkin::plugin::event::EntitiesLoadEventData {
             chunk_x: self.chunk_pos.x,
             chunk_z: self.chunk_pos.y,
             entity_count: self.entity_count as u32,
+            target_world,
+            entities,
             cancelled: self.cancelled,
         })
     }
 
-    fn from_wasm_event(event: Event, _state: &mut PluginHostState) -> Self {
+    fn from_wasm_event(event: Event, state: &mut PluginHostState) -> Self {
         match event {
             Event::EntitiesLoadEvent(data) => Self {
                 chunk_pos: pumpkin_util::math::vector2::Vector2::new(data.chunk_x, data.chunk_z),
                 entity_count: data.entity_count as usize,
+                world: consume_world(state, &data.target_world),
+                entities: data
+                    .entities
+                    .iter()
+                    .map(|entity| consume_entity(state, entity))
+                    .collect(),
                 cancelled: data.cancelled,
             },
             _ => panic!("unexpected event type"),
@@ -456,20 +477,41 @@ impl ToFromWasmEvent
 impl ToFromWasmEvent
     for pumpkin_core::plugin::api::events::world::entities_unload::EntitiesUnloadEvent
 {
-    fn to_wasm_event(&self, _state: &mut PluginHostState) -> Event {
+    fn to_wasm_event(&self, state: &mut PluginHostState) -> Event {
+        let target_world = state
+            .add(self.world.clone())
+            .expect("failed to add world resource");
+        let entities = self
+            .entities
+            .iter()
+            .map(|entity| {
+                state
+                    .add(entity.clone())
+                    .expect("failed to add entity resource")
+            })
+            .collect();
+
         Event::EntitiesUnloadEvent(crate::pumpkin::plugin::event::EntitiesUnloadEventData {
             chunk_x: self.chunk_pos.x,
             chunk_z: self.chunk_pos.y,
             entity_count: self.entity_count as u32,
+            target_world,
+            entities,
             cancelled: self.cancelled,
         })
     }
 
-    fn from_wasm_event(event: Event, _state: &mut PluginHostState) -> Self {
+    fn from_wasm_event(event: Event, state: &mut PluginHostState) -> Self {
         match event {
             Event::EntitiesUnloadEvent(data) => Self {
                 chunk_pos: pumpkin_util::math::vector2::Vector2::new(data.chunk_x, data.chunk_z),
                 entity_count: data.entity_count as usize,
+                world: consume_world(state, &data.target_world),
+                entities: data
+                    .entities
+                    .iter()
+                    .map(|entity| consume_entity(state, entity))
+                    .collect(),
                 cancelled: data.cancelled,
             },
             _ => panic!("unexpected event type"),

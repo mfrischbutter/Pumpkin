@@ -6,7 +6,7 @@ interface event {
     use screens.{screen};
     use player.{player};
     use text.{text-component};
-    use %world.{%world, block-direction};
+    use %world.{%world, block-direction, equipment-slot, entity};
     use java-packets.{serverbound-packet as java-serverbound-packet, clientbound-packet as java-clientbound-packet};
     use bedrock-packets.{serverbound-packet as bedrock-serverbound-packet, clientbound-packet as bedrock-clientbound-packet};
     use uuid.{uuid};
@@ -38,9 +38,22 @@ interface event {
         cancelled: bool
     }
 
+    /// Why a player left the server.
+    enum player-leave-reason {
+        /// The connection closed for any reason not listed here, usually because the client quit.
+        disconnected,
+        /// The server kicked the player.
+        kicked,
+        /// The client stopped answering keep-alives.
+        timed-out,
+        /// The server is shutting down.
+        server-stopping,
+    }
+
     record player-leave-event-data {
         player: player,
         leave-message: text-component,
+        reason: player-leave-reason,
         cancelled: bool
     }
 
@@ -152,6 +165,7 @@ interface event {
         state: player-fish-state,
         hand: hand,
         exp-to-drop: s32,
+        caught-items: list<item-stack>,
         cancelled: bool
     }
 
@@ -374,6 +388,10 @@ interface event {
         cancelled: bool
     }
 
+    /// A packet on its way to a player. A blocking handler can cancel it or change `packet-id`
+    /// and `raw-payload`. Packets a plugin sends itself are not reported to it: nothing sent
+    /// while one of its own calls is running (its host calls and what they trigger) reaches its
+    /// handlers. See also `context.set-packet-sent-filter`.
     record packet-sent-event-data {
         player: player,
         packet: clientbound-packet,
@@ -394,7 +412,8 @@ interface event {
         target-world: %world,
         chunk-x: s32,
         chunk-z: s32,
-        cancelled: bool
+        /// Whether the chunk was generated instead of read from disk.
+        is-new: bool
     }
 
     record chunk-save-event-data {
@@ -731,16 +750,22 @@ interface event {
         cancelled: bool
     }
 
+    /// Cancelling skips the hit; the projectile keeps flying.
     record projectile-hit-event-data {
         entity-id: s32,
         hit-position: position,
         hit-entity-id: option<s32>,
+        item: option<item-stack>,
+        target-world: %world,
         cancelled: bool
     }
 
+    /// Fired before a projectile is spawned; cancelling keeps it from being spawned.
     record projectile-launch-event-data {
         entity-id: s32,
         shooter-id: option<s32>,
+        item: option<item-stack>,
+        target-world: %world,
         cancelled: bool
     }
 
@@ -857,9 +882,11 @@ interface event {
         cancelled: bool
     }
 
+    /// Fired after the entity was removed; `cancelled` is ignored.
     record entity-remove-event-data {
         entity-id: s32,
         cause: string,
+        entity: entity,
         cancelled: bool
     }
 
@@ -974,6 +1001,9 @@ interface event {
         player: player,
         block-pos: block-pos,
         bucket: string,
+        hand: hand,
+        item: item-stack,
+        %result: option<item-stack>,
         cancelled: bool
     }
 
@@ -981,6 +1011,9 @@ interface event {
         player: player,
         block-pos: block-pos,
         bucket: string,
+        hand: hand,
+        item: item-stack,
+        %result: option<item-stack>,
         cancelled: bool
     }
 
@@ -1332,6 +1365,7 @@ interface event {
         from-pos: block-pos,
         to-pos: block-pos,
         block: string,
+        target-world: %world,
         cancelled: bool
     }
 
@@ -1658,29 +1692,38 @@ interface event {
         cancelled: bool
     }
 
+    /// Fired once for every newly generated chunk, after its load event. The chunk is loaded, so
+    /// handlers can change its blocks through the world.
     record chunk-populate-event-data {
+        target-world: %world,
         chunk-x: s32,
-        chunk-z: s32,
-        cancelled: bool
+        chunk-z: s32
     }
 
+    /// Fired after a chunk was unloaded.
     record chunk-unload-event-data {
+        target-world: %world,
         chunk-x: s32,
-        chunk-z: s32,
-        cancelled: bool
+        chunk-z: s32
     }
 
+    /// Fired after the chunk's entities went live; `cancelled` is ignored.
     record entities-load-event-data {
         chunk-x: s32,
         chunk-z: s32,
         entity-count: u32,
+        target-world: %world,
+        entities: list<entity>,
         cancelled: bool
     }
 
+    /// Fired before the chunk's entities are saved and dropped; `cancelled` is ignored.
     record entities-unload-event-data {
         chunk-x: s32,
         chunk-z: s32,
         entity-count: u32,
+        target-world: %world,
+        entities: list<entity>,
         cancelled: bool
     }
 
@@ -1692,6 +1735,11 @@ interface event {
 
     record loot-generate-event-data {
         loot-table: string,
+        target-world: %world,
+        block-pos: option<block-pos>,
+        entity: option<entity>,
+        player: option<player>,
+        items: list<item-stack>,
         cancelled: bool
     }
 
@@ -1821,8 +1869,12 @@ interface event {
 
     record prepare-anvil-event-data {
         player: player,
+        left: option<item-stack>,
+        right: option<item-stack>,
+        %result: option<item-stack>,
         rename-text: string,
-        repair-cost: u32
+        repair-cost: u32,
+        repair-item-count: u32
     }
 
     record prepare-grindstone-event-data {
@@ -1837,7 +1889,9 @@ interface event {
 
     record prepare-item-craft-event-data {
         player: player,
-        recipe-id: string,
+        recipe-id: option<string>,
+        matrix: list<option<item-stack>>,
+        %result: option<item-stack>,
         cancelled: bool
     }
 
@@ -1949,6 +2003,59 @@ interface event {
         position: position,
         is-effect: bool,
         cancelled: bool
+    }
+
+    record player-armor-change-event-data {
+        player: player,
+        slot: equipment-slot,
+        old-item: option<item-stack>,
+        new-item: option<item-stack>
+    }
+
+    /// Fired before a shape update changes a block state the plugin watches
+    /// (see `context.watch-block-states`).
+    ///
+    /// Cancelling keeps `old-state-id`; changing `new-state-id` sets that state instead.
+    record block-shape-update-event-data {
+        target-world: %world,
+        block-pos: block-pos,
+        old-state-id: u16,
+        new-state-id: u16,
+        /// The direction from `block-pos` to `neighbor-pos`.
+        direction: block-direction,
+        neighbor-pos: block-pos,
+        cancelled: bool
+    }
+
+    /// Fired before a scheduled tick of a hooked block runs
+    /// (see `context.register-scheduled-tick-hook`).
+    ///
+    /// Cancelling skips the tick. The tick is used up either way; use
+    /// `world.schedule-block-tick` to tick the block again later.
+    record block-scheduled-tick-event-data {
+        target-world: %world,
+        block-pos: block-pos,
+        state-id: u16,
+        cancelled: bool
+    }
+
+    /// One random tick in a `block-random-tick-event`.
+    record block-random-tick {
+        block-pos: block-pos,
+        /// The state at `block-pos` when the random ticks were picked.
+        state-id: u16,
+        /// Skips vanilla's random tick of this block. States vanilla does not random tick
+        /// only tick for plugins, so this changes nothing for them.
+        cancelled: bool
+    }
+
+    /// Fired once per world tick, before random ticks run, with the random ticks of the
+    /// states the plugin watches (see `context.watch-random-tick-states`).
+    ///
+    /// Only the `cancelled` flags are read back; entries are matched by index and position.
+    record block-random-tick-event-data {
+        target-world: %world,
+        ticks: list<block-random-tick>
     }
 
     enum event-type {
@@ -2227,6 +2334,10 @@ interface event {
         lightning-strike-event,
         player-pick-block-event,
         player-pick-entity-event,
+        player-armor-change-event,
+        block-shape-update-event,
+        block-scheduled-tick-event,
+        block-random-tick-event,
     }
 
     variant event {
@@ -2505,5 +2616,9 @@ interface event {
         lightning-strike-event(lightning-strike-event-data),
         player-pick-block-event(player-pick-block-event-data),
         player-pick-entity-event(player-pick-entity-event-data),
+        player-armor-change-event(player-armor-change-event-data),
+        block-shape-update-event(block-shape-update-event-data),
+        block-scheduled-tick-event(block-scheduled-tick-event-data),
+        block-random-tick-event(block-random-tick-event-data),
     }
 }

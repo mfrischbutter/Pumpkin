@@ -349,8 +349,18 @@ pub fn cleanup_event(event: &Event, state: &mut PluginHostState) {
         Event::AsyncStructureSpawnEvent(_) => {}
         Event::ChunkPopulateEvent(_) => {}
         Event::ChunkUnloadEvent(_) => {}
-        Event::EntitiesLoadEvent(_) => {}
-        Event::EntitiesUnloadEvent(_) => {}
+        Event::EntitiesLoadEvent(data) => {
+            cleanup_world(state, &data.target_world);
+            for res in &data.entities {
+                cleanup_entity(state, res);
+            }
+        }
+        Event::EntitiesUnloadEvent(data) => {
+            cleanup_world(state, &data.target_world);
+            for res in &data.entities {
+                cleanup_entity(state, res);
+            }
+        }
         Event::GenericGameEvent(_) => {}
         Event::LootGenerateEvent(_) => {}
         Event::PortalCreateEvent(_) => {}
@@ -597,7 +607,9 @@ pub fn cleanup_event(event: &Event, state: &mut PluginHostState) {
         Event::EntityKnockbackByEntityEvent(_) => {}
         Event::EntityPortalEnterEvent(_) => {}
         Event::EntityPortalExitEvent(_) => {}
-        Event::EntityRemoveEvent(_) => {}
+        Event::EntityRemoveEvent(data) => {
+            cleanup_entity(state, &data.entity);
+        }
         Event::EntityTargetBlockEvent(_) => {}
         Event::EntityUnleashEvent(_) => {}
         Event::ExpBottleEvent(_) => {}

@@ -26,6 +26,7 @@ use crate::pumpkin::plugin::world::{
     WorldSpawnLocation as WitWorldSpawnLocation,
 };
 use crate::pumpkin::{self, plugin::world::World};
+use crate::uuid::UuidExt;
 use pumpkin_core::block::entities::banner::BannerBlockEntity as InternalBannerBlockEntity;
 use pumpkin_core::block::entities::barrel::BarrelBlockEntity as InternalBarrelBlockEntity;
 use pumpkin_core::block::entities::beacon::BeaconBlockEntity as InternalBeaconBlockEntity;
@@ -990,6 +991,36 @@ impl pumpkin::plugin::world::HostWorld for PluginHostState {
         }
 
         Ok(entities)
+    }
+
+    fn get_entity_by_id(
+        &mut self,
+        world: Resource<World>,
+        id: i32,
+    ) -> wasmtime::Result<Option<Resource<pumpkin::plugin::entity::Entity>>> {
+        let world = self.get(&world)?.clone();
+        world
+            .get_entity_by_id(id)
+            .map(|entity| self.add(entity))
+            .transpose()
+    }
+
+    fn get_entity_by_uuid(
+        &mut self,
+        world: Resource<World>,
+        id: pumpkin::plugin::uuid::Uuid,
+    ) -> wasmtime::Result<Option<Resource<pumpkin::plugin::entity::Entity>>> {
+        let world = self.get(&world)?.clone();
+        let uuid = pumpkin::plugin::uuid::Uuid::from_wit(&id);
+        world
+            .get_entity_by_uuid(uuid)
+            .or_else(|| {
+                world
+                    .get_player_by_uuid(uuid)
+                    .map(|player| player as Arc<dyn pumpkin_core::entity::EntityBase>)
+            })
+            .map(|entity| self.add(entity))
+            .transpose()
     }
 
     fn ray_trace_blocks(
