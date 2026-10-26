@@ -1,6 +1,6 @@
 use std::{borrow::Cow, vec};
 
-use serde::{Deserialize, Serialize};
+use serde::{Deserialize, Deserializer, Serialize};
 
 use super::{TextComponent, TextComponentBase};
 
@@ -9,7 +9,10 @@ use super::{TextComponent, TextComponentBase};
 #[serde(tag = "action", rename_all = "snake_case")]
 pub enum HoverEvent {
     /// Displays a tooltip with the given text.
-    ShowText { value: Vec<TextComponentBase> },
+    ShowText {
+        #[serde(deserialize_with = "deserialize_components")]
+        value: Vec<TextComponentBase>,
+    },
     /// Shows an item.
     ShowItem {
         /// Resource identifier of the item.
@@ -28,9 +31,36 @@ pub enum HoverEvent {
         /// The UUID cannot use `uuid::Uuid` because its serialization parses it into bytes, so its double bytes serialized.
         uuid: Cow<'static, str>,
         /// Optional custom name for the entity.
-        #[serde(default, skip_serializing_if = "Option::is_none")]
+        #[serde(
+            default,
+            skip_serializing_if = "Option::is_none",
+            deserialize_with = "deserialize_optional_components"
+        )]
         name: Option<Vec<TextComponentBase>>,
     },
+}
+
+/// Reads a component in any vanilla form (string, object or list) as a list of components.
+fn deserialize_components<'de, D: Deserializer<'de>>(
+    deserializer: D,
+) -> Result<Vec<TextComponentBase>, D::Error> {
+    #[derive(Deserialize)]
+    #[serde(untagged)]
+    enum Components {
+        List(Vec<TextComponent>),
+        One(TextComponent),
+    }
+
+    Ok(match Components::deserialize(deserializer)? {
+        Components::List(list) => list.into_iter().map(|component| component.0).collect(),
+        Components::One(component) => vec![component.0],
+    })
+}
+
+fn deserialize_optional_components<'de, D: Deserializer<'de>>(
+    deserializer: D,
+) -> Result<Option<Vec<TextComponentBase>>, D::Error> {
+    deserialize_components(deserializer).map(Some)
 }
 
 impl HoverEvent {
