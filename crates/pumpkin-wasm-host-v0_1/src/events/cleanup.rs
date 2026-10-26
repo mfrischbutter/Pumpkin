@@ -89,6 +89,9 @@ pub fn cleanup_event(event: &Event, state: &mut PluginHostState) {
         }
         Event::PlayerFishEvent(data) => {
             cleanup_player(state, &data.player);
+            for res in &data.caught_items {
+                cleanup_item_stack(state, res);
+            }
         }
         Event::PlayerEggThrowEvent(data) => {
             cleanup_player(state, &data.player);
@@ -317,7 +320,9 @@ pub fn cleanup_event(event: &Event, state: &mut PluginHostState) {
         Event::BlockIgniteEvent(data) => {
             cleanup_world(state, &data.target_world);
         }
-        Event::BlockFromToEvent(_) => {}
+        Event::BlockFromToEvent(data) => {
+            cleanup_world(state, &data.target_world);
+        }
         Event::BlockFormEvent(_) => {}
         Event::BlockFadeEvent(_) => {}
         Event::BlockDispenseEvent(_) => {}
@@ -355,8 +360,12 @@ pub fn cleanup_event(event: &Event, state: &mut PluginHostState) {
         }
         Event::AsyncStructureGenerateEvent(_) => {}
         Event::AsyncStructureSpawnEvent(_) => {}
-        Event::ChunkPopulateEvent(_) => {}
-        Event::ChunkUnloadEvent(_) => {}
+        Event::ChunkPopulateEvent(data) => {
+            cleanup_world(state, &data.target_world);
+        }
+        Event::ChunkUnloadEvent(data) => {
+            cleanup_world(state, &data.target_world);
+        }
         Event::EntitiesLoadEvent(data) => {
             cleanup_world(state, &data.target_world);
             for res in &data.entities {
@@ -370,7 +379,18 @@ pub fn cleanup_event(event: &Event, state: &mut PluginHostState) {
             }
         }
         Event::GenericGameEvent(_) => {}
-        Event::LootGenerateEvent(_) => {}
+        Event::LootGenerateEvent(data) => {
+            cleanup_world(state, &data.target_world);
+            if let Some(res) = &data.entity {
+                cleanup_entity(state, res);
+            }
+            if let Some(res) = &data.player {
+                cleanup_player(state, res);
+            }
+            for res in &data.items {
+                cleanup_item_stack(state, res);
+            }
+        }
         Event::PortalCreateEvent(_) => {}
         Event::StructureGrowEvent(_) => {}
         Event::TimeSkipEvent(_) => {}
@@ -414,6 +434,15 @@ pub fn cleanup_event(event: &Event, state: &mut PluginHostState) {
         Event::InventoryPickupItemEvent(_) => {}
         Event::PrepareAnvilEvent(data) => {
             cleanup_player(state, &data.player);
+            if let Some(res) = &data.left {
+                cleanup_item_stack(state, res);
+            }
+            if let Some(res) = &data.right {
+                cleanup_item_stack(state, res);
+            }
+            if let Some(res) = &data.result {
+                cleanup_item_stack(state, res);
+            }
         }
         Event::PrepareGrindstoneEvent(data) => {
             cleanup_player(state, &data.player);
@@ -423,6 +452,12 @@ pub fn cleanup_event(event: &Event, state: &mut PluginHostState) {
         }
         Event::PrepareItemCraftEvent(data) => {
             cleanup_player(state, &data.player);
+            for res in data.matrix.iter().flatten() {
+                cleanup_item_stack(state, res);
+            }
+            if let Some(res) = &data.result {
+                cleanup_item_stack(state, res);
+            }
         }
         Event::PrepareSmithingEvent(data) => {
             cleanup_player(state, &data.player);
@@ -806,6 +841,15 @@ pub fn cleanup_event(event: &Event, state: &mut PluginHostState) {
             if let Some(res) = &data.new_item {
                 cleanup_item_stack(state, res);
             }
+        }
+        Event::BlockShapeUpdateEvent(data) => {
+            cleanup_world(state, &data.target_world);
+        }
+        Event::BlockScheduledTickEvent(data) => {
+            cleanup_world(state, &data.target_world);
+        }
+        Event::BlockRandomTickEvent(data) => {
+            cleanup_world(state, &data.target_world);
         }
     }
 }

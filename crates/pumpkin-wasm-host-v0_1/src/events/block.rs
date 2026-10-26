@@ -334,18 +334,23 @@ impl ToFromWasmEvent for BlockIgniteEvent {
 }
 
 impl ToFromWasmEvent for BlockFromToEvent {
-    fn to_wasm_event(&self, _state: &mut PluginHostState) -> Event {
+    fn to_wasm_event(&self, state: &mut PluginHostState) -> Event {
+        let target_world = state
+            .add(self.world.clone())
+            .expect("failed to add world resource");
         Event::BlockFromToEvent(BlockFromToEventData {
             from_pos: to_wasm_block_position(self.from_pos),
             to_pos: to_wasm_block_position(self.to_pos),
             block: to_wasm_block_name(self.block),
+            target_world,
             cancelled: self.cancelled,
         })
     }
 
-    fn from_wasm_event(event: Event, _state: &mut PluginHostState) -> Self {
+    fn from_wasm_event(event: Event, state: &mut PluginHostState) -> Self {
         match event {
             Event::BlockFromToEvent(data) => Self {
+                world: consume_world(state, &data.target_world),
                 from_pos: from_wasm_block_position(data.from_pos),
                 to_pos: from_wasm_block_position(data.to_pos),
                 block: from_wasm_block_name(&data.block),
