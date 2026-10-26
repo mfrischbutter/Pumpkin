@@ -32,6 +32,7 @@ use crate::entity::attributes::ModifierOperation;
 use crate::entity::combat::{CombatRules, CombatTracker, FallLocation, knockback_after_resistance};
 use crate::entity::mob::equipment::DEFAULT_EQUIPMENT_DROP_CHANCE;
 use crate::entity::player::statistics::{CustomStatistic, StatisticCategory};
+use crate::plugin::api::events::entity::entity_death::EntityDeathEvent;
 use crate::server::Server;
 use crate::world::loot::LootContextParameters;
 use crossbeam::atomic::AtomicCell;
@@ -2278,21 +2279,36 @@ impl LivingEntity {
                 ..Default::default()
             };
 
-            // Drop loot
-            self.drop_loot(&params);
-
-            // Award experience
-            if params.killed_by_player.unwrap_or(false)
+            let mut drops = self.loot_table_drops(&params);
+            let dropped_exp = if params.killed_by_player.unwrap_or(false)
                 && world.level_info.load().game_rules.mob_drops
             {
-                let amount = dyn_self.get_experience_reward(killer);
-                if amount > 0 {
-                    ExperienceOrbEntity::spawn(&world, self.entity.pos.load(), amount);
-                }
-            }
+                dyn_self.get_experience_reward(killer)
+            } else {
+                0
+            };
             self.entity.pose.store(EntityPose::Dying);
+            drops.extend(self.equipment_drops(looting_level));
 
-            self.drop_equipment(looting_level);
+            let mut death_event =
+                EntityDeathEvent::new(self.entity.entity_id, dropped_exp as i32, drops);
+            if let Some(server) = world.server.upgrade() {
+                server
+                    .plugin_manager
+                    .fire_blocking(&server, &mut death_event);
+            }
+            let block_pos = self.entity.block_pos.load();
+            for stack in death_event.drops {
+                world.drop_stack(&block_pos, stack);
+            }
+            if death_event.dropped_exp > 0 {
+                ExperienceOrbEntity::spawn(
+                    &world,
+                    self.entity.pos.load(),
+                    death_event.dropped_exp as u32,
+                );
+            }
+
             if let Some(mob) = dyn_self.get_mob() {
                 mob.drop_inventory();
             }
@@ -2321,10 +2337,9 @@ impl LivingEntity {
         }
     }
 
-    fn drop_equipment(&self, looting_level: u32) {
-        let world = self.entity.world.load();
-        let block_pos = self.entity.block_pos.load();
-
+    /// Takes the equipment that drops on death out of its slots.
+    fn equipment_drops(&self, looting_level: u32) -> Vec<ItemStack> {
+        let mut drops = Vec::new();
         let drop_chances = self
             .equipment_drop_chances
             .lock()
@@ -2372,8 +2387,9 @@ impl LivingEntity {
                 let outer = rng.random_range(0..=inner);
                 item.set_damage((max_damage - outer).max(0));
             }
-            world.drop_stack(&block_pos, item);
+            drops.push(item);
         }
+        drops
     }
 
     fn broadcast_death_message(
@@ -2389,6 +2405,21 @@ impl LivingEntity {
             let death_message = Self::get_death_message(dyn_self, damage_type, source, cause);
             let mut final_death_message = death_message;
             if let Some(player) = dyn_self.get_player() {
+                let mut keep_inventory = world.level_info.load().game_rules.keep_inventory;
+                let mut items_to_keep = Vec::new();
+                let mut drops = if keep_inventory {
+                    Vec::new()
+                } else {
+                    player
+                        .inventory()
+                        .main_inventory
+                        .read()
+                        .unwrap_or_else(std::sync::PoisonError::into_inner)
+                        .iter()
+                        .filter(|stack| !stack.is_empty())
+                        .cloned()
+                        .collect()
+                };
                 if let Some(player_arc) = world.get_player_by_uuid(player.gameprofile.id)
                     && let Some(server) = world.server.upgrade()
                 {
@@ -2397,15 +2428,20 @@ impl LivingEntity {
                             player_arc,
                             final_death_message.clone(),
                             0,
+                            keep_inventory,
+                            drops,
                         );
                     server.plugin_manager.fire_blocking(&server, &mut event);
                     if event.cancelled {
                         return;
                     }
                     final_death_message = event.death_message;
+                    keep_inventory = event.keep_inventory;
+                    drops = event.drops;
+                    items_to_keep = event.items_to_keep;
                 }
 
-                player.handle_killed(&final_death_message);
+                player.handle_killed(&final_death_message, keep_inventory, drops, items_to_keep);
             }
 
             if show_death_messages && let Some(server) = world.server.upgrade() {
@@ -2496,17 +2532,16 @@ impl LivingEntity {
         }
     }
 
-    fn drop_loot(&self, params: &LootContextParameters) {
+    fn loot_table_drops(&self, params: &LootContextParameters) -> Vec<ItemStack> {
         let resource_name = self.get_entity().entity_type.resource_name;
         let key = format!("minecraft:entities/{resource_name}");
         let world = self.entity.world.load();
-        if let Some(loot_table) = world.get_loot_table(&key) {
-            let seed: i64 = rand::random();
-            let pos = self.entity.block_pos.load();
-            for stack in crate::world::loot::generate_loot_from_handle(&loot_table, seed, params) {
-                world.drop_stack(&pos, stack);
-            }
-        }
+        world
+            .get_loot_table(&key)
+            .map_or_else(Vec::new, |loot_table| {
+                let seed: i64 = rand::random();
+                crate::world::loot::generate_loot_from_handle(&loot_table, seed, params)
+            })
     }
 
     fn tick_effects(&self) {
@@ -3611,16 +3646,6 @@ impl LivingEntity {
         }
 
         if new_health <= 0.0 {
-            let mut death_event =
-                crate::plugin::api::events::entity::entity_death::EntityDeathEvent::new(
-                    self.entity.entity_id,
-                    0,
-                );
-            if let Some(server) = world.server.upgrade() {
-                server
-                    .plugin_manager
-                    .fire_blocking(&server, &mut death_event);
-            }
             self.on_death(damage_type, source, cause);
         }
 
