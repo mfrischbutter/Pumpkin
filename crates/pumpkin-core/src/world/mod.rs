@@ -55,7 +55,9 @@ use crate::{
     net::{ClientPlatform, bedrock::BedrockClient, java::JavaClient},
     plugin::{
         block::{
-            block_break::BlockBreakEvent, block_scheduled_tick::BlockScheduledTickEvent,
+            block_break::BlockBreakEvent,
+            block_random_tick::{BlockRandomTick, BlockRandomTickEvent},
+            block_scheduled_tick::BlockScheduledTickEvent,
             block_shape_update::BlockShapeUpdateEvent,
         },
         block_hooks::BlockStateHook,
@@ -166,7 +168,7 @@ use pumpkin_world::{
     world::BlockAccessor,
 };
 use pumpkin_world::{
-    level::Level,
+    level::{Level, RandomTickSample},
     tick::{TickPriority, order},
 };
 pub use pumpkin_world::{world::BlockFlags, world_info::LevelData};
@@ -2284,46 +2286,41 @@ impl World {
             });
 
         // 3. Parallel Random Ticks via Rayon
+        let random_ticks = self.fire_block_random_ticks(tick_data.random_ticks);
         let world = self.clone();
         let random_handle = handle.clone();
-        tick_data
-            .random_ticks
-            .par_chunks(BATCH_SIZE)
-            .for_each(|batch| {
-                let _guard = random_handle.enter();
-                let world = world.clone();
-                for scheduled_tick in batch {
-                    let pos = scheduled_tick.position;
-                    let (block, fluid) =
-                        match (scheduled_tick.tick_block, scheduled_tick.tick_fluid) {
-                            (true, true) => {
-                                let (b, f) = world.get_block_and_fluid(&pos);
-                                (Some(b), Some(f))
-                            }
-                            (true, false) => (Some(world.get_block(&pos)), None),
-                            (false, true) => (None, Some(world.get_fluid(&pos))),
-                            (false, false) => (None, None),
-                        };
-
-                    if let Some(block) = block
-                        && let Some(pumpkin_block) =
-                            world.block_registry.get_pumpkin_block(block.id)
-                    {
-                        pumpkin_block.random_tick(RandomTickArgs {
-                            world: &world,
-                            block,
-                            position: &pos,
-                        });
+        random_ticks.par_chunks(BATCH_SIZE).for_each(|batch| {
+            let _guard = random_handle.enter();
+            let world = world.clone();
+            for scheduled_tick in batch {
+                let pos = scheduled_tick.position;
+                let (block, fluid) = match (scheduled_tick.tick_block, scheduled_tick.tick_fluid) {
+                    (true, true) => {
+                        let (b, f) = world.get_block_and_fluid(&pos);
+                        (Some(b), Some(f))
                     }
+                    (true, false) => (Some(world.get_block(&pos)), None),
+                    (false, true) => (None, Some(world.get_fluid(&pos))),
+                    (false, false) => (None, None),
+                };
 
-                    if let Some(fluid) = fluid
-                        && let Some(pumpkin_fluid) =
-                            world.block_registry.get_pumpkin_fluid(fluid.id)
-                    {
-                        pumpkin_fluid.random_tick(fluid, &world, &pos);
-                    }
+                if let Some(block) = block
+                    && let Some(pumpkin_block) = world.block_registry.get_pumpkin_block(block.id)
+                {
+                    pumpkin_block.random_tick(RandomTickArgs {
+                        world: &world,
+                        block,
+                        position: &pos,
+                    });
                 }
-            });
+
+                if let Some(fluid) = fluid
+                    && let Some(pumpkin_fluid) = world.block_registry.get_pumpkin_fluid(fluid.id)
+                {
+                    pumpkin_fluid.random_tick(fluid, &world, &pos);
+                }
+            }
+        });
 
         // 4. Calculate Spawn List (Sequential setup)
         let spawn_state = self.spawn_state.load();
@@ -6731,6 +6728,45 @@ impl World {
         let mut event = BlockScheduledTickEvent::new(self.clone(), *pos, state_id);
         server.plugin_manager.fire_blocking(&server, &mut event);
         event.cancelled
+    }
+
+    /// Fires `BlockRandomTickEvent` with the samples of watched states and drops the block
+    /// tick of the samples plugins cancelled. Samples of states only plugins made randomly
+    /// ticking are dropped after the event, since vanilla does not tick them.
+    fn fire_block_random_ticks(
+        self: &Arc<Self>,
+        mut samples: Vec<RandomTickSample>,
+    ) -> Vec<RandomTickSample> {
+        let hooks = &self.block_registry.plugin_hooks;
+        if !hooks.is_active(BlockStateHook::RandomTick) {
+            return samples;
+        }
+        let mut ticks = Vec::new();
+        let mut indices = Vec::new();
+        for (index, sample) in samples.iter().enumerate() {
+            if hooks.contains(BlockStateHook::RandomTick, sample.state_id) {
+                ticks.push(BlockRandomTick {
+                    block_pos: sample.position,
+                    state_id: sample.state_id,
+                    cancelled: false,
+                });
+                indices.push(index);
+            }
+        }
+        if !ticks.is_empty()
+            && let Some(server) = self.server.upgrade()
+            && server.plugin_manager.has_handlers::<BlockRandomTickEvent>()
+        {
+            let mut event = BlockRandomTickEvent::new(self.clone(), ticks);
+            server.plugin_manager.fire_blocking(&server, &mut event);
+            for (tick, index) in event.ticks.iter().zip(indices) {
+                if tick.cancelled {
+                    samples[index].tick_block = false;
+                }
+            }
+        }
+        samples.retain(|sample| sample.tick_block || sample.tick_fluid);
+        samples
     }
 
     /// Returns whether monsters can be spawned in the world

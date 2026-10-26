@@ -261,6 +261,17 @@ impl Context {
         hooks.set(&self.metadata.name, BlockStateHook::ShapeUpdate, states);
     }
 
+    /// Fires `BlockRandomTickEvent` for random ticks of `states`. States vanilla never random
+    /// ticks get random ticks for this, which only reach plugins.
+    ///
+    /// Replaces the states this plugin watched before; an empty slice stops watching.
+    pub fn watch_random_tick_states(&self, states: Box<[BlockStateId]>) {
+        let hooks = &self.server.block_registry.plugin_hooks;
+        if hooks.set(&self.metadata.name, BlockStateHook::RandomTick, states) {
+            self.rebuild_random_tick_caches();
+        }
+    }
+
     /// Fires `BlockScheduledTickEvent` before each scheduled tick of `block` runs.
     pub fn register_scheduled_tick_hook(&self, block: &Block) {
         let states = block.states.iter().map(|state| state.id);
@@ -269,10 +280,19 @@ impl Context {
     }
 
     pub(crate) fn unregister_block_hooks(&self) {
-        self.server
-            .block_registry
-            .plugin_hooks
-            .remove_plugin(&self.metadata.name);
+        let hooks = &self.server.block_registry.plugin_hooks;
+        if hooks.remove_plugin(&self.metadata.name) {
+            self.rebuild_random_tick_caches();
+        }
+    }
+
+    /// Recounts the random-ticking blocks of loaded chunks after the plugin random-ticking
+    /// states changed. Runs on Rayon, as it walks every loaded section.
+    fn rebuild_random_tick_caches(&self) {
+        for world in self.server.worlds.load().iter() {
+            let level = world.level.clone();
+            rayon::spawn(move || level.rebuild_random_tick_caches());
+        }
     }
 
     /// Reloads (resends) all commands for all currently online players.

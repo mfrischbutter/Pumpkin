@@ -1,7 +1,7 @@
 use crate::chunk::format::LightContainer;
 use crate::tick::scheduler::ChunkTickScheduler;
-use palette::{BiomePalette, BlockPalette, has_random_ticking_fluid};
-use pumpkin_data::block_properties::{blocks_movement, has_random_ticks, is_air};
+use palette::{BiomePalette, BlockPalette, has_random_ticking_fluid, is_randomly_ticking};
+use pumpkin_data::block_properties::{blocks_movement, is_air};
 use pumpkin_data::chunk::ChunkStatus;
 use pumpkin_data::fluid::Fluid;
 use pumpkin_data::tag::Block::MINECRAFT_LEAVES;
@@ -336,6 +336,24 @@ impl ChunkSections {
         }
     }
 
+    /// Recounts the random-ticking blocks of every section, for when the set of randomly
+    /// ticking states changed.
+    pub fn rebuild_random_tick_sections_cache(&self) {
+        // Same lock order as block writes: block sections first, then the random-tick cache.
+        let block_sections = self
+            .block_sections
+            .read()
+            .unwrap_or_else(std::sync::PoisonError::into_inner);
+        let mut random_tick_sections = self
+            .random_tick_sections
+            .write()
+            .unwrap_or_else(std::sync::PoisonError::into_inner);
+        let (cache, mask) = Self::build_random_tick_sections_cache(&block_sections);
+        *random_tick_sections = cache;
+        self.randomly_ticking_mask
+            .store(mask, std::sync::atomic::Ordering::Relaxed);
+    }
+
     #[must_use]
     pub fn new(num_sections: usize, min_y: i32) -> Self {
         let block_sections = vec![BlockPalette::default(); num_sections].into_boxed_slice();
@@ -581,7 +599,7 @@ impl ChunkSections {
                 return Some(replaced_block_state_id);
             }
 
-            if (has_random_ticks(block_state_id) || has_random_ticking_fluid(block_state_id))
+            if (is_randomly_ticking(block_state_id) || has_random_ticking_fluid(block_state_id))
                 && random_tick_sections_guard.is_none()
             {
                 let new_cache =
@@ -591,7 +609,7 @@ impl ChunkSections {
 
             if let Some(random_tick_sections) = random_tick_sections_guard.as_mut() {
                 let random_tick_cache = &mut random_tick_sections[section_index];
-                if has_random_ticks(replaced_block_state_id) {
+                if is_randomly_ticking(replaced_block_state_id) {
                     random_tick_cache.random_ticking_block_count = random_tick_cache
                         .random_ticking_block_count
                         .saturating_sub(1);
@@ -602,7 +620,7 @@ impl ChunkSections {
                         .saturating_sub(1);
                 }
 
-                if has_random_ticks(block_state_id) {
+                if is_randomly_ticking(block_state_id) {
                     random_tick_cache.random_ticking_block_count = random_tick_cache
                         .random_ticking_block_count
                         .saturating_add(1);
@@ -798,7 +816,7 @@ impl ChunkData {
                 if replaced_id != new_state_id {
                     modified = true;
                     changed_columns.insert((rel_x, rel_z));
-                    if (has_random_ticks(new_state_id) || has_random_ticking_fluid(new_state_id))
+                    if (is_randomly_ticking(new_state_id) || has_random_ticking_fluid(new_state_id))
                         && random_tick_sections_guard.is_none()
                     {
                         let new_cache = vec![RandomTickSectionCache::default(); self.section.count]
@@ -808,7 +826,7 @@ impl ChunkData {
 
                     if let Some(random_tick_sections) = random_tick_sections_guard.as_mut() {
                         let random_tick_cache = &mut random_tick_sections[section_index];
-                        if has_random_ticks(replaced_id) {
+                        if is_randomly_ticking(replaced_id) {
                             random_tick_cache.random_ticking_block_count = random_tick_cache
                                 .random_ticking_block_count
                                 .saturating_sub(1);
@@ -818,7 +836,7 @@ impl ChunkData {
                                 .random_ticking_fluid_count
                                 .saturating_sub(1);
                         }
-                        if has_random_ticks(new_state_id) {
+                        if is_randomly_ticking(new_state_id) {
                             random_tick_cache.random_ticking_block_count = random_tick_cache
                                 .random_ticking_block_count
                                 .saturating_add(1);

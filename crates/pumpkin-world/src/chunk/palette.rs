@@ -1,4 +1,8 @@
-use std::{collections::HashMap, hash::Hash};
+use std::{
+    collections::HashMap,
+    hash::Hash,
+    sync::atomic::{AtomicBool, Ordering},
+};
 
 use pumpkin_data::{
     BlockState, BlockStateId,
@@ -25,6 +29,49 @@ type AbstractCube<T, const DIM: usize> = [[[T; DIM]; DIM]; DIM];
 #[must_use]
 pub fn has_random_ticking_fluid(id: BlockStateId) -> bool {
     Fluid::from_state_id(id).is_some_and(|fluid| Fluid::same_fluid_type(fluid.id, Fluid::LAVA.id))
+}
+
+/// Block states that plugins made randomly ticking on top of vanilla's, by state id.
+static PLUGIN_RANDOM_TICKS: [AtomicBool; BlockStateId::COUNT as usize] =
+    [const { AtomicBool::new(false) }; BlockStateId::COUNT as usize];
+
+/// Whether `PLUGIN_RANDOM_TICKS` holds any state, so lookups skip it otherwise.
+static ANY_PLUGIN_RANDOM_TICKS: AtomicBool = AtomicBool::new(false);
+
+/// Returns whether the state was added with [`set_plugin_random_ticks`].
+#[inline]
+#[must_use]
+pub fn has_plugin_random_ticks(id: BlockStateId) -> bool {
+    ANY_PLUGIN_RANDOM_TICKS.load(Ordering::Relaxed)
+        && PLUGIN_RANDOM_TICKS[id.as_u16() as usize].load(Ordering::Relaxed)
+}
+
+/// Returns whether blocks in this state get random ticks: the states vanilla ticks
+/// (`BlockState.isRandomlyTicking`) plus the ones added with [`set_plugin_random_ticks`].
+#[inline]
+#[must_use]
+pub fn is_randomly_ticking(id: BlockStateId) -> bool {
+    has_random_ticks(id) || has_plugin_random_ticks(id)
+}
+
+/// Replaces the block states that get random ticks on top of vanilla's. Returns whether the
+/// set changed.
+///
+/// The set is process-wide. Loaded chunks keep their random-tick counts until
+/// [`Level::rebuild_random_tick_caches`](crate::level::Level::rebuild_random_tick_caches) runs,
+/// so call that on every level after a change.
+pub fn set_plugin_random_ticks(states: impl IntoIterator<Item = BlockStateId>) -> bool {
+    let mut wanted = vec![false; PLUGIN_RANDOM_TICKS.len()];
+    for state in states {
+        wanted[state.as_u16() as usize] = true;
+    }
+    let any = wanted.contains(&true);
+    let mut changed = false;
+    for (slot, value) in PLUGIN_RANDOM_TICKS.iter().zip(wanted) {
+        changed |= slot.swap(value, Ordering::Relaxed) != value;
+    }
+    ANY_PLUGIN_RANDOM_TICKS.store(any, Ordering::Relaxed);
+    changed
 }
 
 /// Returns the block state for Bedrock's secondary water storage.
@@ -882,7 +929,7 @@ impl BlockPalette {
     pub fn random_ticking_counts(&self) -> (u16, u16) {
         match self {
             Self::Homogeneous(registry_id) => {
-                let block_count = if has_random_ticks(*registry_id) {
+                let block_count = if is_randomly_ticking(*registry_id) {
                     Self::VOLUME as u16
                 } else {
                     0
@@ -897,7 +944,7 @@ impl BlockPalette {
             Self::Heterogeneous(data) => data.palette.iter().zip(data.counts.iter()).fold(
                 (0, 0),
                 |(block_count, fluid_count), (registry_id, count)| {
-                    let block_count = if has_random_ticks(*registry_id) {
+                    let block_count = if is_randomly_ticking(*registry_id) {
                         block_count.saturating_add(*count)
                     } else {
                         block_count
