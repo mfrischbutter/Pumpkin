@@ -3,6 +3,12 @@ package pumpkin:plugin@0.2.0;
 interface java-packets {
   use common.{ inexpressible-host-type, nbt-tree };
   use uuid.{ uuid };
+  /// A game profile property, such as `textures`, which carries the player's skin
+  record profile-property {
+    name: string,
+    value: string,
+    signature: option<string>,
+  }
   /// Sent by the client to inform the server about its local settings
   record config-s-client-information-config {
     /// The language code used by the client (e.g., "`en_us`")
@@ -680,7 +686,7 @@ interface java-packets {
     username: string,
     /// A list of properties for the player's profile, such as skin data and signatures.
     /// This is typically retrieved from the Mojang authentication servers.
-    properties: list<property>,
+    properties: list<profile-property>,
     /// (<1.21.2) Whether strict error handling should be enabled.
     strict-error-handling: bool,
     /// Added in 26.2
@@ -1702,7 +1708,7 @@ interface java-packets {
   /// Generated; extracted from variant arm. See `player-action.add-player` for details.
   record player-action-add-player {
     name: string,
-    properties: list<property>,
+    properties: list<profile-property>,
   }
   variant player-action {
     add-player(player-action-add-player),

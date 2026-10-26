@@ -9,7 +9,7 @@ use std::fs;
 use std::path::PathBuf;
 use syn::{Fields, Item};
 use wit_encoder::{
-    Interface, Package, PackageName, Record, Type as WitType, TypeDef, TypeDefKind, Variant,
+    Field, Interface, Package, PackageName, Record, Type as WitType, TypeDef, TypeDefKind, Variant,
     VariantCase,
 };
 
@@ -82,7 +82,7 @@ pub fn build() -> String {
         })
         .collect::<Vec<_>>();
 
-    let defined_types = syn_items
+    let mut defined_types = syn_items
         .iter()
         .map(|(item, state, _)| match item {
             Item::Struct(s) if has_java_packet_attr(&s.attrs) => {
@@ -94,6 +94,23 @@ pub fn build() -> String {
             _ => unreachable!(),
         })
         .collect::<HashSet<_>>();
+
+    // The game profile property lives in the pumpkin-protocol crate root, outside the packet
+    // modules, so its record is defined here. Packets import it as `ProfileProperty`.
+    processed_types.insert("profile-property".to_string());
+    defined_types.insert("profile-property".to_string());
+    let mut profile_property = TypeDef::new(
+        "profile-property",
+        TypeDefKind::Record(Record::new(vec![
+            Field::new("name", WitType::String),
+            Field::new("value", WitType::String),
+            Field::new("signature", WitType::option(WitType::String)),
+        ])),
+    );
+    profile_property.set_docs(Some(
+        "A game profile property, such as `textures`, which carries the player's skin".to_string(),
+    ));
+    interface.type_def(profile_property);
 
     for (item, state, direction) in syn_items {
         let variant = match direction {
