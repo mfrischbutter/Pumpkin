@@ -38,6 +38,9 @@ pub mod packet;
 #[path = "generated/jukebox_song.rs"]
 pub mod jukebox_song;
 
+#[cfg(feature = "jukebox_song")]
+pub mod jukebox_song_registry;
+
 #[cfg(feature = "translation")]
 #[rustfmt::skip]
 #[path = "generated/translation.rs"]

@@ -6,18 +6,32 @@ use std::{
 
 use crate::{
     LoggerOption,
+    block::blocks::redstone::SIGNAL_MAX,
     command::client_suggestions,
+    data::datapack::{BIOME_REGISTRY, ENCHANTMENT_REGISTRY, JUKEBOX_SONG_REGISTRY},
     net::ClientPlatform,
     plugin::{PluginMetadata, block_hooks::BlockStateHook},
     plugin_log,
+    world::client_biome::{BiomeEffects, MAX_SYNCED_BIOMES, biome_definition},
 };
 use arc_swap::ArcSwap;
+use pumpkin_data::biome::Biome;
+use pumpkin_data::biome_registry::{
+    biome_network_id, dynamic_biome_count, register_dynamic_biome, unregister_dynamic_biome,
+};
+use pumpkin_data::jukebox_song_registry::{
+    DynamicJukeboxSong, register_dynamic_jukebox_song, unregister_dynamic_jukebox_song,
+};
+use pumpkin_data::packet::CURRENT_MC_VERSION;
 use pumpkin_data::{Block, BlockStateId};
+use pumpkin_nbt::NbtCompound;
 use pumpkin_util::{
     PermissionLvl,
+    identifier::Identifier,
     permission::{Permission, PermissionManager},
+    text::TextComponent,
 };
-use tracing::Level;
+use tracing::{Level, warn};
 
 use crate::{
     entity::player::Player,
@@ -356,6 +370,147 @@ impl Context {
         self.server
             .datapack_manager
             .remove_plugin_loot_tables(&self.metadata.name);
+    }
+
+    /// Adds an entry to a synced registry, such as a chat type or a wolf variant.
+    ///
+    /// `data` is the entry in the registry's NBT form, as a datapack defines it. Players receive
+    /// the entry from their next configuration on. It is removed when this plugin unloads.
+    pub fn register_registry_entry(
+        &self,
+        registry: &str,
+        id: &str,
+        data: NbtCompound,
+    ) -> Result<(), String> {
+        self.server
+            .datapack_manager
+            .register_plugin_registry_entry(&self.metadata.name, registry, id, data)?;
+        self.warn_if_players_online(id);
+        Ok(())
+    }
+
+    /// Registers a jukebox song. Jukeboxes play discs whose `jukebox_playable` names `id`, with
+    /// this length and comparator signal, and clients show `description` as "now playing" and
+    /// in the disc's tooltip. The song is removed when this plugin unloads.
+    pub fn register_jukebox_song(
+        &self,
+        id: &str,
+        sound_event: &str,
+        description: &TextComponent,
+        length_in_seconds: f32,
+        comparator_output: u8,
+    ) -> Result<(), String> {
+        let sound_event = Identifier::parse(sound_event).map_err(|error| error.to_string())?;
+        // Vanilla's `JukeboxSong` codec takes a positive length and a signal from 0 to 15
+        // (from memory).
+        if !length_in_seconds.is_finite() || length_in_seconds <= 0.0 {
+            return Err(format!(
+                "Jukebox song length must be positive, got {length_in_seconds}"
+            ));
+        }
+        if comparator_output > SIGNAL_MAX {
+            return Err(format!(
+                "Jukebox song comparator output must be at most {SIGNAL_MAX}, got {comparator_output}"
+            ));
+        }
+        let mut data = NbtCompound::new();
+        data.put_string("sound_event", sound_event.to_string());
+        data.put(
+            "description",
+            description.to_nbt_tag_for_version(&CURRENT_MC_VERSION),
+        );
+        data.put_float("length_in_seconds", length_in_seconds);
+        data.put_int("comparator_output", i32::from(comparator_output));
+
+        let id = self.server.datapack_manager.insert_plugin_registry_entry(
+            &self.metadata.name,
+            JUKEBOX_SONG_REGISTRY.to_string(),
+            id,
+            data,
+        )?;
+        register_dynamic_jukebox_song(
+            id.clone(),
+            DynamicJukeboxSong {
+                length_in_seconds,
+                comparator_output,
+            },
+        );
+        self.warn_if_players_online(&id);
+        Ok(())
+    }
+
+    /// Registers a biome for clients, shown where a plugin sets it as a client biome. It looks
+    /// like `effects` and otherwise like the vanilla biome `base`, whose climate, sounds and
+    /// particles it copies. The server never stores it: palettes, saves and gameplay keep the
+    /// biome that is actually there. The biome is removed when this plugin unloads.
+    pub fn register_biome(
+        &self,
+        id: &str,
+        base: &str,
+        effects: &BiomeEffects,
+    ) -> Result<(), String> {
+        let base = Identifier::parse(base)
+            .map_err(|error| error.to_string())?
+            .to_string();
+        let base_biome = base
+            .strip_prefix("minecraft:")
+            .and_then(Biome::from_name)
+            .ok_or_else(|| format!("Base biome {base} is not a vanilla biome"))?;
+        let normalized = Identifier::parse(id)
+            .map_err(|error| error.to_string())?
+            .to_string();
+        if biome_network_id(&normalized).is_none()
+            && Biome::ALL.len() + dynamic_biome_count() >= MAX_SYNCED_BIOMES
+        {
+            return Err(format!(
+                "Biome {normalized} does not fit: clients take at most {MAX_SYNCED_BIOMES} biomes"
+            ));
+        }
+        let definition = biome_definition(base_biome, effects)?;
+
+        let id = self.server.datapack_manager.insert_plugin_registry_entry(
+            &self.metadata.name,
+            BIOME_REGISTRY.to_string(),
+            id,
+            definition,
+        )?;
+        register_dynamic_biome(id.clone());
+        self.warn_if_players_online(&id);
+        Ok(())
+    }
+
+    /// Players that already configured keep the registries they received.
+    fn warn_if_players_online(&self, entry_id: &str) {
+        if self.server.get_player_count() > 0 {
+            warn!(
+                "Registry entry {entry_id} of plugin {} was added while players are online; they receive it when they rejoin",
+                self.metadata.name
+            );
+        }
+    }
+
+    /// Removes the registry entries this plugin added, and the server's model of them.
+    pub(crate) async fn unregister_registry_entries(&self) {
+        let removed = self
+            .server
+            .datapack_manager
+            .remove_plugin_registry_entries(&self.metadata.name);
+        for (registry_id, entry_id) in removed {
+            if registry_id == JUKEBOX_SONG_REGISTRY {
+                unregister_dynamic_jukebox_song(&entry_id);
+            } else if registry_id == BIOME_REGISTRY {
+                unregister_dynamic_biome(&entry_id);
+            } else if registry_id == ENCHANTMENT_REGISTRY {
+                self.server.enchantment_manager.unregister(&entry_id).await;
+            }
+        }
+    }
+
+    /// Clears the client biomes this plugin set in every world.
+    pub(crate) fn clear_client_biomes(&self) {
+        for world in self.server.worlds.load().iter() {
+            world.clear_client_biomes_of(&self.metadata.name);
+        }
     }
 
     /// Check if a player has a permission
