@@ -6062,9 +6062,15 @@ impl World {
     }
 
     /// Spawns an item entity at an exact position, firing a single `ItemSpawnEvent`.
-    pub fn drop_stack_at(self: &Arc<Self>, pos: Vector3<f64>, stack: ItemStack) {
+    ///
+    /// Returns `None` if the stack is empty or a plugin cancelled the spawn.
+    pub fn drop_stack_at(
+        self: &Arc<Self>,
+        pos: Vector3<f64>,
+        stack: ItemStack,
+    ) -> Option<Arc<ItemEntity>> {
         if stack.is_empty() {
-            return;
+            return None;
         }
 
         let entity = Entity::new(self.clone(), pos, &EntityType::ITEM);
@@ -6079,11 +6085,12 @@ impl World {
                 .fire_blocking(&server, &mut item_event);
         }
         if item_event.cancelled {
-            return;
+            return None;
         }
 
         let item_entity = Arc::new(ItemEntity::new(entity, stack));
-        self.spawn_entity(item_entity);
+        self.spawn_entity(item_entity.clone())
+            .then_some(item_entity)
     }
 
     pub fn drop_stack_from_face(

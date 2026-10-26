@@ -470,6 +470,9 @@ mod resource_with {
     impl FromResource for plugin::display::InteractionEntity {
         type Internal = Arc<pumpkin_core::entity::interaction::InteractionEntity>;
     }
+    impl FromResource for plugin::display::ItemEntity {
+        type Internal = Arc<pumpkin_core::entity::item::ItemEntity>;
+    }
 
     impl FromResource for plugin::world::ChunkBuffer {
         type Internal = ChunkBuffer;

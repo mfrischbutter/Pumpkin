@@ -201,7 +201,7 @@ impl AllayEntity {
             let Some(item) = other.cast_any().downcast_ref::<ItemEntity>() else {
                 continue;
             };
-            if item.get_pickup_delay() != 0 || item.get_entity().is_removed() {
+            if item.has_pickup_delay() || item.get_entity().is_removed() {
                 continue;
             }
             let stack = item

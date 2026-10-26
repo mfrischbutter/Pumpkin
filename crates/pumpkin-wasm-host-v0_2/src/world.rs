@@ -1374,18 +1374,21 @@ impl pumpkin::plugin::world::HostWorldWithStore<PluginHostState> for HasSelf<Plu
     }
 
     async fn drop_item(
-        mut host: Access<'_, PluginHostState, Self>,
+        accessor: &Accessor<PluginHostState, Self>,
         world: Resource<World>,
         pos: pumpkin::plugin::common::Position,
         item: Resource<WitHostItemStack>,
-    ) -> wasmtime::Result<()> {
-        let (world, plugin) = world_and_plugin(host.get(), &world)?;
-        let stack = host.get().take(item)?.lock().await.clone();
+    ) -> wasmtime::Result<Option<Resource<pumpkin::plugin::world::Entity>>> {
+        let world = accessor.with(|mut host| world_from_state(host.get(), &world))?;
+        let stack = accessor.take_res(item)?.lock().await.clone();
         let pos = pumpkin_util::math::vector3::Vector3::new(pos.0, pos.1, pos.2);
-        plugin
-            .store
-            .pump_blocking(&mut host, move || world.drop_stack_at(pos, stack))
-            .await
+        let Some(entity) = run_blocking(accessor, move || world.drop_stack_at(pos, stack)).await?
+        else {
+            return Ok(None);
+        };
+        accessor
+            .add_res(entity as Arc<dyn pumpkin_core::entity::EntityBase>)
+            .map(Some)
     }
 
     async fn strike_lightning(
