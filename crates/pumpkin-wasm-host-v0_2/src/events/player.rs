@@ -34,8 +34,9 @@ use crate::{
             PlayerKickEventData, PlayerLeashEntityEventData, PlayerLeaveEventData,
             PlayerLevelChangeEventData, PlayerLinksSendEventData, PlayerLocaleChangeEventData,
             PlayerLoginEventData, PlayerMoveEventData, PlayerNameEntityEventData,
-            PlayerOpenSignEventData, PlayerPermissionCheckEventData, PlayerPickupArrowEventData,
-            PlayerPortalEventData, PlayerPreLoginEventData, PlayerRecipeBookClickEventData,
+            PlayerOpenSignEventData, PlayerPermissionCheckEventData, PlayerPickBlockEventData,
+            PlayerPickEntityEventData, PlayerPickupArrowEventData, PlayerPortalEventData,
+            PlayerPreLoginEventData, PlayerRecipeBookClickEventData,
             PlayerRecipeBookSettingsChangeEventData, PlayerRecipeDiscoverEventData,
             PlayerRegisterChannelEventData, PlayerResourcePackStatusEventData,
             PlayerRespawnEventData, PlayerRiptideEventData, PlayerShearEntityEventData,
@@ -97,6 +98,8 @@ use pumpkin_core::plugin::player::{
     player_name_entity::PlayerNameEntityEvent,
     player_open_sign::PlayerOpenSignEvent,
     player_permission_check::PlayerPermissionCheckEvent,
+    player_pick_block::PlayerPickBlockEvent,
+    player_pick_entity::PlayerPickEntityEvent,
     player_pickup_arrow::PlayerPickupArrowEvent,
     player_portal::PlayerPortalEvent,
     player_pre_login::PlayerPreLoginEvent,
@@ -2359,6 +2362,82 @@ impl ToFromWasmEvent for PlayerLinksSendEvent {
             Event::PlayerLinksSendEvent(data) => Self {
                 player: consume_player(state, &data.player),
                 links: data.links,
+                cancelled: data.cancelled,
+            },
+            _ => panic!("unexpected event type"),
+        }
+    }
+}
+
+impl ToFromWasmEvent for PlayerPickBlockEvent {
+    fn to_wasm_event(&self, state: &mut PluginHostState) -> Event {
+        let player = state
+            .add(self.player.clone())
+            .expect("failed to add player resource");
+        let target_world = state
+            .add(self.world.clone())
+            .expect("failed to add world resource");
+        let item = self.item.as_ref().map(|stack| {
+            state
+                .add(Arc::new(Mutex::new(stack.clone())))
+                .expect("failed to add item stack resource")
+        });
+        Event::PlayerPickBlockEvent(PlayerPickBlockEventData {
+            player,
+            target_world,
+            block_pos: to_wasm_block_position(self.block_pos),
+            include_data: self.include_data,
+            item,
+            cancelled: self.cancelled,
+        })
+    }
+
+    fn from_wasm_event(event: Event, state: &mut PluginHostState) -> Self {
+        match event {
+            Event::PlayerPickBlockEvent(data) => Self {
+                player: consume_player(state, &data.player),
+                world: consume_world(state, &data.target_world),
+                block_pos: from_wasm_block_position(data.block_pos),
+                include_data: data.include_data,
+                item: data.item.map(|item| consume_item_stack(state, &item)),
+                cancelled: data.cancelled,
+            },
+            _ => panic!("unexpected event type"),
+        }
+    }
+}
+
+impl ToFromWasmEvent for PlayerPickEntityEvent {
+    fn to_wasm_event(&self, state: &mut PluginHostState) -> Event {
+        let player = state
+            .add(self.player.clone())
+            .expect("failed to add player resource");
+        let target_world = state
+            .add(self.world.clone())
+            .expect("failed to add world resource");
+        let item = self.item.as_ref().map(|stack| {
+            state
+                .add(Arc::new(Mutex::new(stack.clone())))
+                .expect("failed to add item stack resource")
+        });
+        Event::PlayerPickEntityEvent(PlayerPickEntityEventData {
+            player,
+            target_world,
+            entity_id: self.entity_id,
+            include_data: self.include_data,
+            item,
+            cancelled: self.cancelled,
+        })
+    }
+
+    fn from_wasm_event(event: Event, state: &mut PluginHostState) -> Self {
+        match event {
+            Event::PlayerPickEntityEvent(data) => Self {
+                player: consume_player(state, &data.player),
+                world: consume_world(state, &data.target_world),
+                entity_id: data.entity_id,
+                include_data: data.include_data,
+                item: data.item.map(|item| consume_item_stack(state, &item)),
                 cancelled: data.cancelled,
             },
             _ => panic!("unexpected event type"),

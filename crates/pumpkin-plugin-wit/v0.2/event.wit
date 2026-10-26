@@ -1263,6 +1263,24 @@ interface event {
         cancelled: bool
     }
 
+    record player-pick-block-event-data {
+        player: player,
+        target-world: %world,
+        block-pos: block-pos,
+        include-data: bool,
+        item: option<item-stack>,
+        cancelled: bool
+    }
+
+    record player-pick-entity-event-data {
+        player: player,
+        target-world: %world,
+        entity-id: s32,
+        include-data: bool,
+        item: option<item-stack>,
+        cancelled: bool
+    }
+
     record raid-finish-event-data {
         victory: bool,
         cancelled: bool
@@ -2180,6 +2198,8 @@ interface event {
         raid-stop-event,
         raid-trigger-event,
         lightning-strike-event,
+        player-pick-block-event,
+        player-pick-entity-event,
     }
 
     variant event {
@@ -2456,5 +2476,7 @@ interface event {
         raid-stop-event(raid-stop-event-data),
         raid-trigger-event(raid-trigger-event-data),
         lightning-strike-event(lightning-strike-event-data),
+        player-pick-block-event(player-pick-block-event-data),
+        player-pick-entity-event(player-pick-entity-event-data),
     }
 }
