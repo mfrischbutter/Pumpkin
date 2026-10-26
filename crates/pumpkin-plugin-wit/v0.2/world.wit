@@ -699,6 +699,16 @@ interface %world {
         /// dominates any bulk world operation; this is the bulk form.
         read-section: func(section-y: s32) -> option<list<u16>>;
 
+        /// Returns the distinct block states of a 16x16x16 section, read from the
+        /// section's palette without visiting its blocks. Returns none when the section
+        /// lies outside the world's height.
+        get-section-palette: func(section-y: s32) -> option<list<u16>>;
+
+        /// Finds every block whose state is one of `states`, as positions relative to
+        /// the chunk (x and z in [0, 15], y absolute). Sections whose palette holds none
+        /// of the states are skipped without visiting their blocks.
+        find-states: func(states: list<u16>) -> list<block-pos>;
+
         /// Gets detailed block state information at the specified position relative to the chunk.
         /// X and Z must be in the range [0, 15].
         get-block-state: func(pos: block-pos) -> block-state;
