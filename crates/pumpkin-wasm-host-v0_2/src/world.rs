@@ -859,6 +859,14 @@ impl pumpkin::plugin::world::HostWorld for PluginHostState {
         Ok(self.get(&world)?.min_y)
     }
 
+    fn get_height(&mut self, world: Resource<World>) -> wasmtime::Result<i32> {
+        Ok(self.get(&world)?.dimension.height)
+    }
+
+    fn get_logical_height(&mut self, world: Resource<World>) -> wasmtime::Result<i32> {
+        Ok(self.get(&world)?.dimension.logical_height)
+    }
+
     fn get_sky_light(&mut self, world: Resource<World>, pos: WitBlockPos) -> wasmtime::Result<u8> {
         let world_ref = self.get(&world)?;
         let internal_pos = BlockPos::new(pos.x, pos.y, pos.z);

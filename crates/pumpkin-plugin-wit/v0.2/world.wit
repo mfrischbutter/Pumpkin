@@ -895,6 +895,13 @@ interface %world {
         /// Returns the minimum Y coordinate (bottom of the world).
         get-min-y: func() -> s32;
 
+        /// Returns the height of the world in blocks, from the minimum Y coordinate up.
+        get-height: func() -> s32;
+
+        /// Returns the logical height of the dimension: the height portals, chorus fruit and
+        /// similar mechanics stay within.
+        get-logical-height: func() -> s32;
+
         /// Returns the sky light level at the specified position.
         get-sky-light: func(pos: block-pos) -> u8;
 
