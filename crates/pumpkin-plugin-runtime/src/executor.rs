@@ -20,7 +20,7 @@ use wasmtime::{
 
 use crate::{
     RuntimeSpawner,
-    chain::{ReentryContext, RootAdmissionGuard, scope, sync_scope},
+    chain::{ChainAdmission, ReentryContext, StoreAdmission, StoreGate, scope, sync_scope},
     lifecycle::{DriverError, DriverJoin, DriverState, Lifecycle},
     policy::{LegacySyncReentry, StorePolicy},
 };
@@ -51,6 +51,9 @@ trait StoreJob<T>: Send {
 }
 
 trait GuestStoreJob<T>: Send {
+    /// Hands the job the chain's hold on the Store, released once the job has run.
+    fn admit(&mut self, admission: StoreAdmission);
+
     fn run_concurrent(self: Box<Self>, accessor: &Accessor<T>) -> StoreFuture<'_, ()>;
 
     fn run_sequential(
@@ -155,7 +158,7 @@ struct GuestStoreCall<T, F, R> {
     context: ReentryContext,
     reentry: Arc<ReentryState<T>>,
     guest_call_failure: Arc<GuestCallFailure>,
-    root_admission: Option<RootAdmissionGuard>,
+    admission: Option<StoreAdmission>,
 }
 
 #[derive(Default)]
@@ -189,7 +192,7 @@ where
             context,
             reentry,
             guest_call_failure,
-            root_admission,
+            admission,
         } = self;
         let failure_for_scope = Arc::clone(&guest_call_failure);
         let output = scope(context, async move {
@@ -198,7 +201,7 @@ where
         })
         .await;
         let guest_call_failure = guest_call_failure.message();
-        drop(root_admission);
+        drop(admission);
         if let Some(message) = guest_call_failure {
             let output = match output {
                 Ok(_) => Err(wasmtime::Error::msg(message.clone())),
@@ -219,6 +222,10 @@ where
     F: for<'a> FnOnce(LegacyGuestScope<'a, T>) -> StoreFuture<'a, R> + Send + 'static,
     R: Send + 'static,
 {
+    fn admit(&mut self, admission: StoreAdmission) {
+        self.admission = Some(admission);
+    }
+
     fn run_concurrent(self: Box<Self>, accessor: &Accessor<T>) -> StoreFuture<'_, ()> {
         Box::pin((*self).execute(move |failure| LegacyGuestScope::concurrent(accessor, failure)))
     }
@@ -379,7 +386,7 @@ enum StoreMessage<T> {
     GuestCall(Box<dyn GuestStoreJob<T>>),
     Shutdown {
         job: Box<dyn StoreJob<T>>,
-        root_admission: Option<RootAdmissionGuard>,
+        admission: Option<StoreAdmission>,
     },
 }
 
@@ -501,6 +508,21 @@ impl<T> ReentryState<T> {
             .map(|scope| scope.sender.clone())
     }
 
+    /// The sender of the newest scope that is still open, of any chain. Scopes on
+    /// a sequential Store nest, so this is the scope whose pump is servicing
+    /// callbacks while the outer ones wait for it.
+    fn innermost_sender(&self) -> Option<ReentrySender<T>> {
+        let scopes = self
+            .scopes
+            .lock()
+            .unwrap_or_else(std::sync::PoisonError::into_inner);
+        scopes
+            .values()
+            .flatten()
+            .max_by_key(|scope| scope.id)
+            .map(|scope| scope.sender.clone())
+    }
+
     fn remove(&self, admission_id: u64, chain_id: u64, scope_id: u64) {
         let mut scopes = self
             .scopes
@@ -562,6 +584,8 @@ struct StoreShared<T, P> {
     lifecycle: Arc<Lifecycle>,
     reentry: Arc<ReentryState<T>>,
     policy: P,
+    /// Admits one causal chain at a time into this Store.
+    gate: StoreGate,
     spawner: Arc<dyn RuntimeSpawner>,
     mode: StoreMode,
 }
@@ -670,6 +694,18 @@ where
 {
     /// Queues a synchronous guest call, or routes it through the active host
     /// frame when this Store already appears in the current causal chain.
+    ///
+    /// Each Store admits one causal chain at a time. A new root waits only for
+    /// this Store. A call from a chain that runs elsewhere waits until this Store
+    /// is free, unless the chain holding it waits on the caller's chain: then the
+    /// call runs in this Store's innermost active reentry scope, like a callback
+    /// of the holding chain, because waiting would never end.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if the Store failed or is shutting down, if the guest call
+    /// fails, or if waiting would deadlock and this Store is not servicing
+    /// callbacks.
     pub async fn call_guest<R, F>(&self, call: F) -> wasmtime::Result<R>
     where
         F: for<'a> FnOnce(LegacyGuestScope<'a, T>) -> StoreFuture<'a, R> + Send + 'static,
@@ -682,17 +718,17 @@ where
         }
         let (result, receiver) = oneshot::channel();
         let inherited_context = self.shared.policy.inherited_context();
-        let (context, root_admission) = if let Some(context) = inherited_context {
+        let (context, admission) = if let Some(context) = inherited_context {
             tracing::trace!(
                 wasm_plugin_admission_id = context.admission_id,
                 wasm_plugin_chain_id = context.chain_id,
                 wasm_plugin_reentry_depth = context.depth,
-                "Inherited legacy Wasm plugin root admission"
+                "Inherited legacy Wasm plugin causal chain"
             );
             (context, None)
         } else {
             self.ensure_accepting("Wasm plugin store is shutting down")?;
-            let admission = self.shared.policy.acquire_root().await?;
+            let admission = self.shared.policy.acquire_root(&self.shared.gate).await?;
             (admission.context(), Some(admission))
         };
         let mut job: Box<dyn GuestStoreJob<T>> = Box::new(GuestStoreCall {
@@ -701,20 +737,16 @@ where
             context,
             reentry: Arc::clone(&self.shared.reentry),
             guest_call_failure: Arc::clone(&self.shared.guest_call_failure),
-            root_admission,
+            admission,
         });
 
-        if let Some(context) = inherited_context
-            && let Some(sender) = self.shared.reentry.sender_for(context)
-        {
-            match sender.send(job).await {
-                Ok(()) => {
-                    return self
-                        .receive_result(receiver, "Wasm plugin guest call did not complete")
-                        .await;
-                }
-                Err(error) => job = error.0,
-            }
+        if inherited_context.is_some() {
+            let Some(queued) = self.route_inherited(context, job).await? else {
+                return self
+                    .receive_result(receiver, "Wasm plugin guest call did not complete")
+                    .await;
+            };
+            job = queued;
         }
 
         let send_guard = self.shared.send_gate.lock().await;
@@ -730,6 +762,57 @@ where
 
         self.receive_result(receiver, "Wasm plugin guest call did not complete")
             .await
+    }
+
+    /// Admits a guest call from an inherited causal chain into this Store.
+    ///
+    /// Returns the job when it has to go through the Store's queue, or `None`
+    /// once an active reentry scope of the Store took it.
+    async fn route_inherited(
+        &self,
+        context: ReentryContext,
+        mut job: Box<dyn GuestStoreJob<T>>,
+    ) -> wasmtime::Result<Option<Box<dyn GuestStoreJob<T>>>> {
+        // A concurrent Store runs calls of other chains as tasks next to the active ones, so a
+        // chain never has to wait for it.
+        if self.shared.mode == StoreMode::Concurrent {
+            return Ok(Some(job));
+        }
+        let shared = &self.shared;
+        loop {
+            let admission = shared.policy.admit_chain(context, &shared.gate).await?;
+            match admission {
+                ChainAdmission::Held => {
+                    let Some(sender) = shared.reentry.sender_for(context) else {
+                        return Ok(Some(job));
+                    };
+                    return Ok(sender.send(job).await.err().map(|error| error.0));
+                }
+                ChainAdmission::Admitted(admission) => {
+                    job.admit(admission);
+                    return Ok(Some(job));
+                }
+                ChainAdmission::Cycle { holder_chain_id } => {
+                    let Some(sender) = shared.reentry.innermost_sender() else {
+                        return Err(wasmtime::Error::msg(format!(
+                            "Wasm plugin guest call would deadlock: the store is held by causal chain {holder_chain_id}, which waits on chain {}, and the store is not servicing callbacks",
+                            context.chain_id
+                        )));
+                    };
+                    tracing::debug!(
+                        wasm_plugin_admission_id = context.admission_id,
+                        wasm_plugin_chain_id = context.chain_id,
+                        wasm_plugin_holder_chain_id = holder_chain_id,
+                        "Joining the active reentry scope of a Wasm plugin store whose holder waits on this chain"
+                    );
+                    match sender.send(job).await {
+                        Ok(()) => return Ok(None),
+                        // The scope closed, so the holder moved on: admit the call again.
+                        Err(error) => job = error.0,
+                    }
+                }
+            }
+        }
     }
 
     /// Awaits host work in the active guest call's chain with the reentry depth incremented
@@ -949,6 +1032,7 @@ where
             lifecycle: Arc::clone(&lifecycle),
             reentry: Arc::new(ReentryState::new()),
             policy,
+            gate: StoreGate::new(),
             spawner: Arc::clone(&spawner),
             mode,
         });
@@ -1064,7 +1148,7 @@ where
         self.handle
             .ensure_accepting("Wasm plugin store is already shutting down")?;
         let inherited_context = self.handle.shared.policy.inherited_context();
-        let (context, root_admission) = if let Some(context) = inherited_context {
+        let (context, admission) = if let Some(context) = inherited_context {
             if self.handle.shared.reentry.has_active_context(context) {
                 return Err(wasmtime::Error::msg(
                     "Cannot shut down a Wasm plugin store while it is active in the current causal chain",
@@ -1074,11 +1158,16 @@ where
                 wasm_plugin_admission_id = context.admission_id,
                 wasm_plugin_chain_id = context.chain_id,
                 wasm_plugin_reentry_depth = context.depth,
-                "Inherited legacy Wasm plugin root admission"
+                "Inherited legacy Wasm plugin causal chain"
             );
-            (context, None)
+            (context, self.admit_inherited_shutdown(context).await?)
         } else {
-            let admission = self.handle.shared.policy.acquire_root().await?;
+            let admission = self
+                .handle
+                .shared
+                .policy
+                .acquire_root(&self.handle.shared.gate)
+                .await?;
             (admission.context(), Some(admission))
         };
         let send_guard = self.handle.shared.send_gate.lock().await;
@@ -1104,7 +1193,7 @@ where
                 result,
                 context,
             }),
-            root_admission,
+            admission,
         });
         drop(send_guard);
 
@@ -1112,6 +1201,27 @@ where
         let mut join = self.driver_join();
         let terminal = join.wait().await;
         reconcile_shutdown_result(result, terminal)
+    }
+
+    /// Lets a shutdown requested from inside a causal chain into a sequential
+    /// Store, so the Store stops only once no other chain runs in it.
+    async fn admit_inherited_shutdown(
+        &self,
+        context: ReentryContext,
+    ) -> wasmtime::Result<Option<StoreAdmission>> {
+        let shared = &self.handle.shared;
+        if shared.mode == StoreMode::Concurrent {
+            return Ok(None);
+        }
+        let admission = shared.policy.admit_chain(context, &shared.gate).await?;
+        match admission {
+            ChainAdmission::Held => Ok(None),
+            ChainAdmission::Admitted(admission) => Ok(Some(admission)),
+            ChainAdmission::Cycle { holder_chain_id } => Err(wasmtime::Error::msg(format!(
+                "Cannot shut down a Wasm plugin store held by causal chain {holder_chain_id}, which waits on the shutting down chain {}",
+                context.chain_id
+            ))),
+        }
     }
 }
 
@@ -1240,13 +1350,10 @@ where
     match message {
         StoreMessage::Call(job) => job.run_sequential(store.as_context_mut()).await?,
         StoreMessage::GuestCall(job) => job.run_sequential(store.as_context_mut(), false).await?,
-        StoreMessage::Shutdown {
-            job,
-            root_admission,
-        } => {
+        StoreMessage::Shutdown { job, admission } => {
             lifecycle.transition(DriverState::Stopping);
             let result = job.run_sequential(store.as_context_mut()).await;
-            drop(root_admission);
+            drop(admission);
             return Ok(Step::Finished(result));
         }
     }
@@ -1342,15 +1449,12 @@ async fn run_concurrent_driver<T>(
                                 StoreMessage::GuestCall(job) => {
                                     active_calls.push(accessor.spawn(async move |accessor| job.run_concurrent(accessor).await)?);
                                 }
-                                StoreMessage::Shutdown {
-                                    job,
-                                    root_admission,
-                                } => {
+                                StoreMessage::Shutdown { job, admission } => {
                                     while active_calls.next().await.is_some() {}
                                     loop_lifecycle.transition(DriverState::Stopping);
                                     let result = job.run_concurrent(accessor).await;
                                     poll_fn(|cx| accessor.poll_no_interesting_tasks(cx)).await;
-                                    drop(root_admission);
+                                    drop(admission);
                                     return result;
                                 }
                             }
@@ -1379,17 +1483,14 @@ async fn run_concurrent_driver<T>(
                     StoreMessage::GuestCall(job) => {
                         active_calls.push(accessor.spawn(async move |accessor| job.run_concurrent(accessor).await)?);
                     }
-                    StoreMessage::Shutdown {
-                        job,
-                        root_admission,
-                    } => {
+                    StoreMessage::Shutdown { job, admission } => {
                         loop_lifecycle.transition(DriverState::Draining);
                         receiver.close();
                         while active_calls.next().await.is_some() {}
                         loop_lifecycle.transition(DriverState::Stopping);
                         let result = job.run_concurrent(accessor).await;
                         poll_fn(|cx| accessor.poll_no_interesting_tasks(cx)).await;
-                        drop(root_admission);
+                        drop(admission);
                         return result;
                     }
                 }
