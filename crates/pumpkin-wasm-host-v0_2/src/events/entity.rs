@@ -935,10 +935,14 @@ impl ToFromWasmEvent for EntityExhaustionEvent {
 }
 
 impl ToFromWasmEvent for EntityInteractEvent {
-    fn to_wasm_event(&self, _state: &mut PluginHostState) -> Event {
+    fn to_wasm_event(&self, state: &mut PluginHostState) -> Event {
+        let target_world = state
+            .add(self.world.clone())
+            .expect("failed to add world resource");
         Event::EntityInteractEvent(EntityInteractEventData {
             entity_id: self.entity_id,
             block_pos: to_wasm_block_position(self.block_pos),
+            target_world,
             cancelled: self.cancelled,
         })
     }
@@ -950,11 +954,12 @@ impl ToFromWasmEvent for EntityInteractEvent {
         }
     }
 
-    fn from_wasm_event(event: Event, _state: &mut PluginHostState) -> Self {
+    fn from_wasm_event(event: Event, state: &mut PluginHostState) -> Self {
         match event {
             Event::EntityInteractEvent(data) => Self {
                 entity_id: data.entity_id,
                 block_pos: from_wasm_block_position(data.block_pos),
+                world: consume_world(state, &data.target_world),
                 cancelled: data.cancelled,
             },
             _ => panic!("unexpected event type"),

@@ -5,7 +5,10 @@
 use pumpkin_data::{Block, BlockDirection, BlockState};
 use pumpkin_util::math::position::BlockPos;
 
-use crate::world::World;
+use crate::{
+    block::OnEntityCollisionArgs, plugin::entity::entity_interact::EntityInteractEvent,
+    world::World,
+};
 
 pub mod bell;
 pub mod buttons;
@@ -36,6 +39,21 @@ pub mod dispenser;
 
 /// Strongest redstone signal (`Redstone.SIGNAL_MAX`).
 pub const SIGNAL_MAX: u8 = 15;
+
+/// Fires `EntityInteractEvent` for an entity that is about to trigger a tripwire or pressure
+/// plate. Returns false if a plugin cancelled it.
+pub(crate) fn fire_entity_interact(args: &OnEntityCollisionArgs<'_>) -> bool {
+    let Some(server) = args.world.server.upgrade() else {
+        return true;
+    };
+    let mut event = EntityInteractEvent::new(
+        args.entity.get_entity().entity_id,
+        *args.position,
+        args.world.clone(),
+    );
+    server.plugin_manager.fire_blocking(&server, &mut event);
+    !event.cancelled
+}
 
 pub fn is_emitting_redstone_power(
     block: &Block,

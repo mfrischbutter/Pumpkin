@@ -14,7 +14,7 @@ use crate::{
     world::World,
 };
 
-use super::tripwire_hook::TripwireHookBlock;
+use super::{fire_entity_interact, tripwire_hook::TripwireHookBlock};
 
 type TripwireProperties = pumpkin_data::block_properties::TripwireLikeProperties;
 type TripwireHookProperties = pumpkin_data::block_properties::TripwireHookLikeProperties;
@@ -25,7 +25,7 @@ pub struct TripwireBlock;
 impl BlockBehaviour for TripwireBlock {
     fn on_entity_collision(&self, args: OnEntityCollisionArgs<'_>) {
         let mut props = TripwireProperties::from_state_id(args.state.id);
-        if props.powered {
+        if props.powered || !fire_entity_interact(&args) {
             return;
         }
         props.powered = true;

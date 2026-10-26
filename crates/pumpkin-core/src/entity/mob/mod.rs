@@ -1696,6 +1696,7 @@ pub trait Mob: EntityBase + Send + Sync {
             crate::plugin::api::events::entity::entity_interact::EntityInteractEvent::new(
                 mob.living_entity.entity.entity_id,
                 block_pos,
+                mob.living_entity.entity.world.load_full(),
             );
         if let Some(server) = mob.living_entity.entity.world.load().server.upgrade() {
             server.plugin_manager.fire_blocking(&server, &mut event);

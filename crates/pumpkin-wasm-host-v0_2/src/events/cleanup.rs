@@ -526,7 +526,9 @@ pub fn cleanup_event(event: &Event, state: &mut PluginHostState) {
         Event::EntityDropItemEvent(_) => {}
         Event::EntityEnterBlockEvent(_) => {}
         Event::EntityExhaustionEvent(_) => {}
-        Event::EntityInteractEvent(_) => {}
+        Event::EntityInteractEvent(data) => {
+            cleanup_world(state, &data.target_world);
+        }
         Event::EntityKnockbackEvent(_) => {}
         Event::EntityPlaceEvent(_) => {}
         Event::EntityPoseChangeEvent(_) => {}
