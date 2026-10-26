@@ -310,9 +310,12 @@ use crate::plugin::player::inventory_interact::InventoryClickEvent;
 use crate::plugin::player::player_armor_change::PlayerArmorChangeEvent;
 use crate::plugin::player::player_change_world::PlayerChangeWorldEvent;
 use crate::plugin::player::player_gamemode_change::PlayerGamemodeChangeEvent;
+use crate::plugin::player::player_hide_entity::PlayerHideEntityEvent;
 use crate::plugin::player::player_permission_check::PlayerPermissionCheckEvent;
+use crate::plugin::player::player_show_entity::PlayerShowEntityEvent;
 use crate::plugin::player::player_teleport::PlayerTeleportEvent;
 use crate::plugin::server::packet::PacketSentEvent;
+use crate::plugin::{Cancellable, Payload};
 use crate::server::Server;
 use crate::world::{BlockBreakingProgress, World};
 use bytes::Bytes;
@@ -4101,6 +4104,89 @@ impl Player {
 
     pub fn can_see_player(&self, other_id: &uuid::Uuid) -> bool {
         self.can_see(other_id)
+    }
+
+    /// Checks whether this player is shown `entity`. Players follow `hide_player`, other entities
+    /// their default visibility and this player's `hide_entity` and `show_entity` calls.
+    pub fn can_see_entity(&self, entity: &dyn EntityBase) -> bool {
+        entity.get_player().map_or_else(
+            || entity.get_entity().is_visible_to(&self.gameprofile.id),
+            |other| self.can_see(&other.gameprofile.id),
+        )
+    }
+
+    /// Hides `entity` from this player until `show_entity`. A player is hidden as with
+    /// `hide_player`.
+    pub fn hide_entity(&self, entity: &dyn EntityBase) {
+        let base = entity.get_entity();
+        let entity_id = base.entity_id;
+        if entity_id == self.entity_id()
+            || !self.can_see_entity(entity)
+            || self.visibility_event_cancelled(|player| PlayerHideEntityEvent {
+                player,
+                entity_id,
+                cancelled: false,
+            })
+        {
+            return;
+        }
+        if let Some(other) = entity.get_player() {
+            self.hide_player(other.gameprofile.id);
+            return;
+        }
+        base.set_visible_to(self.gameprofile.id, false);
+        if let Some(tracked) = self.world().entity_tracker.get_tracked_entity(entity_id) {
+            tracked.remove_player(self);
+        }
+    }
+
+    /// Shows `entity` to this player, also one that is hidden by default. A player is shown as
+    /// with `show_player`.
+    pub fn show_entity(&self, entity: &dyn EntityBase) {
+        let base = entity.get_entity();
+        let entity_id = base.entity_id;
+        if entity_id == self.entity_id()
+            || self.can_see_entity(entity)
+            || self.visibility_event_cancelled(|player| PlayerShowEntityEvent {
+                player,
+                entity_id,
+                cancelled: false,
+            })
+        {
+            return;
+        }
+        if let Some(other) = entity.get_player() {
+            self.show_player(other.gameprofile.id);
+            return;
+        }
+        base.set_visible_to(self.gameprofile.id, true);
+        let world = self.world();
+        if let Some(tracked) = world.entity_tracker.get_tracked_entity(entity_id)
+            && let Some(viewer) = world.get_player_by_uuid(self.gameprofile.id)
+        {
+            tracked.update_player(&viewer, &world);
+        }
+    }
+
+    /// Fires a visibility event built by `event` if a plugin listens for it; returns whether it
+    /// was cancelled.
+    fn visibility_event_cancelled<E: Payload + Cancellable + 'static>(
+        &self,
+        event: impl FnOnce(Arc<Self>) -> E,
+    ) -> bool {
+        let world = self.world();
+        let Some(server) = world.server.upgrade() else {
+            return false;
+        };
+        if !server.plugin_manager.has_handlers::<E>() {
+            return false;
+        }
+        let Some(player) = world.get_player_by_uuid(self.gameprofile.id) else {
+            return false;
+        };
+        let mut event = event(player);
+        server.plugin_manager.fire_blocking(&server, &mut event);
+        event.cancelled()
     }
 
     // --- Experience & Leveling API ---

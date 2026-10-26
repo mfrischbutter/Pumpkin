@@ -1206,6 +1206,12 @@ interface player {
         can-see: func(other: player) -> bool;
         /// Checks if this player can see another specified player.
         can-see-player: func(other: player) -> bool;
+        /// Hides an entity from this player until `show-entity`. A player is hidden as with `hide-player`.
+        hide-entity: func(entity: borrow<entity>);
+        /// Shows an entity to this player, also one that is hidden by default (see `entity.set-visible-by-default`).
+        show-entity: func(entity: borrow<entity>);
+        /// Checks if this player is shown the entity.
+        can-see-entity: func(entity: borrow<entity>) -> bool;
 
         /// Sets the tab list ping / latency indicator in milliseconds.
         set-tab-list-ping: func(latency-ms: s32);
