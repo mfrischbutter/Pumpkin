@@ -30,8 +30,23 @@ pub trait CookingBlockEntityBase:
     fn set_lit_total_time(&self, total_time: u16);
 
     fn is_burning(&self) -> bool;
-    fn can_accept_recipe_output(&self, recipe: Option<&CookingRecipe>, max_count: u8) -> bool;
-    fn craft_recipe(&self, recipe: Option<&CookingRecipe>) -> bool;
+    fn can_accept_recipe_output(&self, result: Option<&ItemStack>, max_count: u8) -> bool;
+    fn craft_recipe(&self, recipe: Option<&CookingRecipe>, result: &ItemStack) -> bool;
+    /// Whether the input slot is filled and the output slot is not full.
+    fn output_has_room(&self) -> bool;
+}
+
+/// Builds the stack a cooking recipe puts into the output slot.
+#[must_use]
+pub fn cooking_recipe_result(recipe: &CookingRecipe) -> Option<ItemStack> {
+    let item = pumpkin_data::item::Item::from_registry_key(
+        recipe
+            .result
+            .id
+            .strip_prefix("minecraft:")
+            .unwrap_or(recipe.result.id),
+    )?;
+    Some(ItemStack::new(recipe.result.count, item))
 }
 
 #[macro_export]
@@ -128,10 +143,10 @@ macro_rules! impl_cooking_block_entity_base {
 
             fn can_accept_recipe_output(
                 &self,
-                recipe: Option<&pumpkin_data::recipes::CookingRecipe>,
+                result: Option<&pumpkin_data::item_stack::ItemStack>,
                 max_count: u8,
             ) -> bool {
-                let Some(recipe) = recipe else { return false };
+                let Some(result) = result else { return false };
                 let Ok(items) = self.items.try_read() else {
                     return false;
                 };
@@ -143,62 +158,57 @@ macro_rules! impl_cooking_block_entity_base {
                     return !is_top_items_empty;
                 }
 
-                if let Some(recipe_output_item) = pumpkin_data::item::Item::from_registry_key(
-                    recipe
-                        .result
-                        .id
-                        .strip_prefix("minecraft:")
-                        .unwrap_or(&recipe.result.id),
-                ) && !is_top_items_empty
-                    && recipe_output_item.id == side_item_stack.item.id
-                    && side_item_stack.item_count < max_count
-                    && side_item_stack.item_count < side_item_stack.get_max_stack_size()
-                {
-                    return true;
-                }
-                false
+                // Vanilla `canBurn` only stacks onto the same item with the same components.
+                // A plugin result can hold more than one item, so it has to fit as a whole.
+                !is_top_items_empty
+                    && side_item_stack.are_items_and_components_equal(result)
+                    && side_item_stack.item_count + result.item_count
+                        <= max_count.min(side_item_stack.get_max_stack_size())
             }
-            fn craft_recipe(&self, recipe: Option<&pumpkin_data::recipes::CookingRecipe>) -> bool {
-                let can_accept_output =
-                    self.can_accept_recipe_output(recipe, self.get_max_count_per_stack());
-                if let Some(recipe) = recipe {
-                    if can_accept_output {
-                        let Ok(mut items) = self.items.try_write() else {
-                            return false;
-                        };
-                        let Some(output_item) = pumpkin_data::item::Item::from_registry_key(
-                            recipe
-                                .result
-                                .id
-                                .strip_prefix("minecraft:")
-                                .unwrap_or(&recipe.result.id),
-                        ) else {
-                            return false;
-                        };
-                        let output_item_stack = ItemStack::new(recipe.result.count, output_item);
+            fn output_has_room(&self) -> bool {
+                let Ok(items) = self.items.try_read() else {
+                    return false;
+                };
+                !items[0].is_empty()
+                    && items[2].item_count
+                        < self
+                            .get_max_count_per_stack()
+                            .min(items[2].get_max_stack_size())
+            }
+            fn craft_recipe(
+                &self,
+                recipe: Option<&pumpkin_data::recipes::CookingRecipe>,
+                result: &ItemStack,
+            ) -> bool {
+                let Some(recipe) = recipe else { return false };
+                // A plugin can empty the result to smelt the source into nothing.
+                if !result.is_empty()
+                    && !self.can_accept_recipe_output(Some(result), self.get_max_count_per_stack())
+                {
+                    return false;
+                }
+                let Ok(mut items) = self.items.try_write() else {
+                    return false;
+                };
 
-                        if items[2].are_equal(ItemStack::EMPTY) {
-                            items[2] = output_item_stack;
-                        } else if items[2].are_items_and_components_equal(&output_item_stack) {
-                            items[2].increment(1);
-                        }
-
-                        // Track recipe usage for XP calculation (vanilla RecipesUsed format)
-                        self.add_recipe_used(recipe);
-
-                        if items[0].item.id == pumpkin_data::item::Item::WET_SPONGE.id
-                            && !items[1].is_empty()
-                            && items[1].item.id == pumpkin_data::item::Item::BUCKET.id
-                        {
-                            items[1] = ItemStack::new(1, &pumpkin_data::item::Item::WATER_BUCKET);
-                        }
-
-                        items[0].decrement(1);
-                        return true;
-                    }
+                if items[2].is_empty() {
+                    items[2] = result.clone();
+                } else if items[2].are_items_and_components_equal(result) {
+                    items[2].increment(result.item_count);
                 }
 
-                false
+                // Track recipe usage for XP calculation (vanilla RecipesUsed format)
+                self.add_recipe_used(recipe);
+
+                if items[0].item.id == pumpkin_data::item::Item::WET_SPONGE.id
+                    && !items[1].is_empty()
+                    && items[1].item.id == pumpkin_data::item::Item::BUCKET.id
+                {
+                    items[1] = ItemStack::new(1, &pumpkin_data::item::Item::WATER_BUCKET);
+                }
+
+                items[0].decrement(1);
+                true
             }
         }
     };
@@ -379,9 +389,23 @@ macro_rules! impl_block_entity_for_cooking {
                     top_item.item,
                     $recipe_kind,
                 );
+                let recipe_result = furnace_recipe.and_then(
+                    $crate::block::entities::furnace_like_block_entity::cooking_recipe_result,
+                );
 
-                let can_accept_output = self
-                    .can_accept_recipe_output(furnace_recipe, self.get_max_count_per_stack());
+                // The output slot may hold what a plugin gave for an earlier smelt instead of the
+                // vanilla result; then the smelt event decides, and `craft_recipe` checks the
+                // result it returns.
+                let can_accept_output = self.can_accept_recipe_output(
+                    recipe_result.as_ref(),
+                    self.get_max_count_per_stack(),
+                ) || (recipe_result.is_some()
+                    && self.output_has_room()
+                    && world.server.upgrade().is_some_and(|server| {
+                        server
+                            .plugin_manager
+                            .has_handlers::<$crate::plugin::api::events::inventory::furnace_smelt::FurnaceSmeltEvent>()
+                    }));
 
                 let bottom_items_is_empty = bottom_item.is_empty();
                 if self.is_burning() || !bottom_items_is_empty && !is_top_items_empty {
@@ -402,6 +426,7 @@ macro_rules! impl_block_entity_for_cooking {
                                 self.position,
                                 bottom_item.item.registry_key.to_string(),
                                 adjusted_fuel_ticks as u32,
+                                bottom_item,
                             );
                             server.plugin_manager.fire_blocking(&server, &mut burn_event);
                             if burn_event.cancelled {
@@ -459,6 +484,7 @@ macro_rules! impl_block_entity_for_cooking {
                                     self.position,
                                     top_item.item.registry_key.to_string(),
                                     self.get_cooking_total_time() as u32,
+                                    top_item.clone(),
                                 );
                                 server.plugin_manager.fire_blocking(&server, &mut start_event);
                                 if start_event.cancelled {
@@ -473,7 +499,9 @@ macro_rules! impl_block_entity_for_cooking {
 
                             if self.get_cooking_time_spent() == self.get_cooking_total_time() {
                                 self.set_cooking_time_spent(0);
-                                if let Some(cooking_recipe) = furnace_recipe {
+                                if let Some(cooking_recipe) = furnace_recipe
+                                    && let Some(mut result) = recipe_result
+                                {
                                     let cooking_total_time = cooking_recipe.cookingtime;
                                     self.set_cooking_total_time(cooking_total_time as u16);
 
@@ -483,14 +511,17 @@ macro_rules! impl_block_entity_for_cooking {
                                             self.position,
                                             top_item.item.registry_key.to_string(),
                                             cooking_recipe.result.id.to_string(),
+                                            top_item,
+                                            result,
                                         );
                                         server.plugin_manager.fire_blocking(&server, &mut smelt_event);
                                         if smelt_event.cancelled {
                                             smelt_cancelled = true;
                                         }
+                                        result = smelt_event.result;
                                     }
                                     if !smelt_cancelled {
-                                        self.craft_recipe(Some(cooking_recipe));
+                                        self.craft_recipe(Some(cooking_recipe), &result);
                                         is_dirty = true;
                                     }
                                 }

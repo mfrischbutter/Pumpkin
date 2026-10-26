@@ -1736,6 +1736,8 @@ interface event {
         block-pos: block-pos,
         source-item: string,
         result-item: string,
+        source: item-stack,
+        %result: item-stack,
         cancelled: bool
     }
 
@@ -1755,6 +1757,7 @@ interface event {
         block-pos: block-pos,
         fuel-item: string,
         burn-time: u32,
+        fuel: item-stack,
         cancelled: bool
     }
 
@@ -1770,6 +1773,7 @@ interface event {
         block-pos: block-pos,
         source-item: string,
         cooking-time: u32,
+        source: item-stack,
         cancelled: bool
     }
 
