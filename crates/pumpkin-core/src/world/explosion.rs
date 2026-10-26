@@ -14,6 +14,10 @@ use rustc_hash::FxHashMap;
 use crate::{
     block::{ExplodeArgs, drop_loot},
     entity::{Entity, EntityBase},
+    plugin::api::events::{
+        block::block_explode::BlockExplodeEvent, entity::entity_explode::EntityExplodeEvent,
+    },
+    server::Server,
     world::loot::LootContextParameters,
 };
 
@@ -184,12 +188,15 @@ impl ExplosionDamageCalculator for SimpleExplosionDamageCalculator {
     }
 }
 
+type ExplodedBlocks = FxHashMap<BlockPos, (&'static Block, &'static BlockState)>;
+
 pub struct Explosion {
     power: f32,
     pos: Vector3<f64>,
     block_interaction: BlockInteraction,
     damage_calculator: Option<Arc<dyn ExplosionDamageCalculator>>,
     preserve_rails: bool,
+    source_entity_id: Option<i32>,
 }
 
 impl Explosion {
@@ -201,7 +208,15 @@ impl Explosion {
             block_interaction,
             damage_calculator: None,
             preserve_rails: false,
+            source_entity_id: None,
         }
+    }
+
+    /// Sets the entity that caused the explosion, if there is one.
+    #[must_use]
+    pub fn with_source(mut self, source: Option<&Entity>) -> Self {
+        self.source_entity_id = source.map(|entity| entity.entity_id);
+        self
     }
 
     #[must_use]
@@ -231,10 +246,7 @@ impl Explosion {
     }
 
     #[allow(clippy::too_many_lines)]
-    fn get_blocks_to_destroy(
-        &self,
-        world: &World,
-    ) -> FxHashMap<BlockPos, (&'static Block, &'static BlockState)> {
+    fn get_blocks_to_destroy(&self, world: &World) -> ExplodedBlocks {
         let mut map = FxHashMap::default();
 
         let mut chunk_cache: FxHashMap<
@@ -496,14 +508,87 @@ impl Explosion {
         visible_points as f32 / total_points as f32
     }
 
-    /// Returns the removed block count
-    pub fn explode(&self, world: &Arc<World>) -> u32 {
+    /// The share of destroyed blocks that drop loot, as the explode events report it.
+    fn default_yield_rate(&self) -> f32 {
+        if self.block_interaction == BlockInteraction::DestroyWithDecay && self.power > 0.0 {
+            1.0 / self.power
+        } else {
+            1.0
+        }
+    }
+
+    /// Fires the explode event for this explosion. Returns the blocks and yield rate the
+    /// plugins left, or `None` when a plugin cancelled the explosion.
+    fn fire_explode_event(
+        &self,
+        server: &Arc<Server>,
+        world: &Arc<World>,
+        mut blocks: ExplodedBlocks,
+        yield_rate: f32,
+    ) -> Option<(ExplodedBlocks, f32)> {
+        let (cancelled, returned_blocks, yield_rate) =
+            if let Some(entity_id) = self.source_entity_id {
+                if !server.plugin_manager.has_handlers::<EntityExplodeEvent>() {
+                    return Some((blocks, yield_rate));
+                }
+                let mut event = EntityExplodeEvent::new(
+                    world.clone(),
+                    entity_id,
+                    self.pos,
+                    blocks.keys().copied().collect(),
+                    yield_rate,
+                );
+                server.plugin_manager.fire_blocking(server, &mut event);
+                (event.cancelled, event.blocks, event.yield_rate)
+            } else {
+                if !server.plugin_manager.has_handlers::<BlockExplodeEvent>() {
+                    return Some((blocks, yield_rate));
+                }
+                let mut event = BlockExplodeEvent::new(
+                    world.clone(),
+                    BlockPos::floored(self.pos.x, self.pos.y, self.pos.z),
+                    blocks.keys().copied().collect(),
+                    yield_rate,
+                );
+                server.plugin_manager.fire_blocking(server, &mut event);
+                (event.cancelled, event.blocks, event.yield_rate)
+            };
+        if cancelled {
+            return None;
+        }
+
+        // Plugins may add positions the rays did not reach; those use the block there now.
+        let blocks = returned_blocks
+            .into_iter()
+            .filter_map(|pos| {
+                let entry = blocks.remove(&pos).or_else(|| {
+                    let (block, state) = world.get_block_and_state(&pos);
+                    (!state.is_air()).then_some((block, state))
+                })?;
+                Some((pos, entry))
+            })
+            .collect();
+        Some((blocks, yield_rate))
+    }
+
+    /// Returns the removed block count, or `None` when a plugin cancelled the explosion.
+    pub fn explode(&self, world: &Arc<World>) -> Option<u32> {
+        let mut blocks = if self.block_interaction == BlockInteraction::Keep {
+            ExplodedBlocks::default()
+        } else {
+            self.get_blocks_to_destroy(world)
+        };
+        let default_yield_rate = self.default_yield_rate();
+        let mut yield_rate = default_yield_rate;
+        if let Some(server) = world.server.upgrade() {
+            (blocks, yield_rate) = self.fire_explode_event(&server, world, blocks, yield_rate)?;
+        }
+
         self.damage_entities(world);
 
         match self.block_interaction {
-            BlockInteraction::Keep => 0,
+            BlockInteraction::Keep => Some(0),
             BlockInteraction::TriggerBlock => {
-                let blocks = self.get_blocks_to_destroy(world);
                 for (pos, (block, _state)) in &blocks {
                     let pumpkin_block = world.block_registry.get_pumpkin_block(block.id);
                     if let Some(pumpkin_block) = pumpkin_block {
@@ -514,29 +599,16 @@ impl Explosion {
                         });
                     }
                 }
-                0
+                Some(0)
             }
             BlockInteraction::Destroy | BlockInteraction::DestroyWithDecay => {
-                let center_pos = BlockPos::floored(self.pos.x, self.pos.y, self.pos.z);
-                let mut event =
-                    crate::plugin::api::events::block::block_explode::BlockExplodeEvent::new(
-                        center_pos,
-                        if self.power > 0.0 {
-                            1.0 / self.power
-                        } else {
-                            1.0
-                        },
-                    );
-                if let Some(server) = world.server.upgrade() {
-                    server.plugin_manager.fire_blocking(&server, &mut event);
-                }
-                if event.cancelled {
-                    return 0;
-                }
-
-                let blocks = self.get_blocks_to_destroy(world);
                 let decay_drops = self.block_interaction == BlockInteraction::DestroyWithDecay;
-                let explosion_radius = decay_drops.then_some(self.power);
+                let explosion_radius = if yield_rate == default_yield_rate {
+                    decay_drops.then_some(self.power)
+                } else {
+                    // Loot survives an explosion with a chance of 1 / radius.
+                    (yield_rate < 1.0).then_some(1.0 / yield_rate)
+                };
 
                 for (pos, (block, state)) in &blocks {
                     let pumpkin_block = world.block_registry.get_pumpkin_block(block.id);
@@ -572,7 +644,7 @@ impl Explosion {
                     }
                 }
                 // TODO: fire
-                blocks.len() as u32
+                Some(blocks.len() as u32)
             }
         }
     }

@@ -92,7 +92,12 @@ impl EntityBase for EndCrystalEntity {
         let world = self.entity.world.load();
         if !damage_type.has_tag(&tag::DamageType::MINECRAFT_IS_EXPLOSION) {
             let pos = self.entity.pos.load();
-            world.explode(pos, 6.0, crate::world::ExplosionInteraction::Block);
+            world.explode(
+                Some(&self.entity),
+                pos,
+                6.0,
+                crate::world::ExplosionInteraction::Block,
+            );
         }
 
         if let Some(ref fight_mutex) = world.dragon_fight

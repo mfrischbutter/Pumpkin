@@ -3986,33 +3986,44 @@ impl World {
         player.set_health(20.0);
     }
 
+    /// Creates an explosion. `source` is the entity that explodes, or `None` for explosions
+    /// without one, such as beds and respawn anchors.
     pub fn explode(
         self: &Arc<Self>,
+        source: Option<&Entity>,
         position: Vector3<f64>,
         power: f32,
         interaction: ExplosionInteraction,
     ) {
-        self.explode_with_calculator(position, power, interaction, None);
+        self.explode_with_calculator(source, position, power, interaction, None);
     }
 
     pub fn explode_with_calculator(
         self: &Arc<Self>,
+        source: Option<&Entity>,
         position: Vector3<f64>,
         power: f32,
         interaction: ExplosionInteraction,
         damage_calculator: Option<Arc<dyn ExplosionDamageCalculator>>,
     ) {
         let block_interaction = self.get_block_interaction(interaction);
-        let mut explosion = Explosion::new(power, position, block_interaction);
+        let mut explosion = Explosion::new(power, position, block_interaction).with_source(source);
         if let Some(calc) = damage_calculator {
             explosion = explosion.with_damage_calculator(calc);
         }
         self.run_explosion(&explosion, position, power);
     }
 
-    pub fn explode_tnt_minecart(self: &Arc<Self>, position: Vector3<f64>, power: f32) {
+    pub fn explode_tnt_minecart(
+        self: &Arc<Self>,
+        source: &Entity,
+        position: Vector3<f64>,
+        power: f32,
+    ) {
         let block_interaction = self.get_block_interaction(ExplosionInteraction::Tnt);
-        let explosion = Explosion::new(power, position, block_interaction).preserving_rails();
+        let explosion = Explosion::new(power, position, block_interaction)
+            .with_source(Some(source))
+            .preserving_rails();
         self.run_explosion(&explosion, position, power);
     }
 
@@ -4048,17 +4059,9 @@ impl World {
     }
 
     fn run_explosion(self: &Arc<Self>, explosion: &Explosion, position: Vector3<f64>, power: f32) {
-        let mut event = crate::plugin::api::events::entity::entity_explode::EntityExplodeEvent::new(
-            0, position, power,
-        );
-        if let Some(server) = self.server.upgrade() {
-            server.plugin_manager.fire_blocking(&server, &mut event);
-        }
-        if event.cancelled {
+        let Some(block_count) = explosion.explode(self) else {
             return;
-        }
-
-        let block_count = explosion.explode(self);
+        };
         let particle = if power < 2.0 {
             Particle::Explosion
         } else {

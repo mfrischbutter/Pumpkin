@@ -254,7 +254,9 @@ pub fn cleanup_event(event: &Event, state: &mut PluginHostState) {
             }
         }
         Event::EntityEnterLoveModeEvent(_) => {}
-        Event::EntityExplodeEvent(_) => {}
+        Event::EntityExplodeEvent(data) => {
+            cleanup_world(state, &data.target_world);
+        }
         Event::EntityMountEvent(_) => {}
         Event::EntityPickupItemEvent(data) => {
             if let Some(res) = &data.item {
@@ -304,7 +306,9 @@ pub fn cleanup_event(event: &Event, state: &mut PluginHostState) {
         Event::BlockFormEvent(_) => {}
         Event::BlockFadeEvent(_) => {}
         Event::BlockDispenseEvent(_) => {}
-        Event::BlockExplodeEvent(_) => {}
+        Event::BlockExplodeEvent(data) => {
+            cleanup_world(state, &data.target_world);
+        }
         Event::BlockPhysicsEvent(data) => {
             cleanup_world(state, &data.target_world);
         }

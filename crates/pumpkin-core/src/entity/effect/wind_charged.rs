@@ -20,6 +20,7 @@ impl MobEffect for WindChargedMobEffect {
         let gust_strength = 3.0 + rand::random::<f32>() * 2.0;
 
         world.explode_with_calculator(
+            Some(&living.entity),
             center,
             gust_strength,
             ExplosionInteraction::Trigger,
