@@ -75,7 +75,7 @@ impl JavaClient {
     async fn run_reconfiguration(
         &self,
         server: &Server,
-        network_reader: &mut TCPNetworkDecoder<BufReader<OwnedReadHalf>>,
+        network_reader: &mut TCPNetworkDecoder<BufReader<JavaReadHalf>>,
     ) -> Option<()> {
         let version = CURRENT_MC_VERSION;
 
@@ -154,7 +154,7 @@ impl JavaClient {
     async fn next_configuration_packet(
         &self,
         server: &Server,
-        network_reader: &mut TCPNetworkDecoder<BufReader<OwnedReadHalf>>,
+        network_reader: &mut TCPNetworkDecoder<BufReader<JavaReadHalf>>,
     ) -> Option<RawPacket> {
         let Ok(packet) = tokio::time::timeout(
             RECONFIGURATION_IDLE_TIMEOUT,
