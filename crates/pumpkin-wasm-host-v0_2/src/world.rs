@@ -28,7 +28,6 @@ use crate::pumpkin::plugin::world::{
     WorldSpawnLocation as WitWorldSpawnLocation,
 };
 use crate::pumpkin::{self, plugin::world::World};
-use crate::uuid::UuidExt;
 use pumpkin_core::block::entities::banner::BannerBlockEntity as InternalBannerBlockEntity;
 use pumpkin_core::block::entities::barrel::BarrelBlockEntity as InternalBarrelBlockEntity;
 use pumpkin_core::block::entities::beacon::BeaconBlockEntity as InternalBeaconBlockEntity;
