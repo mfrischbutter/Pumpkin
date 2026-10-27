@@ -438,6 +438,10 @@ impl World {
             NbtCompound::new()
         };
 
+        if let Some(server_arc) = server.upgrade() {
+            let _ = level.rt_handle.set(server_arc.runtime.clone());
+        }
+
         Self {
             uuid: Uuid::new_v4(),
             level,
@@ -1740,10 +1744,8 @@ impl World {
         };
 
         let t_chunks = std::time::Instant::now();
-        self.tick_chunks(server);
+        self.tick_chunks();
         let chunk_elapsed = t_chunks.elapsed();
-
-        let handle = server.runtime.clone();
 
         let players = self.players.load();
         let player_count = players.len();
@@ -1762,9 +1764,7 @@ impl World {
             .collect();
 
         let t_players = std::time::Instant::now();
-        let player_handle = handle.clone();
         players.par_iter().for_each(|player| {
-            let _guard = player_handle.enter();
             player.tick(server);
         });
         let player_elapsed = t_players.elapsed();
@@ -1777,7 +1777,6 @@ impl World {
             .unwrap_or_else(std::sync::PoisonError::into_inner)
             .clone();
         let level_for_entities = self.level.clone();
-        let entity_handle = handle.clone();
 
         let t_entities = std::time::Instant::now();
         let tickable: Vec<_> = entities_to_tick
@@ -1892,7 +1891,6 @@ impl World {
                 .par_iter()
                 .with_max_len(1)
                 .for_each(|island| {
-                    let _guard = entity_handle.enter();
                     for &index in island {
                         #[cfg(debug_assertions)]
                         entity_islands::enter(&islands, tickable[index].0.get_entity().entity_id);
@@ -1903,7 +1901,6 @@ impl World {
                     entity_islands::leave();
                 });
         } else {
-            let _guard = entity_handle.enter();
             for index in 0..tickable.len() {
                 tick_entity(index);
             }
@@ -1937,9 +1934,7 @@ impl World {
         let block_entity_count = block_entities.len();
 
         let t_be = std::time::Instant::now();
-        let be_handle = handle;
         block_entities.par_chunks(16).for_each(|batch| {
-            let _guard = be_handle.enter();
             for be in batch {
                 // Vanilla's ticking wrapper skips a block entity whose block no longer owns
                 // it. Without this, a leftover (say, a daylight detector under a `fill` of
@@ -1954,9 +1949,7 @@ impl World {
             }
         });
         // Drained after all ticks, so changes (hopper -> chest) land in the same tick.
-        let guard = be_handle.enter();
         self.flush_comparator_updates(&block_entities);
-        drop(guard);
         let block_entity_elapsed = t_be.elapsed();
 
         self.level
@@ -2285,7 +2278,7 @@ impl World {
     }
 
     #[expect(clippy::too_many_lines)]
-    pub fn tick_chunks(self: &Arc<Self>, server: &Arc<Server>) {
+    pub fn tick_chunks(self: &Arc<Self>) {
         const BATCH_SIZE: usize = 32;
         const INHABITED_TIME_BATCH_SIZE: usize = 1024;
         let random_tick_speed = self.level_info.load().game_rules.random_tick_speed;
@@ -2296,16 +2289,13 @@ impl World {
             .unwrap_or_else(std::sync::PoisonError::into_inner)
             .clone();
         let tick_data = self.level.get_tick_data(&active_chunks, random_tick_speed);
-        let handle = server.runtime.clone();
 
         // 1. Parallel Block Ticks via Rayon
         let world = self.clone();
-        let block_handle = handle.clone();
         tick_data
             .block_ticks
             .par_chunks(BATCH_SIZE)
             .for_each(|batch| {
-                let _guard = block_handle.enter();
                 let world = world.clone();
                 for scheduled_tick in batch {
                     let pos = scheduled_tick.position;
@@ -2325,12 +2315,10 @@ impl World {
 
         // 2. Parallel Fluid Ticks via Rayon
         let world = self.clone();
-        let fluid_handle = handle.clone();
         tick_data
             .fluid_ticks
             .par_chunks(BATCH_SIZE)
             .for_each(|batch| {
-                let _guard = fluid_handle.enter();
                 let world = world.clone();
                 for scheduled_tick in batch {
                     let pos = scheduled_tick.position;
@@ -2344,9 +2332,7 @@ impl World {
         // 3. Parallel Random Ticks via Rayon
         let random_ticks = self.fire_block_random_ticks(tick_data.random_ticks);
         let world = self.clone();
-        let random_handle = handle.clone();
         random_ticks.par_chunks(BATCH_SIZE).for_each(|batch| {
-            let _guard = random_handle.enter();
             let world = world.clone();
             for scheduled_tick in batch {
                 let pos = scheduled_tick.position;
@@ -2411,9 +2397,7 @@ impl World {
             spawning_chunks.shuffle(&mut rng());
 
             let world = self.clone();
-            let spawn_handle = handle;
             spawning_chunks.par_chunks(8).for_each(|batch| {
-                let _guard = spawn_handle.enter();
                 let world = world.clone();
                 let s_list = spawn_list.clone();
                 let s_state = spawn_state.clone();
@@ -4538,8 +4522,16 @@ impl World {
     pub fn should_skip_night(&self) -> bool {
         let players = self.players.load();
 
-        let player_count = players.len();
-        let sleeping_player_count = players
+        let eligible_players: Vec<_> = players
+            .iter()
+            .filter(|player| {
+                !player
+                    .sleeping_ignored
+                    .load(std::sync::atomic::Ordering::Relaxed)
+            })
+            .collect();
+        let player_count = eligible_players.len();
+        let sleeping_player_count = eligible_players
             .iter()
             .filter(|player| {
                 player
@@ -5890,7 +5882,7 @@ impl World {
             crate::block::drop_loot(self, broken_block, position, true, &params);
         }
 
-        let new_state_id = if broken_block.is_waterlogged(broken_block_state.id) {
+        let new_state_id = if *self.get_fluid(position) == Fluid::WATER {
             Block::WATER.default_state.id
         } else {
             Block::AIR.default_state.id
@@ -8029,7 +8021,7 @@ impl WorldPortalExt for WorldPortal {
     ) -> bool {
         self.0.block_registry.can_place_at(
             None,
-            Some(&self.0),
+            None,
             block_accessor,
             None,
             block,

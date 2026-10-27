@@ -2364,63 +2364,65 @@ impl Entity {
                 let entity_id = self.entity_id;
                 let yaw = self.yaw.load();
 
-                let rt_handle = world_clone.server.upgrade().map(|s| s.runtime.clone());
-                rayon::spawn(move || {
-                    let _guard = rt_handle.as_ref().map(tokio::runtime::Handle::enter);
-                    let Some(entity_arc) = world_clone.get_entity_by_id(entity_id) else {
-                        return;
-                    };
-                    let transition = portal_type.get_portal_destination(
-                        &world_clone,
-                        dest_world_opt,
-                        entity_arc.as_ref(),
-                        src_portal.as_ref(),
-                    );
+                if let Some(server) = world_clone.server.upgrade() {
+                    server.spawn_task(async move {
+                        let Some(entity_arc) = world_clone.get_entity_by_id(entity_id) else {
+                            return;
+                        };
+                        let transition = portal_type
+                            .get_portal_destination(
+                                &world_clone,
+                                dest_world_opt,
+                                entity_arc.as_ref(),
+                                src_portal.as_ref(),
+                            )
+                            .await;
 
-                    if let Some(transition) = transition {
-                        let dest_world = transition.new_world.clone();
-                        let yaw_val = transition.yaw;
-                        let pitch = transition.pitch;
-                        let mut teleport_pos = transition.position;
+                        if let Some(transition) = transition {
+                            let dest_world = transition.new_world.clone();
+                            let yaw_val = transition.yaw;
+                            let pitch = transition.pitch;
+                            let mut teleport_pos = transition.position;
 
-                        if let Some(player) = world_clone.get_player_by_id(entity_id)
-                            && let Some(server) = world_clone.server.upgrade()
-                        {
-                            let to_pos = BlockPos::floored_v(teleport_pos);
-                            let mut event =
-                                crate::plugin::api::events::player::player_portal::PlayerPortalEvent::new(
-                                    player,
-                                    entry_pos,
-                                    Some(to_pos),
-                                );
-                            server.plugin_manager.fire_blocking(&server, &mut event);
-                            if event.cancelled {
-                                return;
-                            }
-                            if let Some(new_pos) = event.to_pos
-                                && new_pos != to_pos
+                            if let Some(player) = world_clone.get_player_by_id(entity_id)
+                                && let Some(server) = world_clone.server.upgrade()
                             {
-                                teleport_pos = Vector3::new(
-                                    f64::from(new_pos.0.x) + 0.5,
-                                    f64::from(new_pos.0.y),
-                                    f64::from(new_pos.0.z) + 0.5,
-                                );
+                                let to_pos = BlockPos::floored_v(teleport_pos);
+                                let mut event =
+                                    crate::plugin::api::events::player::player_portal::PlayerPortalEvent::new(
+                                        player,
+                                        entry_pos,
+                                        Some(to_pos),
+                                    );
+                                server.plugin_manager.fire(&server, &mut event).await;
+                                if event.cancelled {
+                                    return;
+                                }
+                                if let Some(new_pos) = event.to_pos
+                                    && new_pos != to_pos
+                                {
+                                    teleport_pos = Vector3::new(
+                                        f64::from(new_pos.0.x) + 0.5,
+                                        f64::from(new_pos.0.y),
+                                        f64::from(new_pos.0.z) + 0.5,
+                                    );
+                                }
                             }
+
+                            // Teleport the main entity
+                            entity_arc.teleport(teleport_pos, yaw_val, pitch, dest_world.clone());
+
+                            // Teleport all passengers recursively along with the vehicle
+                            let yaw_delta = yaw_val.map(|y| y - yaw);
+                            Self::teleport_passengers_recursive(
+                                entity_arc.get_entity(),
+                                teleport_pos,
+                                yaw_delta,
+                                &dest_world,
+                            );
                         }
-
-                        // Teleport the main entity
-                        entity_arc.teleport(teleport_pos, yaw_val, pitch, dest_world.clone());
-
-                        // Teleport all passengers recursively along with the vehicle
-                        let yaw_delta = yaw_val.map(|y| y - yaw);
-                        Self::teleport_passengers_recursive(
-                            entity_arc.get_entity(),
-                            teleport_pos,
-                            yaw_delta,
-                            &dest_world,
-                        );
-                    }
-                });
+                    });
+                }
             } else if portal_processor.portal_time == 0 {
                 should_remove = true;
             }
