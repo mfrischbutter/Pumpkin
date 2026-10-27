@@ -696,16 +696,7 @@ impl Server {
         profile: GameProfile,
         config: Option<PlayerConfig>,
     ) -> Option<(Arc<Player>, Arc<World>)> {
-        // The login handlers check this too, but long before the insertion
-        // and not on every path (proxies, no encryption, Bedrock).
-        let _join_guard = self
-            .player_join_lock
-            .lock()
-            .unwrap_or_else(std::sync::PoisonError::into_inner);
-        if let Some(reason) = self.join_rejection(&client, &profile) {
-            client.try_kick(DisconnectReason::Kicked, &reason);
-            return None;
-        }
+        let _join_guard = self.lock_join(&client, &profile)?;
 
         let gamemode = self
             .defaultgamemode
@@ -818,6 +809,26 @@ impl Server {
                 None
             }
         }}
+    }
+
+    /// Takes the join lock, or kicks `client` and returns `None` if `profile` can't join now.
+    ///
+    /// The login handlers check this too, but long before the insertion
+    /// and not on every path (proxies, no encryption, Bedrock).
+    fn lock_join(
+        &self,
+        client: &ClientPlatform,
+        profile: &GameProfile,
+    ) -> Option<std::sync::MutexGuard<'_, ()>> {
+        let guard = self
+            .player_join_lock
+            .lock()
+            .unwrap_or_else(std::sync::PoisonError::into_inner);
+        if let Some(reason) = self.join_rejection(client, profile) {
+            client.try_kick(DisconnectReason::Kicked, &reason);
+            return None;
+        }
+        Some(guard)
     }
 
     /// Why `profile` can't join right now, if anything. Call with the join lock held.
