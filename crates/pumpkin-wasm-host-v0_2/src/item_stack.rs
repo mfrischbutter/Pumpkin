@@ -910,22 +910,4 @@ impl HostItemStackWithStore<PluginHostState> for HasSelf<PluginHostState> {
         set_patch_component(&mut stack, id, component_impl);
         Ok(Ok(()))
     }
-
-    async fn get_max_damage(
-        accessor: &Accessor<PluginHostState, Self>,
-        res: Resource<ItemStackHandle>,
-    ) -> wasmtime::Result<Option<i32>> {
-        let stack = accessor.get_res(&res)?;
-        let stack = stack.lock().await;
-        Ok(stack.get_max_damage())
-    }
-
-    async fn get_damage(
-        accessor: &Accessor<PluginHostState, Self>,
-        res: Resource<ItemStackHandle>,
-    ) -> wasmtime::Result<i32> {
-        let stack = accessor.get_res(&res)?;
-        let stack = stack.lock().await;
-        Ok(stack.get_damage())
-    }
 }

@@ -143,10 +143,5 @@ interface item-stack {
         /// Sets a data component on this item stack. Fails without changing the stack when the
         /// value cannot be decoded as that component or has bytes left over.
         try-set-component: async func(component: data-component, value: list<u8>) -> result<_, string>;
-
-        /// Returns the maximum damage of this item stack, if it has one.
-        get-max-damage: async func() -> option<s32>;
-        /// Returns the damage of this item stack, or 0 if it has none.
-        get-damage: async func() -> s32;
     }
 }
