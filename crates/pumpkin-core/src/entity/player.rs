@@ -278,8 +278,7 @@ use pumpkin_protocol::java::client::play::{
     CSetExperience, CSetHealth, CSetPlayerInventory, CSetSelectedSlot, CSoundEffect, CStopSound,
     CSubtitle, CSystemChatMessage, CTabList, CTitleAnimation, CTitleText, CUnloadChunk,
     CUpdateMobEffect, CUpdateTime, GameEvent, MapIcon, MapPatch, ParticleOptions, PlayerAction,
-    PlayerInfoFlags,
-    PlayerSpawnData, PreviousMessage, Statistic,
+    PlayerInfoFlags, PlayerSpawnData, PreviousMessage, Statistic,
 };
 use pumpkin_protocol::java::server::play::{
     SClickSlot, SContainerButtonClick, SRenameItem, SlotActionType,

@@ -578,8 +578,13 @@ impl ItemBehaviour for FilledBucketItem {
         // Players with infinite materials keep the filled bucket.
         let infinite_materials = player.gamemode.load() == GameMode::Creative;
         let mut result = (!infinite_materials).then(|| ItemStack::new(1, &Item::BUCKET));
-        let Some(place_pos) =
-            try_place_liquid(&world, item, pos, direction, is_sneaking, |place_pos| {
+        let Some(place_pos) = try_place_liquid(
+            &world,
+            item,
+            pos,
+            direction,
+            is_sneaking,
+            |place_pos| {
                 if let Some(server) = world.server.upgrade()
                     && let Some(player_arc) = world.get_player_by_uuid(player.gameprofile.id)
                 {
@@ -601,8 +606,8 @@ impl ItemBehaviour for FilledBucketItem {
                     result = event.result;
                 }
                 true
-            })
-        else {
+            },
+        ) else {
             return;
         };
 

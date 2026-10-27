@@ -251,9 +251,11 @@ pub async fn serve_java_connection(server: Arc<Server>, mut pending: PendingConn
 
             // A reconfiguration takes the player out and creates it again
             // from its saved data, like vanilla `placeNewPlayer`.
-            while let Some((player, world)) =
-                server.add_player(client_platform.clone(), profile.clone(), Some(config.clone()))
-            {
+            while let Some((player, world)) = server.add_player(
+                client_platform.clone(),
+                profile.clone(),
+                Some(config.clone()),
+            ) {
                 if let ClientPlatform::Java(client) = player.client.as_ref() {
                     client.set_player(player.clone());
                 }
