@@ -4,7 +4,8 @@ use pumpkin_macros::{Event, cancellable};
 use pumpkin_util::math::vector3::Vector3;
 use std::sync::Arc;
 
-/// An event that occurs when determining player spawn position.
+/// An event that occurs when determining player spawn position: when the
+/// player joins and when they respawn.
 #[cancellable]
 #[derive(Event, Clone)]
 pub struct PlayerSpawnLocationEvent {

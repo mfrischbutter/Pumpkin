@@ -2957,6 +2957,22 @@ impl World {
             .unwrap_or(self.min_y)
     }
 
+    /// Fires [`PlayerSpawnLocationEvent`] for a joining player, before they are
+    /// placed in the world: plugins may move where the player spawns, as on
+    /// respawn.
+    async fn fire_join_spawn_location(
+        player: &Arc<Player>,
+        server: &Arc<Server>,
+        position: Vector3<f64>,
+    ) -> Vector3<f64> {
+        let mut event = crate::plugin::api::events::player::player_spawn_location::PlayerSpawnLocationEvent::new(
+            player.clone(),
+            position,
+        );
+        server.plugin_manager.fire(server, &mut event).await;
+        event.spawn_pos
+    }
+
     #[allow(clippy::too_many_lines)]
     pub async fn spawn_bedrock_player(
         &self,
@@ -3002,6 +3018,7 @@ impl World {
             );
             (position, level_info.spawn_yaw, level_info.spawn_pitch)
         };
+        let position = Self::fire_join_spawn_location(&player, server, position).await;
 
         // Keep the server-side transform aligned with the StartGame position. In
         // particular, this ensures an early disconnect persists the real spawn.
@@ -3584,6 +3601,7 @@ impl World {
             );
             (position, info.spawn_yaw, info.spawn_pitch)
         };
+        let position = Self::fire_join_spawn_location(player, server, position).await;
 
         // Load chunks around the real spawn position before teleporting the client there.
         player.living_entity.entity.set_pos(position);
