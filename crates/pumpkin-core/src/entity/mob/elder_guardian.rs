@@ -1,4 +1,4 @@
-use std::sync::atomic::Ordering;
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, Weak};
 
 use pumpkin_data::damage::DamageType;
@@ -7,25 +7,35 @@ use pumpkin_data::entity::EntityType;
 use pumpkin_data::potion::Effect;
 use pumpkin_protocol::java::client::play::{CGameEvent, GameEvent};
 
+use pumpkin_util::math::position::BlockPos;
+
 use crate::entity::{
     Entity, EntityBase,
     ai::goal::{
         active_target::ActiveTargetGoal, look_around::RandomLookAroundGoal,
-        look_at_entity::LookAtEntityGoal, swim::SwimGoal, wander_around::WanderAroundGoal,
+        look_at_entity::LookAtEntityGoal, wander_around::WanderAroundGoal,
     },
-    mob::{Mob, MobEntity},
+    mob::{
+        Mob, MobEntity,
+        guardian::{
+            MAX_HEAD_X_ROT, guardian_ai_step, guardian_travel_in_water, guardian_walk_target_value,
+            initialize_guardian_movement,
+        },
+    },
 };
 
 const EFFECT_INTERVAL: i32 = 1200;
 
 pub struct ElderGuardianEntity {
     pub mob_entity: MobEntity,
+    moving: Arc<AtomicBool>,
 }
 
 impl ElderGuardianEntity {
     pub fn new(entity: Entity) -> Arc<Self> {
-        let mob_entity = MobEntity::new(entity);
-        let guardian = Self { mob_entity };
+        let mut mob_entity = MobEntity::new(entity);
+        let moving = initialize_guardian_movement(&mut mob_entity);
+        let guardian = Self { mob_entity, moving };
         let mob_arc = Arc::new(guardian);
         let mob_weak: Weak<dyn Mob> = {
             let mob_arc: Arc<dyn Mob> = mob_arc.clone();
@@ -35,7 +45,6 @@ impl ElderGuardianEntity {
         {
             let goal_selector = &mob_arc.mob_entity.goals_selector;
 
-            goal_selector.add_goal(0, Box::new(SwimGoal::default()));
             goal_selector.add_goal(4, Box::new(WanderAroundGoal::new(1.0)));
             goal_selector.add_goal(
                 5,
@@ -57,6 +66,22 @@ impl ElderGuardianEntity {
 impl Mob for ElderGuardianEntity {
     fn get_mob_entity(&self) -> &MobEntity {
         &self.mob_entity
+    }
+
+    fn get_max_look_pitch_change(&self) -> f32 {
+        MAX_HEAD_X_ROT
+    }
+
+    fn before_mob_ai_step(&self) {
+        guardian_ai_step(self);
+    }
+
+    fn travel_in_water(&self, caller: &dyn EntityBase, _gravity: f64, _falling: bool) {
+        guardian_travel_in_water(self, caller, self.moving.load(Ordering::Relaxed));
+    }
+
+    fn get_walk_target_value(&self, pos: &BlockPos) -> f32 {
+        guardian_walk_target_value(self, pos)
     }
 
     fn custom_server_ai_step(&self, _caller: &dyn EntityBase) {
