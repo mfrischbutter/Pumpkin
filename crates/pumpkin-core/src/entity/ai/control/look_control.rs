@@ -123,4 +123,12 @@ impl LookControlTrait for LookControl {
     ) {
         Self::look_at_with_range(self, x, y, z, max_yaw_change, max_pitch_change);
     }
+
+    fn wanted_position(&self) -> Vector3<f64> {
+        self.position
+    }
+
+    fn is_looking_at_target(&self) -> bool {
+        self.look_at_timer > 0
+    }
 }
