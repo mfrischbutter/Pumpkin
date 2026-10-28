@@ -59,7 +59,8 @@ impl LpVector3d {
     }
 
     pub fn read<R: std::io::Read>(reader: &mut R) -> Result<Self, ReadingError> {
-        // A zero vector is the single byte `write` (and vanilla) sends for it.
+        // `write` encodes a zero vector as a single 0 byte, so read one byte
+        // first; reading two would consume the field that follows it.
         let mut low_16 = [0u8; 2];
         reader
             .read_exact(&mut low_16[..1])
@@ -157,22 +158,6 @@ mod tests {
     use pumpkin_util::math::vector3::Vector3;
 
     #[test]
-    fn zero_vector_is_one_byte() -> Result<(), Box<dyn std::error::Error>> {
-        let mut buf = Vec::new();
-        LpVector3d(Vector3::new(0.0, 0.0, 0.0)).write(&mut buf)?;
-        assert_eq!(buf, vec![0x00]);
-
-        // The byte after the vector belongs to the next field.
-        let mut reader: &[u8] = &[0x00, 0x01];
-        assert_eq!(
-            LpVector3d::read(&mut reader)?,
-            LpVector3d(Vector3::new(0.0, 0.0, 0.0))
-        );
-        assert_eq!(reader, [0x01]);
-        Ok(())
-    }
-
-    #[test]
     fn legacy_component_is_clamped_and_scaled() {
         assert_eq!(encode_legacy_velocity_component(0.5), 4000);
         assert_eq!(encode_legacy_velocity_component(-0.5), -4000);
@@ -186,6 +171,21 @@ mod tests {
         let mut buf = Vec::new();
         velocity.write_legacy(&mut buf)?;
         assert_eq!(buf, vec![0x0F, 0xA0, 0xF0, 0x60, 0x00, 0x00]);
+        Ok(())
+    }
+
+    #[test]
+    fn zero_vector_round_trips_as_one_byte() -> Result<(), Box<dyn std::error::Error>> {
+        let velocity = LpVector3d(Vector3::new(0.0, 0.0, 0.0));
+        let mut buf = Vec::new();
+        velocity.write(&mut buf)?;
+        assert_eq!(buf, [0]);
+
+        // The following byte belongs to the next field and must stay unread.
+        let mut reader = std::io::Cursor::new([0u8, 0x2A]);
+        let decoded = LpVector3d::read(&mut reader)?;
+        assert_eq!(decoded.0, Vector3::new(0.0, 0.0, 0.0));
+        assert_eq!(reader.position(), 1);
         Ok(())
     }
 }

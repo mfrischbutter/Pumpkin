@@ -87,7 +87,8 @@ impl ServerPlayerData {
             }
 
             let storage = self.storage.clone();
-            // The tick runs on the simulation pool, which has no Tokio context.
+            // The tick runs on a simulation thread with no Tokio context, so use the
+            // server's runtime handle instead of `tokio::task::spawn_blocking`.
             server.runtime.spawn_blocking(move || {
                 for (uuid, nbt) in snapshots {
                     if let Err(e) = storage.save_player_data(&uuid, nbt) {
