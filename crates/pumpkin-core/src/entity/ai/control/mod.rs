@@ -44,6 +44,12 @@ pub trait LookControlTrait: Control {
         max_pitch_change: f32,
     );
 
+    /// Vanilla `getWantedX/Y/Z`: the position last asked to look at.
+    fn wanted_position(&self) -> Vector3<f64>;
+
+    /// Vanilla `isLookingAtTarget`: a look target is set and has not timed out.
+    fn is_looking_at_target(&self) -> bool;
+
     fn look_at(&mut self, mob: &dyn Mob, x: f64, y: f64, z: f64) {
         self.look_at_with_range(
             x,
