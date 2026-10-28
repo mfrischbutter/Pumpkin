@@ -1300,6 +1300,9 @@ interface event {
     record player-spawn-location-event-data {
         player: player,
         spawn-pos: position,
+        spawn-world: %world,
+        spawn-yaw: f32,
+        spawn-pitch: f32,
         cancelled: bool
     }
 

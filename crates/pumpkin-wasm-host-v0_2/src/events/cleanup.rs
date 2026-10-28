@@ -824,6 +824,7 @@ pub fn cleanup_event(event: &Event, state: &mut PluginHostState) {
         }
         Event::PlayerSpawnLocationEvent(data) => {
             cleanup_player(state, &data.player);
+            cleanup_world(state, &data.spawn_world);
         }
         Event::PlayerUnregisterChannelEvent(data) => {
             cleanup_player(state, &data.player);

@@ -2758,18 +2758,31 @@ impl ToFromWasmEvent for PlayerSpawnLocationEvent {
         let player = state
             .add(self.player.clone())
             .expect("failed to add player resource");
+        let spawn_world = state
+            .add(self.spawn_world.clone())
+            .expect("failed to add world resource");
         Event::PlayerSpawnLocationEvent(PlayerSpawnLocationEventData {
             player,
             spawn_pos: to_wasm_position(self.spawn_pos),
+            spawn_world,
+            spawn_yaw: self.spawn_yaw,
+            spawn_pitch: self.spawn_pitch,
             cancelled: self.cancelled,
         })
     }
 
     fn apply_wasm_event(&mut self, event: Event, state: &mut PluginHostState) {
+        if let Event::PlayerSpawnLocationEvent(data) = &event
+            && let Ok(world) = state.get(&data.spawn_world)
+        {
+            self.spawn_world = world.clone();
+        }
         cleanup_event(&event, state);
         if let Event::PlayerSpawnLocationEvent(data) = event {
             self.cancelled = data.cancelled;
             self.spawn_pos = from_wasm_position(data.spawn_pos);
+            self.spawn_yaw = data.spawn_yaw;
+            self.spawn_pitch = data.spawn_pitch;
         }
     }
 
@@ -2778,6 +2791,9 @@ impl ToFromWasmEvent for PlayerSpawnLocationEvent {
             Event::PlayerSpawnLocationEvent(data) => Self {
                 player: consume_player(state, &data.player),
                 spawn_pos: from_wasm_position(data.spawn_pos),
+                spawn_world: consume_world(state, &data.spawn_world),
+                spawn_yaw: data.spawn_yaw,
+                spawn_pitch: data.spawn_pitch,
                 cancelled: data.cancelled,
             },
             _ => panic!("unexpected event type"),

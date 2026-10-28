@@ -2981,42 +2981,62 @@ impl World {
     }
 
     /// Fires [`PlayerSpawnLocationEvent`] for a joining player, before they are
-    /// placed in the world: plugins may move where the player spawns, as on
-    /// respawn.
+    /// placed in the world: plugins may move where and in which world the
+    /// player spawns, as on respawn. Returns the world and the spawn point; a
+    /// player sent to another world is moved there before anything is sent.
     async fn fire_join_spawn_location(
         player: &Arc<Player>,
         server: &Arc<Server>,
-        position: Vector3<f64>,
-    ) -> Vector3<f64> {
+        (position, yaw, pitch): (Vector3<f64>, f32, f32),
+    ) -> (Arc<Self>, (Vector3<f64>, f32, f32)) {
+        let world = player.world();
         let mut event = crate::plugin::api::events::player::player_spawn_location::PlayerSpawnLocationEvent::new(
             player.clone(),
             position,
+            world.clone(),
+            (yaw, pitch),
         );
         server.plugin_manager.fire(server, &mut event).await;
-        event.spawn_pos
+        let destination = event.spawn_world;
+        if destination.uuid != world.uuid {
+            debug!(
+                "Join spawn of {}: {} -> {}",
+                player.gameprofile.name,
+                world.dimension.minecraft_name,
+                destination.dimension.minecraft_name
+            );
+            // Nothing about the player was sent yet, so only the world's own
+            // bookkeeping moves; `remove_player` would announce a leave.
+            world.players.rcu(|current_list| {
+                let mut new_list = (**current_list).clone();
+                new_list.retain(|p| p.gameprofile.id != player.gameprofile.id);
+                new_list
+            });
+            world
+                .entity_tracker
+                .remove_entity(player.as_ref() as &dyn EntityBase, &world);
+            player.change_world_chunks(&world.level, &destination);
+            player.living_entity.entity.set_world(destination.clone());
+            if let Err(e) = destination.add_player(player) {
+                warn!(
+                    "Failed to move {} to their join world: {e}",
+                    player.gameprofile.name
+                );
+            }
+        }
+        (
+            destination,
+            (event.spawn_pos, event.spawn_yaw, event.spawn_pitch),
+        )
     }
 
-    #[allow(clippy::too_many_lines)]
     pub async fn spawn_bedrock_player(
         &self,
         base_config: &BasicConfiguration,
         player: Arc<Player>,
         server: &Arc<Server>,
     ) {
-        static CREATIVE_CONTENT: std::sync::OnceLock<(
-            Vec<CreativeGroupInfoPayload>,
-            Vec<CreativeItemEntryPayload>,
-        )> = std::sync::OnceLock::new();
-
         let level_info = server.level_info.load();
-        let (rain_level, lightning_level) = {
-            let weather = self
-                .weather
-                .lock()
-                .unwrap_or_else(std::sync::PoisonError::into_inner);
-            (weather.rain_level, weather.thunder_level)
-        };
-        let runtime_id = player.entity_id() as u64;
         let (position, yaw, pitch) = if player.has_played_before.load(Ordering::Relaxed) {
             let position = player.position();
             let yaw = player.get_entity().yaw.load(); //info.spawn_angle;
@@ -3041,7 +3061,35 @@ impl World {
             );
             (position, level_info.spawn_yaw, level_info.spawn_pitch)
         };
-        let position = Self::fire_join_spawn_location(&player, server, position).await;
+        let (world, spawn) =
+            Self::fire_join_spawn_location(&player, server, (position, yaw, pitch)).await;
+        world
+            .spawn_bedrock_player_at(base_config, player, server, spawn)
+            .await;
+    }
+
+    #[allow(clippy::too_many_lines)]
+    async fn spawn_bedrock_player_at(
+        &self,
+        base_config: &BasicConfiguration,
+        player: Arc<Player>,
+        server: &Arc<Server>,
+        (position, yaw, pitch): (Vector3<f64>, f32, f32),
+    ) {
+        static CREATIVE_CONTENT: std::sync::OnceLock<(
+            Vec<CreativeGroupInfoPayload>,
+            Vec<CreativeItemEntryPayload>,
+        )> = std::sync::OnceLock::new();
+
+        let level_info = server.level_info.load();
+        let (rain_level, lightning_level) = {
+            let weather = self
+                .weather
+                .lock()
+                .unwrap_or_else(std::sync::PoisonError::into_inner);
+            (weather.rain_level, weather.thunder_level)
+        };
+        let runtime_id = player.entity_id() as u64;
 
         // Keep the server-side transform aligned with the StartGame position. In
         // particular, this ensures an early disconnect persists the real spawn.
@@ -3490,7 +3538,6 @@ impl World {
         }
     }
 
-    #[expect(clippy::too_many_lines)]
     /// `rejoin` is set when the player comes back from a reconfiguration: the join event and the
     /// join message are skipped, as the leave event was when it went into the configuration phase.
     pub async fn spawn_java_player(
@@ -3499,6 +3546,47 @@ impl World {
         player: &Arc<Player>,
         server: &Arc<Server>,
         rejoin: bool,
+    ) {
+        let (position, yaw, pitch) = if player.has_played_before.load(Ordering::Relaxed) {
+            let position = player.position();
+            let yaw = player.get_entity().yaw.load(); //info.spawn_angle;
+            let pitch = player.get_entity().pitch.load();
+
+            (position, yaw, pitch)
+        } else {
+            let info = &self.level_info.load();
+            let spawn_position = Vector2::new(info.spawn_x, info.spawn_z);
+            let chunk_pos = Vector2::new(info.spawn_x >> 4, info.spawn_z >> 4);
+            self.level.get_or_fetch_chunk(chunk_pos, |_| ()).await;
+            let top = self.get_top_block(spawn_position);
+            let pos_y = if top > self.dimension.min_y {
+                top + 1
+            } else {
+                info.spawn_y
+            };
+
+            let position = Vector3::new(
+                f64::from(info.spawn_x) + 0.5,
+                f64::from(pos_y),
+                f64::from(info.spawn_z) + 0.5,
+            );
+            (position, info.spawn_yaw, info.spawn_pitch)
+        };
+        let (world, spawn) =
+            Self::fire_join_spawn_location(player, server, (position, yaw, pitch)).await;
+        world
+            .spawn_java_player_at(base_config, player, server, rejoin, spawn)
+            .await;
+    }
+
+    #[expect(clippy::too_many_lines)]
+    async fn spawn_java_player_at(
+        &self,
+        base_config: &BasicConfiguration,
+        player: &Arc<Player>,
+        server: &Arc<Server>,
+        rejoin: bool,
+        (position, yaw, pitch): (Vector3<f64>, f32, f32),
     ) {
         let dimensions: Vec<ResourceLocation> = server
             .dimensions
@@ -3598,33 +3686,6 @@ impl World {
             let packet = pumpkin_protocol::java::client::play::CUpdateTagsPlay::new(&tags);
             client.send_packet(&packet).await;
         }
-
-        let (position, yaw, pitch) = if player.has_played_before.load(Ordering::Relaxed) {
-            let position = player.position();
-            let yaw = player.get_entity().yaw.load(); //info.spawn_angle;
-            let pitch = player.get_entity().pitch.load();
-
-            (position, yaw, pitch)
-        } else {
-            let info = &self.level_info.load();
-            let spawn_position = Vector2::new(info.spawn_x, info.spawn_z);
-            let chunk_pos = Vector2::new(info.spawn_x >> 4, info.spawn_z >> 4);
-            self.level.get_or_fetch_chunk(chunk_pos, |_| ()).await;
-            let top = self.get_top_block(spawn_position);
-            let pos_y = if top > self.dimension.min_y {
-                top + 1
-            } else {
-                info.spawn_y
-            };
-
-            let position = Vector3::new(
-                f64::from(info.spawn_x) + 0.5,
-                f64::from(pos_y),
-                f64::from(info.spawn_z) + 0.5,
-            );
-            (position, info.spawn_yaw, info.spawn_pitch)
-        };
-        let position = Self::fire_join_spawn_location(player, server, position).await;
 
         // Load chunks around the real spawn position before teleporting the client there.
         player.living_entity.entity.set_pos(position);
@@ -4341,15 +4402,6 @@ impl World {
             )
         };
 
-        let mut spawn_loc_event = crate::plugin::api::events::player::player_spawn_location::PlayerSpawnLocationEvent::new(
-            player.clone(),
-            position,
-        );
-        if let Some(ref s) = server {
-            s.plugin_manager.fire(s, &mut spawn_loc_event).await;
-        }
-        let position = spawn_loc_event.spawn_pos;
-
         // Candidate destination world for a cross-dimension respawn.
         let candidate_world = if respawn_dimension == self.dimension {
             None
@@ -4368,6 +4420,20 @@ impl World {
                 },
             )
         };
+
+        let mut spawn_loc_event = crate::plugin::api::events::player::player_spawn_location::PlayerSpawnLocationEvent::new(
+            player.clone(),
+            position,
+            candidate_world.clone().unwrap_or_else(|| self.clone()),
+            (yaw, pitch),
+        );
+        if let Some(ref s) = server {
+            s.plugin_manager.fire(s, &mut spawn_loc_event).await;
+        }
+        let position = spawn_loc_event.spawn_pos;
+        let (yaw, pitch) = (spawn_loc_event.spawn_yaw, spawn_loc_event.spawn_pitch);
+        let candidate_world =
+            Some(spawn_loc_event.spawn_world).filter(|world| world.uuid != self.uuid);
 
         // Fire PlayerChangeWorldEvent (cancellable) before the transfer; it runs before
         // the non-cancellable PlayerRespawnEvent, which observes the resolved world.
