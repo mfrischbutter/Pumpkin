@@ -108,6 +108,25 @@ impl SynchedEntityData {
         tracked: TrackedData,
         value: T,
     ) -> bool {
+        self.store(tracked, value, false)
+    }
+
+    /// Stores a tracked value and marks it dirty even when it equals the stored
+    /// value, so it is sent again (vanilla `SynchedEntityData.set` with `forceDirty`).
+    pub fn set_forced<T: MetadataSerializer + Clone + Send + Sync + 'static>(
+        &self,
+        tracked: TrackedData,
+        value: T,
+    ) {
+        self.store(tracked, value, true);
+    }
+
+    fn store<T: MetadataSerializer + Clone + Send + Sync + 'static>(
+        &self,
+        tracked: TrackedData,
+        value: T,
+        force_dirty: bool,
+    ) -> bool {
         let holder = SerializerHolder { value };
         let new_canonical = holder.write_canonical(tracked.id, tracked.r#type);
 
@@ -116,13 +135,16 @@ impl SynchedEntityData {
             .lock()
             .unwrap_or_else(std::sync::PoisonError::into_inner);
         if let Some(item) = items.get_mut(&tracked) {
-            if item.canonical_bytes == new_canonical {
+            let changed = item.canonical_bytes != new_canonical;
+            if !changed && !force_dirty {
                 return false;
             }
-            item.canonical_bytes = new_canonical;
-            item.serializer = Box::new(holder);
+            if changed {
+                item.canonical_bytes = new_canonical;
+                item.serializer = Box::new(holder);
+                item.is_default = false;
+            }
             item.dirty = true;
-            item.is_default = false;
         } else {
             items.insert(
                 tracked,
@@ -251,6 +273,30 @@ mod test {
         assert_eq!(
             data.pack_dirty_for_version(&JavaMinecraftVersion::V_1_20_5),
             current
+        );
+    }
+
+    /// Writing the stored value again is only sent when forced, as display
+    /// entities need for their start-interpolation value.
+    #[test]
+    fn only_a_forced_equal_write_marks_the_value_dirty() {
+        let data = SynchedEntityData::new();
+        data.define(PLAYER_MODE_CUSTOMISATION, 0u8);
+        assert!(data.set(PLAYER_MODE_CUSTOMISATION, 0x7Fu8));
+        data.clear_dirty();
+
+        assert!(!data.set(PLAYER_MODE_CUSTOMISATION, 0x7Fu8));
+        assert!(!data.is_dirty());
+        assert!(
+            data.pack_dirty_for_version(&JavaMinecraftVersion::V_26_3)
+                .is_none()
+        );
+
+        data.set_forced(PLAYER_MODE_CUSTOMISATION, 0x7Fu8);
+        assert!(data.is_dirty());
+        assert!(
+            data.pack_dirty_for_version(&JavaMinecraftVersion::V_26_3)
+                .is_some()
         );
     }
 

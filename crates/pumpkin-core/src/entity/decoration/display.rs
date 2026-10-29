@@ -97,7 +97,8 @@ impl DisplayEntity {
     pub fn set_interpolation_start_delta_ticks(&self, ticks: i32) {
         self.interpolation_start_delta_ticks
             .store(ticks, Ordering::Relaxed);
-        self.entity.set_synced_data(
+        // Vanilla forces this one: every update restarts the client's interpolation.
+        self.entity.force_synced_data(
             pumpkin_data::tracked_data::display::START_INTERPOLATION,
             VarInt(ticks),
         );

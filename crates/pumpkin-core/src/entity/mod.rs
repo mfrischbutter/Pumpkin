@@ -3237,6 +3237,16 @@ impl Entity {
         self.synched_data.set(tracked, value)
     }
 
+    /// Like [`Self::set_synced_data`], but sends the value again even when it is
+    /// unchanged.
+    pub fn force_synced_data<T: MetadataSerializer + Clone + Send + Sync + 'static>(
+        &self,
+        tracked: pumpkin_data::tracked_data::TrackedData,
+        value: T,
+    ) {
+        self.synched_data.set_forced(tracked, value);
+    }
+
     pub fn send_bedrock_actor_data(&self, bedrock_meta: &SyncedActorDataList) {
         let world = self.world.load();
         let players = world.players.load();
