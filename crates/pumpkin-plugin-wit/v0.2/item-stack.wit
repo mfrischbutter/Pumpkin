@@ -143,5 +143,10 @@ interface item-stack {
         /// Sets a data component on this item stack. Fails without changing the stack when the
         /// value cannot be decoded as that component or has bytes left over.
         try-set-component: async func(component: data-component, value: list<u8>) -> result<_, string>;
+
+        /// Returns this item stack in the saved NBT form (`id`, `count` and the changed
+        /// `components` by name), as in player and chunk data. Contents of containers and bundles
+        /// are nested item stacks in the same form.
+        to-nbt: async func() -> nbt-tree;
     }
 }

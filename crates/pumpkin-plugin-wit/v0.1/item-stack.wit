@@ -111,5 +111,10 @@ interface item-stack {
         get-max-damage: func() -> option<s32>;
         /// Returns the damage of this item stack, or 0 if it has none.
         get-damage: func() -> s32;
+
+        /// Returns this item stack in the saved NBT form (`id`, `count` and the changed
+        /// `components` by name), as in player and chunk data. Contents of containers and bundles
+        /// are nested item stacks in the same form.
+        to-nbt: func() -> nbt-tree;
     }
 }

@@ -148,6 +148,7 @@ bindgen!({
         "pumpkin:plugin/item-stack@0.1.0.[method]item-stack.set-custom-data": async | trappable,
         "pumpkin:plugin/item-stack@0.1.0.[method]item-stack.set-custom-name": async | trappable,
         "pumpkin:plugin/item-stack@0.1.0.[method]item-stack.set-lore": async | trappable,
+        "pumpkin:plugin/item-stack@0.1.0.[method]item-stack.to-nbt": async | trappable,
         "pumpkin:plugin/item-stack@0.1.0.[method]item-stack.try-set-component": async | trappable,
         "pumpkin:plugin/player@0.1.0.[method]bedrock-player.open-form": async | trappable,
         "pumpkin:plugin/player@0.1.0.[method]bedrock-player.send-packet": async | trappable,

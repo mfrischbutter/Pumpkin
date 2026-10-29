@@ -752,6 +752,14 @@ impl HostItemStack for PluginHostState {
         Ok(stack.get_damage())
     }
 
+    async fn to_nbt(&mut self, res: Resource<ItemStackHandle>) -> wasmtime::Result<WitNbtTree> {
+        let stack = self.get(&res)?;
+        let stack = stack.lock().await;
+        let mut compound = pumpkin_nbt::compound::NbtCompound::new();
+        stack.write_item_stack(&mut compound);
+        Ok(to_wit_nbt_tree(NbtTag::Compound(compound)))
+    }
+
     fn drop(&mut self, rep: Resource<ItemStackHandle>) -> wasmtime::Result<()> {
         self.drop(rep)
     }

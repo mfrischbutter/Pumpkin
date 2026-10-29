@@ -910,4 +910,15 @@ impl HostItemStackWithStore<PluginHostState> for HasSelf<PluginHostState> {
         set_patch_component(&mut stack, id, component_impl);
         Ok(Ok(()))
     }
+
+    async fn to_nbt(
+        accessor: &Accessor<PluginHostState, Self>,
+        res: Resource<ItemStackHandle>,
+    ) -> wasmtime::Result<WitNbtTree> {
+        let stack = accessor.get_res(&res)?;
+        let stack = stack.lock().await;
+        let mut compound = pumpkin_nbt::compound::NbtCompound::new();
+        stack.write_item_stack(&mut compound);
+        Ok(to_wit_nbt_tree(NbtTag::Compound(compound)))
+    }
 }
