@@ -5188,12 +5188,22 @@ impl Player {
         crate::entity::mob::neutral::tell_neutral_mobs_player_died(self, &self.world());
         let block_pos = self.position().to_block_pos();
 
+        let mut drops = drops;
         if !keep_inventory {
             self.inventory()
                 .main_inventory
                 .write()
                 .unwrap_or_else(std::sync::PoisonError::into_inner)
                 .fill(ItemStack::EMPTY.clone());
+            let equipment = std::mem::take(
+                &mut self
+                    .inventory()
+                    .entity_equipment
+                    .lock()
+                    .unwrap_or_else(std::sync::PoisonError::into_inner)
+                    .equipment,
+            );
+            drops.extend(equipment.into_values());
         }
         for stack in drops {
             if stack.is_empty() {

@@ -2370,7 +2370,9 @@ impl LivingEntity {
                 0
             };
             self.entity.pose.store(EntityPose::Dying);
-            if should_drop_loot {
+            // A player's armour and off hand drop with their inventory in
+            // `Player::handle_killed`, as vanilla's `Inventory.dropAll`.
+            if should_drop_loot && dyn_self.get_player().is_none() {
                 drops.extend(self.equipment_drops(looting_level));
             }
 
