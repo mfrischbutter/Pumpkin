@@ -24,6 +24,8 @@ use pumpkin_data::{Block, BlockStateId, block_properties::has_random_ticks, flui
 use pumpkin_util::math::{position::BlockPos, vector2::Vector2};
 use pumpkin_util::world_seed::Seed;
 use rustc_hash::FxHashSet;
+
+use crate::generation::secret::{GenerationSecret, part};
 use std::sync::{Arc, Mutex, OnceLock, Weak};
 use std::time::Duration;
 use std::{
@@ -72,6 +74,10 @@ pub type EntitySaver = LevelFileIO<ChunkEntityData>;
 /// For more details on world generation, refer to the `WorldGenerator` module.
 pub struct Level {
     pub seed: Seed,
+    /// The world's generation secret ([`crate::generation::secret`]): keys the
+    /// parts of generation a client could recover the seed from, none in a
+    /// world created without one.
+    pub generation_secret: GenerationSecret,
     pub world_portal: ArcSwap<Option<Arc<dyn WorldPortalExt>>>,
     pub level_folder: Arc<LevelFolder>,
     pub lighting_config: LightingEngineConfig,
@@ -148,12 +154,36 @@ pub struct LevelFolder {
 }
 
 impl Level {
+    /// The seed clients get to know: the world seed, or with a generation
+    /// secret a value derived from it, so that the seed never leaves the server.
+    #[must_use]
+    pub fn client_seed(&self) -> u64 {
+        self.generation_secret
+            .seed_for(part::BIOME_ZOOM, self.seed.0)
+    }
+
+    /// The hashed seed Java clients zoom biomes with; the generator uses the
+    /// same value, so client and server agree on biome borders.
+    #[must_use]
+    pub fn hashed_seed(&self) -> i64 {
+        crate::biome::hash_seed(self.client_seed())
+    }
+
+    /// The seed slime chunks are chosen with: the world seed, or the one the
+    /// generation secret derives, so that slime chunks say nothing about the seed.
+    #[must_use]
+    pub fn slime_seed(&self) -> u64 {
+        self.generation_secret
+            .seed_for(part::SLIME_CHUNKS, self.seed.0)
+    }
+
     #[must_use]
     #[expect(clippy::too_many_lines)]
     pub fn from_root_folder(
         level_config: &LevelConfig,
         root_folder: PathBuf,
         seed: i64,
+        generation_secret: GenerationSecret,
         dimension: Dimension,
     ) -> Arc<Self> {
         let (namespace, name) = match dimension.minecraft_name.split_once(':') {
@@ -248,6 +278,7 @@ impl Level {
             generator_settings_name.as_deref(),
             biome_source.as_ref(),
             structure_overrides.as_deref(),
+            generation_secret,
         ));
         if let Some(cache) = world_gen.global_structure_cache() {
             cache.ensure_strongholds_generated();
@@ -303,6 +334,7 @@ impl Level {
 
         let level_ref = Arc::new(Self {
             seed,
+            generation_secret,
             world_portal: ArcSwap::new(Arc::new(None)),
             world_gen: ArcSwap::new(world_gen),
             level_folder,
@@ -1097,8 +1129,13 @@ mod tests {
         let root = temp_dir.path().to_path_buf();
         let config = LevelConfig::default();
 
-        let overworld_level =
-            Level::from_root_folder(&config, root.clone(), 0, Dimension::OVERWORLD);
+        let overworld_level = Level::from_root_folder(
+            &config,
+            root.clone(),
+            0,
+            GenerationSecret::NONE,
+            Dimension::OVERWORLD,
+        );
         assert_eq!(
             overworld_level.level_folder.dim_folder,
             root.join("dimensions").join("minecraft").join("overworld")
@@ -1111,13 +1148,25 @@ mod tests {
                 .join("region")
         );
 
-        let nether_level = Level::from_root_folder(&config, root.clone(), 0, Dimension::THE_NETHER);
+        let nether_level = Level::from_root_folder(
+            &config,
+            root.clone(),
+            0,
+            GenerationSecret::NONE,
+            Dimension::THE_NETHER,
+        );
         assert_eq!(
             nether_level.level_folder.dim_folder,
             root.join("dimensions").join("minecraft").join("the_nether")
         );
 
-        let end_level = Level::from_root_folder(&config, root.clone(), 0, Dimension::THE_END);
+        let end_level = Level::from_root_folder(
+            &config,
+            root.clone(),
+            0,
+            GenerationSecret::NONE,
+            Dimension::THE_END,
+        );
         assert_eq!(
             end_level.level_folder.dim_folder,
             root.join("dimensions").join("minecraft").join("the_end")
@@ -1135,14 +1184,31 @@ mod tests {
         std::fs::create_dir_all(root.join("DIM-1").join("region")).unwrap();
         std::fs::create_dir_all(root.join("DIM1").join("region")).unwrap();
 
-        let overworld_level =
-            Level::from_root_folder(&config, root.clone(), 0, Dimension::OVERWORLD);
+        let overworld_level = Level::from_root_folder(
+            &config,
+            root.clone(),
+            0,
+            GenerationSecret::NONE,
+            Dimension::OVERWORLD,
+        );
         assert_eq!(overworld_level.level_folder.dim_folder, root);
 
-        let nether_level = Level::from_root_folder(&config, root.clone(), 0, Dimension::THE_NETHER);
+        let nether_level = Level::from_root_folder(
+            &config,
+            root.clone(),
+            0,
+            GenerationSecret::NONE,
+            Dimension::THE_NETHER,
+        );
         assert_eq!(nether_level.level_folder.dim_folder, root.join("DIM-1"));
 
-        let end_level = Level::from_root_folder(&config, root.clone(), 0, Dimension::THE_END);
+        let end_level = Level::from_root_folder(
+            &config,
+            root.clone(),
+            0,
+            GenerationSecret::NONE,
+            Dimension::THE_END,
+        );
         assert_eq!(end_level.level_folder.dim_folder, root.join("DIM1"));
     }
 }

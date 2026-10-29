@@ -611,9 +611,12 @@ impl VillagerEntity {
 
         let world = self.get_entity().world.load().clone();
         let generator = world.level.world_gen();
+        let set_index = StructureSet::NAMES
+            .iter()
+            .position(|&name| name == structure_set)?;
         let (target, _) = find_nearest_structure_start(
             self.get_entity().block_pos.load(),
-            StructureSet::get(structure_set)?,
+            set_index,
             &[structure],
             100,
             &generator,

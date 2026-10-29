@@ -293,7 +293,6 @@ use pumpkin_util::text::click::ClickEvent;
 use pumpkin_util::text::color::NamedColor;
 use pumpkin_util::text::hover::HoverEvent;
 use pumpkin_util::{Difficulty, GameMode, Hand};
-use pumpkin_world::biome;
 use pumpkin_world::cylindrical_chunk_iterator::Cylindrical;
 
 use crate::block;
@@ -4408,7 +4407,7 @@ impl Player {
                         let packet = CRespawn::new(
                             PlayerSpawnData::new(
                                 new_world.dimension.clone(),
-                                biome::hash_seed(new_world.level.seed.0), // seed
+                                new_world.level.hashed_seed(),
                                 self.gamemode.load() as u8,
                                 self.previous_gamemode.load().unwrap_or(self.gamemode.load()) as i8,
                                 false,

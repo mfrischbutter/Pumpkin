@@ -181,11 +181,10 @@ impl SlimeEntity {
 
         // Slime Chunk Spawning
         let chunk_pos = pos.chunk_position();
-        let world_seed = world.level.seed.0;
         let slime_seed = pumpkin_util::random::seed_slime_chunk(
             chunk_pos.x,
             chunk_pos.y,
-            world_seed,
+            world.level.slime_seed(),
             987_234_911,
         );
         let mut slime_rand = pumpkin_util::random::legacy_rand::LegacyRand::from_seed(slime_seed);

@@ -27,6 +27,7 @@ use pumpkin_util::permission::PermissionManager;
 use pumpkin_util::text::color::NamedColor;
 use pumpkin_world::dimension::into_level;
 use pumpkin_world::generation::generator::GeneratorInit;
+use pumpkin_world::generation::secret::GenerationSecret;
 use pumpkin_world::world::WorldPortalExt;
 use tracing::{debug, error, info, warn};
 
@@ -228,8 +229,15 @@ impl Server {
                     basic_config.seed,
                     Dimension::OVERWORLD,
                 );
-                let default_data =
+                let mut default_data =
                     LevelData::from_world_generator(basic_config.seed, &overworld_gen);
+                if basic_config.secure_generation {
+                    // Keys structures, caves, bedrock, slime chunks and features instead of
+                    // the seed, so that clients cannot recover the seed from them.
+                    default_data.world_gen_settings.generation_secret =
+                        GenerationSecret::random().stored();
+                    info!("The new world gets a generation secret (secure_generation)");
+                }
                 AnvilLevelInfo.write_world_info(&default_data, &world_path)?;
                 default_data
             }
@@ -254,6 +262,13 @@ impl Server {
         };
 
         let seed = level_info.world_gen_settings.seed;
+        let generation_secret =
+            GenerationSecret::from_stored(level_info.world_gen_settings.generation_secret);
+        if basic_config.secure_generation && !generation_secret.is_set() {
+            warn!(
+                "secure_generation is on, but this world was created without a generation secret: seed crackers can read its structures"
+            );
+        }
         let level_info = Arc::new(ArcSwap::new(Arc::new(level_info)));
 
         let listing = std::sync::Mutex::new(CachedStatus::new(
@@ -445,7 +460,13 @@ impl Server {
                     .to_pretty_console()
             );
             let config = Arc::new(server.advanced_config.world.clone());
-            let level = into_level(dim.clone(), &config, world_path.clone(), seed);
+            let level = into_level(
+                dim.clone(),
+                &config,
+                world_path.clone(),
+                seed,
+                generation_secret,
+            );
             let world = Arc::new(World::load(
                 level.clone(),
                 server.level_info.clone(),
@@ -531,10 +552,17 @@ impl Server {
         let l_info = self.level_info.clone();
         let weak = Arc::downgrade(self);
         let config = Arc::new(self.advanced_config.world.clone());
-        let seed = self.level_info.load().world_gen_settings.seed;
+        let world_gen_settings = &self.level_info.load().world_gen_settings;
+        let seed = world_gen_settings.seed;
+        let generation_secret = GenerationSecret::from_stored(world_gen_settings.generation_secret);
 
-        let level =
-            pumpkin_world::dimension::into_level(dimension.clone(), &config, world_path, seed);
+        let level = pumpkin_world::dimension::into_level(
+            dimension.clone(),
+            &config,
+            world_path,
+            seed,
+            generation_secret,
+        );
         let world: World = World::load(level.clone(), l_info, dimension, registry, weak);
         let world = Arc::new(world);
         let portal: Arc<dyn WorldPortalExt> = Arc::new(WorldPortal(world.clone()));

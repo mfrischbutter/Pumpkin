@@ -15,6 +15,7 @@ pub mod positions;
 pub mod proto_chunk;
 pub mod proto_chunk_test;
 pub mod rule;
+pub mod secret;
 pub mod structure;
 mod surface;
 
@@ -24,6 +25,7 @@ use pumpkin_util::{
     random::xoroshiro128::{Xoroshiro, XoroshiroSplitter},
     world_seed::Seed,
 };
+use secret::{GenerationSecret, part};
 
 #[must_use]
 pub fn get_world_gen(
@@ -54,6 +56,7 @@ pub fn get_world_gen_with_settings(
         generator_settings,
         None,
         None,
+        GenerationSecret::NONE,
     )
 }
 
@@ -68,6 +71,7 @@ pub fn get_world_gen_with_all_settings(
     generator_settings: Option<&str>,
     biome_source: Option<&crate::world_info::BiomeSource>,
     structure_overrides: Option<&[String]>,
+    secret: GenerationSecret,
 ) -> Box<generator::WorldGenerator> {
     if is_flat {
         Box::new(generator::WorldGenerator::Flat(Box::new(
@@ -81,34 +85,57 @@ pub fn get_world_gen_with_all_settings(
                 generator_settings,
                 biome_source,
                 structure_overrides,
+                secret,
             ),
         )))
     }
 }
 
 pub struct GlobalRandomConfig {
+    /// The world seed: terrain, biome, aquifer and ore vein noise.
     pub seed: u64,
     pub legacy_random_source: bool,
     pub base_random_deriver: XoroshiroSplitter,
     aquifer_random_deriver: XoroshiroSplitter,
     pub ore_random_deriver: XoroshiroSplitter,
+    /// The seeds the generation secret ([`secret`]) derives for the parts a
+    /// client could recover the seed from. Without a secret every one of them
+    /// is the world seed, as in vanilla.
+    pub structure_seed: u64,
+    pub stronghold_seed: u64,
+    pub feature_seed: u64,
+    pub carver_seed: u64,
+    pub surface_seed: u64,
+    pub surface_random_deriver: XoroshiroSplitter,
 }
 
 impl GlobalRandomConfig {
     #[must_use]
     pub fn new(seed: u64, legacy_random_source: bool) -> Self {
+        Self::with_secret(seed, legacy_random_source, GenerationSecret::NONE)
+    }
+
+    #[must_use]
+    pub fn with_secret(seed: u64, legacy_random_source: bool, secret: GenerationSecret) -> Self {
         let random_deriver = Xoroshiro::from_seed(seed).next_splitter();
 
         let aquifer_deriver = random_deriver
             .split_string("minecraft:aquifer")
             .next_splitter();
         let ore_deriver = random_deriver.split_string("minecraft:ore").next_splitter();
+        let surface_seed = secret.seed_for(part::SURFACE, seed);
         Self {
             seed,
             legacy_random_source,
             base_random_deriver: random_deriver,
             aquifer_random_deriver: aquifer_deriver,
             ore_random_deriver: ore_deriver,
+            structure_seed: secret.seed_for(part::STRUCTURES, seed),
+            stronghold_seed: secret.seed_for(part::STRONGHOLDS, seed),
+            feature_seed: secret.seed_for(part::FEATURES, seed),
+            carver_seed: secret.seed_for(part::CARVERS, seed),
+            surface_seed,
+            surface_random_deriver: Xoroshiro::from_seed(surface_seed).next_splitter(),
         }
     }
 

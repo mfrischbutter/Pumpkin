@@ -89,9 +89,7 @@ impl CarvingContext<'_> {
         let mut context = MaterialRuleContext::new(
             self.min_y,
             self.height,
-            &self.random_config.base_random_deriver,
-            self.random_config.legacy_random_source,
-            self.random_config.seed,
+            self.random_config,
             self.terrain_builder,
             self.surface_noise,
             self.secondary_noise,
@@ -239,7 +237,7 @@ pub fn carve(chunk: &mut ProtoChunk, generator: &VanillaGenerator) {
 
             for (index, &config) in carver_biome.carvers.iter().enumerate() {
                 let seed = get_large_feature_seed(
-                    generator.random_config.seed + index as u64,
+                    generator.random_config.carver_seed + index as u64,
                     carver_x,
                     carver_z,
                 );

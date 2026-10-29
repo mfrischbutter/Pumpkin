@@ -264,6 +264,7 @@ fn read_world_gen_settings_file(path: &Path) -> Option<WorldGenSettings> {
                     return None;
                 };
                 let seed = c.get_long("seed")?;
+                let generation_secret = c.get_long("generation_secret");
                 let mut dimensions = std::collections::HashMap::new();
                 if let Some(dims_comp) = c.get_compound("dimensions") {
                     for (dim_name, dim_tag) in &dims_comp.child_tags {
@@ -323,7 +324,11 @@ fn read_world_gen_settings_file(path: &Path) -> Option<WorldGenSettings> {
                         }
                     }
                 }
-                Some(WorldGenSettings { seed, dimensions })
+                Some(WorldGenSettings {
+                    seed,
+                    generation_secret,
+                    dimensions,
+                })
             }
             Err(e) => {
                 warn!("Failed to deserialize {}: {e}", path.display());
@@ -360,6 +365,9 @@ pub fn write_world_gen_settings(
     let mut inner = NbtCompound::new();
     inner.put_int("DataVersion", data_version);
     inner.put_long("seed", settings.seed);
+    if let Some(generation_secret) = settings.generation_secret {
+        inner.put_long("generation_secret", generation_secret);
+    }
     inner.put_bool("generate_structures", true);
     inner.put_bool("bonus_chest", false);
 

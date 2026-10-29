@@ -228,7 +228,6 @@ impl CommandExecutor for LocateStructureExecutor {
         let origin = BlockPos::floored_v(context.source.position);
 
         let world = context.source.world();
-        let seed = world.level.seed.0;
         let world_gen = world.level.world_gen.load_full();
 
         let mut found: Option<(BlockPos, StructureKeys)> = None;
@@ -242,9 +241,9 @@ impl CommandExecutor for LocateStructureExecutor {
                     let search = world_gen.global_structure_cache().map(|global_cache| {
                         find_nearest_structure(
                             origin,
-                            &[&set.placement],
+                            &[(&set.placement, world_gen.structure_salt(set_index))],
                             STRUCTURE_SEARCH_RADIUS,
-                            seed as i64,
+                            world_gen.structure_seed() as i64,
                             global_cache,
                         )
                     });
@@ -262,7 +261,7 @@ impl CommandExecutor for LocateStructureExecutor {
                 // sure the reported position actually holds one, and says which.
                 StructurePlacementType::RandomSpread(_) => find_nearest_structure_start(
                     origin,
-                    set,
+                    set_index,
                     &keys,
                     STRUCTURE_SEARCH_RADIUS,
                     &world_gen,

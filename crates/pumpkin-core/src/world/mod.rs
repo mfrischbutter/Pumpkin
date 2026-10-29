@@ -160,7 +160,7 @@ use pumpkin_util::{
 };
 use pumpkin_world::world::{GetBlockError, WorldPortalExt};
 use pumpkin_world::{
-    CURRENT_BEDROCK_MC_VERSION, biome,
+    CURRENT_BEDROCK_MC_VERSION,
     chunk::{io::Dirtiable, palette::bedrock_water_state},
 };
 use pumpkin_world::{
@@ -3099,7 +3099,7 @@ impl World {
 
         // Todo make the data less spread
         let level_settings = LevelSettings {
-            seed: self.level.seed.0,
+            seed: self.level.client_seed(),
             spawn_biome_type: 0,
             custom_biome_name: String::new(),
             dimension: VarInt(0),
@@ -3637,7 +3637,7 @@ impl World {
                 false,
                 PlayerSpawnData::new(
                     self.dimension.clone(),
-                    biome::hash_seed(self.level.seed.0), // seed
+                    self.level.hashed_seed(),
                     gamemode as u8,
                     player
                         .previous_gamemode
@@ -4525,7 +4525,7 @@ impl World {
             .send_client_packet(&CRespawn::new(
                 PlayerSpawnData::new(
                     target_world.dimension.clone(),
-                    biome::hash_seed(target_world.level.seed.0),
+                    target_world.level.hashed_seed(),
                     player.gamemode.load() as u8,
                     player.gamemode.load() as i8,
                     false,

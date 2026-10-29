@@ -1015,6 +1015,7 @@ mod test {
 
         // Write world_gen_settings.dat
         let mut wgs = WorldGenSettings::new(Seed(777));
+        wgs.generation_secret = Some(-4242);
         wgs.dimensions.insert(
             "minecraft:overworld".to_string(),
             crate::world_info::Dimension {
@@ -1046,6 +1047,7 @@ mod test {
 
         let read_wgs = read_world_gen_settings(temp_dir.path()).unwrap();
         assert_eq!(read_wgs.seed, 777);
+        assert_eq!(read_wgs.generation_secret, Some(-4242));
         let overworld_dim = read_wgs.dimensions.get("minecraft:overworld").unwrap();
         assert_eq!(overworld_dim.generator.generator_type, "minecraft:flat");
         if let Some(crate::world_info::GeneratorSettings::Compound(val)) =

@@ -186,6 +186,17 @@ pub struct AdvancedConfiguration {
 pub struct BasicConfiguration {
     /// The seed for the world generation.
     pub seed: Seed,
+    /// Whether a new world gets a generation secret: a random value stored
+    /// with the world that keys structure placement and layouts, caves,
+    /// bedrock, slime chunks, stronghold rings, feature placement and the
+    /// hashed seed sent to clients, instead of the seed. What a client sees
+    /// then reveals nothing about the seed, so seed crackers (tools that
+    /// recover the seed from structures, bedrock or slime chunks and then
+    /// know every ore and structure) do not work. Terrain and biomes stay as
+    /// the seed generates them. Only applies when a world is created; a
+    /// world keeps the secret it was created with (or none), because chunks
+    /// generated with different secrets would not fit together.
+    pub secure_generation: bool,
     /// The default game difficulty.
     pub default_difficulty: Difficulty,
     /// The op level assigned by the /op command.
@@ -229,6 +240,7 @@ impl Default for BasicConfiguration {
     fn default() -> Self {
         Self {
             seed: Seed(random::get_seed()),
+            secure_generation: true,
             default_difficulty: Difficulty::Normal,
             op_permission_level: PermissionLvl::Four,
             allow_nether: true,

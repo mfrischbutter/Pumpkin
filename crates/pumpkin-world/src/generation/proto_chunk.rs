@@ -1166,13 +1166,10 @@ impl ProtoChunk {
         let random_config = &generator.random_config;
         let terrain_cache = &generator.terrain_cache;
 
-        let random = &random_config.base_random_deriver;
         let mut context = MaterialRuleContext::new(
             self.generation_bottom_y(),
             self.generation_height(),
-            random,
-            random_config.legacy_random_source,
-            random_config.seed,
+            random_config,
             &terrain_cache.terrain_builder,
             &terrain_cache.surface_noise,
             &terrain_cache.secondary_noise,
@@ -1353,8 +1350,11 @@ impl ProtoChunk {
         let start_block_z = chunk_pos::start_block_z(center_z);
         let origin_pos = BlockPos::new(start_block_x, min_y, start_block_z);
 
-        let population_seed =
-            WorldgenRandom::get_population_seed(random_config.seed, start_block_x, start_block_z);
+        let population_seed = WorldgenRandom::get_population_seed(
+            random_config.feature_seed,
+            start_block_x,
+            start_block_z,
+        );
 
         for chunk_x in center_x - 1..=center_x + 1 {
             for chunk_z in center_z - 1..=center_z + 1 {
@@ -1373,7 +1373,7 @@ impl ProtoChunk {
                 block_registry,
                 step,
                 population_seed,
-                random_config.seed as i64,
+                random_config.structure_seed as i64,
             );
 
             let selected = select_features(&possible_biomes, step);
@@ -1562,7 +1562,7 @@ impl ProtoChunk {
         let global_cache = &generator.global_structure_cache;
         let calculator = &generator.structure_calculator;
 
-        let seed = random_config.seed;
+        let seed = random_config.structure_seed;
 
         let mut height_sampler =
             crate::generation::structure::height_sampler::NoiseHeightSampler::new(generator);
@@ -1574,8 +1574,14 @@ impl ProtoChunk {
                 continue;
             }
 
-            if !should_generate_structure(&set.placement, calculator, self.x, self.z, global_cache)
-            {
+            if !should_generate_structure(
+                i,
+                calculator,
+                &generator.structure_salts,
+                self.x,
+                self.z,
+                global_cache,
+            ) {
                 continue;
             }
 
@@ -1639,11 +1645,11 @@ impl ProtoChunk {
             global_cache.get_or_compute_structure_start(entry.structure, chunk_x, chunk_z, || {
                 let structure = Structure::get(&entry.structure);
                 let context = StructureGeneratorContext {
-                    seed: generator.random_config.seed as i64,
+                    seed: generator.random_config.structure_seed as i64,
                     chunk_x,
                     chunk_z,
                     random: create_chunk_random(
-                        generator.random_config.seed as i64,
+                        generator.random_config.structure_seed as i64,
                         chunk_x,
                         chunk_z,
                     ),
@@ -1686,7 +1692,7 @@ impl ProtoChunk {
         let end_x = start_x + 15;
         let end_z = start_z + 15;
 
-        let seed = random_config.seed as i64;
+        let seed = random_config.structure_seed as i64;
 
         let base_supplier: &dyn BiomeSupplier = &generator.biome_supplier;
         let blender = Blender::empty();
@@ -1729,7 +1735,7 @@ impl ProtoChunk {
                                     seed,
                                     rx,
                                     rz,
-                                    set.placement.salt,
+                                    generator.structure_salts[set_index],
                                 )
                             );
                         }
@@ -1746,8 +1752,9 @@ impl ProtoChunk {
 
             for (candidate_chunk_x, candidate_chunk_z) in candidate_chunks {
                 if !should_generate_structure(
-                    &set.placement,
+                    set_index,
                     calculator,
+                    &generator.structure_salts,
                     candidate_chunk_x,
                     candidate_chunk_z,
                     global_cache,
@@ -1763,7 +1770,7 @@ impl ProtoChunk {
                     } else {
                         Self::weighted_structure_order(
                             set.structures,
-                            random_config.seed,
+                            random_config.structure_seed,
                             candidate_chunk_x,
                             candidate_chunk_z,
                         )

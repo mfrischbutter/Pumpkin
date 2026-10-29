@@ -140,18 +140,20 @@ impl ItemBehaviour for EnderEyeItem {
 fn find_stronghold(world: &Arc<World>, origin: BlockPos) -> Option<BlockPos> {
     let level = &world.level;
     let generator = level.world_gen();
-    let seed = level.seed.0;
 
     let global_cache = generator.global_structure_cache()?;
 
-    let strongholds = StructureSet::get("strongholds")?;
+    let set_index = StructureSet::NAMES
+        .iter()
+        .position(|&name| name == "strongholds")?;
+    let strongholds = &StructureSet::ALL[set_index];
 
     // Pending positions leave the eye unthrown and unconsumed, so the player can retry
     match find_nearest_structure(
         origin,
-        &[&strongholds.placement],
+        &[(&strongholds.placement, generator.structure_salt(set_index))],
         100, // max search radius in chunks, matches vanilla default
-        seed as i64,
+        generator.structure_seed() as i64,
         global_cache,
     ) {
         StructureSearch::Found(pos) => Some(pos),

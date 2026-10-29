@@ -160,6 +160,10 @@ fn default_world_version_series() -> String {
 pub struct WorldGenSettings {
     // the numerical seed of the world
     pub seed: i64,
+    /// The generation secret ([`crate::generation::secret`]) the world was
+    /// created with, none for vanilla generation. Fixed for the world's life.
+    #[serde(default)]
+    pub generation_secret: Option<i64>,
     #[serde(default)]
     pub dimensions: Dimensions,
 }
@@ -477,6 +481,7 @@ impl WorldGenSettings {
             Self {
                 dimensions,
                 seed: seed.0 as i64,
+                generation_secret: None,
             }
         })
     }
@@ -486,6 +491,7 @@ impl WorldGenSettings {
         Self {
             dimensions: preset.dimensions.clone(),
             seed: seed.0 as i64,
+            generation_secret: None,
         }
     }
 

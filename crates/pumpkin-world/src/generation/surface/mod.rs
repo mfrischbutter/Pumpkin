@@ -15,7 +15,7 @@ use terrain::SurfaceTerrainBuilder;
 
 use crate::{
     ProtoChunk,
-    generation::{positions::chunk_pos, section_coords},
+    generation::{GlobalRandomConfig, positions::chunk_pos, section_coords},
 };
 
 use super::{
@@ -37,6 +37,11 @@ pub struct MaterialRuleContext<'a> {
     pub random_deriver: &'a XoroshiroSplitter,
     pub legacy_random_source: bool,
     pub world_seed: u64,
+    /// Seed and deriver of the vertical gradients (bedrock, deepslate): the
+    /// world's, or the ones its generation secret derives so that the bedrock
+    /// pattern reveals nothing about the seed.
+    pub gradient_seed: u64,
+    pub gradient_random_deriver: &'a XoroshiroSplitter,
     fluid_height: i32,
     pub block_pos_x: i32,
     pub block_pos_y: i32,
@@ -123,13 +128,10 @@ impl VeinContext<'_> {
 }
 
 impl<'a> MaterialRuleContext<'a> {
-    #[expect(clippy::too_many_arguments)]
     pub const fn new(
         min_y: i8,
         height: u16,
-        random_deriver: &'a XoroshiroSplitter,
-        legacy_random_source: bool,
-        world_seed: u64,
+        random_config: &'a GlobalRandomConfig,
         terrain_builder: &'a SurfaceTerrainBuilder,
         surface_noise: &'a DoublePerlinNoiseSampler,
         secondary_noise: &'a DoublePerlinNoiseSampler,
@@ -145,9 +147,11 @@ impl<'a> MaterialRuleContext<'a> {
             unique_horizontal_pos_value: HORIZONTAL_POS - 1, // Because pre increment
             last_unique_horizontal_pos_value: HORIZONTAL_POS - 1,
             last_est_heiht_unique_horizontal_pos_value: HORIZONTAL_POS - 1,
-            random_deriver,
-            legacy_random_source,
-            world_seed,
+            random_deriver: &random_config.base_random_deriver,
+            legacy_random_source: random_config.legacy_random_source,
+            world_seed: random_config.seed,
+            gradient_seed: random_config.surface_seed,
+            gradient_random_deriver: &random_config.surface_random_deriver,
             terrain_builder,
             fluid_height: 0,
             block_pos_x: 0,
@@ -516,7 +520,7 @@ pub fn test_vertical_gradient(
             10411719568726253007 => -112689504i32, // minecraft:deepslate
             _ => 0i32,
         };
-        let mut root = LegacyRand::from_seed(context.world_seed);
+        let mut root = LegacyRand::from_seed(context.gradient_seed);
         let root_seed = root.next_i64();
         let mut derived = LegacyRand::from_seed((name_hash as i64 ^ root_seed) as u64);
         let derived_seed = derived.next_i64() as u64;
@@ -525,7 +529,7 @@ pub fn test_vertical_gradient(
         block_rand.next_f32() < mapped
     } else {
         let splitter = context
-            .random_deriver
+            .gradient_random_deriver
             .from_lo_and_hi(condition.random_lo, condition.random_hi)
             .next_splitter();
         let mut random = splitter.split_pos(context.block_pos_x, block_y, context.block_pos_z);

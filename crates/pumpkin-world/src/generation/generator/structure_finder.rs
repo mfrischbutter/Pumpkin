@@ -21,6 +21,10 @@ pub struct FoundStructure {
 /// Finds the block position of the nearest structure whose placement is listed
 /// in `placements`, within `max_search_radius` chunk-region rings.
 ///
+/// Each placement comes with the salt the world places it with
+/// ([`WorldGenerator::structure_salt`]); `structure_seed` is the world's
+/// [`WorldGenerator::structure_seed`].
+///
 /// Mirrors the two-pass logic in vanilla's
 /// `ChunkGenerator.findNearestMapStructure`:
 ///
@@ -35,9 +39,9 @@ pub struct FoundStructure {
 /// being computed, so the caller can retry instead of reporting a wrong result.
 pub fn find_nearest_structure(
     origin: BlockPos,
-    placements: &[&StructurePlacement],
+    placements: &[(&StructurePlacement, u32)],
     max_search_radius: i32,
-    world_seed: i64,
+    structure_seed: i64,
     global_cache: &GlobalStructureCache,
 ) -> StructureSearch {
     if placements.is_empty() {
@@ -47,7 +51,7 @@ pub fn find_nearest_structure(
     let mut nearest: Option<FoundStructure> = None;
 
     // ── Pass 1: Concentric-rings (strongholds) ──────────────────────────────
-    for p in placements {
+    for (p, _) in placements {
         if let StructurePlacementType::ConcentricRings(rings) = &p.placement_type {
             match find_nearest_concentric(origin, rings, global_cache) {
                 ConcentricSearch::Pending => return StructureSearch::Pending,
@@ -65,9 +69,9 @@ pub fn find_nearest_structure(
 
     let random_spread: Vec<(&RandomSpreadStructurePlacement, u32)> = placements
         .iter()
-        .filter_map(|p| {
+        .filter_map(|(p, salt)| {
             if let StructurePlacementType::RandomSpread(r) = &p.placement_type {
-                Some((r, p.salt))
+                Some((r, *salt))
             } else {
                 None
             }
@@ -85,7 +89,7 @@ pub fn find_nearest_structure(
                     chunk_origin_x,
                     chunk_origin_z,
                     radius,
-                    world_seed,
+                    structure_seed,
                     placement,
                     *salt,
                 ) {
@@ -121,7 +125,7 @@ pub enum StructureSearch {
 #[expect(clippy::too_many_lines)]
 pub fn find_nearest_structure_start(
     origin: BlockPos,
-    structure_set: &StructureSet,
+    set_index: usize,
     target_structures: &[pumpkin_data::structures::StructureKeys],
     max_search_radius: i32,
     generator: &WorldGenerator,
@@ -147,6 +151,7 @@ pub fn find_nearest_structure_start(
     let WorldGenerator::Noise(noise_generator) = generator else {
         return None;
     };
+    let structure_set = &StructureSet::ALL[set_index];
     let StructurePlacementType::RandomSpread(placement) = &structure_set.placement.placement_type
     else {
         return None;
@@ -156,7 +161,8 @@ pub fn find_nearest_structure_start(
     let chunk_origin_z = origin.0.z >> 4;
     let region_origin_x = floor_div(chunk_origin_x, placement.spacing);
     let region_origin_z = floor_div(chunk_origin_z, placement.spacing);
-    let world_seed = noise_generator.random_config.seed as i64;
+    let world_seed = noise_generator.random_config.structure_seed as i64;
+    let salt = noise_generator.structure_salts[set_index];
     let global_cache = &noise_generator.global_structure_cache;
 
     for radius in 0..=max_search_radius {
@@ -171,11 +177,12 @@ pub fn find_nearest_structure_start(
                     world_seed,
                     region_origin_x + region_x_offset,
                     region_origin_z + region_z_offset,
-                    structure_set.placement.salt,
+                    salt,
                 );
                 if !should_generate_structure(
-                    &structure_set.placement,
+                    set_index,
                     &noise_generator.structure_calculator,
+                    &noise_generator.structure_salts,
                     chunk_x,
                     chunk_z,
                     global_cache,

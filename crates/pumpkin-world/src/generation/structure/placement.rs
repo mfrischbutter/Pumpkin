@@ -1,7 +1,6 @@
 use pumpkin_data::structures::{
     ConcentricRingsStructurePlacement, FrequencyReductionMethod, RandomSpreadStructurePlacement,
-    SpreadType, StructurePlacement, StructurePlacementCalculator, StructurePlacementType,
-    StructureSet,
+    SpreadType, StructurePlacementCalculator, StructurePlacementType, StructureSet,
 };
 use pumpkin_util::{
     math::floor_div,
@@ -397,40 +396,57 @@ impl Default for GlobalStructureCache {
     }
 }
 
+/// Whether the structure set `set_index` of [`StructureSet::ALL`] starts in this chunk.
+///
+/// `salts` are the sets' placement salts by index: vanilla's, or the ones the
+/// world's generation secret derives (`VanillaGenerator::structure_salts`).
 #[must_use]
 pub fn should_generate_structure(
-    placement: &StructurePlacement,
+    set_index: usize,
     calculator: &StructurePlacementCalculator,
+    salts: &[u32],
     chunk_x: i32,
     chunk_z: i32,
     global_cache: &GlobalStructureCache,
 ) -> bool {
+    let placement = &StructureSet::ALL[set_index].placement;
+    let salt = salts[set_index];
     is_start_chunk(
         &placement.placement_type,
         calculator,
         chunk_x,
         chunk_z,
-        placement.salt,
+        salt,
         global_cache,
     ) && apply_frequency_reduction(
         placement.frequency_reduction_method,
         calculator.seed,
         chunk_x,
         chunk_z,
-        placement.salt,
+        salt,
         placement.frequency.unwrap_or(1.0),
     ) && !placement.exclusion_zone.as_ref().is_some_and(|zone| {
         let set_name = zone
             .other_set
             .strip_prefix("minecraft:")
             .unwrap_or(zone.other_set);
-        StructureSet::get(set_name).is_some_and(|set| {
-            (chunk_x - zone.chunk_count..=chunk_x + zone.chunk_count).any(|x| {
-                (chunk_z - zone.chunk_count..=chunk_z + zone.chunk_count).any(|z| {
-                    should_generate_structure(&set.placement, calculator, x, z, global_cache)
+        StructureSet::NAMES
+            .iter()
+            .position(|&name| name == set_name)
+            .is_some_and(|other_index| {
+                (chunk_x - zone.chunk_count..=chunk_x + zone.chunk_count).any(|x| {
+                    (chunk_z - zone.chunk_count..=chunk_z + zone.chunk_count).any(|z| {
+                        should_generate_structure(
+                            other_index,
+                            calculator,
+                            salts,
+                            x,
+                            z,
+                            global_cache,
+                        )
+                    })
                 })
             })
-        })
     })
 }
 
@@ -623,9 +639,18 @@ mod tests {
             })
         }));
 
+        let outposts_index = StructureSet::NAMES
+            .iter()
+            .position(|&name| name == "pillager_outposts")
+            .unwrap();
+        let vanilla_salts: Vec<u32> = StructureSet::ALL
+            .iter()
+            .map(|set| set.placement.salt)
+            .collect();
         assert!(!should_generate_structure(
-            &outposts.placement,
+            outposts_index,
             &calculator,
+            &vanilla_salts,
             excluded.0,
             excluded.1,
             &cache,

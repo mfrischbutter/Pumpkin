@@ -16,7 +16,9 @@ pub(crate) mod test_support {
     use pumpkin_config::world::LevelConfig;
     use pumpkin_data::dimension::Dimension;
     use pumpkin_util::world_seed::Seed;
-    use pumpkin_world::{level::Level, world_info::LevelData};
+    use pumpkin_world::{
+        generation::secret::GenerationSecret, level::Level, world_info::LevelData,
+    };
 
     use crate::{block::registry::default_registry, world::World};
 
@@ -30,6 +32,7 @@ pub(crate) mod test_support {
                 &LevelConfig::default(),
                 folder.path().to_path_buf(),
                 0,
+                GenerationSecret::NONE,
                 dimension.clone(),
             ),
             Arc::new(ArcSwap::from_pointee(LevelData::default(Seed(0)))),

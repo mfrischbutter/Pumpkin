@@ -6,6 +6,7 @@ use pumpkin_data::noise_settings::NoiseSettings;
 
 use super::noise::router::proto_noise_router::ProtoNoiseRouters;
 use crate::generation::proto_chunk::TerrainCache;
+use crate::generation::secret::{GenerationSecret, part};
 use crate::generation::{GlobalRandomConfig, Seed};
 
 pub mod biome_finder;
@@ -101,6 +102,25 @@ impl WorldGenerator {
         }
     }
 
+    /// The seed structures are placed with: the world seed, or the one the
+    /// world's generation secret derives ([`crate::generation::secret`]).
+    #[must_use]
+    pub fn structure_seed(&self) -> u64 {
+        match self {
+            Self::Noise(noise_gen) => noise_gen.random_config.structure_seed,
+            Self::Flat(_) | Self::Custom(_) => self.seed(),
+        }
+    }
+
+    /// The placement salt of the structure set `set_index` of [`StructureSet::ALL`].
+    #[must_use]
+    pub fn structure_salt(&self, set_index: usize) -> u32 {
+        match self {
+            Self::Noise(noise_gen) => noise_gen.structure_salts[set_index],
+            Self::Flat(_) | Self::Custom(_) => StructureSet::ALL[set_index].placement.salt,
+        }
+    }
+
     #[must_use]
     pub fn global_structure_cache(
         &self,
@@ -136,6 +156,10 @@ pub struct VanillaGenerator {
 
     pub global_structure_cache: crate::generation::structure::placement::GlobalStructureCache,
     pub structure_calculator: StructurePlacementCalculator,
+    /// Placement salts by index of [`StructureSet::ALL`]: vanilla's, or the
+    /// ones the generation secret derives, one per set, so that the
+    /// positions of one kind of structure say nothing about any other.
+    pub structure_salts: Vec<u32>,
     pub structure_allowed_biomes: FxHashMap<usize, Vec<u16>>,
     pub enabled_structure_sets: Option<rustc_hash::FxHashSet<usize>>,
 }
@@ -162,7 +186,14 @@ impl VanillaGenerator {
         dimension: Dimension,
         settings_name: Option<&str>,
     ) -> Self {
-        Self::new_with_all_settings(seed, dimension, settings_name, None, None)
+        Self::new_with_all_settings(
+            seed,
+            dimension,
+            settings_name,
+            None,
+            None,
+            GenerationSecret::NONE,
+        )
     }
 
     #[must_use]
@@ -172,6 +203,7 @@ impl VanillaGenerator {
         settings_name: Option<&str>,
         biome_source: Option<&crate::world_info::BiomeSource>,
         structure_overrides: Option<&[String]>,
+        secret: GenerationSecret,
     ) -> Self {
         let settings = settings_name
             .and_then(NoiseSettings::from_name)
@@ -181,7 +213,8 @@ impl VanillaGenerator {
             .unwrap_or_else(|| MaterialRule::from_dimension(&dimension));
         let biome_supplier =
             crate::biome::ActiveBiomeSupplier::from_biome_source(biome_source, &dimension);
-        let random_config = GlobalRandomConfig::new(seed.0, settings.legacy_random_source);
+        let random_config =
+            GlobalRandomConfig::with_secret(seed.0, settings.legacy_random_source, secret);
 
         let base = settings_name
             .and_then(BaseNoiseRouters::from_name)
@@ -190,7 +223,9 @@ impl VanillaGenerator {
 
         let default_block = settings.default_block;
         let base_router = ProtoNoiseRouters::generate(base, &random_config);
-        let biome_mixer_seed = crate::biome::hash_seed(seed.0);
+        // The same value clients get as their hashed seed (`Level::hashed_seed`),
+        // so their biome zoom matches the server's.
+        let biome_mixer_seed = crate::biome::hash_seed(secret.seed_for(part::BIOME_ZOOM, seed.0));
 
         let mut structure_allowed_biomes = FxHashMap::default();
         for (i, set) in StructureSet::ALL.iter().enumerate() {
@@ -199,6 +234,11 @@ impl VanillaGenerator {
                 crate::generation::proto_chunk::ProtoChunk::get_allowed_biomes(set),
             );
         }
+        let structure_salts = StructureSet::ALL
+            .iter()
+            .zip(StructureSet::NAMES)
+            .map(|(set, name)| secret.structure_salt(name, set.placement.salt))
+            .collect();
 
         let enabled_structure_sets: Option<rustc_hash::FxHashSet<usize>> =
             structure_overrides.map(|overrides| {
@@ -218,13 +258,15 @@ impl VanillaGenerator {
                 unreachable!()
             };
             crate::generation::structure::placement::GlobalStructureCache::with_background_strongholds(
-                seed.0 as i64,
+                random_config.stronghold_seed as i64,
                 rings,
                 &base_router.multi_noise,
             )
         } else {
             crate::generation::structure::placement::GlobalStructureCache::new()
         };
+        let structure_calculator =
+            StructurePlacementCalculator::new(random_config.structure_seed as i64);
 
         Self {
             random_config,
@@ -237,7 +279,8 @@ impl VanillaGenerator {
             terrain_cache,
             default_block,
             global_structure_cache,
-            structure_calculator: StructurePlacementCalculator::new(seed.0 as i64),
+            structure_calculator,
+            structure_salts,
             structure_allowed_biomes,
             enabled_structure_sets,
         }
@@ -297,8 +340,14 @@ mod tests {
         let seed = Seed(42);
 
         // No overrides: None means all structure sets enabled
-        let all_gen =
-            VanillaGenerator::new_with_all_settings(seed, Dimension::OVERWORLD, None, None, None);
+        let all_gen = VanillaGenerator::new_with_all_settings(
+            seed,
+            Dimension::OVERWORLD,
+            None,
+            None,
+            None,
+            GenerationSecret::NONE,
+        );
         assert!(all_gen.enabled_structure_sets.is_none());
 
         // Overrides with villages only
@@ -309,6 +358,7 @@ mod tests {
             None,
             None,
             Some(&village_overrides),
+            GenerationSecret::NONE,
         );
         let enabled = filtered_gen
             .enabled_structure_sets
@@ -341,6 +391,7 @@ mod tests {
             None,
             Some(&biome_source),
             None,
+            GenerationSecret::NONE,
         );
 
         let mut sampler =
