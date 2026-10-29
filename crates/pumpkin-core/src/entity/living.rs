@@ -2198,7 +2198,8 @@ impl LivingEntity {
 
         let damage = (unsafe_fall_distance * damage_per_distance).floor();
         if damage > 0.0 {
-            let check_damage = self.damage(caller, damage, DamageType::FALL); // Fall
+            // Through the caller, so the player checks its abilities like vanilla `hurtServer`.
+            let check_damage = caller.damage(caller, damage, DamageType::FALL);
             if check_damage {
                 self.entity
                     .play_sound(Self::get_fall_sound(fall_distance as i32));
