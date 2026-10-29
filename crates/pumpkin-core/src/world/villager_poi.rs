@@ -14,6 +14,9 @@ use pumpkin_world::poi::{Occupancy, PoiStorage};
 
 use crate::entity::EntityBase;
 
+/// Vanilla `PoiTypes.MEETING`, used to place wandering traders near a village bell.
+pub const POI_TYPE_MEETING: &str = "minecraft:meeting";
+
 /// The villagers holding a job site ticket, by site.
 #[derive(Default)]
 pub struct VillagerPoiStorage {

@@ -199,6 +199,7 @@ pub mod scoreboard;
 pub mod structures;
 pub mod thunder;
 pub mod village_siege;
+pub mod wandering_trader_spawner;
 pub mod weather;
 
 pub use environment::EnvironmentAttributes;
@@ -322,6 +323,9 @@ pub struct World {
     pub cat_spawner: std::sync::Mutex<cat_spawner::CatSpawner>,
     /// Vanilla `VillageSiege`, ticked in the overworld only.
     pub village_siege: std::sync::Mutex<village_siege::VillageSiege>,
+    /// Vanilla `WanderingTraderSpawner`; only ticked in the overworld.
+    pub wandering_trader_spawner:
+        std::sync::Mutex<wandering_trader_spawner::WanderingTraderSpawner>,
     /// The structure starts reaching into each loaded chunk, for the spawn lists
     /// (vanilla's structure references, see `structures`).
     pub structure_reference_cache: DashMap<Vector2<i32>, Arc<[StructureReference]>>,
@@ -469,6 +473,11 @@ impl World {
             let _ = level.rt_handle.set(server_arc.runtime.clone());
         }
 
+        let wandering_trader_spawner =
+            std::sync::Mutex::new(wandering_trader_spawner::WanderingTraderSpawner::new(
+                level.level_folder.dim_folder.join("data"),
+            ));
+
         Self {
             uuid: Uuid::new_v4(),
             level,
@@ -501,6 +510,7 @@ impl World {
             patrol_spawner: std::sync::Mutex::new(patrol_spawner::PatrolSpawner::default()),
             cat_spawner: std::sync::Mutex::new(cat_spawner::CatSpawner::default()),
             village_siege: std::sync::Mutex::new(village_siege::VillageSiege::default()),
+            wandering_trader_spawner,
             structure_reference_cache: DashMap::new(),
             dragon_fight,
             spawn_state: ArcSwap::new(Arc::new(SpawnState::empty())),
@@ -2463,6 +2473,10 @@ impl World {
             .lock()
             .unwrap_or_else(std::sync::PoisonError::into_inner)
             .tick(self, spawn_enemies);
+        self.wandering_trader_spawner
+            .lock()
+            .unwrap_or_else(std::sync::PoisonError::into_inner)
+            .tick(self);
     }
 
     /// Vanilla `ChunkMap.collectSpawningChunks`: the loaded active chunks within
