@@ -3,13 +3,20 @@ use crate::entity::ai::goal::ParentHandle;
 use crate::entity::ai::goal::move_to_target_pos::{MoveToTargetPos, MoveToTargetPosGoal};
 use crate::entity::mob::Mob;
 use crate::world::World;
+use pumpkin_data::item::Item;
+use pumpkin_data::item_stack::ItemStack;
+use pumpkin_data::particle::Particle;
 use pumpkin_data::{Block, BlockStateId};
+use pumpkin_protocol::java::client::play::ParticleOptions;
 use pumpkin_util::math::position::BlockPos;
 use pumpkin_util::math::vector3::Vector3;
+use pumpkin_util::random::{RandomImpl, get_seed, xoroshiro128::Xoroshiro};
 use pumpkin_world::world::BlockFlags;
+use rand::RngExt;
 use std::sync::Arc;
 
 const MAX_COOLDOWN: i32 = 20;
+const PARTICLE_SPEED: f32 = 0.15;
 
 pub struct StepAndDestroyBlockGoal<S: Stepping, M: MoveToTargetPos> {
     pub stepping: ParentHandle<S>,
@@ -69,6 +76,35 @@ impl<S: Stepping, M: MoveToTargetPos> StepAndDestroyBlockGoal<S, M> {
             }
             None
         }
+    }
+}
+
+/// Vanilla `RemoveBlockGoal.tick` sends egg item particles whatever block is removed.
+fn spawn_egg_particles(world: &World, mob: &dyn Mob, pos: BlockPos) {
+    let mut random = mob.get_random();
+    let mut spread = || (random.random::<f32>() - 0.5) * 0.08;
+    let offset = Vector3::new(spread(), spread(), spread());
+    let center = pos.to_f64();
+    world.spawn_particle_with_options(
+        Vector3::new(center.x, center.y + 0.7, center.z),
+        offset,
+        PARTICLE_SPEED,
+        3,
+        &ParticleOptions::Item(ItemStack::new(1, &Item::EGG)),
+    );
+}
+
+/// The 20 single poof particles of vanilla `RemoveBlockGoal.tick` once the block is gone.
+fn spawn_poof_particles(world: &World, pos: BlockPos) {
+    let mut random = Xoroshiro::from_seed(get_seed());
+    let center = pos.to_f64();
+    for _ in 0..20 {
+        let offset = Vector3::new(
+            (random.next_gaussian() * 0.02) as f32,
+            (random.next_gaussian() * 0.02) as f32,
+            (random.next_gaussian() * 0.02) as f32,
+        );
+        world.spawn_particles(Particle::Poof, center, 1, offset, PARTICLE_SPEED);
     }
 }
 
@@ -132,7 +168,7 @@ impl<S: Stepping + Send + Sync, M: MoveToTargetPos + Send + Sync> Goal
                 .living_entity
                 .entity
                 .set_velocity(Vector3::new(velocity.x, 0.3, velocity.z));
-            // TODO: spawn particles
+            spawn_egg_particles(&world, mob, tweak_pos);
         }
 
         if counter % 2 == 0 {
@@ -153,7 +189,7 @@ impl<S: Stepping + Send + Sync, M: MoveToTargetPos + Send + Sync> Goal
         if counter > 60 {
             // Replace with air, no drops.
             world.set_block_state(&tweak_pos, BlockStateId::AIR, BlockFlags::NOTIFY_ALL);
-            // TODO: spawn the poof particles
+            spawn_poof_particles(&world, tweak_pos);
             if let Some(stepping) = self.stepping.get() {
                 stepping.on_destroy_block(world, tweak_pos);
             } else {
