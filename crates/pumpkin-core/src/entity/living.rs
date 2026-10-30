@@ -1709,6 +1709,14 @@ impl LivingEntity {
 
         self.push_entities(caller);
 
+        if caller
+            .get_mob()
+            .is_some_and(crate::entity::mob::Mob::is_sensitive_to_water)
+            && self.entity.is_in_water_or_rain()
+        {
+            caller.damage(caller, 1.0, DamageType::DROWN);
+        }
+
         if let Some(ageable) = caller.get_mob().and_then(|mob| mob.as_ageable())
             && self.entity.is_alive()
             && !self.is_dead_or_dying()

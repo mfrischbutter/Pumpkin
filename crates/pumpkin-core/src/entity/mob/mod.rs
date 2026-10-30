@@ -1352,6 +1352,11 @@ pub trait Mob: EntityBase + Send + Sync {
         true
     }
 
+    /// Vanilla `isSensitiveToWater`: takes drowning damage every tick in water or rain.
+    fn is_sensitive_to_water(&self) -> bool {
+        false
+    }
+
     /// See [`EntityBase::sound_source`].
     fn mob_sound_source(&self) -> SoundCategory {
         self.get_entity().entity_type.sound_source
