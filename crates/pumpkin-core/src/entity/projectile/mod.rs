@@ -273,6 +273,10 @@ impl ThrownItemEntity {
             return true;
         }
 
+        if !other.can_be_hit_by_projectile() {
+            return true;
+        }
+
         // Projectiles should pass through lingering clouds
         if *other_ent.entity_type == EntityType::AREA_EFFECT_CLOUD {
             return true;

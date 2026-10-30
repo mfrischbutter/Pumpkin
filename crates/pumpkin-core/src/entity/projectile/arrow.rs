@@ -1075,6 +1075,10 @@ impl ArrowEntity {
             return true;
         }
 
+        if !other.can_be_hit_by_projectile() {
+            return true;
+        }
+
         // Skip dead entities
         if !other_ent.is_alive() {
             return true;
@@ -1119,6 +1123,14 @@ fn get_hit_face(hit_pos: Vector3<f64>, block_pos: BlockPos) -> pumpkin_data::Blo
 #[cfg(test)]
 mod tests {
     use super::ArrowEntity;
+    use crate::entity::ai::test_support::world;
+    use crate::entity::decoration::armor_stand::ArmorStandEntity;
+    use crate::entity::interaction::InteractionEntity;
+    use crate::entity::{Entity, EntityBase};
+    use pumpkin_util::math::vector3::Vector3;
+    use std::sync::Arc;
+
+    type TestResult = Result<(), Box<dyn std::error::Error>>;
     use pumpkin_data::data_component::DataComponent;
     use pumpkin_data::data_component_impl::{
         DataComponentImpl, PotionContentsImpl, PotionDurationScaleImpl,
@@ -1225,5 +1237,29 @@ mod tests {
         let power_5 = base_damage + 5.0 * 0.5 + 0.5;
         assert_eq!(power_1, 3.0);
         assert_eq!(power_5, 5.0);
+    }
+
+    #[tokio::test]
+    async fn arrows_fly_through_interaction_entities() -> TestResult {
+        let folder = tempfile::tempdir()?;
+        let world = world(&folder);
+        let pos = Vector3::new(0.0, 64.0, 0.0);
+        let arrow_entity = Entity::new(world.clone(), pos, &EntityType::ARROW);
+        let arrow = ArrowEntity::new(arrow_entity, None);
+        let interaction: Arc<dyn EntityBase> =
+            InteractionEntity::new(Entity::new(world.clone(), pos, &EntityType::INTERACTION));
+        let stand: Arc<dyn EntityBase> = Arc::new(ArmorStandEntity::new(Entity::new(
+            world.clone(),
+            pos,
+            &EntityType::ARMOR_STAND,
+        )));
+
+        let skips_interaction = arrow.should_skip_collision(&arrow.entity, &interaction);
+        let skips_stand = arrow.should_skip_collision(&arrow.entity, &stand);
+        world.level.shutdown().await;
+
+        assert!(skips_interaction);
+        assert!(!skips_stand);
+        Ok(())
     }
 }

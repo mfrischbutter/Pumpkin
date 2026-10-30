@@ -145,6 +145,10 @@ impl TridentEntity {
             return true;
         }
 
+        if !other.can_be_hit_by_projectile() {
+            return true;
+        }
+
         // Skip other projectiles and item entities
         if other_ent.entity_type == &pumpkin_data::entity::EntityType::ARROW
             || other_ent.entity_type == &pumpkin_data::entity::EntityType::TRIDENT

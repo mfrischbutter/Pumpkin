@@ -315,7 +315,7 @@ impl FishingBobberEntity {
                 continue;
             }
 
-            if is_projectile(cand.get_entity().entity_type) {
+            if is_projectile(cand.get_entity().entity_type) || !cand.can_be_hit_by_projectile() {
                 continue;
             }
 

@@ -433,6 +433,11 @@ pub trait EntityBase: Send + Sync + std::any::Any {
         false
     }
 
+    /// Vanilla `Entity.canBeHitByProjectile`, for the entities that override it.
+    fn can_be_hit_by_projectile(&self) -> bool {
+        true
+    }
+
     fn is_immobile(&self) -> bool {
         self.get_living_entity()
             .is_some_and(LivingEntity::is_dead_or_dying)
