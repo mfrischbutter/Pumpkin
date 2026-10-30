@@ -1389,6 +1389,23 @@ pub trait Mob: EntityBase + Send + Sync {
 
     fn mob_ai_step(&self) {}
 
+    /// Vanilla `JumpControl.tick`: the jump asked for this tick becomes the jumping state.
+    fn tick_jump_control(&self, jump: bool) {
+        self.get_mob_entity()
+            .living_entity
+            .jumping
+            .store(jump, std::sync::atomic::Ordering::SeqCst);
+    }
+
+    /// Vanilla `getJumpPower`.
+    fn get_jump_power(&self) -> f64 {
+        self.get_mob_entity().living_entity.get_jump_velocity(1.0)
+    }
+
+    /// Vanilla `jumpFromGround` overrides: runs after the jump impulse, also when it was too
+    /// weak to apply.
+    fn on_jump_from_ground(&self) {}
+
     fn travel_in_water(&self, caller: &dyn EntityBase, gravity: f64, falling: bool) {
         self.get_mob_entity()
             .living_entity

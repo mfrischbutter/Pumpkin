@@ -1,6 +1,5 @@
 use crate::entity::ai::control::Control;
 use crate::entity::mob::Mob;
-use std::sync::atomic::Ordering;
 
 #[derive(Default)]
 pub struct JumpControl {
@@ -14,11 +13,14 @@ impl JumpControl {
         self.jump = true;
     }
 
+    /// Vanilla `RabbitJumpControl.wantJump`: a jump was asked for and not yet ticked.
+    #[must_use]
+    pub const fn wants_jump(&self) -> bool {
+        self.jump
+    }
+
     pub fn tick(&mut self, mob: &dyn Mob) {
-        mob.get_mob_entity()
-            .living_entity
-            .jumping
-            .store(self.jump, Ordering::SeqCst);
+        mob.tick_jump_control(self.jump);
         self.jump = false;
     }
 }

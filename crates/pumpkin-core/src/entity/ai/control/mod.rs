@@ -32,6 +32,16 @@ pub trait MoveControlTrait: Control {
     fn has_wanted(&self) -> bool {
         false
     }
+
+    /// Vanilla `getSpeedModifier`. Controls that keep no speed report none.
+    fn get_speed_modifier(&self) -> f64 {
+        0.0
+    }
+
+    /// Vanilla `getWantedX/Y/Z`. Controls that keep no wanted position report the origin.
+    fn get_wanted_position(&self) -> Vector3<f64> {
+        Vector3::new(0.0, 0.0, 0.0)
+    }
 }
 
 pub trait LookControlTrait: Control {

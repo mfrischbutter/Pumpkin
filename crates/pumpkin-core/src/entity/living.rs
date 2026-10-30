@@ -1666,7 +1666,7 @@ impl LivingEntity {
             } else if (on_ground || in_water && fluid_height <= swim_height)
                 && self.jumping_cooldown.load(SeqCst) == 0
             {
-                self.jump();
+                self.jump_from_ground(caller);
 
                 self.jumping_cooldown.store(10, SeqCst);
             }
@@ -2153,9 +2153,20 @@ impl LivingEntity {
         }
     }
 
-    fn jump(&self) {
-        let jump = self.get_jump_velocity(1.0);
+    /// Vanilla `jumpFromGround`, with the mob's jump power and its follow-up.
+    fn jump_from_ground(&self, caller: &dyn EntityBase) {
+        let mob = caller.get_mob();
+        let jump_power = mob.map_or_else(
+            || self.get_jump_velocity(1.0),
+            crate::entity::mob::Mob::get_jump_power,
+        );
+        self.jump(jump_power);
+        if let Some(mob) = mob {
+            mob.on_jump_from_ground();
+        }
+    }
 
+    fn jump(&self, jump: f64) {
         if jump <= 1.0e-5 {
             return;
         }
