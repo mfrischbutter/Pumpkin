@@ -112,6 +112,8 @@ pub struct WasmPlugin {
     pub task_scheduler: Arc<TaskScheduler>,
     /// Packet ids this plugin's `packet-sent-event` handlers get, `None` for all of them.
     pub packet_sent_filter: RwLock<Option<HashSet<i32>>>,
+    /// Packet ids this plugin's `packet-received-event` handlers get, `None` for all of them.
+    pub packet_received_filter: RwLock<Option<HashSet<i32>>>,
     /// Runs the plugin's worker jobs, when its component exports the `worker` interface.
     pub worker: Option<PluginWorker>,
 }
@@ -133,25 +135,42 @@ impl WasmPlugin {
     /// the event back into that call, which waits for the host call to return.
     #[must_use]
     pub fn wants_packet_sent(&self, packet_id: i32) -> bool {
-        let listed = self
-            .packet_sent_filter
-            .read()
-            .unwrap_or_else(PoisonError::into_inner)
-            .as_ref()
-            .is_none_or(|ids| ids.contains(&packet_id));
-        listed && !self.store.is_active_in_current_chain()
+        filter_allows(&self.packet_sent_filter, packet_id)
+            && !self.store.is_active_in_current_chain()
     }
 
     /// Limits this plugin's `packet-sent-event` handlers to `ids`; an empty list removes the
     /// limit.
     pub fn set_packet_sent_filter(&self, ids: Vec<i32>) {
-        let filter = (!ids.is_empty()).then(|| ids.into_iter().collect());
-        let mut guard = self
-            .packet_sent_filter
-            .write()
-            .unwrap_or_else(PoisonError::into_inner);
-        *guard = filter;
+        set_filter(&self.packet_sent_filter, ids);
     }
+
+    /// Whether this plugin's `packet-received-event` handlers get packets with `packet_id`.
+    #[must_use]
+    pub fn wants_packet_received(&self, packet_id: i32) -> bool {
+        filter_allows(&self.packet_received_filter, packet_id)
+    }
+
+    /// Limits this plugin's `packet-received-event` handlers to `ids`; an empty list removes the
+    /// limit.
+    pub fn set_packet_received_filter(&self, ids: Vec<i32>) {
+        set_filter(&self.packet_received_filter, ids);
+    }
+}
+
+/// Whether `filter` lets `packet_id` through; no filter lets every packet through.
+fn filter_allows(filter: &RwLock<Option<HashSet<i32>>>, packet_id: i32) -> bool {
+    filter
+        .read()
+        .unwrap_or_else(PoisonError::into_inner)
+        .as_ref()
+        .is_none_or(|ids| ids.contains(&packet_id))
+}
+
+/// Replaces `filter` with `ids`; an empty list removes it.
+fn set_filter(filter: &RwLock<Option<HashSet<i32>>>, ids: Vec<i32>) {
+    let ids = (!ids.is_empty()).then(|| ids.into_iter().collect());
+    *filter.write().unwrap_or_else(PoisonError::into_inner) = ids;
 }
 
 impl Drop for WasmPlugin {
@@ -164,7 +183,9 @@ impl Drop for WasmPlugin {
 mod tests {
     use wasm_encoder::{ComponentBuilder, ComponentTypeRef, InstanceType};
 
-    use super::{is_wasi_p3_import, scan_component_names};
+    use std::sync::RwLock;
+
+    use super::{filter_allows, is_wasi_p3_import, scan_component_names, set_filter};
 
     fn component_importing(names: &[&str]) -> Vec<u8> {
         let mut component = ComponentBuilder::default();
@@ -198,5 +219,16 @@ mod tests {
     #[test]
     fn scan_rejects_bytes_that_are_not_a_component() {
         assert!(scan_component_names(b"not wasm").is_err());
+    }
+
+    #[test]
+    fn packet_filter_limits_to_listed_ids_until_cleared() {
+        let filter = RwLock::default();
+        assert!(filter_allows(&filter, 7));
+        set_filter(&filter, vec![49]);
+        assert!(filter_allows(&filter, 49));
+        assert!(!filter_allows(&filter, 7));
+        set_filter(&filter, Vec::new());
+        assert!(filter_allows(&filter, 7));
     }
 }

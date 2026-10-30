@@ -62,6 +62,11 @@ impl ToFromWasmEvent for PacketReceivedEvent {
             self.cancelled = data.cancelled;
         }
     }
+
+    fn wanted_by(&self, plugin: &WasmPlugin) -> bool {
+        plugin.wants_packet_received(self.packet_id)
+    }
+
     fn from_wasm_event(event: Event, _state: &mut PluginHostState) -> Self {
         match event {
             Event::PacketReceivedEvent(_) => {

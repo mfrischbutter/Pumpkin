@@ -380,6 +380,8 @@ interface event {
         duration-nanos: s64
     }
 
+    /// A play packet from a player, before the server handles it. A blocking handler can cancel
+    /// it or change `packet-id` and `raw-payload`. See also `context.set-packet-received-filter`.
     record packet-received-event-data {
         player: player,
         packet: serverbound-packet,

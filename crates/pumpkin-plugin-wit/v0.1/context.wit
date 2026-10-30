@@ -71,6 +71,10 @@ interface context {
         /// Limits this plugin's `packet-sent-event` handlers to packets with these ids, so other
         /// packets are not copied into the plugin. An empty list removes the limit (the default).
         set-packet-sent-filter: func(ids: list<s32>);
+        /// Limits this plugin's `packet-received-event` handlers to packets with these ids, so other
+        /// packets are not decoded and copied into the plugin. An empty list removes the limit (the
+        /// default).
+        set-packet-received-filter: func(ids: list<s32>);
         /// Registers a loot table from its JSON definition, in the format of a datapack's
         /// `data/<namespace>/loot_table/<path>.json`. It replaces a vanilla table with the same id,
         /// while a datapack table with the same id still wins. The table stays registered across

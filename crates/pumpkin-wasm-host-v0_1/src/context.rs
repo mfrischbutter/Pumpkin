@@ -1769,6 +1769,19 @@ impl pumpkin::plugin::context::HostContext for PluginHostState {
         Ok(())
     }
 
+    fn set_packet_received_filter(
+        &mut self,
+        _context: Resource<WitContext>,
+        ids: Vec<i32>,
+    ) -> wasmtime::Result<()> {
+        self.plugin
+            .as_ref()
+            .and_then(std::sync::Weak::upgrade)
+            .ok_or_else(|| wasmtime::Error::msg("Plugin has been dropped"))?
+            .set_packet_received_filter(ids);
+        Ok(())
+    }
+
     fn register_loot_table(
         &mut self,
         context: Resource<WitContext>,
