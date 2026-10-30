@@ -1518,6 +1518,12 @@ pub trait Mob: EntityBase + Send + Sync {
         damaged
     }
 
+    /// Vanilla `blockedByItem`: `defender` blocked this mob's hit with a shield.
+    ///
+    /// Vanilla's default only knocks a partly blocking defender back, and Pumpkin's shields
+    /// always block fully, so the default does nothing.
+    fn blocked_by_item(&self, _defender: &dyn EntityBase) {}
+
     // getArrow in vanilla, lets skeletons change the arrow before it's shot
     fn get_arrow(&self, arrow: ArrowEntity) -> ArrowEntity {
         arrow

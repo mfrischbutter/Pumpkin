@@ -3660,6 +3660,15 @@ impl LivingEntity {
                         }
                     }
 
+                    // Vanilla `blockUsingItem`: a mob that hit the shield directly reacts.
+                    if amount > 0.0
+                        && !damage_type.has_tag(&tag::DamageType::MINECRAFT_IS_PROJECTILE)
+                        && let Some(direct) = source
+                        && let Some(attacker) = direct.get_mob()
+                    {
+                        attacker.blocked_by_item(caller);
+                    }
+
                     let disable_seconds = cause.or(source).map_or(0.0, |attacker| {
                         if attacker.get_entity().entity_type == &EntityType::WARDEN {
                             5.0
