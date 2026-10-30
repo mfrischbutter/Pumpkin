@@ -161,9 +161,10 @@ pub trait PatrollingMonster: Mob {
     }
 }
 
-/// Vanilla `PatrollingMonster.LongDistancePatrolGoal`: the patrol walks toward its target in
-/// steps that swing out to the side, the leader leading its companions; a patroller left
-/// without companions stops patrolling.
+/// Vanilla `PatrollingMonster.LongDistancePatrolGoal`.
+///
+/// The patrol walks toward its target in steps that swing out to the side, the leader leading
+/// its companions; a patroller left without companions stops patrolling.
 pub struct LongDistancePatrolGoal {
     speed_modifier: f64,
     leader_speed_modifier: f64,
@@ -308,17 +309,19 @@ impl Goal for LongDistancePatrolGoal {
             } else {
                 self.speed_modifier
             };
-            if !Self::move_to(mob, path_target, speed) {
-                self.move_randomly(mob, &world);
-                self.cooldown_until = world.get_world_age() + NAVIGATION_FAILED_COOLDOWN;
-            } else if is_leader {
-                for companion in &companions {
-                    if let Some(companion) =
-                        companion.get_mob().and_then(Mob::as_patrolling_monster)
-                    {
-                        companion.set_patrol_target(path_target);
+            if Self::move_to(mob, path_target, speed) {
+                if is_leader {
+                    for companion in &companions {
+                        if let Some(companion) =
+                            companion.get_mob().and_then(Mob::as_patrolling_monster)
+                        {
+                            companion.set_patrol_target(path_target);
+                        }
                     }
                 }
+            } else {
+                self.move_randomly(mob, &world);
+                self.cooldown_until = world.get_world_age() + NAVIGATION_FAILED_COOLDOWN;
             }
         }
     }
