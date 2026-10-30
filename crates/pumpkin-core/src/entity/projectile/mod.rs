@@ -142,10 +142,6 @@ impl ThrownItemEntity {
     /// Process a tick for projectile movement and collisions
     pub fn process_tick(&self, caller: &dyn EntityBase) {
         let entity = self.get_entity();
-        let world = entity.world.load();
-
-        self.owner.check_left_owner(entity);
-        entity.update_last_pos();
 
         // Apply gravity and inertia
         let mut velocity = entity.velocity.load();
@@ -156,11 +152,38 @@ impl ThrownItemEntity {
         } else {
             0.99
         };
-        velocity = velocity.multiply(inertia, inertia, inertia);
+        entity
+            .velocity
+            .store(velocity.multiply(inertia, inertia, inertia));
 
-        // Store velocity
+        self.move_and_collide(caller);
+    }
+
+    /// Vanilla `AbstractHurtingProjectile.tick`: speeds up along its heading instead of falling.
+    pub fn process_hurting_tick(&self, caller: &dyn EntityBase, power: f64) {
+        let entity = self.get_entity();
+
+        let velocity = entity.velocity.load();
+        let inertia = if entity.touching_water.load(Ordering::Relaxed) {
+            fireball::WATER_INERTIA
+        } else {
+            fireball::AIR_INERTIA
+        };
+        let push = velocity.normalize().multiply(power, power, power);
+        let velocity = velocity.add(&push).multiply(inertia, inertia, inertia);
         entity.velocity.store(velocity);
 
+        self.move_and_collide(caller);
+    }
+
+    fn move_and_collide(&self, caller: &dyn EntityBase) {
+        let entity = self.get_entity();
+        let world = entity.world.load();
+
+        self.owner.check_left_owner(entity);
+        entity.update_last_pos();
+
+        let velocity = entity.velocity.load();
         let start_pos = entity.pos.load();
         let delta = velocity;
 

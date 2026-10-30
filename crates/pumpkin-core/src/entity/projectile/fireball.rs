@@ -208,27 +208,8 @@ impl EntityBase for FireballEntity {
     }
 
     fn tick(&self, caller: &dyn EntityBase, _server: &Server) {
-        let entity = self.get_entity();
-        let mut velocity = entity.velocity.load();
-
-        let inertia = if entity.touching_water.load(Ordering::Relaxed) {
-            WATER_INERTIA
-        } else {
-            AIR_INERTIA
-        };
-
-        let accel = self.get_acceleration_power();
-        let speed = velocity.length();
-        if speed > 1e-6 {
-            let norm = velocity.normalize();
-            velocity = norm
-                .multiply(accel, accel, accel)
-                .add(&velocity)
-                .multiply(inertia, inertia, inertia);
-            entity.velocity.store(velocity);
-        }
-
-        self.thrown.process_tick(caller);
+        let power = self.get_acceleration_power();
+        self.thrown.process_hurting_tick(caller, power);
     }
 
     fn get_entity(&self) -> &Entity {

@@ -1,9 +1,12 @@
 use crate::entity::projectile::owner::ProjectileOwner;
-use std::sync::atomic::AtomicBool;
+use std::sync::atomic::{AtomicBool, Ordering};
 
+use pumpkin_data::damage::DamageType;
 use pumpkin_util::math::vector3::Vector3;
+use pumpkin_world::world::BlockFlags;
 
 use crate::{
+    block::blocks::fire::{FireBlockBase, fire::FireBlock},
     entity::{
         Entity, EntityBase,
         projectile::{ProjectileHit, ThrownItemEntity, fireball::INITIAL_ACCELERATION_POWER},
@@ -12,6 +15,8 @@ use crate::{
 };
 
 const GRAVITY: f64 = 0.0;
+const HIT_DAMAGE: f32 = 5.0;
+const HIT_FIRE_SECONDS: f32 = 5.0;
 
 pub struct SmallFireballEntity {
     pub thrown: ThrownItemEntity,
@@ -49,7 +54,8 @@ impl EntityBase for SmallFireballEntity {
     }
 
     fn tick(&self, caller: &dyn EntityBase, _server: &Server) {
-        self.thrown.process_tick(caller);
+        self.thrown
+            .process_hurting_tick(caller, INITIAL_ACCELERATION_POWER);
     }
 
     fn get_entity(&self) -> &Entity {
@@ -63,33 +69,44 @@ impl EntityBase for SmallFireballEntity {
         self
     }
 
+    /// Vanilla `SmallFireball.onHitEntity` and `onHitBlock`.
     fn on_hit(&self, hit: ProjectileHit) {
+        let world = self.get_entity().world.load_full();
+        let owner = self.thrown.owner.get(&world);
         match hit {
-            ProjectileHit::Entity { ref entity, .. } => {
-                entity.get_entity().set_on_fire_for(5.0);
-                let _ = entity.damage(
+            ProjectileHit::Entity {
+                ref entity,
+                hit_pos,
+                ..
+            } => {
+                let target = entity.get_entity();
+                let remaining_fire_ticks = target.fire_ticks.load(Ordering::Relaxed);
+                entity.set_on_fire_for(HIT_FIRE_SECONDS);
+                let damaged = entity.damage_with_context(
                     entity.as_ref(),
-                    5.0,
-                    pumpkin_data::damage::DamageType::FIREBALL,
+                    HIT_DAMAGE,
+                    DamageType::FIREBALL,
+                    Some(hit_pos),
+                    Some(self),
+                    owner.as_deref(),
                 );
+                if !damaged {
+                    target
+                        .fire_ticks
+                        .store(remaining_fire_ticks, Ordering::Relaxed);
+                }
             }
             ProjectileHit::Block { pos, face, .. } => {
-                // Try to place fire
-                let block_to_place = match face {
-                    pumpkin_data::BlockDirection::Up => pos.up(),
-                    pumpkin_data::BlockDirection::Down => pos.down(),
-                    pumpkin_data::BlockDirection::North => pos.north(),
-                    pumpkin_data::BlockDirection::South => pos.south(),
-                    pumpkin_data::BlockDirection::West => pos.west(),
-                    pumpkin_data::BlockDirection::East => pos.east(),
-                };
-                let world = self.get_entity().world.load();
-                let fire_state = pumpkin_data::Block::FIRE.default_state.id;
-                world.set_block_state(
-                    &block_to_place,
-                    fire_state,
-                    pumpkin_world::world::BlockFlags::NOTIFY_ALL,
-                );
+                let shot_by_mob = owner.is_some_and(|owner| owner.get_mob().is_some());
+                if shot_by_mob && !world.level_info.load().game_rules.mob_griefing {
+                    return;
+                }
+                let fire_pos = pos.offset(face.to_offset());
+                if world.get_block_state(&fire_pos).is_air() {
+                    let fire = FireBlockBase::get_fire_type(&world, &fire_pos);
+                    let state = FireBlock.get_state_for_position(&world, &fire, &fire_pos);
+                    world.set_block_state(&fire_pos, state, BlockFlags::NOTIFY_ALL);
+                }
             }
         }
     }
