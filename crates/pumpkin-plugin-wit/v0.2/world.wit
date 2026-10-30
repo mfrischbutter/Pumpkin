@@ -492,6 +492,14 @@ interface %world {
 
         get-width: func() -> f32;
         get-height: func() -> f32;
+        /// Makes this entity's bounding box this wide and high (blocks) until `reset-dimensions`,
+        /// whatever its type, pose and scale: collisions, projectiles and explosions use it.
+        /// Java clients keep their own box. A box that grows may move the entity out of blocks,
+        /// as a growing mob does. The eye stays at the same fraction of the height. Not saved
+        /// with the entity. Values that are negative or not finite are ignored.
+        set-dimensions: func(width: f32, height: f32);
+        /// Drops the dimensions set with `set-dimensions`, back to the entity's own.
+        reset-dimensions: func();
 
         set-rotation: func(yaw: f32, pitch: f32);
 

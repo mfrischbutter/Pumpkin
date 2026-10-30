@@ -495,6 +495,26 @@ impl HostEntity for PluginHostState {
         Ok(entity.get_entity().entity_dimension.load().height)
     }
 
+    fn set_dimensions(
+        &mut self,
+        entity: Resource<Entity>,
+        width: f32,
+        height: f32,
+    ) -> wasmtime::Result<()> {
+        let entity = self.get(&entity)?;
+        let valid = |v: f32| v.is_finite() && v >= 0.0;
+        if valid(width) && valid(height) {
+            entity.get_entity().set_dimensions(width, height);
+        }
+        Ok(())
+    }
+
+    fn reset_dimensions(&mut self, entity: Resource<Entity>) -> wasmtime::Result<()> {
+        let entity = self.get(&entity)?;
+        entity.get_entity().reset_dimensions();
+        Ok(())
+    }
+
     fn set_rotation(
         &mut self,
         entity: Resource<Entity>,

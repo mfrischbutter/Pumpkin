@@ -1049,6 +1049,8 @@ pub struct Entity {
     /// Vanilla `LivingEntity.getScale`: the scale attribute's value, 1 for entities without
     /// attributes.
     scale: AtomicCell<f32>,
+    /// Dimensions a plugin set, used instead of the computed ones until it resets them.
+    dimensions_override: AtomicCell<Option<EntityDimensions>>,
     /// Whether this entity is invulnerable to all damage
     pub invulnerable: AtomicBool,
     /// List of damage types this entity is immune to
@@ -1275,6 +1277,7 @@ impl Entity {
             entity_dimension: AtomicCell::new(bounding_box_size),
             default_dimensions: AtomicCell::new(None),
             scale: AtomicCell::new(1.0),
+            dimensions_override: AtomicCell::new(None),
             invulnerable: AtomicBool::new(false),
             damage_immunities: std::sync::Mutex::new(Vec::new()),
             data: AtomicI32::new(0),
@@ -1540,6 +1543,9 @@ impl Entity {
 
     #[must_use]
     pub fn get_dimensions(&self, pose: EntityPose) -> EntityDimensions {
+        if let Some(dimensions) = self.dimensions_override.load() {
+            return dimensions;
+        }
         if pose == EntityPose::Sleeping {
             return EntityDimensions::new(0.2, 0.2, 0.2);
         }
@@ -1566,6 +1572,29 @@ impl Entity {
     /// Vanilla `LivingEntity.onAttributeUpdated` for the scale attribute: resizes the entity.
     pub fn set_scale(&self, scale: f32) {
         self.scale.store(scale);
+        self.refresh_dimensions();
+    }
+
+    /// Makes the entity this wide and high, whatever its type, pose and scale, until
+    /// [`Self::reset_dimensions`]. The eye stays at the same fraction of the height.
+    pub fn set_dimensions(&self, width: f32, height: f32) {
+        let current = self.get_dimensions(self.pose.load());
+        let eye_ratio = if current.height > 0.0 {
+            current.eye_height / current.height
+        } else {
+            0.0
+        };
+        self.dimensions_override.store(Some(EntityDimensions::new(
+            width,
+            height,
+            height * eye_ratio,
+        )));
+        self.refresh_dimensions();
+    }
+
+    /// Drops the dimensions set with [`Self::set_dimensions`].
+    pub fn reset_dimensions(&self) {
+        self.dimensions_override.store(None);
         self.refresh_dimensions();
     }
 

@@ -4803,11 +4803,21 @@ mod ai_step_tests {
         let scaled = entity.entity_dimension.load();
         let scaled_box = entity.bounding_box.load();
 
+        entity.set_dimensions(3.0, 1.0);
+        living.set_attribute_base(&Attributes::SCALE, 0.5);
+        living.refresh_dirty_attributes(&mob);
+        let overridden = entity.entity_dimension.load();
+
+        entity.reset_dimensions();
+        let reset = entity.entity_dimension.load();
         world.level.shutdown().await;
 
         assert!((scaled.width - width * 2.0).abs() < f32::EPSILON);
         assert!((scaled.height - height * 2.0).abs() < f32::EPSILON);
         assert!((scaled_box.max.y - scaled_box.min.y - f64::from(height) * 2.0).abs() < 1e-6);
+        assert!((overridden.width - 3.0).abs() < f32::EPSILON);
+        assert!((overridden.height - 1.0).abs() < f32::EPSILON);
+        assert!((reset.width - width * 0.5).abs() < f32::EPSILON);
         Ok(())
     }
 
