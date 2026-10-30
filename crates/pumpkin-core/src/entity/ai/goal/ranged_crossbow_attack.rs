@@ -6,12 +6,17 @@ use pumpkin_data::item::Item;
 use pumpkin_data::item_stack::ItemStack;
 use pumpkin_data::sound::{Sound, SoundCategory};
 use pumpkin_util::Hand;
+use rand::RngExt;
 
 use crate::entity::ai::goal::{Controls, Goal};
 use crate::entity::ai::pathfinder::NavigatorGoal;
 use crate::entity::mob::Mob;
 use crate::entity::projectile::arrow::{ArrowEntity, ArrowPickup};
 use crate::entity::{Entity, EntityBase};
+use crate::plugin::api::events::entity::entity_target::TargetReason;
+
+/// Vanilla `PATHFINDING_DELAY_RANGE`, one to two seconds.
+const PATHFINDING_DELAY_RANGE: std::ops::RangeInclusive<i32> = 20..=40;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 enum CrossbowState {
@@ -52,6 +57,12 @@ impl RangedCrossbowAttackGoal {
             update_path_delay: 0,
             charge_ticks: 0,
         }
+    }
+
+    fn has_valid_target(mob: &dyn Mob) -> bool {
+        mob.get_mob_entity()
+            .get_target()
+            .is_some_and(|target| target.get_entity().is_alive())
     }
 
     fn is_holding_crossbow(mob: &dyn Mob) -> bool {
@@ -152,39 +163,28 @@ impl RangedCrossbowAttackGoal {
 
 impl Goal for RangedCrossbowAttackGoal {
     fn can_start(&mut self, mob: &dyn Mob) -> bool {
-        let target = mob.get_mob_entity().get_target().clone();
-        let Some(target) = target else {
-            return false;
-        };
-        if !target.get_entity().is_alive() {
-            return false;
-        }
-        Self::is_holding_crossbow(mob)
+        Self::has_valid_target(mob) && Self::is_holding_crossbow(mob)
     }
 
     fn should_continue(&mut self, mob: &dyn Mob) -> bool {
-        let target = mob.get_mob_entity().get_target().clone();
-        let Some(target) = target else {
-            return false;
-        };
-        target.get_entity().is_alive() && Self::is_holding_crossbow(mob)
+        Self::has_valid_target(mob)
+            && (self.can_start(mob) || !mob.get_mob_entity().steered().navigator().is_done())
+            && Self::is_holding_crossbow(mob)
     }
 
-    fn start(&mut self, _mob: &dyn Mob) {
-        self.state = CrossbowState::Uncharged;
-        self.see_time = 0;
-        self.attack_delay = 0;
-        self.update_path_delay = 0;
-        self.charge_ticks = 0;
-    }
-
+    /// Vanilla keeps the crossbow state, attack delay and path delay between runs.
     fn stop(&mut self, mob: &dyn Mob) {
-        if let Some(crossbow_mob) = mob.as_crossbow_attack_mob() {
-            crossbow_mob.set_charging_crossbow(false);
+        mob.get_mob_entity().set_attacking(false);
+        mob.set_mob_target(None, TargetReason::Unknown);
+        self.see_time = 0;
+        if self.state == CrossbowState::Charging {
+            mob.get_mob_entity().living_entity.clear_active_hand();
+            if let Some(crossbow_mob) = mob.as_crossbow_attack_mob() {
+                crossbow_mob.set_charging_crossbow(false);
+            }
+            // Vanilla falls back to uncharged on its next tick once the item is no longer used.
+            self.state = CrossbowState::Uncharged;
         }
-        mob.get_mob_entity().living_entity.clear_active_hand();
-        self.state = CrossbowState::Uncharged;
-        mob.get_mob_entity().steered().navigator().stop();
     }
 
     #[expect(clippy::too_many_lines)]
@@ -199,10 +199,13 @@ impl Goal for RangedCrossbowAttackGoal {
         let distance_sq = mob_pos.squared_distance_to_vec(&target_pos);
 
         let has_line_of_sight = mob.has_line_of_sight(target.get_entity());
+        if has_line_of_sight != (self.see_time > 0) {
+            self.see_time = 0;
+        }
         if has_line_of_sight {
             self.see_time += 1;
         } else {
-            self.see_time = 0;
+            self.see_time -= 1;
         }
 
         let needs_to_move =
@@ -224,7 +227,7 @@ impl Goal for RangedCrossbowAttackGoal {
                         destination: target_pos,
                         speed: move_speed,
                     });
-                self.update_path_delay = 20 + rand::random_range(0..20);
+                self.update_path_delay = mob.get_random().random_range(PATHFINDING_DELAY_RANGE);
             }
         } else {
             self.update_path_delay = 0;

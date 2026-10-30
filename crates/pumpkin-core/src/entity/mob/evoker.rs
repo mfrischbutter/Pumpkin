@@ -95,7 +95,7 @@ impl EvokerEntity {
 
             goal_selector.add_goal(0, Box::new(SwimGoal::default()));
             goal_selector.add_goal(1, Box::new(EvokerCastingSpellGoal::new(mob_weak.clone())));
-            goal_selector.add_goal(2, Box::new(ObtainRaidLeaderBannerGoal));
+            goal_selector.add_goal(2, Box::new(ObtainRaidLeaderBannerGoal::default()));
             fleeing::apply(goal_selector, EVOKER_FLEES);
             goal_selector.add_goal(3, Box::new(RaiderMoveThroughVillageGoal::new(1.05)));
             goal_selector.add_goal(3, Box::new(PathfindToRaidGoal::default()));

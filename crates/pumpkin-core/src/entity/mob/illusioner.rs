@@ -54,7 +54,7 @@ impl IllusionerEntity {
             let goal_selector = &mob_arc.mob_entity.goals_selector;
 
             goal_selector.add_goal(0, Box::new(SwimGoal::default()));
-            goal_selector.add_goal(1, Box::new(ObtainRaidLeaderBannerGoal));
+            goal_selector.add_goal(1, Box::new(ObtainRaidLeaderBannerGoal::default()));
             goal_selector.add_goal(2, Box::new(HoldGroundAttackGoal::new(10.0)));
             fleeing::apply(goal_selector, ILLUSIONER_FLEES);
             goal_selector.add_goal(4, Box::new(LongDistancePatrolGoal::new(0.7, 0.595)));

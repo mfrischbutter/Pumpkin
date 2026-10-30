@@ -194,6 +194,18 @@ impl Raid {
         self.raid_omen_level = level.clamp(0, Self::MAX_RAID_OMEN_LEVEL);
     }
 
+    /// Vanilla `getEnchantOdds`: the chance that a raider's raid weapon is enchanted.
+    #[must_use]
+    pub const fn get_enchant_odds(&self) -> f32 {
+        match self.raid_omen_level {
+            2 => 0.1,
+            3 => 0.25,
+            4 => 0.5,
+            5 => 0.75,
+            _ => 0.0,
+        }
+    }
+
     #[must_use]
     pub const fn has_more_waves(&self) -> bool {
         if self.has_bonus_wave() {
@@ -357,7 +369,7 @@ impl Raid {
                     raider.set_can_join_raid(true);
                     // Vanilla `Raid.joinRaid` finalizes the spawn before the raid buffs.
                     finalize_spawn(&entity_base, world, None);
-                    raider.apply_raid_buffs(group_number, false);
+                    raider.apply_raid_buffs(self, group_number, false);
                 }
 
                 self.join_raid(group_number, uuid, &entity_base);
@@ -385,7 +397,7 @@ impl Raid {
                             raider.set_wave(group_number);
                             raider.set_can_join_raid(true);
                             finalize_spawn(&rider_base, world, None);
-                            raider.apply_raid_buffs(group_number, false);
+                            raider.apply_raid_buffs(self, group_number, false);
                         }
                         self.join_raid(group_number, rider_uuid, &rider_base);
                         world.spawn_entity_non_save(rider_base);

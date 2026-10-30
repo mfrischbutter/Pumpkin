@@ -1,3 +1,4 @@
+use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, Ordering};
 
 use crossbeam::atomic::AtomicCell;
@@ -5,11 +6,27 @@ use pumpkin_data::data_component_impl::EquipmentSlot;
 use pumpkin_nbt::compound::NbtCompound;
 use pumpkin_util::math::position::BlockPos;
 use pumpkin_util::math::vector3::Vector3;
+use pumpkin_world::chunk::ChunkHeightmapType;
+use rand::RngExt;
 
+use crate::entity::EntityBase;
 use crate::entity::ai::goal::{Controls, Goal};
-use crate::entity::ai::pathfinder::NavigatorGoal;
 use crate::entity::mob::Mob;
-use crate::entity::mob::raider::create_ominous_banner;
+use crate::entity::mob::raider::{Raider, create_ominous_banner};
+use crate::world::World;
+
+/// A patrolling monster farther than this from every player despawns.
+const PATROL_DESPAWN_DISTANCE_SQ: f64 = 16_384.0;
+/// Vanilla `LongDistancePatrolGoal.NAVIGATION_FAILED_COOLDOWN`.
+const NAVIGATION_FAILED_COOLDOWN: i64 = 200;
+const PATROL_COMPANION_RANGE: f64 = 16.0;
+/// A leader this close to its patrol target picks a new one.
+const PATROL_TARGET_REACHED_DISTANCE: f64 = 10.0;
+const PATROL_STEP_LENGTH: f64 = 10.0;
+/// Vanilla rotates by 90 as radians, not degrees.
+const PATROL_STEP_ROTATION: f32 = 90.0;
+const PATROL_STEP_SPREAD: f64 = 0.4;
+const RANDOM_STEP_RANGE: i32 = 16;
 
 pub struct PatrolData {
     pub patrol_target: AtomicCell<Option<BlockPos>>,
@@ -68,8 +85,15 @@ pub trait PatrollingMonster: Mob {
         self.get_patrol_data().patrol_target.load().is_some()
     }
 
+    /// Vanilla `canJoinPatrol`; `Raider` overrides it to skip raiders of an active raid.
     fn can_join_patrol(&self) -> bool {
-        true
+        self.as_raider()
+            .is_none_or(|raider| !Raider::has_active_raid(raider))
+    }
+
+    /// Vanilla `PatrollingMonster.removeWhenFarAway`.
+    fn patrol_remove_when_far_away(&self, distance_sq: f64) -> bool {
+        !self.is_patrolling() || distance_sq > PATROL_DESPAWN_DISTANCE_SQ
     }
 
     fn find_patrol_target(&self) {
@@ -137,6 +161,9 @@ pub trait PatrollingMonster: Mob {
     }
 }
 
+/// Vanilla `PatrollingMonster.LongDistancePatrolGoal`: the patrol walks toward its target in
+/// steps that swing out to the side, the leader leading its companions; a patroller left
+/// without companions stops patrolling.
 pub struct LongDistancePatrolGoal {
     speed_modifier: f64,
     leader_speed_modifier: f64,
@@ -152,6 +179,83 @@ impl LongDistancePatrolGoal {
             cooldown_until: -1,
         }
     }
+
+    /// Vanilla `findPatrolCompanions`.
+    fn find_patrol_companions(mob: &dyn Mob) -> Vec<Arc<dyn EntityBase>> {
+        let entity = mob.get_entity();
+        let area = entity.bounding_box.load().expand(
+            PATROL_COMPANION_RANGE,
+            PATROL_COMPANION_RANGE,
+            PATROL_COMPANION_RANGE,
+        );
+        entity
+            .world
+            .load()
+            .get_entities_at_box(&area)
+            .into_iter()
+            .filter(|candidate| {
+                candidate.get_entity().entity_id != entity.entity_id
+                    && candidate
+                        .get_mob()
+                        .and_then(Mob::as_patrolling_monster)
+                        .is_some_and(PatrollingMonster::can_join_patrol)
+            })
+            .collect()
+    }
+
+    /// Vanilla `getHeightmapPos(MOTION_BLOCKING_NO_LEAVES, ...)`.
+    fn surface_pos(world: &World, x: i32, z: i32) -> BlockPos {
+        let y = world.get_heightmap_height(ChunkHeightmapType::MotionBlockingNoLeaves, x, z) + 1;
+        BlockPos::new(x, y, z)
+    }
+
+    /// The next step toward the patrol target, rotated to the side and cut to 10 blocks.
+    fn next_step(world: &World, patrol_target: BlockPos, pos: Vector3<f64>) -> BlockPos {
+        let target = Vector3::new(
+            f64::from(patrol_target.0.x) + 0.5,
+            f64::from(patrol_target.0.y),
+            f64::from(patrol_target.0.z) + 0.5,
+        );
+        let offset = pos.sub(&target);
+        let (sin, cos) = PATROL_STEP_ROTATION.sin_cos();
+        let (sin, cos) = (f64::from(sin), f64::from(cos));
+        let rotated = Vector3::new(
+            offset.x.mul_add(cos, offset.z * sin),
+            offset.y,
+            offset.z.mul_add(cos, -(offset.x * sin)),
+        );
+        let long_distance_target = rotated
+            .multiply(PATROL_STEP_SPREAD, PATROL_STEP_SPREAD, PATROL_STEP_SPREAD)
+            .add(&target);
+        let move_target = long_distance_target
+            .sub(&pos)
+            .normalize()
+            .multiply(PATROL_STEP_LENGTH, PATROL_STEP_LENGTH, PATROL_STEP_LENGTH)
+            .add(&pos);
+        let step = BlockPos::floored_v(move_target);
+        Self::surface_pos(world, step.0.x, step.0.z)
+    }
+
+    fn move_to(mob: &dyn Mob, pos: BlockPos, speed: f64) -> bool {
+        let steered = mob.get_mob_entity().steered();
+        let owner = &steered.mob_entity().living_entity;
+        steered.navigator().move_to_coords(
+            f64::from(pos.0.x),
+            f64::from(pos.0.y),
+            f64::from(pos.0.z),
+            speed,
+            owner,
+        )
+    }
+
+    /// Vanilla `moveRandomly`.
+    fn move_randomly(&self, mob: &dyn Mob, world: &World) {
+        let mut random = mob.get_random();
+        let block_pos = mob.get_entity().block_pos.load();
+        let x = block_pos.0.x - RANDOM_STEP_RANGE / 2 + random.random_range(0..RANDOM_STEP_RANGE);
+        let z = block_pos.0.z - RANDOM_STEP_RANGE / 2 + random.random_range(0..RANDOM_STEP_RANGE);
+        Self::move_to(mob, Self::surface_pos(world, x, z), self.speed_modifier);
+    }
 }
 
 impl Goal for LongDistancePatrolGoal {
@@ -159,24 +263,12 @@ impl Goal for LongDistancePatrolGoal {
         let Some(patrol) = mob.as_patrolling_monster() else {
             return false;
         };
-        let world = mob.get_entity().world.load();
-        let game_time = world
-            .level_time
-            .lock()
-            .unwrap_or_else(std::sync::PoisonError::into_inner)
-            .query_daytime();
-        let is_on_cooldown = game_time < self.cooldown_until;
-
-        let target = mob.get_mob_entity().get_target().clone();
-        patrol.is_patrolling() && target.is_none() && patrol.has_patrol_target() && !is_on_cooldown
-    }
-
-    fn should_continue(&mut self, mob: &dyn Mob) -> bool {
-        let Some(patrol) = mob.as_patrolling_monster() else {
-            return false;
-        };
-        let target = mob.get_mob_entity().get_target().clone();
-        patrol.is_patrolling() && target.is_none() && patrol.has_patrol_target()
+        let is_on_cooldown = mob.get_entity().world.load().get_world_age() < self.cooldown_until;
+        patrol.is_patrolling()
+            && mob.get_mob_entity().get_target().is_none()
+            && mob.get_controlling_passenger().is_none()
+            && patrol.has_patrol_target()
+            && !is_on_cooldown
     }
 
     fn controls(&self) -> Controls {
@@ -187,30 +279,47 @@ impl Goal for LongDistancePatrolGoal {
         let Some(patrol) = mob.as_patrolling_monster() else {
             return;
         };
-        let is_leader = patrol.is_patrol_leader();
-        let entity = mob.get_entity();
-        let pos = entity.pos.load();
-
+        if !mob.get_mob_entity().steered().navigator().is_done() {
+            return;
+        }
         let Some(patrol_target) = patrol.get_patrol_target() else {
             return;
         };
-
-        let dist_sq = pos.squared_distance_to_vec(&patrol_target.to_f64());
-        if is_leader && dist_sq < 100.0 {
+        let is_leader = patrol.is_patrol_leader();
+        let companions = Self::find_patrol_companions(mob);
+        let pos = mob.get_entity().pos.load();
+        let target_center = Vector3::new(
+            f64::from(patrol_target.0.x) + 0.5,
+            f64::from(patrol_target.0.y) + 0.5,
+            f64::from(patrol_target.0.z) + 0.5,
+        );
+        if patrol.is_patrolling() && companions.is_empty() {
+            patrol.set_patrolling(false);
+        } else if is_leader
+            && target_center.squared_distance_to_vec(&pos)
+                < PATROL_TARGET_REACHED_DISTANCE * PATROL_TARGET_REACHED_DISTANCE
+        {
             patrol.find_patrol_target();
         } else {
+            let world = mob.get_entity().world.load();
+            let path_target = Self::next_step(&world, patrol_target, pos);
             let speed = if is_leader {
                 self.leader_speed_modifier
             } else {
                 self.speed_modifier
             };
-            let steered = mob.get_mob_entity().steered();
-            let mut nav = steered.navigator();
-            nav.set_progress(NavigatorGoal {
-                current_progress: pos,
-                destination: patrol_target.to_f64(),
-                speed,
-            });
+            if !Self::move_to(mob, path_target, speed) {
+                self.move_randomly(mob, &world);
+                self.cooldown_until = world.get_world_age() + NAVIGATION_FAILED_COOLDOWN;
+            } else if is_leader {
+                for companion in &companions {
+                    if let Some(companion) =
+                        companion.get_mob().and_then(Mob::as_patrolling_monster)
+                    {
+                        companion.set_patrol_target(path_target);
+                    }
+                }
+            }
         }
     }
 }
