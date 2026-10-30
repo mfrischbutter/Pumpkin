@@ -6233,6 +6233,10 @@ impl Player {
         }
     }
 
+    /// Opens a plugin screen. For Java clients a screen that is already open
+    /// is closed on the server only: the client replaces it on the open
+    /// packet, while a close packet in between makes it grab the mouse and
+    /// recentre the cursor on every menu switch.
     pub fn open_handled_screen_direct(
         &self,
         screen_handler: Arc<std::sync::Mutex<dyn ScreenHandler>>,
@@ -6247,7 +6251,11 @@ impl Player {
             .as_any()
             .is::<PlayerScreenHandler>()
         {
-            self.close_handled_screen();
+            if self.as_java().is_some() {
+                self.on_handled_screen_closed();
+            } else {
+                self.close_handled_screen();
+            }
         }
 
         let screen_handler_temp = screen_handler
