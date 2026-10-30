@@ -9,7 +9,8 @@ pub trait CustomSound: Mob {
         1.0
     }
 
+    /// Vanilla `getSoundSource`: the entity type's category unless overridden.
     fn sound_category(&self) -> SoundCategory {
-        SoundCategory::Players
+        self.mob_sound_source()
     }
 }

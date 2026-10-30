@@ -1554,7 +1554,7 @@ pub trait Mob: EntityBase + Send + Sync {
         self.get_mob_entity().living_entity.make_sound(
             sound,
             custom_sound.map_or(
-                pumpkin_data::sound::SoundCategory::Players,
+                self.mob_sound_source(),
                 crate::entity::custom_sound::CustomSound::sound_category,
             ),
             custom_sound.map_or(1.0, crate::entity::custom_sound::CustomSound::sound_volume),
