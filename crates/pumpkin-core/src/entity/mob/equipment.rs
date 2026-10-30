@@ -425,18 +425,6 @@ pub static EQUIPMENT_REGISTRY: LazyLock<HashMap<&'static str, MobEquipmentDef>> 
             },
         );
 
-        // ─── Pillager ───
-        m.insert(
-            "pillager",
-            MobEquipmentDef {
-                entity_type: "pillager",
-                weapon: WeaponConfig::Always(&Item::CROSSBOW),
-                armor: ArmorConfig::None,
-                enchanted: false,
-                can_pick_up_loot: false,
-            },
-        );
-
         m
     });
 
@@ -577,27 +565,12 @@ pub fn apply_vanilla_enchantments(
     EnchantmentProvider::MOB_SPAWN_EQUIPMENT.apply_to_stack(stack, special_multiplier);
 }
 
-/// Applies pillager crossbow enchantments based on raid wave or default spawn provider.
-pub fn apply_pillager_crossbow_enchantments(stack: &mut ItemStack, wave: Option<u32>) {
-    match wave {
-        Some(w) if w >= 5 => {
-            EnchantmentProvider::RAID_PILLAGER_POST_WAVE_5.apply_to_stack(stack, 0.0);
-        }
-        Some(w) if w >= 3 => {
-            EnchantmentProvider::RAID_PILLAGER_POST_WAVE_3.apply_to_stack(stack, 0.0);
-        }
-        _ => {
-            EnchantmentProvider::PILLAGER_SPAWN_CROSSBOW.apply_to_stack(stack, 0.0);
-        }
-    }
-}
-
 // ══════════════════════════════════════════════════════════════════
 // Equipment population
 //
 // Mirrors mob-specific `finalizeSpawn` / `populateDefaultEquipmentSlots`
 // from Vanilla's Zombie, AbstractSkeleton, WitherSkeleton, Piglin,
-// Pillager, Drowned, and ZombifiedPiglin.
+// Drowned, and ZombifiedPiglin.
 // ══════════════════════════════════════════════════════════════════
 
 /// Weighted random selection from a table of weapon entries.
@@ -1081,24 +1054,5 @@ mod tests {
         let mut stack = ItemStack::new(1, &Item::DIAMOND_SWORD);
         super::apply_vanilla_enchantments(&mut stack, &EquipmentSlot::MAIN_HAND, 1.0);
         assert!(stack.has_enchantments());
-    }
-
-    #[test]
-    fn pillager_crossbow_enchantments() {
-        use pumpkin_data::Enchantment;
-        use pumpkin_data::item::Item;
-        use pumpkin_data::item_stack::ItemStack;
-
-        let mut stack = ItemStack::new(1, &Item::CROSSBOW);
-        super::apply_pillager_crossbow_enchantments(&mut stack, None);
-        assert_eq!(stack.get_enchantment_level(&Enchantment::PIERCING), 1);
-
-        let mut stack3 = ItemStack::new(1, &Item::CROSSBOW);
-        super::apply_pillager_crossbow_enchantments(&mut stack3, Some(3));
-        assert_eq!(stack3.get_enchantment_level(&Enchantment::QUICK_CHARGE), 1);
-
-        let mut stack5 = ItemStack::new(1, &Item::CROSSBOW);
-        super::apply_pillager_crossbow_enchantments(&mut stack5, Some(5));
-        assert_eq!(stack5.get_enchantment_level(&Enchantment::QUICK_CHARGE), 2);
     }
 }
