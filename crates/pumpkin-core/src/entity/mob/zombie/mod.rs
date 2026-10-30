@@ -47,8 +47,9 @@ impl ZombieEntityBase {
     }
 
     pub fn with_can_break_doors(entity: Entity, can_break_doors: bool) -> Arc<Self> {
-        let zombie = Self::without_behaviour_goals(entity, can_break_doors);
+        let zombie = Self::without_behaviour_goals(entity);
         zombie.add_behaviour_goals();
+        zombie.set_can_break_doors(can_break_doors, &*zombie);
         zombie
     }
 
@@ -61,11 +62,11 @@ impl ZombieEntityBase {
 
     /// Vanilla `Zombie.registerGoals` without `addBehaviourGoals`, for subclasses that replace
     /// the behaviour goals, like the drowned.
-    pub fn without_behaviour_goals(entity: Entity, can_break_doors: bool) -> Arc<Self> {
+    pub fn without_behaviour_goals(entity: Entity) -> Arc<Self> {
         let mob_entity = MobEntity::new(entity);
         let zombie = Self {
             mob_entity,
-            can_break_doors: AtomicBool::new(can_break_doors),
+            can_break_doors: AtomicBool::new(false),
             is_baby: AtomicBool::new(false),
         };
         let mob_arc = Arc::new(zombie);
@@ -75,9 +76,6 @@ impl ZombieEntityBase {
         };
 
         let goal_selector = &mob_arc.mob_entity.goals_selector;
-        if can_break_doors {
-            goal_selector.add_goal(1, Box::new(BreakDoorGoal::default()));
-        }
         goal_selector.add_goal(4, DestroyEggGoal::new(1.0, 3));
         goal_selector.add_goal(
             8,
@@ -106,21 +104,36 @@ impl ZombieEntityBase {
         self.can_break_doors.load(Ordering::Relaxed)
     }
 
+    /// Vanilla `Zombie.setCanBreakDoors`: only a zombie with ground navigation breaks doors, and
+    /// then its paths lead through them.
     pub fn set_can_break_doors(&self, can_break_doors: bool, mob: &dyn Mob) {
+        let mut navigator = self
+            .mob_entity
+            .navigator
+            .lock()
+            .unwrap_or_else(std::sync::PoisonError::into_inner);
+        let navigates_ground = navigator.can_navigate_ground();
+        let can_break_doors = can_break_doors && navigates_ground;
         if self
             .can_break_doors
             .swap(can_break_doors, Ordering::Relaxed)
-            != can_break_doors
+            == can_break_doors
         {
-            if can_break_doors {
-                self.mob_entity
-                    .goals_selector
-                    .add_goal(1, Box::new(BreakDoorGoal::default()));
-            } else {
-                self.mob_entity
-                    .goals_selector
-                    .remove_goal::<BreakDoorGoal>(mob);
-            }
+            return;
+        }
+        if navigates_ground {
+            navigator.set_can_open_doors(can_break_doors);
+        }
+        drop(navigator);
+
+        if can_break_doors {
+            self.mob_entity
+                .goals_selector
+                .add_goal(1, Box::new(BreakDoorGoal::default()));
+        } else {
+            self.mob_entity
+                .goals_selector
+                .remove_goal::<BreakDoorGoal>(mob);
         }
     }
 }

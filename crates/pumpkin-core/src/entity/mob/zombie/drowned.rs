@@ -42,8 +42,9 @@ impl DrownedEntity {
 
     #[must_use]
     pub fn with_can_break_doors(entity: Entity, can_break_doors: bool) -> Arc<Self> {
-        let entity = ZombieEntityBase::without_behaviour_goals(entity, can_break_doors);
+        let entity = ZombieEntityBase::without_behaviour_goals(entity);
         Self::add_behaviour_goals(&entity.mob_entity);
+        entity.set_can_break_doors(can_break_doors, &*entity);
         let zombie = Self { entity };
         Arc::new(zombie)
     }
