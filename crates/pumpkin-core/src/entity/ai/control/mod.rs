@@ -12,6 +12,7 @@ pub mod look_control;
 pub mod move_control;
 pub mod smooth_swimming_look_control;
 pub mod smooth_swimming_move_control;
+pub mod vex_move_control;
 
 pub trait Control: Send + Sync {
     fn change_angle(&self, start: f32, end: f32, max_change: f32) -> f32 {
