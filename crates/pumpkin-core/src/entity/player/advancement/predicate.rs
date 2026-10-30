@@ -421,6 +421,11 @@ impl LocationPredicate {
         {
             return false;
         }
+        // Vanilla `StructureManager.getStructureWithPieceAt`; without it the position is in no
+        // structure, so "Eye Spy" and the other structure advancements are not granted anywhere.
+        if self.structure.is_some() {
+            return false;
+        }
         true
     }
 
@@ -2392,6 +2397,32 @@ mod tests {
                     Some("diamond_boots")
                 ));
             }
+            _ => panic!("Expected Location variant"),
+        }
+    }
+
+    #[test]
+    fn structure_location_predicate_needs_a_structure() {
+        let cond = CriterionConditions::parse(
+            "minecraft:location",
+            r#"{
+                "player": {
+                    "type": "minecraft:entity_properties",
+                    "predicate": { "location": { "structures": "minecraft:stronghold" } }
+                }
+            }"#,
+        );
+        match &cond {
+            CriterionConditions::Location(pred) => assert!(!pred.matches(
+                (0.0, 64.0, 0.0),
+                Some("minecraft:plains"),
+                Some("minecraft:overworld"),
+                Some("stone"),
+                None,
+                None,
+                Some("stone"),
+                None
+            )),
             _ => panic!("Expected Location variant"),
         }
     }
