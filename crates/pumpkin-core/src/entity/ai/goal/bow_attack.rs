@@ -2,7 +2,7 @@ use pumpkin_data::data_component_impl::EquipmentSlot;
 use pumpkin_data::entity::EntityType;
 use pumpkin_data::item::Item;
 use pumpkin_data::item_stack::ItemStack;
-use pumpkin_data::sound::{Sound, SoundCategory};
+use pumpkin_data::sound::Sound;
 use pumpkin_util::Hand;
 use rand::RngExt;
 use std::sync::Arc;
@@ -133,8 +133,6 @@ impl BowAttackGoal {
             divergence,
         );
 
-        world.play_sound(Sound::EntityArrowShoot, SoundCategory::Hostile, &mob_pos);
-
         let arrow: Arc<dyn EntityBase> = Arc::new(arrow);
         let entity_id = entity.entity_id;
         if let Some(server) = world_full.server.upgrade() {
@@ -150,6 +148,8 @@ impl BowAttackGoal {
             }
         }
         world_full.spawn_entity(arrow);
+        let pitch = 1.0 / mob.get_random().random::<f32>().mul_add(0.4, 0.8);
+        mob.play_entity_sound(Sound::EntitySkeletonShoot, 1.0, pitch);
     }
 }
 
