@@ -7540,6 +7540,11 @@ impl EntityBase for Player {
         self.gamemode.load() == GameMode::Spectator
     }
 
+    /// Vanilla `Player.isPickable`: spectators are not hit.
+    fn can_be_hit_by_projectile(&self) -> bool {
+        !self.is_spectator()
+    }
+
     fn can_be_seen_as_enemy(&self) -> bool {
         !self
             .abilities

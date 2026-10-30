@@ -314,7 +314,7 @@ impl FishingBobberEntity {
 
         entity.set_pos(new_pos);
 
-        let candidates = world.get_entities_at_box(&search_box);
+        let candidates = world.get_all_at_box(&search_box);
         for cand in candidates {
             if !self.owner.can_hit(&world, cand.get_entity())
                 || cand.get_entity().entity_id == entity.entity_id
