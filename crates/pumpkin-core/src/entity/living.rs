@@ -2154,7 +2154,7 @@ impl LivingEntity {
     }
 
     /// Vanilla `jumpFromGround`, with the mob's jump power and its follow-up.
-    fn jump_from_ground(&self, caller: &dyn EntityBase) {
+    pub(crate) fn jump_from_ground(&self, caller: &dyn EntityBase) {
         let mob = caller.get_mob();
         let jump_power = mob.map_or_else(
             || self.get_jump_velocity(1.0),
