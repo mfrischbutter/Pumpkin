@@ -3,7 +3,6 @@ use crate::entity::ai::goal::break_door::BreakDoorGoal;
 use crate::entity::ai::goal::destroy_egg::DestroyEggGoal;
 use crate::entity::ai::goal::look_around::RandomLookAroundGoal;
 use crate::entity::ai::goal::revenge::RevengeGoal;
-use crate::entity::ai::goal::swim::SwimGoal;
 use crate::entity::ai::goal::wander_around::WanderAroundGoal;
 use crate::entity::ai::goal::zombie_attack::ZombieAttackGoal;
 use crate::entity::mob::equipment::RegionalDifficulty;
@@ -48,7 +47,9 @@ impl ZombieEntityBase {
     }
 
     pub fn with_can_break_doors(entity: Entity, can_break_doors: bool) -> Arc<Self> {
-        Self::with_targets(entity, can_break_doors, Self::revenge_goal(), ZOMBIE_HUNTS)
+        let zombie = Self::without_behaviour_goals(entity, can_break_doors);
+        zombie.add_behaviour_goals();
+        zombie
     }
 
     /// Vanilla `HurtByTargetGoal(this).setAlertOthers(ZombifiedPiglin.class)`.
@@ -58,13 +59,9 @@ impl ZombieEntityBase {
             .alerting_others_except(|entity_type| entity_type == &EntityType::ZOMBIFIED_PIGLIN)
     }
 
-    /// For subclasses that replace the target goals, like the drowned.
-    pub fn with_targets(
-        entity: Entity,
-        can_break_doors: bool,
-        revenge: RevengeGoal,
-        hunts: &[Hunt],
-    ) -> Arc<Self> {
+    /// Vanilla `Zombie.registerGoals` without `addBehaviourGoals`, for subclasses that replace
+    /// the behaviour goals, like the drowned.
+    pub fn without_behaviour_goals(entity: Entity, can_break_doors: bool) -> Arc<Self> {
         let mob_entity = MobEntity::new(entity);
         let zombie = Self {
             mob_entity,
@@ -77,28 +74,31 @@ impl ZombieEntityBase {
             Arc::downgrade(&mob_arc)
         };
 
-        {
-            let goal_selector = &mob_arc.mob_entity.goals_selector;
-            let target_selector = &mob_arc.mob_entity.target_selector;
-
-            goal_selector.add_goal(0, Box::new(SwimGoal::default()));
-            if can_break_doors {
-                goal_selector.add_goal(1, Box::new(BreakDoorGoal::default()));
-            }
-            goal_selector.add_goal(2, ZombieAttackGoal::new(1.0, false));
-            goal_selector.add_goal(4, DestroyEggGoal::new(1.0, 3));
-            goal_selector.add_goal(7, Box::new(WanderAroundGoal::new(1.0)));
-            goal_selector.add_goal(
-                8,
-                LookAtEntityGoal::with_default(mob_weak, &EntityType::PLAYER, 8.0),
-            );
-            goal_selector.add_goal(8, Box::new(RandomLookAroundGoal::default()));
-
-            target_selector.add_goal(1, Box::new(revenge));
-            hunting::apply(target_selector, &mob_arc.mob_entity, hunts);
-        };
+        let goal_selector = &mob_arc.mob_entity.goals_selector;
+        if can_break_doors {
+            goal_selector.add_goal(1, Box::new(BreakDoorGoal::default()));
+        }
+        goal_selector.add_goal(4, DestroyEggGoal::new(1.0, 3));
+        goal_selector.add_goal(
+            8,
+            LookAtEntityGoal::with_default(mob_weak, &EntityType::PLAYER, 8.0),
+        );
+        goal_selector.add_goal(8, Box::new(RandomLookAroundGoal::default()));
 
         mob_arc
+    }
+
+    /// Vanilla `Zombie.addBehaviourGoals`.
+    // TODO: `SpearUseGoal` (2) needs mobs that use kinetic weapons and `MoveThroughVillageGoal`
+    // (6) needs village POIs.
+    fn add_behaviour_goals(&self) {
+        let goal_selector = &self.mob_entity.goals_selector;
+        goal_selector.add_goal(3, ZombieAttackGoal::new(1.0, false));
+        goal_selector.add_goal(7, Box::new(WanderAroundGoal::water_avoiding(1.0)));
+
+        let target_selector = &self.mob_entity.target_selector;
+        target_selector.add_goal(1, Box::new(Self::revenge_goal()));
+        hunting::apply(target_selector, &self.mob_entity, ZOMBIE_HUNTS);
     }
 
     #[must_use]

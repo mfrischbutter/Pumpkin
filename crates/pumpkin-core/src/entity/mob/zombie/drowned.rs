@@ -4,6 +4,9 @@ use pumpkin_util::math::position::BlockPos;
 use std::sync::Arc;
 
 use crate::entity::ai::behavior::hunting::{self, Hunt};
+use crate::entity::ai::goal::swim::SwimGoal;
+use crate::entity::ai::goal::wander_around::WanderAroundGoal;
+use crate::entity::ai::goal::zombie_attack::ZombieAttackGoal;
 use crate::entity::ai::target_match::TargetMatch;
 use crate::entity::living::LivingEntity;
 use crate::entity::mob::zombie::ZombieEntityBase;
@@ -39,15 +42,29 @@ impl DrownedEntity {
 
     #[must_use]
     pub fn with_can_break_doors(entity: Entity, can_break_doors: bool) -> Arc<Self> {
-        let entity = ZombieEntityBase::with_targets(
-            entity,
-            can_break_doors,
-            ZombieEntityBase::revenge_goal()
-                .ignoring(|entity_type| entity_type == &EntityType::DROWNED),
-            DROWNED_HUNTS,
-        );
+        let entity = ZombieEntityBase::without_behaviour_goals(entity, can_break_doors);
+        Self::add_behaviour_goals(&entity.mob_entity);
         let zombie = Self { entity };
         Arc::new(zombie)
+    }
+
+    // TODO: vanilla `Drowned.addBehaviourGoals`; until then the drowned keeps the goals the
+    // zombies had before they got their vanilla ones.
+    fn add_behaviour_goals(mob: &MobEntity) {
+        let goal_selector = &mob.goals_selector;
+        goal_selector.add_goal(0, Box::new(SwimGoal::default()));
+        goal_selector.add_goal(2, ZombieAttackGoal::new(1.0, false));
+        goal_selector.add_goal(7, Box::new(WanderAroundGoal::new(1.0)));
+
+        let target_selector = &mob.target_selector;
+        target_selector.add_goal(
+            1,
+            Box::new(
+                ZombieEntityBase::revenge_goal()
+                    .ignoring(|entity_type| entity_type == &EntityType::DROWNED),
+            ),
+        );
+        hunting::apply(target_selector, mob, DROWNED_HUNTS);
     }
 }
 
