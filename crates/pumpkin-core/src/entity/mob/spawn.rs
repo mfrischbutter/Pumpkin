@@ -4,6 +4,7 @@ use std::sync::Arc;
 
 use pumpkin_data::attributes::Attributes;
 use pumpkin_data::effect::StatusEffect;
+use pumpkin_data::entity_variant::RabbitVariant;
 use rand::RngExt;
 
 use crate::entity::EntityBase;
@@ -32,6 +33,11 @@ pub enum SpawnGroupData {
     /// Vanilla `FoxGroupData`: the group's variant and how many joined so far.
     Fox {
         variant: FoxVariant,
+        size: u32,
+    },
+    /// Vanilla `RabbitGroupData`: the group's variant and how many joined so far.
+    Rabbit {
+        variant: RabbitVariant,
         size: u32,
     },
 }
