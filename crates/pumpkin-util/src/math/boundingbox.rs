@@ -502,4 +502,15 @@ impl EntityDimensions {
             eye_height,
         }
     }
+
+    /// Returns these dimensions scaled by `factor`, the eye height with them (vanilla
+    /// `EntityDimensions.scale`).
+    #[must_use]
+    pub fn scale(self, factor: f32) -> Self {
+        Self::new(
+            self.width * factor,
+            self.height * factor,
+            self.eye_height * factor,
+        )
+    }
 }

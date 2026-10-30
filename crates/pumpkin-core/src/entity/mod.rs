@@ -1046,6 +1046,9 @@ pub struct Entity {
     ///The size (width and height) of the bounding box
     pub entity_dimension: AtomicCell<EntityDimensions>,
     default_dimensions: AtomicCell<Option<EntityDimensions>>,
+    /// Vanilla `LivingEntity.getScale`: the scale attribute's value, 1 for entities without
+    /// attributes.
+    scale: AtomicCell<f32>,
     /// Whether this entity is invulnerable to all damage
     pub invulnerable: AtomicBool,
     /// List of damage types this entity is immune to
@@ -1271,6 +1274,7 @@ impl Entity {
             bounding_box,
             entity_dimension: AtomicCell::new(bounding_box_size),
             default_dimensions: AtomicCell::new(None),
+            scale: AtomicCell::new(1.0),
             invulnerable: AtomicBool::new(false),
             damage_immunities: std::sync::Mutex::new(Vec::new()),
             data: AtomicI32::new(0),
@@ -1542,16 +1546,27 @@ impl Entity {
         if self.entity_type == &EntityType::PLAYER {
             match pose {
                 EntityPose::FallFlying | EntityPose::Swimming | EntityPose::SpinAttack => {
-                    return EntityDimensions::new(0.6, 0.6, 0.4);
+                    return EntityDimensions::new(0.6, 0.6, 0.4).scale(self.scale.load());
                 }
-                EntityPose::Crouching => return EntityDimensions::new(0.6, 1.5, 1.27),
+                EntityPose::Crouching => {
+                    return EntityDimensions::new(0.6, 1.5, 1.27).scale(self.scale.load());
+                }
+                // Vanilla `EntityDimensions.fixed`: the scale does not apply.
                 EntityPose::Dying => return EntityDimensions::new(0.2, 0.2, 1.62),
                 _ => {}
             }
         }
-        self.default_dimensions
+        let dimensions = self
+            .default_dimensions
             .load()
-            .unwrap_or_else(|| Self::type_dimensions(self.entity_type))
+            .unwrap_or_else(|| Self::type_dimensions(self.entity_type));
+        dimensions.scale(self.scale.load())
+    }
+
+    /// Vanilla `LivingEntity.onAttributeUpdated` for the scale attribute: resizes the entity.
+    pub fn set_scale(&self, scale: f32) {
+        self.scale.store(scale);
+        self.refresh_dimensions();
     }
 
     pub fn set_default_dimensions(&self, dimensions: EntityDimensions) {

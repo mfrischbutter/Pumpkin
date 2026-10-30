@@ -1017,10 +1017,22 @@ impl LivingEntity {
             .iter_mut()
             .filter_map(|(id, instance)| std::mem::take(instance.updated.get_mut()).then_some(*id))
             .collect();
+        for &attribute in &updated {
+            self.on_attribute_updated(attribute);
+        }
         if let Some(mob) = caller.get_mob() {
             for attribute in updated {
                 mob.get_mob_entity().on_attribute_updated(attribute);
             }
+        }
+    }
+
+    /// Vanilla `LivingEntity.onAttributeUpdated`: a scale change resizes the entity.
+    fn on_attribute_updated(&self, attribute: u8) {
+        if attribute == Attributes::SCALE.id {
+            let scale = self.get_attribute_value(&Attributes::SCALE) as f32;
+            self.entity
+                .set_scale(sanitize_scale(self.entity.entity_type, scale));
         }
     }
 
@@ -4371,6 +4383,35 @@ const fn consume_effect_probability_applies(probability: f32, random: f32) -> bo
     random < probability
 }
 
+/// Vanilla `sanitizeScale` with the overrides of the ender dragon, shulker and happy ghast.
+fn sanitize_scale(entity_type: &EntityType, scale: f32) -> f32 {
+    if entity_type == &EntityType::ENDER_DRAGON {
+        1.0
+    } else if entity_type == &EntityType::SHULKER {
+        scale.min(3.0)
+    } else if entity_type == &EntityType::HAPPY_GHAST {
+        scale.min(1.0)
+    } else {
+        scale
+    }
+}
+
+#[cfg(test)]
+mod scale_tests {
+    use super::sanitize_scale;
+    use pumpkin_data::entity::EntityType;
+
+    #[test]
+    fn scale_caps_match_vanilla_overrides() {
+        assert!((sanitize_scale(&EntityType::ENDER_DRAGON, 4.0) - 1.0).abs() < f32::EPSILON);
+        assert!((sanitize_scale(&EntityType::SHULKER, 5.0) - 3.0).abs() < f32::EPSILON);
+        assert!((sanitize_scale(&EntityType::SHULKER, 2.0) - 2.0).abs() < f32::EPSILON);
+        assert!((sanitize_scale(&EntityType::HAPPY_GHAST, 2.0) - 1.0).abs() < f32::EPSILON);
+        assert!((sanitize_scale(&EntityType::HAPPY_GHAST, 0.5) - 0.5).abs() < f32::EPSILON);
+        assert!((sanitize_scale(&EntityType::COW, 5.0) - 5.0).abs() < f32::EPSILON);
+    }
+}
+
 #[cfg(test)]
 mod consumable_effect_tests {
     use super::{consume_effect_probability_applies, random_teleport_coordinate};
@@ -4745,6 +4786,28 @@ mod ai_step_tests {
         world.level.shutdown().await;
         assert!(!initial);
         assert!(updated);
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn scale_attribute_resizes_the_bounding_box() -> TestResult {
+        let folder = tempfile::tempdir()?;
+        let world = world(&folder);
+        let mob = probe(world.clone(), Arc::new(AtomicUsize::new(0)));
+        let living = &mob.mob.living_entity;
+        let entity = &living.entity;
+        let [width, height] = EntityType::COW.dimension;
+
+        living.set_attribute_base(&Attributes::SCALE, 2.0);
+        living.refresh_dirty_attributes(&mob);
+        let scaled = entity.entity_dimension.load();
+        let scaled_box = entity.bounding_box.load();
+
+        world.level.shutdown().await;
+
+        assert!((scaled.width - width * 2.0).abs() < f32::EPSILON);
+        assert!((scaled.height - height * 2.0).abs() < f32::EPSILON);
+        assert!((scaled_box.max.y - scaled_box.min.y - f64::from(height) * 2.0).abs() < 1e-6);
         Ok(())
     }
 

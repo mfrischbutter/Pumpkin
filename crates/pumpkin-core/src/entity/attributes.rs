@@ -144,10 +144,11 @@ impl AttributeInstance {
         for modifier in modifiers {
             self.add_or_replace_modifier(modifier.clone());
         }
-        // Vanilla ends with `setDirty()`. A save without modifiers leaves the
-        // cached value built from the constructor base, which would otherwise
-        // override the restored base.
-        self.dirty.store(true, Ordering::Relaxed);
+        // Vanilla ends with `setDirty()`, which also queues the attribute
+        // update (a saved scale resizes the entity on its first tick). A save
+        // without modifiers leaves the cached value built from the constructor
+        // base, which would otherwise override the restored base.
+        self.mark_dirty();
     }
 }
 
@@ -587,5 +588,7 @@ mod tests {
             .get(&Attributes::SCALE.id)
             .expect("a bare `scale` id should resolve to minecraft:scale");
         assert!((restored.value() - 2.0).abs() < f64::EPSILON);
+        // Queued like vanilla `setDirty`, so the loaded scale resizes the entity.
+        assert!(restored.updated.load(Ordering::Relaxed));
     }
 }
