@@ -9,11 +9,13 @@ use pumpkin_protocol::java::client::play::{CGameEvent, GameEvent};
 
 use pumpkin_util::math::position::BlockPos;
 
+use crate::entity::ai::behavior::hunting;
+use crate::entity::mob::guardian::GUARDIAN_HUNTS;
 use crate::entity::{
     Entity, EntityBase,
     ai::goal::{
-        active_target::ActiveTargetGoal, look_around::RandomLookAroundGoal,
-        look_at_entity::LookAtEntityGoal, wander_around::WanderAroundGoal,
+        look_around::RandomLookAroundGoal, look_at_entity::LookAtEntityGoal,
+        wander_around::WanderAroundGoal,
     },
     mob::{
         Mob, MobEntity,
@@ -53,10 +55,7 @@ impl ElderGuardianEntity {
             goal_selector.add_goal(6, Box::new(RandomLookAroundGoal::default()));
 
             let target_selector = &mob_arc.mob_entity.target_selector;
-            target_selector.add_goal(
-                1,
-                ActiveTargetGoal::with_default(&mob_arc.mob_entity, &EntityType::PLAYER, true),
-            );
+            hunting::apply(target_selector, &mob_arc.mob_entity, GUARDIAN_HUNTS);
         };
 
         mob_arc

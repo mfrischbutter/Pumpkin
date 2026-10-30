@@ -38,6 +38,9 @@ impl JavaClient {
             ));
             return;
         };
+        if !player.can_interact_with_entity(target.as_ref(), 1.0) {
+            return;
+        }
         let mut event = PlayerInteractEntityEvent::new(
             player,
             target,

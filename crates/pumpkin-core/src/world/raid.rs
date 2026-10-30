@@ -626,6 +626,9 @@ impl Raid {
                                 pumpkin_data::statistic::CustomStatistic::RaidWin as i32,
                                 1,
                             );
+                            player.trigger_advancement(
+                                crate::entity::player::advancement::trigger::AdvancementTrigger::HeroOfTheVillage,
+                            );
                         }
                     }
                 }

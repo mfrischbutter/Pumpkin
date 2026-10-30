@@ -14,8 +14,10 @@ use pumpkin_data::potion::Potion;
 use pumpkin_data::sound::{Sound, SoundCategory};
 use pumpkin_data::tag::{self, Taggable};
 use pumpkin_data::tracked_data;
+use pumpkin_protocol::bedrock::server::ActorEventID;
 use rand::RngExt;
 
+use crate::entity::ai::target_match::TargetMatch;
 use crate::entity::{
     Entity, EntityBase,
     ai::goal::{
@@ -31,11 +33,12 @@ use crate::entity::{
         patrol::{LongDistancePatrolGoal, PatrolData, PatrollingMonster},
         raider::{
             ObtainRaidLeaderBannerGoal, PathfindToRaidGoal, Raider, RaiderCelebrationGoal,
-            RaiderData, RaiderMoveThroughVillageGoal,
+            RaiderData, RaiderMoveThroughVillageGoal, is_raider,
         },
     },
     projectile::splash_potion::SplashPotionEntity,
 };
+use crate::plugin::api::events::entity::entity_target::TargetReason;
 use crate::world::World;
 use crate::world::game_event::GameEventContext;
 
@@ -120,12 +123,7 @@ impl WitchEntity {
             );
             goal_selector.add_goal(3, Box::new(RandomLookAroundGoal::default()));
 
-            target_selector.add_goal(
-                1,
-                Box::new(RevengeGoal::new(true).ignoring(|entity_type| {
-                    entity_type.has_tag(&tag::EntityType::MINECRAFT_RAIDERS)
-                })),
-            );
+            target_selector.add_goal(1, Box::new(RevengeGoal::new(true).ignoring(is_raider)));
             target_selector.add_goal(
                 2,
                 Box::new(NearestHealableRaiderTargetGoal::new(&mob_arc.mob_entity)),
@@ -216,7 +214,7 @@ impl WitchEntity {
                 } else {
                     &Potion::REGENERATION
                 };
-                self.set_mob_target(None);
+                self.set_mob_target(None, TargetReason::Unknown);
             } else if dist >= 8.0 && !target_living.has_effect(&StatusEffect::SLOWNESS) {
                 potion = &Potion::SLOWNESS;
             } else if target_living.health.load() >= 8.0
@@ -314,7 +312,6 @@ impl WitchEntity {
                     id: SPEED_MODIFIER_DRINKING_ID.to_string(),
                     amount: SPEED_MODIFIER_DRINKING_AMOUNT,
                     operation: ModifierOperation::Add,
-                    permanent: false,
                 });
             });
     }
@@ -340,7 +337,6 @@ impl WitchEntity {
                 effects,
                 scale,
                 crate::item::potion::PotionApplicationSource::Normal,
-                None,
                 None,
             );
         }
@@ -376,11 +372,16 @@ impl NearestHealableRaiderTargetGoal {
     fn new(mob: &MobEntity) -> Self {
         Self {
             // `canUse` skips the random interval and searches right away.
-            target_goal: ActiveTargetGoal::predicated(mob, 0, true, |target, _| {
-                let entity_type = target.entity.entity_type;
-                entity_type.has_tag(&tag::EntityType::MINECRAFT_RAIDERS)
-                    && entity_type != &EntityType::WITCH
-            }),
+            target_goal: Box::new(ActiveTargetGoal::new(
+                mob,
+                TargetMatch::Tag(&tag::EntityType::MINECRAFT_RAIDERS),
+                0,
+                true,
+                false,
+                Some(|target: &LivingEntity, _: &World| {
+                    target.entity.entity_type != &EntityType::WITCH
+                }),
+            )),
         }
     }
 }
@@ -477,7 +478,7 @@ impl Mob for WitchEntity {
             living.entity.world.load().send_entity_status(
                 &living.entity,
                 EntityStatus::WitchHatMagic,
-                None,
+                ActorEventID::WitchHatMagic,
             );
         }
     }

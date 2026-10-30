@@ -385,8 +385,10 @@ impl EntityBase for AreaEffectCloudEntity {
                     effs_clone,
                     scale,
                     crate::item::potion::PotionApplicationSource::AreaEffectCloud,
-                    None,
-                    None,
+                    Some(crate::entity::living::EffectSource {
+                        direct: self,
+                        owner: None,
+                    }),
                 );
             }
 

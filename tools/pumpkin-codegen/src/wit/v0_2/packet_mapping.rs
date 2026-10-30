@@ -525,6 +525,12 @@ fn convert_value(
                     } else {
                         format!("VarInt({})", src)
                     }
+                } else if type_ident == "i8" {
+                    if is_ref {
+                        format!("&{}", src)
+                    } else {
+                        src.to_string()
+                    }
                 } else {
                     if is_ref {
                         prep.push_str(&format!(
@@ -546,6 +552,12 @@ fn convert_value(
                     }
                 } else if type_ident == "VarInt" {
                     format!("{}.0.try_into().unwrap()", src)
+                } else if type_ident == "i8" {
+                    if is_ref {
+                        format!("*{}", src)
+                    } else {
+                        src.to_string()
+                    }
                 } else {
                     format!("{}.try_into().unwrap()", src)
                 }

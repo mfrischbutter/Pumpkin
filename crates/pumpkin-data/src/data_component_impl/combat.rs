@@ -1550,6 +1550,7 @@ impl DataComponentImpl for AdditionalTradeCostImpl {
     default_impl!(AdditionalTradeCost);
 }
 
+/// Scales how far the listed mobs notice the wearer, vanilla `MobVisibility`. Mob heads.
 #[derive(Clone, Debug, PartialEq)]
 pub struct MobVisibilityImpl {
     pub targeting_entity_types: IDSet<EntityType>,
@@ -1562,12 +1563,20 @@ impl Hash for MobVisibilityImpl {
     }
 }
 impl MobVisibilityImpl {
+    pub const MAX_VISIBILITY: f32 = 10.0;
+
+    /// Vanilla `floatRange(0, MAX_VISIBILITY)`, which also rejects NaN.
+    #[must_use]
+    pub fn is_valid_visibility(visibility: f32) -> bool {
+        (0.0..=Self::MAX_VISIBILITY).contains(&visibility)
+    }
+
     pub fn read_data(data: &NbtTag) -> Option<Self> {
         let compound = data.extract_compound()?;
         let targeting_entity_types =
             IDSet::<EntityType>::read(compound.get("targeting_entity_types")?)?;
         let visibility = compound.get_float("visibility")?;
-        Some(Self {
+        Self::is_valid_visibility(visibility).then_some(Self {
             targeting_entity_types,
             visibility,
         })

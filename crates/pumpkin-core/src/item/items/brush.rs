@@ -47,6 +47,11 @@ fn get_archaeology_loot(
         if let Ok(mut table_guard) = brushable.loot_table.lock()
             && let Some(loot_key) = table_guard.take()
         {
+            player.trigger_advancement(
+                crate::entity::player::advancement::trigger::AdvancementTrigger::PlayerGeneratesContainerLoot {
+                    loot_table_id: loot_key.clone(),
+                },
+            );
             let seed = brushable.loot_table_seed.lock().map_or(0, |g| *g);
             let actual_seed = if seed == 0 { rand::random() } else { seed };
             let stripped = loot_key.strip_prefix("minecraft:").unwrap_or(&loot_key);
@@ -77,6 +82,12 @@ fn get_archaeology_loot(
     } else {
         "minecraft:archaeology/trail_ruins_common"
     };
+
+    player.trigger_advancement(
+        crate::entity::player::advancement::trigger::AdvancementTrigger::PlayerGeneratesContainerLoot {
+            loot_table_id: loot_key.to_string(),
+        },
+    );
 
     let mut items = world
         .get_loot_table(loot_key)

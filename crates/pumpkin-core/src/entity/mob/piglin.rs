@@ -5,6 +5,7 @@ use std::sync::{
 
 use crossbeam::atomic::AtomicCell;
 use pumpkin_data::Block;
+use pumpkin_data::BlockState;
 use pumpkin_data::Enchantment;
 use pumpkin_data::attributes::Attributes;
 use pumpkin_data::block_properties::CampfireLikeProperties;
@@ -20,6 +21,7 @@ use pumpkin_nbt::tag::NbtTag;
 use pumpkin_util::math::boundingbox::EntityDimensions;
 use pumpkin_util::math::position::BlockPos;
 
+use crate::entity::ai::target_match::TargetMatch;
 use crate::entity::item::ItemEntity;
 use crate::entity::living::LivingEntity;
 use crate::entity::mob::{MobMetadata, equipment as mob_equipment};
@@ -156,15 +158,7 @@ impl PiglinEntity {
 
             target_selector.add_goal(
                 3,
-                ActiveTargetGoal::with_default(
-                    &mob_arc.mob_entity,
-                    &EntityType::WITHER_SKELETON,
-                    true,
-                ),
-            );
-            target_selector.add_goal(
-                3,
-                ActiveTargetGoal::with_default(&mob_arc.mob_entity, &EntityType::WITHER, true),
+                ActiveTargetGoal::with_default(&mob_arc.mob_entity, TargetMatch::WITHER_LIKE, true),
             );
 
             let piglin_clone = mob_arc.clone();
@@ -814,6 +808,27 @@ impl PiglinEntity {
         }
 
         if PiglinAi::is_loved_item(&taken) {
+            if let Some(thrower_uuid) = item.get_thrower()
+                && let Some(thrower_player) = self
+                    .mob_entity
+                    .living_entity
+                    .entity
+                    .world
+                    .load()
+                    .get_player_by_uuid(thrower_uuid)
+            {
+                let is_baby = self.is_baby();
+                let player_wearing_safe_armor =
+                    PiglinAi::is_wearing_safe_armor(&thrower_player.living_entity);
+                thrower_player.trigger_advancement(
+                    crate::entity::player::advancement::trigger::AdvancementTrigger::ThrownItemPickedUpByEntity {
+                        entity_type: "minecraft:piglin".to_string(),
+                        item_id: taken.item.registry_key.to_string(),
+                        is_baby,
+                        player_wearing_safe_armor,
+                    },
+                );
+            }
             self.time_trying_to_reach_item.store(-1, Ordering::Relaxed);
             self.hold_in_off_hand(taken);
             self.admire_gold_item();
@@ -986,6 +1001,10 @@ impl PiglinEntity {
 }
 
 impl Mob for PiglinEntity {
+    fn mob_play_step_sound(&self, _pos: &BlockPos, _state: &BlockState) {
+        self.play_entity_sound(Sound::EntityPiglinStep, 0.15, 1.0);
+    }
+
     fn mob_metadata(&self) -> Option<MobMetadata> {
         self.is_baby().then(|| MobMetadata::new().baby(true))
     }

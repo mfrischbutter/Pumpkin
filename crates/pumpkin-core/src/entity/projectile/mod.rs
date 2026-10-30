@@ -1,5 +1,6 @@
 use super::{Entity, EntityBase, living::LivingEntity};
 use crate::plugin::api::events::entity::projectile_hit::ProjectileHitEvent;
+use crate::world::World;
 use pumpkin_data::BlockDirection;
 use pumpkin_data::entity::EntityType;
 use pumpkin_protocol::java::client::play::CEntityVelocity;
@@ -20,6 +21,7 @@ pub mod firework_rocket;
 pub mod fishing_bobber;
 pub mod lingering_potion;
 pub mod llama_spit;
+pub mod owner;
 pub mod shulker_bullet;
 pub mod small_fireball;
 pub mod snowball;
@@ -35,8 +37,8 @@ pub fn is_projectile(entity_type: &EntityType) -> bool {
     *entity_type == EntityType::ARROW
         || *entity_type == EntityType::TRIDENT
         || *entity_type == EntityType::EGG
-        || *entity_type == EntityType::SNOWBALL
         || *entity_type == EntityType::EXPERIENCE_BOTTLE
+        || *entity_type == EntityType::SNOWBALL
         || *entity_type == EntityType::FIREWORK_ROCKET
         || *entity_type == EntityType::WIND_CHARGE
         || *entity_type == EntityType::SPLASH_POTION
@@ -76,7 +78,7 @@ pub fn apply_on_projectile_spawned(
 
 pub struct ThrownItemEntity {
     pub entity: Entity,
-    pub owner_id: Option<i32>,
+    pub owner: owner::ProjectileOwner,
     pub collides_with_projectiles: bool,
     pub has_hit: AtomicBool,
     pub gravity: f64,
@@ -89,7 +91,7 @@ impl ThrownItemEntity {
         entity.pos.store(owner_pos);
         Self {
             entity,
-            owner_id: Some(owner.entity_id),
+            owner: owner::ProjectileOwner::new(Some(owner)),
             collides_with_projectiles: false,
             has_hit: AtomicBool::new(false),
             gravity,
@@ -142,6 +144,7 @@ impl ThrownItemEntity {
         let entity = self.get_entity();
         let world = entity.world.load();
 
+        self.owner.check_left_owner(entity);
         entity.update_last_pos();
 
         // Apply gravity and inertia
@@ -214,7 +217,7 @@ impl ThrownItemEntity {
         // Entity collisions
         let candidates = world.get_entities_at_box(&search_box);
         for cand in candidates {
-            if self.should_skip_collision(entity, &cand) {
+            if self.should_skip_collision(&world, entity, &cand) {
                 continue;
             }
 
@@ -260,16 +263,18 @@ impl ThrownItemEntity {
     }
 
     /// Returns if collision should be skipped (e.g. owner or projectile vs projectile)
-    fn should_skip_collision(&self, self_ent: &Entity, other: &Arc<dyn EntityBase>) -> bool {
+    fn should_skip_collision(
+        &self,
+        world: &World,
+        self_ent: &Entity,
+        other: &Arc<dyn EntityBase>,
+    ) -> bool {
         let other_ent = other.get_entity();
         if other_ent.entity_id == self_ent.entity_id {
             return true;
         }
 
-        // Skip owner for initial frames
-        if Some(other_ent.entity_id) == self.owner_id
-            && self_ent.tick_count.load(Ordering::Relaxed) < 5
-        {
+        if !self.owner.can_hit(world, other_ent) {
             return true;
         }
 

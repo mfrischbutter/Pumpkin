@@ -1,3 +1,4 @@
+use crate::entity::projectile::owner::ProjectileOwner;
 use std::sync::atomic::AtomicBool;
 use std::sync::{Arc, RwLock};
 
@@ -25,7 +26,7 @@ impl SplashPotionEntity {
         entity.set_velocity(Vector3::new(0.0, 0.1, 0.0));
         let thrown = ThrownItemEntity {
             entity,
-            owner_id: None,
+            owner: ProjectileOwner::none(),
             collides_with_projectiles: false,
             has_hit: AtomicBool::new(false),
             gravity: GRAVITY,
@@ -99,8 +100,8 @@ pub(crate) fn extinguish_fire_if_water_potion(
 }
 
 impl EntityBase for SplashPotionEntity {
-    fn get_owner_id(&self) -> Option<i32> {
-        self.thrown.owner_id
+    fn get_projectile_owner(&self) -> Option<&ProjectileOwner> {
+        Some(&self.thrown.owner)
     }
 
     fn get_projectile_item(&self) -> Option<ItemStack> {
@@ -158,7 +159,7 @@ impl EntityBase for SplashPotionEntity {
         world.send_entity_status(
             self.get_entity(),
             pumpkin_data::entity::EntityStatus::Death,
-            Some(pumpkin_protocol::bedrock::server::actor_event::ActorEventID::Death),
+            pumpkin_protocol::bedrock::server::actor_event::ActorEventID::Death,
         );
 
         let effects = crate::item::potion::PotionContents::read_potion_effects(&stack);
@@ -272,10 +273,7 @@ impl EntityBase for SplashPotionEntity {
             affected.retain(|(c, _)| event.affected_entities.contains(&c.get_entity().entity_id));
         }
 
-        let owner = self
-            .thrown
-            .owner_id
-            .and_then(|id| world.get_entity_by_id(id));
+        let owner = self.thrown.owner.get(&world);
         for (cand, scale) in affected {
             if let Some(living) = cand.get_living_entity() {
                 crate::item::potion::PotionContents::apply_effects_to(
@@ -283,8 +281,10 @@ impl EntityBase for SplashPotionEntity {
                     effects.clone(),
                     scale,
                     crate::item::potion::PotionApplicationSource::Normal,
-                    Some(self.get_entity()),
-                    owner.as_deref(),
+                    Some(crate::entity::living::EffectSource {
+                        direct: self,
+                        owner: owner.as_deref(),
+                    }),
                 );
             }
         }
