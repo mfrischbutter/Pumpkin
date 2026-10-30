@@ -1207,7 +1207,9 @@ pub enum CriterionConditions {
     StartedRiding(Option<EntityPredicate>),
     SummonedEntity(EntityPredicate),
     CrafterRecipeCrafted(String),
-    EffectsChanged,
+    /// The effect ids the player must all have, or `None` when they are unknown (the generated
+    /// vanilla conditions carry none), which never matches.
+    EffectsChanged(Option<Vec<String>>),
     SpearMobs {
         count: Option<i32>,
     },
@@ -1573,7 +1575,7 @@ impl From<pumpkin_data::advancement_data::AdvancementCondition> for CriterionCon
             AC::StartedRiding(p) => Self::StartedRiding(p.as_ref().map(from_entity_condition)),
             AC::SummonedEntity(e) => Self::SummonedEntity(from_entity_condition(&e)),
             AC::CrafterRecipeCrafted(r) => Self::CrafterRecipeCrafted(r.to_string()),
-            AC::EffectsChanged => Self::EffectsChanged,
+            AC::EffectsChanged => Self::EffectsChanged(None),
             AC::SpearMobs { count } => Self::SpearMobs { count },
             AC::Impossible => Self::Impossible,
             AC::Empty | AC::Tick => Self::Tick,
@@ -1999,7 +2001,12 @@ impl CriterionConditions {
                     .unwrap_or("")
                     .to_string(),
             ),
-            "minecraft:effects_changed" => Self::EffectsChanged,
+            "minecraft:effects_changed" => Self::EffectsChanged(Some(
+                val.get("effects")
+                    .and_then(Value::as_object)
+                    .map(|effects| effects.keys().cloned().collect())
+                    .unwrap_or_default(),
+            )),
             "minecraft:spear_mobs" => Self::SpearMobs {
                 count: val.get("count").and_then(Value::as_i64).map(|v| v as i32),
             },

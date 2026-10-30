@@ -960,7 +960,17 @@ impl Player {
             }
 
             AdvancementTrigger::EffectsChanged => {
-                self.trigger_criterion_event("minecraft:effects_changed", |_cond| true);
+                self.trigger_criterion_event("minecraft:effects_changed", |cond| match cond {
+                    // Vanilla `MobEffectsPredicate`: every listed effect is active.
+                    CriterionConditions::EffectsChanged(Some(effects)) => {
+                        effects.iter().all(|id| {
+                            pumpkin_data::effect::StatusEffect::from_minecraft_name(id)
+                                .or_else(|| pumpkin_data::effect::StatusEffect::from_name(id))
+                                .is_some_and(|effect| self.has_effect(effect))
+                        })
+                    }
+                    _ => false,
+                });
             }
 
             AdvancementTrigger::SpearMobs { count } => {
