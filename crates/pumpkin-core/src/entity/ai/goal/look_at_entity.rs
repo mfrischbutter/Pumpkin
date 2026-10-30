@@ -17,7 +17,7 @@ pub struct LookAtEntityGoal {
     look_time: i32,
     chance: f32,
     look_forward: bool,
-    target_type: &'static EntityType,
+    target_match: TargetMatch,
     target_predicate: TargetPredicate,
 }
 
@@ -30,7 +30,26 @@ impl LookAtEntityGoal {
         chance: f32,
         look_forward: bool,
     ) -> Self {
-        let target_predicate = Self::create_target_predicate(mob_weak, target_type, range);
+        Self::matching(
+            mob_weak,
+            TargetMatch::Type(target_type),
+            range,
+            chance,
+            look_forward,
+        )
+    }
+
+    /// Looks at the nearest entity `target_match` accepts, vanilla `LookAtPlayerGoal` with a
+    /// class like `Mob.class`.
+    #[must_use]
+    pub fn matching(
+        mob_weak: Weak<dyn Mob>,
+        target_match: TargetMatch,
+        range: f32,
+        chance: f32,
+        look_forward: bool,
+    ) -> Self {
+        let target_predicate = Self::create_target_predicate(mob_weak, target_match, range);
         Self {
             goal_control: Controls::LOOK,
             target: None,
@@ -38,7 +57,7 @@ impl LookAtEntityGoal {
             look_time: 0,
             chance,
             look_forward,
-            target_type,
+            target_match,
             target_predicate,
         }
     }
@@ -54,12 +73,12 @@ impl LookAtEntityGoal {
 
     fn create_target_predicate(
         mob_weak: Weak<dyn Mob>,
-        target_type: &'static EntityType,
+        target_match: TargetMatch,
         range: f32,
     ) -> TargetPredicate {
         let mut target_predicate = TargetPredicate::create_non_attackable();
         target_predicate.base_max_distance = f64::from(range);
-        if target_type == &EntityType::PLAYER {
+        if target_match.is_player() {
             target_predicate.set_predicate(move |living_entity, _world| {
                 mob_weak.upgrade().is_some_and(|mob_arc| {
                     let predicate = EntityPredicate::Rides(mob_arc.get_entity());
@@ -74,9 +93,13 @@ impl LookAtEntityGoal {
 impl Goal for LookAtEntityGoal {
     fn tick_reach(&self, _mob: &dyn Mob, _running: bool) -> Option<GoalReach> {
         let range = f64::from(self.range);
-        let looks_at_players = *self.target_type == EntityType::PLAYER;
+        let looks_at_players = self.target_match.matches(&EntityType::PLAYER);
         Some(GoalReach {
-            entities: if looks_at_players { 0.0 } else { range },
+            entities: if self.target_match.is_player() {
+                0.0
+            } else {
+                range
+            },
             // The player search is unbounded, only the visibility-scaled range limits it.
             players: if looks_at_players {
                 range * f64::from(MobVisibilityImpl::MAX_VISIBILITY)
@@ -116,10 +139,9 @@ impl Goal for LookAtEntityGoal {
 
         // The conditions filter the candidates instead of being applied to the nearest one.
         let predicate = &self.target_predicate;
-        self.target =
-            TargetMatch::Type(self.target_type).find_nearest(&world, &area, |candidate| {
-                predicate.test(&world, Some(mob), candidate)
-            });
+        self.target = self.target_match.find_nearest(&world, &area, |candidate| {
+            predicate.test(&world, Some(mob), candidate)
+        });
 
         self.target.is_some()
     }
