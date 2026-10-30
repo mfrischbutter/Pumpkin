@@ -4,7 +4,7 @@
 //! vanilla Minecraft's `populateDefaultEquipmentSlots` and
 //! `populateDefaultEquipmentEnchantments` behaviour. It features:
 //!
-//! - A data-driven `EQUIPMENT_REGISTRY` mapping 13 mob types to their weapon/armor
+//! - A data-driven `EQUIPMENT_REGISTRY` mapping mob types to their weapon/armor
 //!   configurations.
 //! - Exact vanilla `RegionalDifficulty` computation (game time, chunk inhabited time,
 //!   moon phase).
@@ -437,18 +437,6 @@ pub static EQUIPMENT_REGISTRY: LazyLock<HashMap<&'static str, MobEquipmentDef>> 
             },
         );
 
-        // ─── Vindicator ───
-        m.insert(
-            "vindicator",
-            MobEquipmentDef {
-                entity_type: "vindicator",
-                weapon: WeaponConfig::Always(&Item::IRON_AXE),
-                armor: ArmorConfig::None,
-                enchanted: true,
-                can_pick_up_loot: false,
-            },
-        );
-
         m
     });
 
@@ -604,25 +592,12 @@ pub fn apply_pillager_crossbow_enchantments(stack: &mut ItemStack, wave: Option<
     }
 }
 
-/// Applies vindicator weapon enchantments based on raid wave.
-pub fn apply_vindicator_weapon_enchantments(stack: &mut ItemStack, wave: Option<u32>) {
-    match wave {
-        Some(w) if w >= 5 => {
-            EnchantmentProvider::RAID_VINDICATOR_POST_WAVE_5.apply_to_stack(stack, 0.0);
-        }
-        Some(_) => {
-            EnchantmentProvider::RAID_VINDICATOR.apply_to_stack(stack, 0.0);
-        }
-        None => {}
-    }
-}
-
 // ══════════════════════════════════════════════════════════════════
 // Equipment population
 //
 // Mirrors mob-specific `finalizeSpawn` / `populateDefaultEquipmentSlots`
 // from Vanilla's Zombie, AbstractSkeleton, WitherSkeleton, Piglin,
-// Pillager, Vindicator, Drowned, and ZombifiedPiglin.
+// Pillager, Drowned, and ZombifiedPiglin.
 // ══════════════════════════════════════════════════════════════════
 
 /// Weighted random selection from a table of weapon entries.
@@ -1125,20 +1100,5 @@ mod tests {
         let mut stack5 = ItemStack::new(1, &Item::CROSSBOW);
         super::apply_pillager_crossbow_enchantments(&mut stack5, Some(5));
         assert_eq!(stack5.get_enchantment_level(&Enchantment::QUICK_CHARGE), 2);
-    }
-
-    #[test]
-    fn vindicator_weapon_enchantments() {
-        use pumpkin_data::Enchantment;
-        use pumpkin_data::item::Item;
-        use pumpkin_data::item_stack::ItemStack;
-
-        let mut stack = ItemStack::new(1, &Item::IRON_AXE);
-        super::apply_vindicator_weapon_enchantments(&mut stack, Some(1));
-        assert_eq!(stack.get_enchantment_level(&Enchantment::SHARPNESS), 1);
-
-        let mut stack5 = ItemStack::new(1, &Item::IRON_AXE);
-        super::apply_vindicator_weapon_enchantments(&mut stack5, Some(5));
-        assert_eq!(stack5.get_enchantment_level(&Enchantment::SHARPNESS), 2);
     }
 }
