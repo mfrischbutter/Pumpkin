@@ -69,23 +69,21 @@ impl Goal for DestroyEggGoal {
 impl Stepping for DestroyEggGoal {
     fn tick_stepping(&self, world: Arc<World>, block_pos: BlockPos) {
         let random = rng().random::<f32>();
-        let pos_f64 = (block_pos.0).to_f64();
         world.play_sound_raw(
             Sound::EntityZombieDestroyEgg as u16,
             SoundCategory::Hostile,
-            &pos_f64,
-            0.7,
+            &block_pos.to_centered_f64(),
+            0.5,
             random.mul_add(0.2, 0.9),
         );
     }
 
     fn on_destroy_block(&self, world: Arc<World>, block_pos: BlockPos) {
         let random = rng().random::<f32>();
-        let pos_f64 = (block_pos.0).to_f64();
         world.play_sound_raw(
             Sound::EntityTurtleEggBreak as u16,
             SoundCategory::Blocks,
-            &pos_f64,
+            &block_pos.to_centered_f64(),
             0.7,
             random.mul_add(0.2, 0.9),
         );
