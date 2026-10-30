@@ -8,6 +8,7 @@ use crate::entity::predicate::EntityPredicate;
 use crate::plugin::api::events::entity::entity_target::TargetReason;
 use pumpkin_util::math::vector3::Vector3;
 use rand::RngExt;
+use std::sync::Arc;
 
 const MAX_ATTACK_TIME: i64 = 20;
 
@@ -63,6 +64,92 @@ impl MeleeAttackGoal {
     #[must_use]
     pub fn get_max_cooldown(&self) -> i32 {
         self.get_tick_count(20)
+    }
+
+    /// Vanilla `resetAttackCooldown`.
+    pub fn reset_attack_cooldown(&mut self) {
+        self.cooldown = self.get_max_cooldown();
+    }
+
+    /// Vanilla `isTimeToAttack`.
+    #[must_use]
+    pub const fn is_time_to_attack(&self) -> bool {
+        self.cooldown <= 0
+    }
+
+    /// Vanilla `canPerformAttack`.
+    #[must_use]
+    pub fn can_perform_attack(&self, mob: &dyn Mob, target: &dyn EntityBase) -> bool {
+        self.is_time_to_attack()
+            && mob.get_mob_entity().is_in_attack_range(target)
+            && mob.has_line_of_sight(target.get_entity())
+    }
+
+    /// Vanilla `tick` up to `checkAndPerformAttack`: looks at and follows the target, counts
+    /// down the attack cooldown, and returns the target to attack.
+    pub fn tick_chase(&mut self, mob: &dyn Mob) -> Option<Arc<dyn EntityBase>> {
+        let target = mob.get_mob_entity().get_target()?;
+
+        mob.get_mob_entity()
+            .look_control
+            .lock()
+            .unwrap_or_else(std::sync::PoisonError::into_inner)
+            .look_at_entity_with_range(&target, 30.0, 30.0);
+
+        self.update_countdown_ticks = (self.update_countdown_ticks - 1).max(0);
+
+        let current_target_pos = target.get_entity().pos.load();
+        let has_line_of_sight =
+            self.pause_when_mob_idle || mob.has_line_of_sight(target.get_entity());
+        let should_update_nav = has_line_of_sight
+            && self.update_countdown_ticks <= 0
+            && (self.last_target_position.is_none_or(|last_pos| {
+                current_target_pos.squared_distance_to_vec(&last_pos) >= 1.0
+            }) || mob.get_random().random::<f32>() < 0.05);
+
+        if should_update_nav {
+            let mob_pos = mob.get_entity().pos.load();
+            let dist_sq = mob_pos.squared_distance_to_vec(&current_target_pos);
+            let steered = mob.get_mob_entity().steered();
+            let mut navigator = steered.navigator();
+            navigator.set_progress(NavigatorGoal {
+                current_progress: mob_pos,
+                destination: current_target_pos,
+                speed: self.speed,
+            });
+            self.last_target_position = Some(current_target_pos);
+            self.update_countdown_ticks = 4 + mob.get_random().random_range(0..7);
+            if dist_sq > 1024.0 {
+                self.update_countdown_ticks += 10;
+            } else if dist_sq > 256.0 {
+                self.update_countdown_ticks += 5;
+            }
+            // TODO: add 15 more ticks when the path request fails.
+            self.update_countdown_ticks = self.get_tick_count(self.update_countdown_ticks);
+        }
+
+        self.cooldown = (self.cooldown - 1).max(0);
+        Some(target)
+    }
+
+    /// Vanilla `checkAndPerformAttack`.
+    pub fn check_and_perform_attack(&mut self, mob: &dyn Mob, target: &dyn EntityBase) {
+        if !self.can_perform_attack(mob, target) {
+            return;
+        }
+        self.reset_attack_cooldown();
+        if let Some(attack) = self.attack {
+            attack(mob, target);
+            return;
+        }
+
+        // Iron golem animation plays on every swing, even when blocked
+        if let Some(golem) = mob.as_iron_golem() {
+            golem.trigger_attack_animation();
+        }
+
+        mob.get_mob_entity().living_entity.swing_hand();
+        mob.do_hurt_target(target);
     }
 }
 
@@ -159,68 +246,8 @@ impl Goal for MeleeAttackGoal {
     }
 
     fn tick(&mut self, mob: &dyn Mob) {
-        let target = mob.get_mob_entity().get_target().clone();
-        let Some(target) = target else {
-            return;
-        };
-
-        mob.get_mob_entity()
-            .look_control
-            .lock()
-            .unwrap_or_else(std::sync::PoisonError::into_inner)
-            .look_at_entity_with_range(&target, 30.0, 30.0);
-
-        self.update_countdown_ticks = (self.update_countdown_ticks - 1).max(0);
-
-        let current_target_pos = target.get_entity().pos.load();
-        let has_line_of_sight =
-            self.pause_when_mob_idle || mob.has_line_of_sight(target.get_entity());
-        let should_update_nav = has_line_of_sight
-            && self.update_countdown_ticks <= 0
-            && (self.last_target_position.is_none_or(|last_pos| {
-                current_target_pos.squared_distance_to_vec(&last_pos) >= 1.0
-            }) || mob.get_random().random::<f32>() < 0.05);
-
-        if should_update_nav {
-            let mob_pos = mob.get_entity().pos.load();
-            let dist_sq = mob_pos.squared_distance_to_vec(&current_target_pos);
-            let steered = mob.get_mob_entity().steered();
-            let mut navigator = steered.navigator();
-            navigator.set_progress(NavigatorGoal {
-                current_progress: mob_pos,
-                destination: current_target_pos,
-                speed: self.speed,
-            });
-            self.last_target_position = Some(current_target_pos);
-            self.update_countdown_ticks = 4 + mob.get_random().random_range(0..7);
-            if dist_sq > 1024.0 {
-                self.update_countdown_ticks += 10;
-            } else if dist_sq > 256.0 {
-                self.update_countdown_ticks += 5;
-            }
-            // TODO: add 15 more ticks when the path request fails.
-            self.update_countdown_ticks = self.get_tick_count(self.update_countdown_ticks);
-        }
-
-        self.cooldown = (self.cooldown - 1).max(0);
-
-        if self.cooldown <= 0
-            && mob.get_mob_entity().is_in_attack_range(target.as_ref())
-            && mob.has_line_of_sight(target.get_entity())
-        {
-            self.cooldown = self.get_max_cooldown();
-            if let Some(attack) = self.attack {
-                attack(mob, target.as_ref());
-                return;
-            }
-
-            // Iron golem animation plays on every swing, even when blocked
-            if let Some(golem) = mob.as_iron_golem() {
-                golem.trigger_attack_animation();
-            }
-
-            mob.get_mob_entity().living_entity.swing_hand();
-            mob.do_hurt_target(target.as_ref());
+        if let Some(target) = self.tick_chase(mob) {
+            self.check_and_perform_attack(mob, target.as_ref());
         }
     }
 
