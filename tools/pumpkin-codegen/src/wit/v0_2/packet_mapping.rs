@@ -467,24 +467,6 @@ fn convert_value(
             MappingMode::Downcast => String::new(),
         },
 
-        // An `i8` is a WIT `u8`; reinterpret the byte so negative values (like -1) round-trip.
-        "i8" if !is_slice => match mode {
-            MappingMode::Serialize => {
-                if is_ref {
-                    let tmp = dst.unwrap_or("tmp").replace('.', "_");
-                    prep.push_str(&format!(
-                        "{}let val_{} = {} as i8;\n",
-                        prep_prefix, tmp, src
-                    ));
-                    format!("&val_{}", tmp)
-                } else {
-                    format!("{} as i8", src)
-                }
-            }
-            MappingMode::Deserialize | MappingMode::ToWit => format!("{} as u8", src),
-            MappingMode::Downcast => String::new(),
-        },
-
         "i32" | "u32" | "i64" | "u64" | "bool" | "f32" | "f64" | "u8" | "i8" | "u16" | "i16"
         | "VarInt" => match mode {
             MappingMode::Serialize => {

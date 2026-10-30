@@ -271,6 +271,15 @@ fn owned_ingredient_options(
             .iter()
             .filter_map(|identifier| item_descriptor(identifier))
             .fold(Vec::new(), push_unique),
+        // Bedrock descriptors cannot match components or custom data: offer the bare item.
+        pumpkin_protocol::codec::recipe::OwnedRecipeIngredient::Exact(stack) => {
+            item_descriptor(stack.item.registry_key)
+                .into_iter()
+                .collect()
+        }
+        pumpkin_protocol::codec::recipe::OwnedRecipeIngredient::CustomData { item, .. } => {
+            item_descriptor(item).into_iter().collect()
+        }
     }
 }
 

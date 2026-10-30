@@ -256,7 +256,6 @@ impl CommandExecutor for ModifierAddExecutor {
                     amount: value,
                     operation: self.operation,
                     // Vanilla `AttributeCommand` adds command modifiers as permanent.
-                    permanent: true,
                 });
                 Ok(())
             }

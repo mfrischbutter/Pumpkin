@@ -745,7 +745,7 @@ impl BedrockClient {
                                 } else {
                                     ""
                                 };
-                                anvil.set_item_name(name, player.has_infinite_materials());
+                                anvil.set_item_name(name, player.as_ref());
                                 let result_stack = anvil.inventory.get_stack(2);
                                 record_preview_update(
                                     &mut updates,
@@ -1543,11 +1543,10 @@ fn refresh_specialized_screen_results(
                 .as_any_mut()
                 .downcast_mut::<AnvilScreenHandler>()
             {
-                let has_infinite = player.has_infinite_materials();
                 if let Some(name) = filter_strings.first() {
-                    anvil.set_item_name(name, has_infinite);
+                    anvil.set_item_name(name, player);
                 } else {
-                    anvil.create_result(has_infinite);
+                    anvil.create_result(player);
                 }
                 let result_stack = anvil.inventory.get_stack(2);
                 record_preview_update(updates, ContainerName::AnvilResultPreview, 2, &result_stack);

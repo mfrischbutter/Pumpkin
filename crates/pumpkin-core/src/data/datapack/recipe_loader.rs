@@ -260,6 +260,7 @@ fn parse_transmute(recipe_id: String, value: &Value) -> Option<OwnedCraftingReci
     let result = parse_result(value.get("result")?).unwrap_or(OwnedRecipeResult {
         item_id: "minecraft:filled_map".to_string(),
         count: 1,
+        components: Vec::new(),
     });
     Some(OwnedCraftingRecipe::Shapeless {
         recipe_id: Some(recipe_id),
