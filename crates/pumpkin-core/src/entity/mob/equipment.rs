@@ -361,7 +361,7 @@ pub static EQUIPMENT_REGISTRY: LazyLock<HashMap<&'static str, MobEquipmentDef>> 
                 weapon: WeaponConfig::AlwaysWeighted(&ZOMBIFIED_PIGLIN_WEAPONS),
                 armor: ArmorConfig::None,
                 enchanted: true,
-                can_pick_up_loot: false,
+                can_pick_up_loot: true,
             },
         );
 
