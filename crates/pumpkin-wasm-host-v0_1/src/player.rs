@@ -1712,6 +1712,23 @@ impl pumpkin::plugin::player::HostPlayer for PluginHostState {
         Ok(())
     }
 
+    fn look_at(
+        &mut self,
+        player: Resource<Player>,
+        target: pumpkin::plugin::common::Position,
+    ) -> wasmtime::Result<()> {
+        let player = self.get(&player)?;
+        let target = from_wasm_position(target);
+        let packet = pumpkin_protocol::java::client::play::CPlayerLookAt::at_position(
+            pumpkin_protocol::codec::var_int::VarInt(1),
+            target.x,
+            target.y,
+            target.z,
+        );
+        player.try_send_client_packet(&packet);
+        Ok(())
+    }
+
     fn open_book(
         &mut self,
         player: Resource<Player>,
@@ -1764,6 +1781,11 @@ impl pumpkin::plugin::player::HostPlayer for PluginHostState {
         let player = self.get(&player)?;
         player.apply_knockback(strength, x, z);
         Ok(())
+    }
+
+    fn is_blocking(&mut self, player: Resource<Player>) -> wasmtime::Result<bool> {
+        let player = self.get(&player)?;
+        Ok(player.living_entity.is_blocking())
     }
 
     fn set_movement_locked(
