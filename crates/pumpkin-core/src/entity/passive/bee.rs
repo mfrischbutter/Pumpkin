@@ -4,12 +4,17 @@ use std::sync::{
 };
 
 use pumpkin_data::BlockState;
+use pumpkin_data::attributes::Attributes;
+use pumpkin_data::damage::DamageType;
+use pumpkin_data::effect::StatusEffect;
 use pumpkin_data::entity::EntityType;
 use pumpkin_data::item_stack::ItemStack;
 use pumpkin_data::sound::Sound;
 use pumpkin_data::tag::{self, Taggable};
 use pumpkin_nbt::compound::NbtCompound;
+use pumpkin_util::Difficulty;
 use pumpkin_util::math::position::BlockPos;
+use rand::RngExt;
 
 use crate::entity::ai::behavior::hunting::{self, Hunt};
 use crate::entity::ai::target_match::TargetMatch;
@@ -27,6 +32,7 @@ use crate::entity::{
         revenge::RevengeGoal, swim::SwimGoal, tempt::TemptGoal, wander_around::WanderAroundGoal,
     },
     ai::pathfinder::Navigator,
+    custom_sound::CustomSound,
     mob::{
         Mob, MobEntity,
         neutral::{NeutralData, NeutralMob},
@@ -41,6 +47,12 @@ pub const FLAG_HAS_NECTAR: u8 = 8;
 
 /// Vanilla `Bee.TICKS_PER_FLAP`, `Mth.ceil(1.4959966F)`.
 const TICKS_PER_FLAP: i32 = 2;
+/// Vanilla `Bee.getSoundVolume`.
+const SOUND_VOLUME: f32 = 0.4;
+/// Vanilla `Bee.customServerAiStep`: ticks in water before it drowns.
+const MAX_UNDER_WATER_TICKS: i32 = 20;
+/// Vanilla `Bee.customServerAiStep`: a bee that stung dies within this many ticks.
+const STING_DEATH_TICKS: i32 = 1200;
 
 fn is_angry(mob: &dyn Mob) -> bool {
     mob.as_neutral().is_some_and(NeutralMob::is_angry)
@@ -68,6 +80,7 @@ pub struct BeeEntity {
     pub cannot_enter_hive_ticks: AtomicI32,
     pub crops_grown_since_pollination: AtomicI32,
     pub time_since_sting: AtomicI32,
+    under_water_ticks: AtomicI32,
 }
 
 impl BeeEntity {
@@ -100,6 +113,7 @@ impl BeeEntity {
             cannot_enter_hive_ticks: AtomicI32::new(0),
             crops_grown_since_pollination: AtomicI32::new(0),
             time_since_sting: AtomicI32::new(0),
+            under_water_ticks: AtomicI32::new(0),
         };
         let mob_arc = Arc::new(bee);
         let mob_weak: Weak<dyn Mob> = {
@@ -115,7 +129,14 @@ impl BeeEntity {
                 Box::new(MeleeAttackGoal::new(1.4, true).gated_by(can_sting)),
             );
             goal_selector.add_goal(2, BreedGoal::new(1.0));
-            goal_selector.add_goal(3, Box::new(TemptGoal::new(1.25, &[], false)));
+            goal_selector.add_goal(
+                3,
+                Box::new(TemptGoal::with_tag(
+                    1.25,
+                    &tag::Item::MINECRAFT_BEE_FOOD,
+                    false,
+                )),
+            );
             goal_selector.add_goal(5, Box::new(FollowParentGoal::new(1.25)));
             goal_selector.add_goal(8, Box::new(WanderAroundGoal::new(1.0)));
             goal_selector.add_goal(9, Box::new(SwimGoal::default()));
@@ -188,6 +209,36 @@ impl BeeEntity {
     pub fn set_rolling(&self, val: bool) {
         self.set_flag(FLAG_ROLL, val);
     }
+
+    /// Vanilla `Bee.customServerAiStep`: a bee long in water drowns, and one that stung dies
+    /// at a random point within a minute.
+    fn tick_drowning_and_sting(&self) {
+        let entity = self.get_entity();
+        let under_water = if entity.is_in_water() {
+            self.under_water_ticks.fetch_add(1, Ordering::Relaxed) + 1
+        } else {
+            self.under_water_ticks.store(0, Ordering::Relaxed);
+            0
+        };
+        if under_water > MAX_UNDER_WATER_TICKS {
+            self.damage(self, 1.0, DamageType::DROWN);
+        }
+        if self.has_stung() {
+            let time = self.time_since_sting.fetch_add(1, Ordering::Relaxed) + 1;
+            if time % 5 == 0
+                && self
+                    .get_random()
+                    .random_range(0..(STING_DEATH_TICKS - time).clamp(1, STING_DEATH_TICKS))
+                    == 0
+            {
+                let health = self.mob_entity.living_entity.health.load();
+                self.damage(self, health, DamageType::GENERIC);
+            }
+        }
+        if !self.has_nectar() {
+            self.ticks_without_nectar.fetch_add(1, Ordering::Relaxed);
+        }
+    }
 }
 
 impl AgeableMob for BeeEntity {
@@ -198,8 +249,21 @@ impl AgeableMob for BeeEntity {
 
 impl Animal for BeeEntity {
     fn is_food(&self, item_stack: &ItemStack) -> bool {
-        item_stack.item.has_tag(&tag::Item::MINECRAFT_FLOWERS)
-            || item_stack.item.has_tag(&tag::Item::MINECRAFT_BEE_FOOD)
+        item_stack.item.has_tag(&tag::Item::MINECRAFT_BEE_FOOD)
+    }
+}
+
+impl CustomSound for BeeEntity {
+    fn death_sound(&self) -> Option<Sound> {
+        None
+    }
+
+    fn hurt_sound(&self) -> Option<Sound> {
+        None
+    }
+
+    fn sound_volume(&self) -> f32 {
+        SOUND_VOLUME
     }
 }
 
@@ -265,6 +329,47 @@ impl Mob for BeeEntity {
         true
     }
 
+    fn as_custom_sound(&self) -> Option<&dyn CustomSound> {
+        Some(self)
+    }
+
+    /// Vanilla `Bee.doHurtTarget`: a sting for the attack damage, poison on normal and hard,
+    /// then the bee loses its stinger and calms down.
+    fn do_hurt_target(&self, target: &dyn EntityBase) -> bool {
+        let mob = &self.mob_entity;
+        // Vanilla rounds the attack damage down to whole points.
+        let damage = mob
+            .living_entity
+            .get_attribute_value(&Attributes::ATTACK_DAMAGE) as i32;
+        let hurt = mob.try_attack_with_damage(self, target, damage as f32, DamageType::STING);
+        if !hurt {
+            return false;
+        }
+        if let Some(living) = target.get_living_entity() {
+            let poison_seconds = match self.get_entity().world.load().level_info.load().difficulty {
+                Difficulty::Normal => 10,
+                Difficulty::Hard => 18,
+                _ => 0,
+            };
+            if poison_seconds > 0 {
+                living.add_effect(pumpkin_data::potion::Effect {
+                    effect_type: &StatusEffect::POISON,
+                    duration: poison_seconds * 20,
+                    amplifier: 0,
+                    ambient: false,
+                    show_particles: true,
+                    show_icon: true,
+                    blend: true,
+                });
+            }
+        }
+        self.set_has_stung(true);
+        self.stop_being_angry();
+        self.play_entity_sound(Sound::EntityBeeSting, 1.0, 1.0);
+        self.on_attack(target);
+        true
+    }
+
     fn as_ageable(&self) -> Option<&dyn AgeableMob> {
         Some(self)
     }
@@ -321,12 +426,7 @@ impl Mob for BeeEntity {
     }
 
     fn custom_server_ai_step(&self, _caller: &dyn EntityBase) {
-        if self.has_stung() {
-            let time = self.time_since_sting.fetch_add(1, Ordering::Relaxed) + 1;
-            if time >= 1200 {
-                self.mob_entity.living_entity.set_health(0.0);
-            }
-        }
+        self.tick_drowning_and_sting();
         self.update_persistent_anger();
     }
 
