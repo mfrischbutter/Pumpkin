@@ -1,12 +1,12 @@
 use crate::entity::projectile::owner::ProjectileOwner;
 use std::sync::RwLock;
-use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
+use std::sync::atomic::{AtomicBool, AtomicI32, AtomicU64, Ordering};
 
+use pumpkin_data::damage::DamageType;
 use pumpkin_data::item::Item;
 use pumpkin_data::item_stack::ItemStack;
 use pumpkin_nbt::compound::NbtCompound;
 use pumpkin_protocol::codec::item_stack_seralizer::ItemStackSerializer;
-use pumpkin_util::math::atomic_f32::AtomicF32;
 use pumpkin_util::math::vector3::Vector3;
 
 use crate::{
@@ -20,7 +20,9 @@ use crate::{
 pub const MIN_CAMERA_DISTANCE_SQUARED: f32 = 12.25;
 pub const INITIAL_ACCELERATION_POWER: f64 = 0.1;
 pub const DEFLECTION_SCALE: f64 = 0.5;
-pub const DEFAULT_EXPLOSION_POWER: f32 = 1.0;
+pub const DEFAULT_EXPLOSION_POWER: i32 = 1;
+/// Vanilla `LargeFireball.onHitEntity` damage.
+const HIT_DAMAGE: f32 = 6.0;
 pub const AIR_INERTIA: f64 = 0.95;
 pub const WATER_INERTIA: f64 = 0.8;
 
@@ -28,7 +30,7 @@ pub struct FireballEntity {
     pub thrown: ThrownItemEntity,
     pub item_stack: RwLock<ItemStack>,
     pub acceleration_power: AtomicU64,
-    pub explosion_power: AtomicF32,
+    pub explosion_power: AtomicI32,
 }
 
 impl FireballEntity {
@@ -46,7 +48,7 @@ impl FireballEntity {
             thrown,
             item_stack: RwLock::new(Self::get_default_item()),
             acceleration_power: AtomicU64::new(INITIAL_ACCELERATION_POWER.to_bits()),
-            explosion_power: AtomicF32::new(DEFAULT_EXPLOSION_POWER),
+            explosion_power: AtomicI32::new(DEFAULT_EXPLOSION_POWER),
         }
     }
 
@@ -61,7 +63,7 @@ impl FireballEntity {
             thrown,
             item_stack: RwLock::new(Self::get_default_item()),
             acceleration_power: AtomicU64::new(accel.to_bits()),
-            explosion_power: AtomicF32::new(DEFAULT_EXPLOSION_POWER),
+            explosion_power: AtomicI32::new(DEFAULT_EXPLOSION_POWER),
         }
     }
 
@@ -89,7 +91,7 @@ impl FireballEntity {
             thrown,
             item_stack: RwLock::new(Self::get_default_item()),
             acceleration_power: AtomicU64::new(acceleration_power.to_bits()),
-            explosion_power: AtomicF32::new(DEFAULT_EXPLOSION_POWER),
+            explosion_power: AtomicI32::new(DEFAULT_EXPLOSION_POWER),
         }
     }
 
@@ -133,11 +135,11 @@ impl FireballEntity {
             .store(power.to_bits(), Ordering::Relaxed);
     }
 
-    pub fn get_explosion_power(&self) -> f32 {
+    pub fn get_explosion_power(&self) -> i32 {
         self.explosion_power.load(Ordering::Relaxed)
     }
 
-    pub fn set_explosion_power(&self, power: f32) {
+    pub fn set_explosion_power(&self, power: i32) {
         self.explosion_power.store(power, Ordering::Relaxed);
     }
 
@@ -179,7 +181,7 @@ impl EntityBase for FireballEntity {
 
     fn write_custom_nbt(&self, nbt: &mut NbtCompound) {
         nbt.put_double("acceleration_power", self.get_acceleration_power());
-        nbt.put_float("ExplosionPower", self.get_explosion_power());
+        nbt.put_byte("ExplosionPower", self.get_explosion_power() as i8);
     }
 
     fn read_custom_nbt(&self, nbt: &NbtCompound) {
@@ -189,8 +191,8 @@ impl EntityBase for FireballEntity {
         {
             self.set_acceleration_power(accel);
         }
-        if let Some(exp) = nbt.get_float("ExplosionPower") {
-            self.set_explosion_power(exp);
+        if let Some(power) = nbt.get_byte("ExplosionPower") {
+            self.set_explosion_power(i32::from(power));
         }
     }
 
@@ -224,24 +226,26 @@ impl EntityBase for FireballEntity {
         self
     }
 
+    /// Vanilla `LargeFireball.onHitEntity` and `onHit`.
     fn on_hit(&self, hit: ProjectileHit) {
-        let world = self.get_entity().world.load();
+        let world = self.get_entity().world.load_full();
 
         if let ProjectileHit::Entity { ref entity, .. } = hit {
-            entity.get_entity().set_on_fire_for(5.0);
-            let _ = entity.damage(
+            let owner = self.thrown.owner.get(&world);
+            let _ = entity.damage_with_context(
                 entity.as_ref(),
-                6.0,
-                pumpkin_data::damage::DamageType::FIREBALL,
+                HIT_DAMAGE,
+                DamageType::FIREBALL,
+                Some(hit.hit_pos()),
+                Some(self),
+                owner.as_deref(),
             );
         }
 
-        let hit_pos = hit.hit_pos();
-        let power = self.get_explosion_power();
         world.explode(
             Some(self.get_entity()),
-            hit_pos,
-            power,
+            hit.hit_pos(),
+            self.get_explosion_power() as f32,
             crate::world::ExplosionInteraction::Mob,
         );
     }
