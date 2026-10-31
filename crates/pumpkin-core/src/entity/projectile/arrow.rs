@@ -899,10 +899,9 @@ impl EntityBase for ArrowEntity {
                     damage = damage.saturating_add(bonus);
                 }
 
-                let is_enderman =
-                    target.get_entity().entity_type == &pumpkin_data::entity::EntityType::ENDERMAN;
+                let remaining_fire_ticks = target.get_entity().fire_ticks.load(Ordering::Relaxed);
                 let is_on_fire = entity.is_on_fire() || self.is_flame.load(Ordering::Relaxed);
-                if is_on_fire && !is_enderman {
+                if is_on_fire {
                     target.get_entity().set_on_fire_for(5.0);
                 }
 
@@ -921,6 +920,23 @@ impl EntityBase for ArrowEntity {
                     // Like vanilla, an ownerless arrow is its own cause.
                     Some(owner_entity.as_deref().unwrap_or(self)),
                 );
+
+                // Vanilla `AbstractArrow.onHitEntity`: an arrow that did no harm to a
+                // target letting it through (an enderman that dodged) flies on.
+                if !damage_succeeded && !target.projectile_receives_side_effects_on_hit(false) {
+                    self.pierced_entities
+                        .write()
+                        .unwrap_or_else(std::sync::PoisonError::into_inner)
+                        .retain(|id| *id != target_entity_id);
+                    self.has_hit.store(false, Ordering::SeqCst);
+                    return;
+                }
+                if !damage_succeeded {
+                    target
+                        .get_entity()
+                        .fire_ticks
+                        .store(remaining_fire_ticks, Ordering::Relaxed);
+                }
 
                 if let Some(living) = target.get_living_entity() {
                     if punch > 0 {

@@ -1324,6 +1324,11 @@ pub trait Mob: EntityBase + Send + Sync {
         self.get_mob_entity().living_entity.is_dead_or_dying()
     }
 
+    /// Vanilla `Entity.projectileReceivesSideEffectsOnHit` for this kind.
+    fn mob_projectile_receives_side_effects_on_hit(&self, _was_hurt: bool) -> bool {
+        true
+    }
+
     fn mob_controlling_passenger(&self) -> Option<Arc<dyn EntityBase>> {
         if self.get_mob_entity().is_no_ai() {
             return None;
@@ -2486,6 +2491,10 @@ impl<T: Mob + Send + 'static> EntityBase for T {
 
     fn get_controlling_passenger(&self) -> Option<Arc<dyn EntityBase>> {
         self.mob_controlling_passenger()
+    }
+
+    fn projectile_receives_side_effects_on_hit(&self, was_hurt: bool) -> bool {
+        self.mob_projectile_receives_side_effects_on_hit(was_hurt)
     }
 
     fn get_experience_reward(&self, _killer: Option<&dyn EntityBase>) -> u32 {

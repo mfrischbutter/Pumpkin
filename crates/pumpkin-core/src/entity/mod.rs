@@ -594,6 +594,12 @@ pub trait EntityBase: Send + Sync + std::any::Any {
         None
     }
 
+    /// Vanilla `Entity.projectileReceivesSideEffectsOnHit`: whether an arrow that hit
+    /// this entity without hurting it bounces off instead of flying on.
+    fn projectile_receives_side_effects_on_hit(&self, _was_hurt: bool) -> bool {
+        true
+    }
+
     fn can_control_vehicle(&self) -> bool {
         !self
             .get_entity()

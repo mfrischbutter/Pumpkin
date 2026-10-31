@@ -494,6 +494,11 @@ impl NeutralMob for EndermanEntity {
 }
 
 impl Mob for EndermanEntity {
+    /// Vanilla `Enderman.projectileReceivesSideEffectsOnHit`: an arrow it dodged flies on.
+    fn mob_projectile_receives_side_effects_on_hit(&self, was_hurt: bool) -> bool {
+        was_hurt
+    }
+
     /// Vanilla `Enderman.requiresCustomPersistence`: an enderman carrying a block stays.
     fn requires_custom_persistence(&self) -> bool {
         requires_custom_persistence_base(self) || self.carried_block.load().is_some()
