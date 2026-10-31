@@ -195,6 +195,7 @@ pub mod phantom_spawner;
 pub mod poi;
 pub mod scoreboard;
 pub mod structures;
+pub mod thunder;
 pub mod weather;
 
 pub use environment::EnvironmentAttributes;
@@ -2795,53 +2796,8 @@ impl World {
         // Vanilla `ServerChunkCache.tickSpawningChunk`: only the spawning chunks age, get
         // lightning and spawn.
         chunk.inhabited_time.fetch_add(1, Relaxed);
-        // this.level.tickThunder(chunk);
-        let (is_raining, is_thundering) = (self.is_raining(), self.is_thundering());
-
-        if is_raining && is_thundering && rng().random_range(0..100_000) == 0 {
-            let rand_value = rng().random::<i32>() >> 2;
-            let delta = Vector3::new(rand_value & 15, rand_value >> 16 & 15, rand_value >> 8 & 15);
-            let random_pos = Vector3::new(
-                chunk_pos.x << 4,
-                chunk
-                    .heightmap
-                    .lock()
-                    .unwrap_or_else(std::sync::PoisonError::into_inner)
-                    .get(
-                        MotionBlocking,
-                        chunk_pos.x << 4,
-                        chunk_pos.y << 4,
-                        self.min_y,
-                    ),
-                chunk_pos.y << 4,
-            )
-            .add(&delta);
-            // TODO this.getBrightness(LightLayer.SKY, blockPos) >= 15;
-            // TODO heightmap
-
-            // TODO findLightningRod(blockPos)
-            // TODO encapsulatingFullBlocks
-            if true {
-                // TODO biome.getPrecipitationAt(pos, this.getSeaLevel()) == Biome.Precipitation.RAIN
-                // TODO this.getCurrentDifficultyAt(blockPos);
-                if rng().random::<f32>() < 0.0675
-                    && self.get_block(&random_pos.to_block_pos().down()) != &Block::LIGHTNING_ROD
-                {
-                    let entity = Entity::new(
-                        self.clone(),
-                        random_pos.to_f64(),
-                        &EntityType::SKELETON_HORSE,
-                    );
-                    self.spawn_entity_non_save(Arc::new(entity));
-                }
-                let entity = Entity::new(
-                    self.clone(),
-                    random_pos.to_f64().add_raw(0.5, 0., 0.5),
-                    &EntityType::LIGHTNING_BOLT,
-                );
-                self.spawn_entity_non_save(Arc::new(entity));
-            }
-        }
+        self.tick_thunder(chunk_pos);
+        let is_thundering = self.is_thundering();
 
         if spawn_list.is_empty() {
             return;
