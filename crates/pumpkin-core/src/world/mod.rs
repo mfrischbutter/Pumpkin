@@ -191,6 +191,7 @@ pub mod end_podium;
 pub mod entity_tracker;
 pub mod environment;
 pub mod natural_spawner;
+pub mod phantom_spawner;
 pub mod scoreboard;
 pub mod weather;
 
@@ -305,6 +306,8 @@ pub struct World {
     pub villager_poi: std::sync::Mutex<villager_poi::VillagerPoiStorage>,
     /// Active raids in this world.
     pub raids: std::sync::Mutex<raid::Raids>,
+    /// Vanilla `PhantomSpawner`, ticked in the overworld only.
+    pub phantom_spawner: std::sync::Mutex<phantom_spawner::PhantomSpawner>,
     /// End Dragon fight manager (only present in `THE_END` dimension).
     pub dragon_fight: Option<std::sync::Mutex<dragon_fight::DragonFight>>,
     pub spawn_state: ArcSwap<SpawnState>,
@@ -477,6 +480,7 @@ impl World {
             portal_poi: std::sync::Mutex::new(portal_poi),
             villager_poi: std::sync::Mutex::new(villager_poi::VillagerPoiStorage::default()),
             raids: std::sync::Mutex::new(raid::Raids::default()),
+            phantom_spawner: std::sync::Mutex::new(phantom_spawner::PhantomSpawner::default()),
             dragon_fight,
             spawn_state: ArcSwap::new(Arc::new(SpawnState::empty())),
             active_chunks: RwLock::new(Arc::default()),
@@ -1760,6 +1764,7 @@ impl World {
 
         let t_chunks = std::time::Instant::now();
         self.tick_chunks();
+        self.tick_custom_spawners();
         let chunk_elapsed = t_chunks.elapsed();
 
         let players = self.players.load();
@@ -2381,18 +2386,9 @@ impl World {
 
         // 4. Calculate Spawn List (Sequential setup)
         let spawn_state = self.spawn_state.load();
-        let (spawn_mobs, spawn_monsters, peaceful) = {
-            let lock = self.level_info.load();
-            (
-                lock.game_rules.spawn_mobs,
-                lock.game_rules.spawn_monsters,
-                lock.difficulty == Difficulty::Peaceful,
-            )
-        };
+        let (spawn_mobs, spawn_enemies) = self.natural_spawn_flags();
         // Vanilla takes the game time, so `/time set` does not shift the animal cadence.
-        let spawn_passives = self.get_world_age() % 400 == 0;
-        let spawn_enemies = !peaceful && spawn_monsters && spawn_mobs;
-        let spawn_passives = spawn_passives && spawn_mobs;
+        let spawn_passives = spawn_mobs && self.get_world_age() % 400 == 0;
 
         let spawn_list = natural_spawner::get_filtered_spawning_categories(
             &spawn_state,
@@ -2409,6 +2405,33 @@ impl World {
         for (pos, chunk) in &spawning_chunks {
             self.tick_spawning_chunk(*pos, chunk, &spawn_list, &spawn_state);
         }
+    }
+
+    /// Vanilla `SPAWN_MOBS` and `ServerLevel.isSpawningMonsters`: whether mobs spawn at all
+    /// and whether enemies do. Peaceful stands in for vanilla's per-type gate until the
+    /// type data carries `isAllowedInPeaceful` (see `check_spawn_rules`).
+    fn natural_spawn_flags(&self) -> (bool, bool) {
+        let info = self.level_info.load();
+        let spawn_mobs = info.game_rules.spawn_mobs;
+        let spawn_enemies =
+            spawn_mobs && info.game_rules.spawn_monsters && info.difficulty != Difficulty::Peaceful;
+        (spawn_mobs, spawn_enemies)
+    }
+
+    /// Vanilla `ServerLevel.tickCustomSpawners`: the overworld's custom spawners run after
+    /// the spawning chunks while mobs spawn at all.
+    fn tick_custom_spawners(self: &Arc<Self>) {
+        if self.dimension != Dimension::OVERWORLD {
+            return;
+        }
+        let (spawn_mobs, spawn_enemies) = self.natural_spawn_flags();
+        if !spawn_mobs {
+            return;
+        }
+        self.phantom_spawner
+            .lock()
+            .unwrap_or_else(std::sync::PoisonError::into_inner)
+            .tick(self, spawn_enemies);
     }
 
     /// Vanilla `ChunkMap.collectSpawningChunks`: the loaded active chunks within
