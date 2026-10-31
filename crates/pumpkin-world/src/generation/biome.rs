@@ -5,6 +5,7 @@ use pumpkin_util::math::{square_f64, vector3::Vector3};
 use super::biome_coords;
 
 // This blends biome boundaries, returning which biome to populate the surface on based on the seed
+#[must_use]
 pub fn get_biome_blend(
     bottom_y: i8,
     height: u16,
@@ -150,6 +151,7 @@ const fn score_permutation(
 }
 
 #[inline]
+#[must_use]
 pub const fn scale_mix(l: i64) -> f64 {
     // Shifting and then masking with 1023 (1024 - 1)
     // This is mathematically identical to floor_mod(l >> 24, 1024)

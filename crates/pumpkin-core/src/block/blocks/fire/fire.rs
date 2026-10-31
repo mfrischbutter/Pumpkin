@@ -126,7 +126,7 @@ impl FireBlock {
 
         // Fire burnout increases in specific biomes
         // TODO: Use proper tag or bool for this when available
-        let biome_id = world.level.get_rough_biome(pos).id;
+        let biome_id = world.get_biome(pos).id;
         matches!(
             biome_id,
             id if id == Biome::BAMBOO_JUNGLE.id

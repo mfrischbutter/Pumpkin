@@ -1,5 +1,7 @@
+use crate::biome::BiomeSupplier;
 use crate::chunk_system::{ChunkListener, ChunkLoading, GenerationSchedule, LevelChannel};
 use crate::generation::generator::WorldGenerator;
+use crate::generation::noise::router::multi_noise_sampler::MultiNoiseSampler;
 use crate::lighting::DynamicLightEngine;
 use crate::{
     chunk::{
@@ -21,7 +23,7 @@ use pumpkin_config::{chunk::ChunkConfig, lighting::LightingEngineConfig, world::
 use pumpkin_data::biome::Biome;
 use pumpkin_data::dimension::Dimension;
 use pumpkin_data::{Block, BlockStateId, block_properties::has_random_ticks, fluid::Fluid};
-use pumpkin_util::math::{position::BlockPos, vector2::Vector2};
+use pumpkin_util::math::{position::BlockPos, vector2::Vector2, vector3::Vector3};
 use pumpkin_util::world_seed::Seed;
 use rustc_hash::FxHashSet;
 
@@ -989,6 +991,24 @@ impl Level {
         self.loaded_entity_chunks
             .get(coordinates)
             .map(|x| f(x.value()))
+    }
+
+    /// Vanilla `ServerLevel.getUncachedNoiseBiome`: the biome source's biome of a cell (in
+    /// quart coordinates) whose chunk is not loaded.
+    #[must_use]
+    pub fn uncached_noise_biome(&self, cell: Vector3<i32>) -> &'static Biome {
+        match &*self.world_gen.load_full() {
+            WorldGenerator::Noise(generator) => {
+                let mut sampler = MultiNoiseSampler::generate(&generator.base_router.multi_noise);
+                generator
+                    .biome_supplier
+                    .biome(cell.x, cell.y, cell.z, &mut sampler)
+            }
+            WorldGenerator::Flat(generator) => {
+                Biome::from_name(&generator.biome).unwrap_or(&Biome::PLAINS)
+            }
+            WorldGenerator::Custom(_) => &Biome::THE_VOID,
+        }
     }
 
     pub fn get_rough_biome(&self, position: &BlockPos) -> &'static Biome {

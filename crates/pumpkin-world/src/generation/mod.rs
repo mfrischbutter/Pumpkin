@@ -1,6 +1,6 @@
 #![allow(dead_code)]
 
-mod biome;
+pub mod biome;
 pub mod blender;
 pub mod block_predicate;
 pub mod block_state_provider;

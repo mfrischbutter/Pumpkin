@@ -462,7 +462,7 @@ impl SpawnState {
         pos: &BlockPos,
         world: &Arc<World>,
     ) -> bool {
-        let biome = world.level.get_rough_biome(pos);
+        let biome = world.get_biome(pos);
         biome
             .spawn_costs
             .get(entity_type.resource_name)
@@ -497,7 +497,7 @@ impl SpawnState {
         };
 
         let charge = charge.unwrap_or_else(|| {
-            let biome = world.level.get_rough_biome(pos);
+            let biome = world.get_biome(pos);
             biome
                 .spawn_costs
                 .get(entity_type.resource_name)
@@ -1094,7 +1094,7 @@ fn mobs_at(world: &World, category: &'static MobCategory, pos: &BlockPos) -> Spa
     if let Some(spawns) = world.structure_spawn_override(category, pos) {
         return SpawnList::Structure(spawns);
     }
-    SpawnList::Biome(biome_spawners(world.level.get_rough_biome(pos), category))
+    SpawnList::Biome(biome_spawners(world.get_biome(pos), category))
 }
 
 /// Vanilla `NaturalSpawner.isInNetherFortressBounds`: a monster position on nether bricks
@@ -1137,7 +1137,7 @@ pub fn get_random_spawn_mob_at(
     category: &'static MobCategory,
     block_pos: &BlockPos,
 ) -> Option<SpawnerData> {
-    let biome = world.level.get_rough_biome(block_pos);
+    let biome = world.get_biome(block_pos);
     if category == &MobCategory::WATER_AMBIENT
         && biome.has_tag(&MINECRAFT_REDUCE_WATER_AMBIENT_SPAWNS)
         && rng().random::<f32>() < 0.98f32

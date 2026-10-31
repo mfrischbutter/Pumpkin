@@ -209,6 +209,7 @@ use crate::world::natural_spawner::{SpawnState, spawn_for_chunk};
 use pumpkin_config::lighting::LightingEngineConfig;
 use pumpkin_data::effect::StatusEffect;
 use pumpkin_world::chunk::ChunkHeightmapType::{self, MotionBlocking};
+use pumpkin_world::generation::biome::get_biome_blend;
 use pumpkin_world::generation::structure::references::StructureReference;
 use uuid::Uuid;
 use weather::Weather;
@@ -6276,21 +6277,32 @@ impl World {
             .set_sky_light_level(&self.level, position, light_level);
     }
 
+    /// Vanilla `Level.getBiome`: the biome through the `BiomeManager` zoom, so that borders
+    /// fall where the client draws them; an unloaded cell gets the biome source's biome.
     pub fn get_biome(&self, position: &BlockPos) -> &'static Biome {
-        let chunk_pos = position.chunk_position();
-        if let Some(chunk) = self.level.loaded_chunks.get(&chunk_pos) {
-            let id = chunk
-                .section
-                .get_rough_biome_absolute_y(
-                    (position.0.x & 15) as usize,
-                    position.0.y,
-                    (position.0.z & 15) as usize,
+        let cell = get_biome_blend(
+            i8::try_from(self.min_y).unwrap_or(i8::MIN),
+            u16::try_from(self.dimension.height).unwrap_or(u16::MAX),
+            self.level.hashed_seed(),
+            position.0.x,
+            position.0.y,
+            position.0.z,
+        );
+        let cell_pos = BlockPos::new(cell.x << 2, cell.y << 2, cell.z << 2);
+        let loaded = self
+            .level
+            .read_chunk_sync(&cell_pos.chunk_position(), |chunk| {
+                chunk.section.get_rough_biome_absolute_y(
+                    (cell_pos.0.x & 15) as usize,
+                    cell_pos.0.y,
+                    (cell_pos.0.z & 15) as usize,
                 )
-                .unwrap_or(0);
-            Biome::from_id(id).unwrap_or(&Biome::PLAINS)
-        } else {
-            &Biome::PLAINS
-        }
+            })
+            .flatten();
+        loaded.map_or_else(
+            || self.level.uncached_noise_biome(cell),
+            |id| Biome::from_id(id).unwrap_or(&Biome::PLAINS),
+        )
     }
 
     pub fn schedule_block_tick(
