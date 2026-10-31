@@ -1,7 +1,7 @@
 use crate::block::PathComputationType;
 use crate::entity::EntityBase;
 use crate::entity::mob::Mob;
-use crate::entity::mob::spawn::{EntitySpawnReason, finalize_spawn};
+use crate::entity::mob::spawn::{EntitySpawnReason, SpawnGroupData, finalize_spawn};
 use crate::entity::player::Player;
 use crate::entity::r#type::{check_spawn_rules, from_type};
 use crate::world::World;
@@ -632,42 +632,22 @@ pub fn spawn_mobs_for_chunk_generation(
         let mut group_data = None;
         for _ in 0..count {
             let mut success = false;
-
-            for _ in 0..4 {
-                if success {
-                    break;
-                }
-
-                let pos = get_top_non_colliding_pos(world, cache, entity_type, x, z);
-
-                if entity_type.summonable && is_spawn_position_ok_cache(cache, &pos, entity_type) {
-                    let width = f64::from(entity_type.dimension[0]);
-                    let fx =
-                        (f64::from(x)).clamp(f64::from(xo) + width, f64::from(xo) + 16.0 - width);
-                    let fz =
-                        (f64::from(z)).clamp(f64::from(zo) + width, f64::from(zo) + 16.0 - width);
-                    let spawn_pos_f64 = Vector3::new(fx, f64::from(pos.0.y), fz);
-                    let check_pos = BlockPos::new(fx.floor() as i32, pos.0.y, fz.floor() as i32);
-
-                    if world.is_space_empty(entity_type.get_spawn_bounding_box(
-                        fx,
-                        f64::from(pos.0.y),
-                        fz,
-                    )) && check_spawn_rules(
-                        entity_type,
-                        world,
-                        EntitySpawnReason::ChunkGeneration,
-                        &check_pos,
-                        world.is_thundering(),
-                    ) {
-                        let entity = from_type(entity_type, spawn_pos_f64, world, Uuid::new_v4());
-                        entity
-                            .get_entity()
-                            .set_rotation(rand::random::<f32>() * 360.0, 0.0);
-                        group_data = finalize_spawn(&entity, world, group_data);
-                        world.spawn_entity_non_save(entity);
-                        success = true;
-                    }
+            let mut attempts = 0;
+            while !success && attempts < 4 {
+                attempts += 1;
+                match chunk_generation_attempt(
+                    world,
+                    cache,
+                    entity_type,
+                    (x, z),
+                    (xo, zo),
+                    &mut group_data,
+                ) {
+                    Attempt::Spawned => success = true,
+                    // Vanilla skips the shuffle below when the spot is blocked or the
+                    // placement rule fails.
+                    Attempt::Blocked => continue,
+                    Attempt::Failed => {}
                 }
 
                 x += rand::random_range(0..5) - rand::random_range(0..5);
@@ -679,6 +659,57 @@ pub fn spawn_mobs_for_chunk_generation(
             }
         }
     }
+}
+
+/// The outcome of one attempt of `spawn_mobs_for_chunk_generation`.
+enum Attempt {
+    Spawned,
+    /// The spot is blocked or the placement rule fails: vanilla retries the same spot.
+    Blocked,
+    Failed,
+}
+
+/// One attempt of vanilla `spawnMobsForChunkGeneration` at `(x, z)`: the top position, the
+/// placement rules with the chunk generation reason, then the mob's own rules and
+/// obstruction test before it joins the group.
+fn chunk_generation_attempt(
+    world: &Arc<World>,
+    cache: &dyn GenerationCache,
+    entity_type: &'static EntityType,
+    (x, z): (i32, i32),
+    (xo, zo): (i32, i32),
+    group_data: &mut Option<SpawnGroupData>,
+) -> Attempt {
+    let pos = get_top_non_colliding_pos(world, cache, entity_type, x, z);
+    if !entity_type.summonable || !is_spawn_position_ok_cache(cache, &pos, entity_type) {
+        return Attempt::Failed;
+    }
+    let width = f64::from(entity_type.dimension[0]);
+    let fx = f64::from(x).clamp(f64::from(xo) + width, f64::from(xo) + 16.0 - width);
+    let fz = f64::from(z).clamp(f64::from(zo) + width, f64::from(zo) + 16.0 - width);
+    let y = f64::from(pos.0.y);
+    let check_pos = BlockPos::new(fx.floor() as i32, pos.0.y, fz.floor() as i32);
+    if !world.is_space_empty(entity_type.get_spawn_bounding_box(fx, y, fz))
+        || !check_spawn_rules(
+            entity_type,
+            world,
+            EntitySpawnReason::ChunkGeneration,
+            &check_pos,
+            world.is_thundering(),
+        )
+    {
+        return Attempt::Blocked;
+    }
+    let entity = from_type(entity_type, Vector3::new(fx, y, fz), world, Uuid::new_v4());
+    entity
+        .get_entity()
+        .set_rotation(rand::random::<f32>() * 360.0, 0.0);
+    if !mob_may_spawn(world, entity.as_ref()) {
+        return Attempt::Failed;
+    }
+    *group_data = finalize_spawn(&entity, world, group_data.take());
+    world.spawn_entity_non_save(entity);
+    Attempt::Spawned
 }
 
 pub fn get_top_non_colliding_pos(
@@ -720,10 +751,13 @@ pub fn get_top_non_colliding_pos(
 
     let pos = BlockPos::new(x, y, z);
 
-    adjust_spawn_position_cache(cache, pos, entity_type)
+    adjust_spawn_position_cache(world, cache, pos, entity_type)
 }
 
+/// The last step of vanilla `getTopNonCollidingPos`: an on-ground type spawns one block
+/// lower when that block is pathfindable on land.
 pub fn adjust_spawn_position_cache(
+    world: &World,
     cache: &dyn GenerationCache,
     pos: BlockPos,
     entity_type: &'static EntityType,
@@ -734,8 +768,11 @@ pub fn adjust_spawn_position_cache(
     ) {
         let below = pos.down();
         let state = GenerationCache::get_block_state(cache, &below.0).to_state();
-
-        if !state.is_full_cube() && !state.is_liquid() {
+        if world.block_registry.is_pathfindable(
+            Block::from_state_id(state.id),
+            state,
+            PathComputationType::Land,
+        ) {
             return below;
         }
     }
@@ -899,6 +936,20 @@ fn is_valid_position_for_mob(
     {
         return false;
     }
+    mob_rules_and_obstruction(world, mob)
+}
+
+/// Vanilla's `mob.checkSpawnRules(level, reason) && mob.checkSpawnObstruction(level)` of
+/// every spawner: the mob's own rules and the obstruction test; anything that is not a
+/// mob passes.
+#[must_use]
+pub fn mob_may_spawn(world: &Arc<World>, entity: &dyn EntityBase) -> bool {
+    entity
+        .get_mob()
+        .is_none_or(|mob| mob_rules_and_obstruction(world, mob))
+}
+
+fn mob_rules_and_obstruction(world: &Arc<World>, mob: &dyn Mob) -> bool {
     mob.get_path_aware_entity()
         .is_none_or(|mob| mob.can_spawn(world.clone()))
         && mob.check_spawn_obstruction(world)

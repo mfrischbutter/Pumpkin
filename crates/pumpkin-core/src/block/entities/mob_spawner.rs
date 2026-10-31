@@ -14,6 +14,7 @@ use crate::{
     entity::mob::spawn::{EntitySpawnReason, finalize_spawn},
     entity::r#type::check_spawn_rules,
     world::World,
+    world::natural_spawner::mob_may_spawn,
 };
 
 pub struct MobSpawnerBlockEntity {
@@ -51,15 +52,6 @@ impl MobSpawnerBlockEntity {
             &BlockPos::floored_v(spawn_pos),
             world.is_thundering(),
         )
-    }
-
-    /// Vanilla `BaseSpawner.serverTick`: the mob's own spawn rules and obstruction test.
-    fn mob_may_spawn(world: &Arc<World>, entity: &dyn EntityBase) -> bool {
-        entity.get_mob().is_none_or(|mob| {
-            mob.get_path_aware_entity()
-                .is_none_or(|mob| mob.can_spawn(world.clone()))
-                && mob.check_spawn_obstruction(world)
-        })
     }
 
     #[must_use]
@@ -206,7 +198,7 @@ impl BlockEntity for MobSpawnerBlockEntity {
                 );
                 let yaw = rand::random::<f32>() * 360.0;
                 entity.get_entity().set_rotation(yaw, 0.0);
-                if !Self::mob_may_spawn(world, entity.as_ref()) {
+                if !mob_may_spawn(world, entity.as_ref()) {
                     continue;
                 }
 
