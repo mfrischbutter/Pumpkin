@@ -112,17 +112,29 @@ impl Goal for PathfindToRaidGoal {
             self.recruitment_tick
                 .store(current_age + 20, std::sync::atomic::Ordering::Relaxed);
 
+            // Vanilla `recruitNearby`: they join the raid's current wave.
             let bb = entity.bounding_box.load().expand(16.0, 16.0, 16.0);
-            let nearby = world.get_entities_at_box(&bb);
-
-            for cand in nearby {
-                if cand.get_entity().entity_id != entity.entity_id
-                    && let Some(cand_mob) = cand.get_mob()
-                    && let Some(cand_raider) = cand_mob.as_raider()
-                    && !cand_raider.has_active_raid()
-                    && cand_raider.can_join_raid()
-                {
-                    cand_raider.get_raider_data().raid_id.store(Some(raid_id));
+            let recruits: Vec<_> =
+                world
+                    .get_entities_at_box(&bb)
+                    .into_iter()
+                    .filter(|cand| {
+                        cand.get_entity().entity_id != entity.entity_id
+                            && cand.get_mob().and_then(|mob| mob.as_raider()).is_some_and(
+                                |raider| !raider.has_active_raid() && raider.can_join_raid(),
+                            )
+                    })
+                    .collect();
+            if !recruits.is_empty() {
+                let mut raids = world
+                    .raids
+                    .lock()
+                    .unwrap_or_else(std::sync::PoisonError::into_inner);
+                if let Some(raid) = raids.get_mut(raid_id) {
+                    let wave = raid.get_groups_spawned();
+                    for recruit in &recruits {
+                        raid.join_raid(wave, recruit);
+                    }
                 }
             }
         }

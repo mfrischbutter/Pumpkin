@@ -1,5 +1,6 @@
 use std::collections::{HashMap, HashSet};
 use std::sync::Arc;
+use std::sync::atomic::Ordering;
 use uuid::Uuid;
 
 use pumpkin_data::data_component_impl::EquipmentSlot;
@@ -351,30 +352,24 @@ impl Raid {
                 );
                 let entity_base = from_type(raider_type.entity_type(), spawn_pos, world, uuid);
 
-                if let Some(mob) = entity_base.get_mob()
+                if !leader_set
+                    && let Some(mob) = entity_base.get_mob()
                     && let Some(raider) = mob.as_raider()
+                    && raider.can_be_leader()
                 {
-                    if !leader_set && raider.can_be_leader() {
-                        raider.set_patrol_leader(true);
-                        let banner = create_ominous_banner();
-                        let living = &mob.get_mob_entity().living_entity;
-                        if let Ok(mut equipment) = living.entity_equipment.try_lock() {
-                            equipment.put(&EquipmentSlot::HEAD, banner.clone());
-                        }
-                        living.send_equipment_changes(&[(EquipmentSlot::HEAD, banner)]);
-                        self.group_to_leader_map.insert(group_number, uuid);
-                        leader_set = true;
+                    raider.set_patrol_leader(true);
+                    let banner = create_ominous_banner();
+                    let living = &mob.get_mob_entity().living_entity;
+                    if let Ok(mut equipment) = living.entity_equipment.try_lock() {
+                        equipment.put(&EquipmentSlot::HEAD, banner.clone());
                     }
-                    raider.set_wave(group_number);
-                    raider.set_can_join_raid(true);
-                    // Vanilla `Raid.joinRaid` finalizes the spawn before the raid buffs.
-                    finalize_spawn(&entity_base, world, None);
-                    raider.apply_raid_buffs(self, group_number, false);
+                    living.send_equipment_changes(&[(EquipmentSlot::HEAD, banner)]);
+                    self.group_to_leader_map.insert(group_number, uuid);
+                    leader_set = true;
                 }
+                self.join_new_raider(world, group_number, &entity_base);
 
-                self.join_raid(group_number, uuid, &entity_base);
-                world.spawn_entity_non_save(entity_base.clone());
-
+                let mut rider = None;
                 if *raider_type.entity_type() == EntityType::RAVAGER {
                     let mut riding_type: Option<&'static EntityType> = None;
                     if group_number == Self::get_num_groups(Difficulty::Normal) {
@@ -389,19 +384,19 @@ impl Raid {
                     ravagers_spawned += 1;
 
                     if let Some(riding_type) = riding_type {
-                        let rider_uuid = Uuid::new_v4();
-                        let rider_base = from_type(riding_type, spawn_pos, world, rider_uuid);
-                        if let Some(mob) = rider_base.get_mob()
-                            && let Some(raider) = mob.as_raider()
-                        {
-                            raider.set_wave(group_number);
-                            raider.set_can_join_raid(true);
-                            finalize_spawn(&rider_base, world, None);
-                            raider.apply_raid_buffs(self, group_number, false);
-                        }
-                        self.join_raid(group_number, rider_uuid, &rider_base);
-                        world.spawn_entity_non_save(rider_base);
+                        let rider_base = from_type(riding_type, spawn_pos, world, Uuid::new_v4());
+                        self.join_new_raider(world, group_number, &rider_base);
+                        // Vanilla `startRiding(raider, false, false)`: no mount event.
+                        entity_base
+                            .get_entity()
+                            .add_passenger_silently(entity_base.clone(), rider_base.clone());
+                        rider = Some(rider_base);
                     }
+                }
+
+                world.spawn_entity_non_save(entity_base);
+                if let Some(rider) = rider {
+                    world.spawn_entity_non_save(rider);
                 }
             }
         }
@@ -411,12 +406,42 @@ impl Raid {
         self.update_bossbar(world);
     }
 
-    pub fn join_raid(&mut self, wave: i32, uuid: Uuid, entity_base: &Arc<dyn EntityBase>) {
-        self.group_raider_map.entry(wave).or_default().insert(uuid);
+    /// Vanilla `Raid.joinRaid`: the raider counts for the wave and knows its raid.
+    pub fn join_raid(&mut self, wave: i32, entity_base: &Arc<dyn EntityBase>) {
+        self.group_raider_map
+            .entry(wave)
+            .or_default()
+            .insert(entity_base.get_entity().entity_uuid);
 
+        if let Some(raider) = entity_base.get_mob().and_then(|mob| mob.as_raider()) {
+            let data = raider.get_raider_data();
+            data.raid_id.store(Some(self.id));
+            raider.set_wave(wave);
+            raider.set_can_join_raid(true);
+            data.ticks_outside_raid.store(0, Ordering::Relaxed);
+        }
         if let Some(living) = entity_base.get_living_entity() {
             self.total_health += living.health.load();
         }
+    }
+
+    /// Vanilla `Raid.joinRaid` for a raider the raid spawns: it joins before the spawn is
+    /// finalized, so the spawn and the raid buffs see the raid.
+    fn join_new_raider(
+        &mut self,
+        world: &Arc<World>,
+        wave: i32,
+        entity_base: &Arc<dyn EntityBase>,
+    ) {
+        self.join_raid(wave, entity_base);
+        finalize_spawn(entity_base, world, None);
+        if let Some(raider) = entity_base.get_mob().and_then(|mob| mob.as_raider()) {
+            raider.apply_raid_buffs(self, wave, false);
+        }
+        entity_base
+            .get_entity()
+            .on_ground
+            .store(true, Ordering::Relaxed);
     }
 
     #[must_use]
@@ -500,6 +525,10 @@ impl Raid {
                         let pos = e.get_entity().pos.load();
                         let dist_sq = pos.squared_distance_to_vec(&center_f64);
                         if is_dead || dist_sq >= Self::RAID_REMOVAL_THRESHOLD_SQR {
+                            // Vanilla `removeFromRaid`: the raider no longer belongs to the raid.
+                            if let Some(raider) = e.get_mob().and_then(|mob| mob.as_raider()) {
+                                raider.get_raider_data().raid_id.store(None);
+                            }
                             wave_dead.push(raider_uuid);
                         }
                     }
