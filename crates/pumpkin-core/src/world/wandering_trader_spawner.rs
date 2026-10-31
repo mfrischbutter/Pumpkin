@@ -2,12 +2,14 @@ use std::path::PathBuf;
 use std::sync::Arc;
 
 use pumpkin_data::entity::EntityType;
+use pumpkin_data::poi_type::PoiType;
 use pumpkin_data::tag::Taggable;
 use pumpkin_data::tag::WorldgenBiome::MINECRAFT_WITHOUT_WANDERING_TRADER_SPAWNS;
 use pumpkin_util::math::position::BlockPos;
 use pumpkin_util::math::vector3::Vector3;
 use pumpkin_util::math::wrap_degrees;
 use pumpkin_world::chunk::ChunkHeightmapType;
+use pumpkin_world::poi::Occupancy;
 use pumpkin_world::world_info::MAXIMUM_SUPPORTED_WORLD_DATA_VERSION;
 use pumpkin_world::world_info::data_files::{
     WanderingTraderData, read_wandering_trader, write_wandering_trader,
@@ -23,7 +25,6 @@ use crate::entity::passive::wandering_trader::WanderingTraderEntity;
 use crate::entity::{Entity, EntityBase};
 use crate::world::World;
 use crate::world::natural_spawner;
-use crate::world::villager_poi::POI_TYPE_MEETING;
 
 const DEFAULT_TICK_DELAY: i32 = 1200;
 pub const DEFAULT_SPAWN_DELAY: i32 = 24_000;
@@ -118,9 +119,14 @@ impl WanderingTraderSpawner {
     }
 
     fn spawn<R: Rng>(world: &Arc<World>, rng: &mut R) -> bool {
+        // Vanilla `getRandomPlayer`: one of the living players.
         let player_pos = {
             let players = world.players.load();
-            players
+            let alive: Vec<_> = players
+                .iter()
+                .filter(|player| player.get_entity().is_alive())
+                .collect();
+            alive
                 .as_slice()
                 .choose(rng)
                 .map(|player| player.get_entity().block_pos.load())
@@ -210,15 +216,19 @@ impl WanderingTraderSpawner {
         rng.random_range(0..SPAWN_ONE_IN_X_CHANCE) == 0
     }
 
+    /// Vanilla `poiManager.find(MEETING, ..., 48, ANY)`: any bell within 48 blocks.
     fn meeting_site_near(world: &World, player_pos: BlockPos) -> Option<BlockPos> {
         world
             .portal_poi
             .lock()
             .unwrap_or_else(std::sync::PoisonError::into_inner)
-            .find_closest_matching(player_pos, SPAWN_RADIUS, |poi_type| {
-                poi_type == POI_TYPE_MEETING
-            })
-            .map(|(position, _)| position)
+            .find_any(
+                player_pos,
+                SPAWN_RADIUS,
+                |kind| kind == &PoiType::MEETING,
+                |_| true,
+                Occupancy::Any,
+            )
     }
 
     fn find_spawn_position_near<R: Rng>(
