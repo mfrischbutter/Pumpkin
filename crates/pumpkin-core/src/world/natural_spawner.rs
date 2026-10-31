@@ -580,13 +580,15 @@ pub fn get_random_pos_within(
 
     let x = (chunk_pos.x << 4) + rng.next_bounded_i32(16);
     let z = (chunk_pos.y << 4) + rng.next_bounded_i32(16);
-    let temp_y = chunk
+    // The heightmap holds the top block; vanilla's `getHeight` is the air above it, and the
+    // column reaches one block further.
+    let top_empty_y = chunk
         .heightmap
         .lock()
         .unwrap_or_else(std::sync::PoisonError::into_inner)
         .get(ChunkHeightmapType::WorldSurface, x, z, chunk.section.min_y)
-        + 1;
-    let y = rng.next_inbetween_i32(min_y, temp_y);
+        + 2;
+    let y = rng.next_inbetween_i32(min_y, top_empty_y);
     BlockPos::new(x, y, z)
 }
 
