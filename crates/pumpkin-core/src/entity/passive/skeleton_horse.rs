@@ -1,6 +1,6 @@
 use std::sync::{
     Arc, Weak,
-    atomic::{AtomicI32, AtomicU8, Ordering},
+    atomic::{AtomicBool, AtomicI32, AtomicU8, Ordering},
 };
 
 use crossbeam::atomic::AtomicCell;
@@ -18,7 +18,8 @@ use crate::entity::{
     ageable::{AgeableData, AgeableMob},
     ai::goal::{
         escape_danger::EscapeDangerGoal, look_around::RandomLookAroundGoal,
-        look_at_entity::LookAtEntityGoal, swim::SwimGoal, wander_around::WanderAroundGoal,
+        look_at_entity::LookAtEntityGoal, skeleton_trap::SkeletonTrapGoal, swim::SwimGoal,
+        wander_around::WanderAroundGoal,
     },
     mob::{Mob, MobEntity},
     passive::animal::Animal,
@@ -31,12 +32,19 @@ pub const FLAG_EATING: u8 = 16;
 pub const FLAG_STANDING: u8 = 32;
 pub const FLAG_OPEN_MOUTH: u8 = 64;
 
+/// An untouched trap horse leaves after this many ticks (vanilla `SkeletonHorse.aiStep`).
+const TRAP_DESPAWN_TICKS: i32 = 18_000;
+
 pub struct SkeletonHorseEntity {
     pub mob_entity: MobEntity,
     pub ageable_data: AgeableData,
     pub flags: AtomicU8,
     pub temper: AtomicI32,
     pub owner: AtomicCell<Option<Uuid>>,
+    /// Vanilla `isTrap`: a horse lightning left, waiting for a player to come close.
+    pub trap: AtomicBool,
+    /// Vanilla `trapTime`: the ticks spent waiting as a trap.
+    pub trap_time: AtomicI32,
 }
 
 impl SkeletonHorseEntity {
@@ -48,6 +56,8 @@ impl SkeletonHorseEntity {
             flags: AtomicU8::new(0),
             temper: AtomicI32::new(0),
             owner: AtomicCell::new(None),
+            trap: AtomicBool::new(false),
+            trap_time: AtomicI32::new(0),
         };
         let mob_arc = Arc::new(horse);
         let mob_weak: Weak<dyn Mob> = {
@@ -60,6 +70,8 @@ impl SkeletonHorseEntity {
 
             goal_selector.add_goal(0, Box::new(SwimGoal::default()));
             goal_selector.add_goal(1, EscapeDangerGoal::new(1.2));
+            // Vanilla adds this goal while the horse is a trap; here it only starts then.
+            goal_selector.add_goal(1, Box::new(SkeletonTrapGoal::new(Arc::downgrade(&mob_arc))));
             goal_selector.add_goal(6, Box::new(WanderAroundGoal::new(0.7)));
             goal_selector.add_goal(
                 7,
@@ -104,6 +116,17 @@ impl SkeletonHorseEntity {
     pub fn set_saddled(&self, val: bool) {
         self.set_flag(FLAG_SADDLE, val);
     }
+
+    /// Vanilla `SkeletonHorse.isTrap`.
+    #[must_use]
+    pub fn is_trap(&self) -> bool {
+        self.trap.load(Ordering::Relaxed)
+    }
+
+    /// Vanilla `SkeletonHorse.setTrap`.
+    pub fn set_trap(&self, trap: bool) {
+        self.trap.store(trap, Ordering::Relaxed);
+    }
 }
 
 impl AgeableMob for SkeletonHorseEntity {
@@ -125,6 +148,16 @@ impl Animal for SkeletonHorseEntity {
 impl Mob for SkeletonHorseEntity {
     fn is_tamed(&self) -> bool {
         self.is_tame()
+    }
+
+    fn mob_tick(&self, _caller: &dyn EntityBase) {
+        // Vanilla `SkeletonHorse.aiStep`: a trap nobody springs leaves after its time.
+        if !self.mob_entity.persistence_required.load(Ordering::Relaxed)
+            && self.is_trap()
+            && self.trap_time.fetch_add(1, Ordering::Relaxed) >= TRAP_DESPAWN_TICKS
+        {
+            self.get_entity().remove();
+        }
     }
 
     fn mob_play_step_sound(&self, pos: &BlockPos, state: &BlockState) {
@@ -154,6 +187,8 @@ impl Mob for SkeletonHorseEntity {
         if let Some(owner) = self.owner.load() {
             nbt.put_uuid("Owner", owner);
         }
+        nbt.put_bool("SkeletonTrap", self.is_trap());
+        nbt.put_int("SkeletonTrapTime", self.trap_time.load(Ordering::Relaxed));
     }
 
     fn mob_read_nbt(&self, nbt: &NbtCompound) {
@@ -167,6 +202,11 @@ impl Mob for SkeletonHorseEntity {
         if let Some(owner) = nbt.get_uuid("Owner") {
             self.owner.store(Some(owner));
         }
+        self.set_trap(nbt.get_bool("SkeletonTrap").unwrap_or(false));
+        self.trap_time.store(
+            nbt.get_int("SkeletonTrapTime").unwrap_or(0),
+            Ordering::Relaxed,
+        );
     }
 
     fn get_mob_entity(&self) -> &MobEntity {

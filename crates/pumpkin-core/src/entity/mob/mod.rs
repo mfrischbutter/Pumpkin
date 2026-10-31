@@ -648,6 +648,11 @@ impl MobEntity {
         }
     }
 
+    /// Vanilla `Mob.setPersistenceRequired`.
+    pub fn set_persistence_required(&self) {
+        self.persistence_required.store(true, Relaxed);
+    }
+
     pub fn read_mob_nbt(&self, nbt: &NbtCompound) {
         self.set_can_pick_up_loot(nbt.get_bool("CanPickUpLoot").unwrap_or(false));
         self.persistence_required.store(

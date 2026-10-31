@@ -47,6 +47,7 @@ pub mod restrict_sun;
 pub mod revenge;
 pub mod run_around_like_crazy;
 pub mod sit_when_ordered_to;
+pub mod skeleton_trap;
 pub mod spider_attack;
 pub mod step_and_destroy_block;
 pub mod swim;

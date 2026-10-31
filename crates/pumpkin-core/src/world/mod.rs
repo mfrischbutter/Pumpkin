@@ -5108,6 +5108,19 @@ impl World {
         self.get_nearest_player(pos, radius, |_| true)
     }
 
+    /// Vanilla `EntityGetter.hasNearbyAlivePlayer`: a living, non-spectator player closer
+    /// than `distance` (any distance when negative).
+    #[must_use]
+    pub fn has_nearby_alive_player(&self, pos: Vector3<f64>, distance: f64) -> bool {
+        self.players.load().iter().any(|player| {
+            !player.is_spectator()
+                && player.get_entity().is_alive()
+                && (distance < 0.0
+                    || player.get_entity().pos.load().squared_distance_to_vec(&pos)
+                        < distance * distance)
+        })
+    }
+
     /// Gets the closest entity to a position, with optional filtering by entity type.
     ///
     /// # Arguments
