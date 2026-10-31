@@ -198,6 +198,7 @@ pub mod poi;
 pub mod scoreboard;
 pub mod structures;
 pub mod thunder;
+pub mod village_siege;
 pub mod weather;
 
 pub use environment::EnvironmentAttributes;
@@ -319,6 +320,8 @@ pub struct World {
     pub patrol_spawner: std::sync::Mutex<patrol_spawner::PatrolSpawner>,
     /// Vanilla `CatSpawner`, ticked in the overworld only.
     pub cat_spawner: std::sync::Mutex<cat_spawner::CatSpawner>,
+    /// Vanilla `VillageSiege`, ticked in the overworld only.
+    pub village_siege: std::sync::Mutex<village_siege::VillageSiege>,
     /// The structure starts reaching into each loaded chunk, for the spawn lists
     /// (vanilla's structure references, see `structures`).
     pub structure_reference_cache: DashMap<Vector2<i32>, Arc<[StructureReference]>>,
@@ -497,6 +500,7 @@ impl World {
             phantom_spawner: std::sync::Mutex::new(phantom_spawner::PhantomSpawner::default()),
             patrol_spawner: std::sync::Mutex::new(patrol_spawner::PatrolSpawner::default()),
             cat_spawner: std::sync::Mutex::new(cat_spawner::CatSpawner::default()),
+            village_siege: std::sync::Mutex::new(village_siege::VillageSiege::default()),
             structure_reference_cache: DashMap::new(),
             dragon_fight,
             spawn_state: ArcSwap::new(Arc::new(SpawnState::empty())),
@@ -2452,6 +2456,10 @@ impl World {
             .unwrap_or_else(std::sync::PoisonError::into_inner)
             .tick(self, spawn_enemies);
         self.cat_spawner
+            .lock()
+            .unwrap_or_else(std::sync::PoisonError::into_inner)
+            .tick(self, spawn_enemies);
+        self.village_siege
             .lock()
             .unwrap_or_else(std::sync::PoisonError::into_inner)
             .tick(self, spawn_enemies);
