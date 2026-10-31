@@ -110,11 +110,39 @@ pub struct SpawnOverrideStruct {
 pub struct SpawnEntryStruct {
     #[serde(rename = "type")]
     pub entity_type: String,
+    /// The pack size since 26.3: a number or a uniform `{min_inclusive, max_inclusive}`.
+    #[serde(default)]
+    pub count: Option<SpawnCount>,
     #[serde(default = "default_spawn_count", rename = "minCount")]
     pub min_count: u32,
     #[serde(default = "default_spawn_count", rename = "maxCount")]
     pub max_count: u32,
     pub weight: u32,
+}
+
+/// A spawn entry's pack size: the `minCount`/`maxCount` of the older data as one `count`.
+#[derive(Deserialize, Clone)]
+#[serde(untagged)]
+pub enum SpawnCount {
+    Fixed(u32),
+    Uniform {
+        min_inclusive: u32,
+        max_inclusive: u32,
+    },
+}
+
+impl SpawnEntryStruct {
+    /// The pack size as (min, max): `count` when the data has it, else `minCount`/`maxCount`.
+    fn pack_size(&self) -> (u32, u32) {
+        match &self.count {
+            Some(SpawnCount::Fixed(count)) => (*count, *count),
+            Some(SpawnCount::Uniform {
+                min_inclusive,
+                max_inclusive,
+            }) => (*min_inclusive, *max_inclusive),
+            None => (self.min_count, self.max_count),
+        }
+    }
 }
 
 fn default_spawn_count() -> u32 {
@@ -411,8 +439,7 @@ impl ToTokens for StructureStruct {
                     .iter()
                     .map(|entry| {
                         let et = &entry.entity_type;
-                        let min = entry.min_count;
-                        let max = entry.max_count;
+                        let (min, max) = entry.pack_size();
                         let weight = entry.weight;
                         quote!(SpawnEntry {
                             entity_type: #et,
