@@ -1,17 +1,20 @@
 use std::sync::{
     Arc, Weak,
-    atomic::{AtomicBool, AtomicI32, Ordering},
+    atomic::{AtomicBool, AtomicI32, AtomicUsize, Ordering},
 };
 
 use pumpkin_data::BlockState;
+use pumpkin_data::attributes::Attributes;
+use pumpkin_data::damage::DamageType;
 use pumpkin_data::entity::{EntityStatus, EntityType};
 use pumpkin_data::item::Item;
 use pumpkin_data::item_stack::ItemStack;
-use pumpkin_data::sound::{Sound, SoundCategory};
+use pumpkin_data::sound::Sound;
 use pumpkin_nbt::compound::NbtCompound;
 use pumpkin_protocol::bedrock::server::ActorEventID;
-use pumpkin_util::GameMode;
 use pumpkin_util::math::position::BlockPos;
+use pumpkin_util::math::vector3::Vector3;
+use rand::RngExt;
 
 use crate::entity::ai::behavior::hunting::{self, Hunt};
 use crate::entity::ai::target_match::TargetMatch;
@@ -37,12 +40,21 @@ const IRON_GOLEM_HUNTS: &[Hunt] = &[Hunt::new(3, TargetMatch::Enemy, false)
     .every(5)
     .matching(|_hunter, target, _world| target.entity.entity_type != &EntityType::CREEPER)];
 
+/// Vanilla `Crackiness.GOLEM`: the health fractions below which the cracks grow.
+const CRACK_FRACTIONS: [f32; 3] = [0.75, 0.5, 0.25];
+/// Vanilla `IronGolem.mobInteract`: the health an iron ingot repairs.
+const REPAIR_HEALTH: f32 = 25.0;
+/// Vanilla `IronGolem.doHurtTarget`: the upward push of a hit.
+const HIT_LIFT: f64 = 0.4;
+
 pub struct IronGolemEntity {
     pub mob_entity: MobEntity,
     pub neutral_data: NeutralData,
     pub player_created: AtomicBool,
     pub attack_animation_tick: AtomicI32,
     pub offer_flower_tick: AtomicI32,
+    /// The crack level when the current hurt started.
+    crackiness_before_hurt: AtomicUsize,
 }
 
 impl IronGolemEntity {
@@ -54,6 +66,7 @@ impl IronGolemEntity {
             player_created: AtomicBool::new(false),
             attack_animation_tick: AtomicI32::new(0),
             offer_flower_tick: AtomicI32::new(0),
+            crackiness_before_hurt: AtomicUsize::new(0),
         };
         let mob_arc = Arc::new(iron_golem);
         let mob_weak: Weak<dyn Mob> = {
@@ -82,6 +95,13 @@ impl IronGolemEntity {
         };
 
         mob_arc
+    }
+
+    /// Vanilla `getCrackiness`: 0 (none) to 3 (high) by the health left.
+    #[must_use]
+    pub fn crackiness(&self) -> usize {
+        let living = &self.mob_entity.living_entity;
+        crack_level(living.health.load() / living.get_max_health())
     }
 
     #[must_use]
@@ -135,6 +155,14 @@ impl IronGolemEntity {
     }
 }
 
+/// Vanilla `Crackiness.byFraction` for golems: how many thresholds the health fraction is under.
+fn crack_level(fraction: f32) -> usize {
+    CRACK_FRACTIONS
+        .iter()
+        .filter(|&&threshold| fraction < threshold)
+        .count()
+}
+
 impl NeutralMob for IronGolemEntity {
     fn get_neutral_data(&self) -> &NeutralData {
         &self.neutral_data
@@ -149,6 +177,51 @@ impl Mob for IronGolemEntity {
 
     fn mob_play_step_sound(&self, _pos: &BlockPos, _state: &BlockState) {
         self.play_entity_sound(Sound::EntityIronGolemStep, 1.0, 1.0);
+    }
+
+    /// Vanilla `IronGolem.doHurtTarget`: half the attack damage plus up to all of it again,
+    /// and a hit lifts the target.
+    fn do_hurt_target(&self, target: &dyn EntityBase) -> bool {
+        self.trigger_attack_animation();
+        let attack_damage = self
+            .mob_entity
+            .living_entity
+            .get_attribute_value(&Attributes::ATTACK_DAMAGE) as f32;
+        let whole = attack_damage as i32;
+        let damage = if whole > 0 {
+            attack_damage / 2.0 + self.get_random().random_range(0..whole) as f32
+        } else {
+            attack_damage
+        };
+        let hurt =
+            self.mob_entity
+                .try_attack_with_damage(self, target, damage, DamageType::MOB_ATTACK);
+        if hurt {
+            let resistance = target.get_living_entity().map_or(0.0, |living| {
+                living.get_attribute_value(&Attributes::KNOCKBACK_RESISTANCE)
+            });
+            let lift = HIT_LIFT * (1.0 - resistance).max(0.0);
+            let target_entity = target.get_entity();
+            let velocity = target_entity.velocity.load();
+            target_entity.set_velocity(Vector3::new(velocity.x, velocity.y + lift, velocity.z));
+            target_entity.velocity_dirty.store(true, Ordering::Relaxed);
+            self.on_attack(target);
+        }
+        self.play_entity_sound(Sound::EntityIronGolemAttack, 1.0, 1.0);
+        hurt
+    }
+
+    fn pre_damage(&self, _damage_type: DamageType, _source: Option<&dyn EntityBase>) -> bool {
+        self.crackiness_before_hurt
+            .store(self.crackiness(), Ordering::Relaxed);
+        true
+    }
+
+    /// Vanilla `IronGolem.hurtServer`: one more crack plays the damage sound.
+    fn on_damage(&self, _damage_type: DamageType, _source: Option<&dyn EntityBase>) {
+        if self.crackiness() != self.crackiness_before_hurt.load(Ordering::Relaxed) {
+            self.play_entity_sound(Sound::EntityIronGolemDamage, 1.0, 1.0);
+        }
     }
 
     fn can_attack(&self, target: &dyn EntityBase) -> bool {
@@ -202,23 +275,37 @@ impl Mob for IronGolemEntity {
         entity.set_synced_data(pumpkin_data::tracked_data::iron_golem::FLAGS_ID, flag);
     }
 
+    /// Vanilla `IronGolem.mobInteract`: an iron ingot repairs 25 health.
     fn mob_interact(&self, player: &Arc<Player>, item_stack: &mut ItemStack) -> bool {
-        if item_stack.item.id == Item::IRON_INGOT.id {
-            let living = &self.mob_entity.living_entity;
-            let current_health = living.health.load();
-            let max_health = living.get_max_health();
-            if current_health < max_health {
-                living.set_health((current_health + 25.0).min(max_health));
-                let entity = self.get_entity();
-                let world = entity.world.load();
-                let pos = entity.pos.load();
-                world.play_sound(Sound::EntityIronGolemRepair, SoundCategory::Neutral, &pos);
-                if player.gamemode.load() != GameMode::Creative {
-                    item_stack.item_count = item_stack.item_count.saturating_sub(1);
-                }
-                return true;
-            }
+        if item_stack.item.id != Item::IRON_INGOT.id {
+            return false;
         }
-        false
+        let living = &self.mob_entity.living_entity;
+        let health_before = living.health.load();
+        living.heal(REPAIR_HEALTH);
+        if living.health.load() == health_before {
+            return false;
+        }
+        let mut rng = self.get_random();
+        let pitch = (rng.random::<f32>() - rng.random::<f32>()).mul_add(0.2, 1.0);
+        self.play_entity_sound(Sound::EntityIronGolemRepair, 1.0, pitch);
+        item_stack.decrement_unless_creative(player.gamemode.load(), 1);
+        true
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::crack_level;
+
+    #[test]
+    fn cracks_follow_the_golem_thresholds() {
+        assert_eq!(crack_level(1.0), 0);
+        assert_eq!(crack_level(0.75), 0);
+        assert_eq!(crack_level(0.74), 1);
+        assert_eq!(crack_level(0.5), 1);
+        assert_eq!(crack_level(0.49), 2);
+        assert_eq!(crack_level(0.24), 3);
+        assert_eq!(crack_level(0.0), 3);
     }
 }

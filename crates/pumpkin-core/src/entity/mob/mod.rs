@@ -872,18 +872,29 @@ impl MobEntity {
     }
 
     pub fn try_attack(&self, caller: &dyn EntityBase, target: &dyn EntityBase) -> bool {
+        let attack_damage = self
+            .living_entity
+            .get_attribute_value(&Attributes::ATTACK_DAMAGE) as f32;
+        self.try_attack_with_damage(caller, target, attack_damage, DamageType::MOB_ATTACK)
+    }
+
+    /// A melee hit for `attack_damage` of `damage_type`, for species that roll their own
+    /// damage or hit with another damage type.
+    pub fn try_attack_with_damage(
+        &self,
+        caller: &dyn EntityBase,
+        target: &dyn EntityBase,
+        attack_damage: f32,
+        damage_type: DamageType,
+    ) -> bool {
         if self.living_entity.dead.load(Relaxed) {
             return false;
         }
 
-        let attack_damage: f32 =
-            self.living_entity
-                .get_attribute_value(&Attributes::ATTACK_DAMAGE) as f32;
-
         let damaged = target.damage_with_context(
             target,
             attack_damage,
-            DamageType::MOB_ATTACK,
+            damage_type,
             None,
             Some(caller),
             Some(caller),
