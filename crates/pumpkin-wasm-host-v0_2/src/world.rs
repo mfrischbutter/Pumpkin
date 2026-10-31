@@ -1334,9 +1334,11 @@ impl pumpkin::plugin::world::HostWorld for PluginHostState {
         let mut reader = pumpkin_nbt::deserializer::NbtReadHelperJava::new(
             pumpkin_nbt::deserializer::NbtStreamReader(&mut cursor),
         );
-        let mut nbt: pumpkin_nbt::NbtCompound = pumpkin_nbt::Nbt::read_unnamed(&mut reader)
-            .map_err(|e| wasmtime::Error::msg(format!("Invalid NBT: {e}")))?
-            .root_tag;
+        // Invalid NBT is the caller's error, not a trap that poisons the plugin.
+        let mut nbt: pumpkin_nbt::NbtCompound = match pumpkin_nbt::Nbt::read_unnamed(&mut reader) {
+            Ok(nbt) => nbt.root_tag,
+            Err(e) => return Ok(Err(format!("Invalid NBT: {e}"))),
+        };
 
         // Override NBT position with the caller-provided position so tile
         // entities land at the correct coordinates during schematic pastes.
