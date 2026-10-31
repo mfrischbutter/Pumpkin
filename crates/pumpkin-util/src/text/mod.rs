@@ -92,8 +92,25 @@ pub struct TextComponentBase {
     #[serde(flatten)]
     pub style: Box<Style>,
     /// Child text components that are appended after this component's content.
-    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    #[serde(
+        default,
+        skip_serializing_if = "Vec::is_empty",
+        deserialize_with = "deserialize_components"
+    )]
     pub extra: Vec<Self>,
+}
+
+/// Deserializes a list of components in any of vanilla's forms: a plain string, a list,
+/// or an object each (`ComponentSerialization`), as [`TextComponent`] accepts them.
+fn deserialize_components<'de, D: Deserializer<'de>>(
+    deserializer: D,
+) -> Result<Vec<TextComponentBase>, D::Error> {
+    Vec::<TextComponent>::deserialize(deserializer).map(|components| {
+        components
+            .into_iter()
+            .map(|component| component.0)
+            .collect()
+    })
 }
 
 impl TextComponentBase {
@@ -2063,7 +2080,11 @@ pub enum TextContent {
         #[serde(skip, default)]
         bedrock_translate: Option<Cow<'static, str>>,
         /// Substitution parameters for the translation.
-        #[serde(default, skip_serializing_if = "Vec::is_empty")]
+        #[serde(
+            default,
+            skip_serializing_if = "Vec::is_empty",
+            deserialize_with = "deserialize_components"
+        )]
         with: Vec<TextComponentBase>,
     },
     /// Displays the name of one or more entities found by a selector.
@@ -2278,5 +2299,16 @@ mod custom_name_nbt_tests {
             .0
             .to_nbt_tag_for_version(&crate::version::JavaMinecraftVersion::V_26_3);
         assert!(matches!(tag, NbtTag::String(ref s) if &**s == "Bob"));
+    }
+
+    /// A plain child is written as a compact string inside `extra`; reading it back must
+    /// keep the child instead of dropping the whole component.
+    #[test]
+    fn compact_string_children_round_trip() {
+        let component = TextComponent::text("Wand").add_text(" of Light");
+        let tag = component
+            .0
+            .to_nbt_tag_for_version(&crate::version::JavaMinecraftVersion::V_26_3);
+        assert_eq!(TextComponent::from_nbt(&tag), component);
     }
 }
