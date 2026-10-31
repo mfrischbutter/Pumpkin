@@ -135,11 +135,10 @@ impl HostInventory for PluginHostState {
             }
             InventoryProvider::PlayerMain(player) => {
                 if slot < 36 {
-                    let s = player.inventory().get_stack(slot as usize);
-                    player.inventory().set_stack(
-                        slot as usize,
-                        pumpkin_data::item_stack::ItemStack::EMPTY.clone(),
-                    );
+                    // Taken in one step, like the generic inventories: between a separate
+                    // read and write the player's packets or the tick may change the slot,
+                    // and the plugin would hold a copy of a stack that is gone or changed.
+                    let s = player.inventory().remove_stack(slot as usize);
                     player.sync_hand_slot(
                         slot as usize,
                         pumpkin_data::item_stack::ItemStack::EMPTY.clone(),
