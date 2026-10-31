@@ -958,6 +958,9 @@ interface player {
         /// Sends a hurt / damage-tilt animation to the player's client (causes screen shake in the given yaw direction).
         send-hurt-animation: func(yaw: f32);
 
+        /// Forces the player's camera to look at the specified target position.
+        look-at: func(target: position);
+
         /// Opens a written book interface for the player from the specified hand.
         open-book: func(hand: hand);
         /// Forces the sign text editor to open for the player at the specified sign block position.
@@ -969,6 +972,9 @@ interface player {
         set-velocity: func(velocity: position);
         /// Applies directional knockback impulse to the player.
         apply-knockback: func(strength: f64, x: f64, z: f64);
+
+        /// Returns whether the player is blocking with an item that blocks attacks (a raised shield).
+        is-blocking: func() -> bool;
 
         // Movement Lock & Freezing
 
