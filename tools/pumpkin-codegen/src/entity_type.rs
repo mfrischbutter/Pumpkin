@@ -50,6 +50,12 @@ pub struct EntityType {
     pub category: MobCategory,
     /// Whether this entity can spawn far from the player (beyond normal spawn range).
     pub can_spawn_far_from_player: bool,
+    /// Vanilla `isAllowedInPeaceful`: false for the types peaceful difficulty refuses to
+    /// spawn and discards.
+    pub is_allowed_in_peaceful: bool,
+    /// Vanilla `immuneTo`: the block tag the type may spawn inside although the blocks are
+    /// dangerous (`minecraft:default_immune_to` for most types).
+    pub immune_to: String,
     /// Client tracking range in chunks.
     pub client_tracking_range: u32,
     /// Update interval in ticks.
@@ -233,6 +239,11 @@ impl ToTokens for NamedEntityType<'_> {
         let is_enemy = entity.is_enemy;
         let limit_per_chunk = entity.limit_per_chunk.unwrap_or(0);
         let can_spawn_far_from_player = entity.can_spawn_far_from_player;
+        let is_allowed_in_peaceful = entity.is_allowed_in_peaceful;
+        let immune_to = format_ident!(
+            "{}",
+            entity.immune_to.replace([':', '/'], "_").to_uppercase()
+        );
 
         let dimension0 = entity.dimension[0];
         let dimension1 = entity.dimension[1];
@@ -265,6 +276,8 @@ impl ToTokens for NamedEntityType<'_> {
                 fire_immune: #fire_immune,
                 category: &#spawn_category,
                 can_spawn_far_from_player: #can_spawn_far_from_player,
+                is_allowed_in_peaceful: #is_allowed_in_peaceful,
+                immune_to: &crate::tag::Block::#immune_to,
                 client_tracking_range: #client_tracking_range,
                 update_interval: #update_interval,
                 track_deltas: #track_deltas,
@@ -326,7 +339,7 @@ pub fn build() -> TokenStream {
     quote! {
         use crate::data_component_impl::IDSetContent;
         use crate::tag::Taggable;
-        use crate::tag::RegistryKey;
+        use crate::tag::{RegistryKey, Tag};
         use crate::attributes::Attributes;
         use crate::sound::{Sound, SoundCategory};
         use pumpkin_util::HeightMap;
@@ -357,6 +370,8 @@ pub fn build() -> TokenStream {
             pub fire_immune: bool,
             pub category: &'static MobCategory,
             pub can_spawn_far_from_player: bool,
+            pub is_allowed_in_peaceful: bool,
+            pub immune_to: &'static Tag,
             pub client_tracking_range: u32,
             pub update_interval: u32,
             pub track_deltas: bool,
@@ -442,6 +457,8 @@ pub fn build() -> TokenStream {
         #[derive(Debug)]
         pub struct MobCategory {
             pub id: usize, // mojang don't have this field
+            /// Vanilla `getName`, the serialized name (`monster`, `creature`, ...).
+            pub name: &'static str,
             pub max: i32,
             pub is_friendly: bool,
             pub is_persistent: bool,
@@ -458,6 +475,7 @@ pub fn build() -> TokenStream {
             pub const NO_DESPAWN_DISTANCE: i32 = 32;
             pub const MONSTER: MobCategory = MobCategory {
                 id: 0,
+                name: "monster",
                 max: 70,
                 is_friendly: false,
                 is_persistent: false,
@@ -465,6 +483,7 @@ pub fn build() -> TokenStream {
             };
             pub const CREATURE: MobCategory = MobCategory {
                 id: 1,
+                name: "creature",
                 max: 10,
                 is_friendly: true,
                 is_persistent: true,
@@ -472,6 +491,7 @@ pub fn build() -> TokenStream {
             };
             pub const AMBIENT: MobCategory = MobCategory {
                 id: 2,
+                name: "ambient",
                 max: 15,
                 is_friendly: true,
                 is_persistent: false,
@@ -479,6 +499,7 @@ pub fn build() -> TokenStream {
             };
             pub const AXOLOTLS: MobCategory = MobCategory {
                 id: 3,
+                name: "axolotls",
                 max: 5,
                 is_friendly: true,
                 is_persistent: false,
@@ -486,6 +507,7 @@ pub fn build() -> TokenStream {
             };
             pub const UNDERGROUND_WATER_CREATURE: MobCategory = MobCategory {
                 id: 4,
+                name: "underground_water_creature",
                 max: 5,
                 is_friendly: true,
                 is_persistent: false,
@@ -493,6 +515,7 @@ pub fn build() -> TokenStream {
             };
             pub const WATER_CREATURE: MobCategory = MobCategory {
                 id: 5,
+                name: "water_creature",
                 max: 5,
                 is_friendly: true,
                 is_persistent: true,
@@ -500,6 +523,7 @@ pub fn build() -> TokenStream {
             };
             pub const WATER_AMBIENT: MobCategory = MobCategory {
                 id: 6,
+                name: "water_ambient",
                 max: 20,
                 is_friendly: true,
                 is_persistent: false,
@@ -507,6 +531,7 @@ pub fn build() -> TokenStream {
             };
             pub const MISC: MobCategory = MobCategory {
                 id: 7,
+                name: "misc",
                 max: -1,
                 is_friendly: true,
                 is_persistent: true,
