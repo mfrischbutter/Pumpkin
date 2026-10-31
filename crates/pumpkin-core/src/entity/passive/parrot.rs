@@ -1,4 +1,7 @@
-use std::sync::{Arc, Weak, atomic::Ordering};
+use std::sync::{
+    Arc, Weak,
+    atomic::{AtomicI32, Ordering},
+};
 
 use crossbeam::atomic::AtomicCell;
 use pumpkin_data::BlockState;
@@ -8,36 +11,71 @@ use pumpkin_data::entity::EntityType;
 use pumpkin_data::item_stack::ItemStack;
 use pumpkin_data::sound::Sound;
 use pumpkin_data::tag::{self, Taggable};
+use pumpkin_nbt::compound::NbtCompound;
+use pumpkin_protocol::codec::var_int::VarInt;
 use pumpkin_util::math::position::BlockPos;
+use rand::RngExt;
 
 use crate::entity::{
     Entity, EntityBase,
+    ai::control::flying_move_control::FlyingMoveControl,
     ai::goal::{
-        look_around::RandomLookAroundGoal, look_at_entity::LookAtEntityGoal, swim::SwimGoal,
-        wander_around::WanderAroundGoal,
+        escape_danger::EscapeDangerGoal, follow_mob::FollowMobGoal, follow_owner::FollowOwnerGoal,
+        look_at_entity::LookAtEntityGoal, sit_when_ordered_to::SitWhenOrderedToGoal,
+        swim::SwimGoal, water_avoiding_random_flying::WaterAvoidingRandomFlyingGoal,
     },
-    mob::{Mob, MobEntity},
+    ai::pathfinder::{Navigator, node::PathType},
+    mob::{Mob, MobEntity, spawn::SpawnGroupData},
+    passive::{
+        animal::Animal,
+        tamable::{TamableAnimal, TamableData},
+    },
     player::Player,
 };
+use crate::world::World;
 
 /// Duration in ticks of the poison a parrot gets from eating a cookie, matching
 /// vanilla `Parrot.mobInteract`.
 const COOKIE_POISON_DURATION: i32 = 900;
+/// Vanilla `Parrot.mobInteract`: one seed in this many tames it.
+const TAME_CHANCE: i32 = 10;
+/// Vanilla `Parrot.Variant`: red-blue, blue, green, yellow-blue and gray.
+const VARIANT_COUNT: i32 = 5;
 
 /// Represents a Parrot, a passive flying mob that can mimic nearby mob sounds.
 ///
 /// Wiki: <https://minecraft.wiki/w/Parrot>
 pub struct ParrotEntity {
     pub mob_entity: MobEntity,
+    pub tamable_data: TamableData,
+    variant: AtomicI32,
     flap_speed: AtomicCell<f32>,
     next_flap: AtomicCell<f32>,
 }
 
 impl ParrotEntity {
     pub fn new(entity: Entity) -> Arc<Self> {
-        let mob_entity = MobEntity::new(entity);
+        let mut mob_entity = MobEntity::new(entity);
+        // Vanilla `Parrot` constructor and `createNavigation`.
+        *mob_entity
+            .move_control
+            .get_mut()
+            .unwrap_or_else(std::sync::PoisonError::into_inner) =
+            Box::new(FlyingMoveControl::new(10, false));
+        let navigator = mob_entity
+            .navigator
+            .get_mut()
+            .unwrap_or_else(std::sync::PoisonError::into_inner);
+        *navigator = Navigator::flying();
+        navigator.set_can_open_doors(false);
+        navigator.set_can_float(true);
+        navigator.set_pathfinding_malus(PathType::DangerFire, -1.0);
+        navigator.set_pathfinding_malus(PathType::DamageFire, -1.0);
+        navigator.set_pathfinding_malus(PathType::Cocoa, -1.0);
         let parrot = Self {
             mob_entity,
+            tamable_data: TamableData::default(),
+            variant: AtomicI32::new(0),
             flap_speed: AtomicCell::new(0.0),
             next_flap: AtomicCell::new(1.0),
         };
@@ -50,16 +88,52 @@ impl ParrotEntity {
         {
             let goal_selector = &mob_arc.mob_entity.goals_selector;
 
+            // Vanilla `Parrot.registerGoals`; `ParrotWanderGoal` is the plain flying stroll here.
+            goal_selector.add_goal(0, EscapeDangerGoal::new(1.25));
             goal_selector.add_goal(0, Box::new(SwimGoal::default()));
-            goal_selector.add_goal(1, Box::new(WanderAroundGoal::new(1.0)));
             goal_selector.add_goal(
-                2,
-                LookAtEntityGoal::with_default(mob_weak, &EntityType::PLAYER, 6.0),
+                1,
+                LookAtEntityGoal::with_default(mob_weak, &EntityType::PLAYER, 8.0),
             );
-            goal_selector.add_goal(3, Box::new(RandomLookAroundGoal::default()));
+            goal_selector.add_goal(2, Box::new(SitWhenOrderedToGoal::new()));
+            goal_selector.add_goal(2, FollowOwnerGoal::new(1.0, 5.0, 1.0));
+            goal_selector.add_goal(2, Box::new(WaterAvoidingRandomFlyingGoal::new(1.0)));
+            goal_selector.add_goal(3, Box::new(FollowMobGoal::new(1.0, 3.0, 7.0)));
         };
 
         mob_arc
+    }
+
+    #[must_use]
+    pub fn get_variant(&self) -> i32 {
+        self.variant.load(Ordering::Relaxed)
+    }
+
+    pub fn set_variant(&self, variant: i32) {
+        self.variant.store(variant, Ordering::Relaxed);
+        self.get_entity().set_synced_data(
+            pumpkin_data::tracked_data::parrot::DATA_VARIANT_ID,
+            VarInt(variant),
+        );
+    }
+
+    /// Vanilla `Parrot.isFlying`.
+    fn is_flying(&self) -> bool {
+        !self.get_entity().on_ground.load(Ordering::Relaxed)
+    }
+
+    /// Vanilla `Parrot.mobInteract` with parrot food: one seed in ten tames a wild parrot.
+    fn eat_seeds(&self, player: &Arc<Player>, item_stack: &mut ItemStack) {
+        item_stack.decrement_unless_creative(player.gamemode.load(), 1);
+        let mut rng = self.get_random();
+        let pitch = (rng.random::<f32>() - rng.random::<f32>()).mul_add(0.2, 1.0);
+        self.play_entity_sound(Sound::EntityParrotEat, 1.0, pitch);
+        if rng.random_range(0..TAME_CHANCE) == 0 && self.approve_taming(player) {
+            TamableAnimal::tame(self, player.gameprofile.id);
+            self.spawn_taming_particles(true);
+        } else {
+            self.spawn_taming_particles(false);
+        }
     }
 
     /// Feeds the parrot a cookie: it is poisoned and then killed, as in vanilla
@@ -93,7 +167,71 @@ impl ParrotEntity {
     }
 }
 
+impl Animal for ParrotEntity {
+    /// Vanilla `Parrot.isFood`: parrots never breed.
+    fn is_food(&self, _item_stack: &ItemStack) -> bool {
+        false
+    }
+
+    fn can_mate(&self, _partner: &dyn EntityBase) -> bool {
+        false
+    }
+}
+
+impl TamableAnimal for ParrotEntity {
+    fn get_tamable_data(&self) -> &TamableData {
+        &self.tamable_data
+    }
+}
+
 impl Mob for ParrotEntity {
+    fn as_animal(&self) -> Option<&dyn Animal> {
+        Some(self)
+    }
+
+    fn as_tamable(&self) -> Option<&dyn TamableAnimal> {
+        Some(self)
+    }
+
+    /// Vanilla `Parrot.hurtServer`: a hurt parrot stands up.
+    fn on_damage(&self, _damage_type: DamageType, _source: Option<&dyn EntityBase>) {
+        self.order_to_sit(false);
+    }
+
+    /// Vanilla `Parrot.finalizeSpawn`: a random variant.
+    fn finalize_spawn(
+        &self,
+        _world: &Arc<World>,
+        group_data: Option<SpawnGroupData>,
+    ) -> Option<SpawnGroupData> {
+        self.set_variant(self.get_random().random_range(0..VARIANT_COUNT));
+        self.finalize_spawn_super(group_data)
+    }
+
+    fn get_ambient_sound(&self) -> Option<Sound> {
+        Some(Sound::EntityParrotAmbient)
+    }
+
+    fn mob_write_nbt(&self, nbt: &mut NbtCompound) {
+        nbt.put_int("Variant", self.get_variant());
+    }
+
+    fn mob_read_nbt(&self, nbt: &NbtCompound) {
+        let variant = nbt.get_int("Variant").unwrap_or(0);
+        self.set_variant(if (0..VARIANT_COUNT).contains(&variant) {
+            variant
+        } else {
+            0
+        });
+    }
+
+    fn mob_init_data_tracker(&self) {
+        self.get_entity().set_synced_data(
+            pumpkin_data::tracked_data::parrot::DATA_VARIANT_ID,
+            VarInt(self.get_variant()),
+        );
+    }
+
     fn mob_ai_step(&self) {
         // Vanilla `calculateFlapping`.
         let entity = self.get_entity();
@@ -132,21 +270,24 @@ impl Mob for ParrotEntity {
         &self.mob_entity
     }
 
+    /// Vanilla `Parrot.mobInteract`: seeds tame, a cookie kills, the owner makes a landed
+    /// parrot sit or stand.
     fn mob_interact(&self, player: &Arc<Player>, item_stack: &mut ItemStack) -> bool {
-        // Vanilla checks the poisonous food tag last, after taming, which isn't
-        // implemented yet. Nothing in `parrot_food` is also in
-        // `parrot_poisonous_food`, so the two branches can't be confused.
-        if !item_stack
-            .get_item()
-            .has_tag(&tag::Item::MINECRAFT_PARROT_POISONOUS_FOOD)
-        {
-            return self
-                .mob_entity
-                .mob_interact(player, item_stack, self.can_be_leashed());
+        let item = item_stack.get_item();
+        if !self.is_tame() && item.has_tag(&tag::Item::MINECRAFT_PARROT_FOOD) {
+            self.eat_seeds(player, item_stack);
+            return true;
         }
-
-        self.eat_cookie(player, item_stack);
-        true
+        if item.has_tag(&tag::Item::MINECRAFT_PARROT_POISONOUS_FOOD) {
+            self.eat_cookie(player, item_stack);
+            return true;
+        }
+        if !self.is_flying() && self.is_tame() && self.is_owned_by(&player.gameprofile.id) {
+            self.order_to_sit(!self.is_ordered_to_sit());
+            return true;
+        }
+        self.mob_entity
+            .mob_interact(player, item_stack, self.can_be_leashed())
     }
 }
 
