@@ -131,15 +131,11 @@ pub fn find_nearest_structure_start(
     generator: &WorldGenerator,
 ) -> Option<(BlockPos, pumpkin_data::structures::StructureKeys)> {
     use crate::{
-        biome::{BiomeSupplier, MultiNoiseBiomeSupplier},
+        biome::BiomeSupplier,
         generation::{
-            noise::router::{
-                multi_noise_sampler::MultiNoiseSampler,
-                surface_height_sampler::{
-                    SurfaceHeightEstimateSampler, SurfaceHeightSamplerBuilderOptions,
-                },
-            },
+            noise::router::multi_noise_sampler::MultiNoiseSampler,
             structure::{
+                height_sampler::NoiseHeightSampler,
                 lazily_generate_structure,
                 placement::should_generate_structure,
                 structures::{StructureGeneratorContext, create_chunk_random},
@@ -191,24 +187,19 @@ pub fn find_nearest_structure_start(
                 }
 
                 for &key in target_structures {
+                    // The start lands in the cache chunk generation reads, so it is
+                    // computed the way `ProtoChunk::set_structure_starts` does: with this
+                    // world's biome source (the overworld's rejects every nether
+                    // structure) and its noise height sampler.
                     let start =
                         global_cache.get_or_compute_structure_start(key, chunk_x, chunk_z, || {
                             let settings = noise_generator.settings;
-                            let mut height_sampler = SurfaceHeightEstimateSampler::generate(
-                                &noise_generator.base_router.surface_estimator,
-                                &SurfaceHeightSamplerBuilderOptions::new(
-                                    settings.shape.min_y as i32,
-                                    settings.shape.height as i32,
-                                    (settings.shape.height
-                                        / settings.shape.vertical_cell_block_count() as u16)
-                                        as usize,
-                                ),
-                            );
+                            let mut height_sampler = NoiseHeightSampler::new(noise_generator);
                             let mut biome_sampler = MultiNoiseSampler::generate(
                                 &noise_generator.base_router.multi_noise,
                             );
                             let biome_supplier: &dyn BiomeSupplier =
-                                &MultiNoiseBiomeSupplier::OVERWORLD;
+                                &noise_generator.biome_supplier;
                             let context = StructureGeneratorContext {
                                 seed: world_seed,
                                 chunk_x,
@@ -346,4 +337,38 @@ fn find_nearest_random_spread_at_radius(
     }
 
     best
+}
+
+#[cfg(test)]
+mod tests {
+    use pumpkin_data::dimension::Dimension;
+    use pumpkin_data::structures::{StructureKeys, StructureSet};
+    use pumpkin_util::math::position::BlockPos;
+    use pumpkin_util::world_seed::Seed;
+
+    use super::super::{GeneratorInit, VanillaGenerator, WorldGenerator};
+    use super::find_nearest_structure_start;
+
+    /// A nether structure resolves through the nether's biome source: with the
+    /// overworld's, no candidate passed the fortress biome test, `/locate` found no
+    /// fortress and cached the miss for chunk generation.
+    #[test]
+    fn nether_structure_starts_resolve() {
+        let generator = WorldGenerator::Noise(Box::new(VanillaGenerator::new(
+            Seed(13579),
+            Dimension::THE_NETHER,
+        )));
+        let set_index = StructureSet::NAMES
+            .iter()
+            .position(|name| *name == "nether_complexes")
+            .expect("nether_complexes is a structure set");
+        let found = find_nearest_structure_start(
+            BlockPos::new(0, 64, 0),
+            set_index,
+            &[StructureKeys::Fortress],
+            8,
+            &generator,
+        );
+        assert!(matches!(found, Some((_, StructureKeys::Fortress))));
+    }
 }
