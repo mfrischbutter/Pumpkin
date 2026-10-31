@@ -66,6 +66,9 @@ pub trait TamableAnimal: Animal {
         }
     }
 
+    /// Vanilla `applyTamingSideEffects`, run when a tame or untame comes with side effects.
+    fn apply_taming_side_effects(&self) {}
+
     fn is_in_sitting_pose(&self) -> bool {
         self.get_tamable_data().in_sitting_pose.load(Relaxed)
     }
@@ -150,6 +153,7 @@ pub trait TamableAnimal: Animal {
 
     fn tame(&self, player_id: Uuid) {
         self.set_tame(true);
+        self.apply_taming_side_effects();
         self.set_owner(Some(player_id));
         let mob_entity = self.get_mob_entity();
         let entity = &mob_entity.living_entity.entity;
@@ -195,8 +199,10 @@ pub trait TamableAnimal: Animal {
         if let Some(owner) = nbt.get_uuid("Owner") {
             self.set_owner(Some(owner));
             self.set_tame(true);
-        } else if let Some(is_tame) = nbt.get_bool("IsTame") {
-            self.set_tame(is_tame);
+        } else {
+            // Vanilla `setTame(false, true)`: an animal without an owner is wild.
+            self.set_tame(nbt.get_bool("IsTame").unwrap_or(false));
+            self.apply_taming_side_effects();
         }
         let sitting = nbt
             .get_bool("Sitting")
