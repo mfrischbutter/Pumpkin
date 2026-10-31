@@ -16,6 +16,45 @@ use crate::world::World;
 
 const RANDOM_SPAWN_BONUS_ID: &str = "minecraft:random_spawn_bonus";
 
+/// Why a mob is being created (vanilla `EntitySpawnReason`). The placement rules relax
+/// their floor and light tests for spawner blocks and trial spawners.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum EntitySpawnReason {
+    Natural,
+    ChunkGeneration,
+    Spawner,
+    Structure,
+    Breeding,
+    MobSummoned,
+    Jockey,
+    Event,
+    Conversion,
+    Reinforcement,
+    Triggered,
+    Bucket,
+    SpawnItemUse,
+    Command,
+    Dispenser,
+    Patrol,
+    TrialSpawner,
+    Load,
+    DimensionTravel,
+}
+
+impl EntitySpawnReason {
+    /// Vanilla `EntitySpawnReason.isSpawner`.
+    #[must_use]
+    pub const fn is_spawner(self) -> bool {
+        matches!(self, Self::Spawner | Self::TrialSpawner)
+    }
+
+    /// Vanilla `EntitySpawnReason.ignoresLightRequirements`.
+    #[must_use]
+    pub const fn ignores_light_requirements(self) -> bool {
+        matches!(self, Self::TrialSpawner)
+    }
+}
+
 /// State shared by every mob of one spawn group (vanilla `SpawnGroupData`).
 pub enum SpawnGroupData {
     Ageable {

@@ -3,6 +3,7 @@ use std::sync::{
     atomic::{AtomicBool, Ordering},
 };
 
+use pumpkin_data::Block;
 use pumpkin_data::entity::{EntityStatus, EntityType};
 use pumpkin_data::item::Item;
 use pumpkin_data::item_stack::ItemStack;
@@ -24,6 +25,7 @@ use crate::entity::{
     passive::animal::Animal,
     player::Player,
 };
+use crate::world::World;
 
 const OCELOT_FLEES: &[Flee] = &[feline::flee_players(4, is_wary)];
 
@@ -105,6 +107,24 @@ impl Animal for OcelotEntity {
 impl Mob for OcelotEntity {
     fn as_animal(&self) -> Option<&dyn Animal> {
         Some(self)
+    }
+
+    /// Vanilla `Ocelot.checkSpawnObstruction`: at or above the sea level, on a grass block
+    /// or leaves.
+    fn check_spawn_obstruction(&self, world: &World) -> bool {
+        let entity = self.get_entity();
+        let bounding_box = entity.bounding_box.load();
+        if !world.get_entities_at_box(&bounding_box).is_empty()
+            || world.contains_any_liquid(bounding_box)
+        {
+            return false;
+        }
+        let pos = entity.block_pos.load();
+        if pos.0.y < world.sea_level {
+            return false;
+        }
+        let below = world.get_block(&pos.down());
+        below == &Block::GRASS_BLOCK || below.has_tag(&tag::Block::MINECRAFT_LEAVES)
     }
 
     fn mob_write_nbt(&self, nbt: &mut NbtCompound) {
