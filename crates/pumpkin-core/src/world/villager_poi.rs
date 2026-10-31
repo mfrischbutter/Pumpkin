@@ -1,125 +1,163 @@
+//! Villager job sites: the professions' workstations and who holds each site's ticket.
+//!
+//! The sites are points of interest of the world (`pumpkin_world::poi`); the holder is
+//! kept so a dead villager's site frees up (vanilla releases it from the villager's brain).
+
 use std::{collections::HashMap, sync::Weak};
 
+use pumpkin_data::poi_type::PoiType;
+use pumpkin_data::tag::PointOfInterestType::MINECRAFT_ACQUIRABLE_JOB_SITE;
+use pumpkin_data::tag::Taggable;
 use pumpkin_data::{Block, villager::VillagerProfession};
 use pumpkin_util::math::position::BlockPos;
+use pumpkin_world::poi::{Occupancy, PoiStorage};
 
 use crate::entity::EntityBase;
 
-struct JobSite {
-    profession: VillagerProfession,
-    owner: Option<Weak<dyn EntityBase>>,
-}
-
+/// The villagers holding a job site ticket, by site.
 #[derive(Default)]
 pub struct VillagerPoiStorage {
-    job_sites: HashMap<BlockPos, JobSite>,
+    holders: HashMap<BlockPos, Weak<dyn EntityBase>>,
 }
 
 impl VillagerPoiStorage {
-    fn live_owner(owner: &Weak<dyn EntityBase>) -> Option<std::sync::Arc<dyn EntityBase>> {
-        owner.upgrade().filter(|entity| {
+    fn live_holder(holder: &Weak<dyn EntityBase>) -> Option<std::sync::Arc<dyn EntityBase>> {
+        holder.upgrade().filter(|entity| {
             entity
                 .get_living_entity()
                 .is_none_or(|living| living.health.load() > 0.0)
         })
     }
 
-    pub fn update_block(&mut self, position: BlockPos, block: &Block) {
-        let Some(profession) = profession_for_block(block) else {
-            self.job_sites.remove(&position);
-            return;
-        };
-        let site = self.job_sites.entry(position).or_insert(JobSite {
-            profession,
-            owner: None,
+    /// Frees the tickets of the sites whose holder died.
+    fn release_dead_holders(&mut self, poi: &mut PoiStorage) {
+        self.holders.retain(|site, holder| {
+            if Self::live_holder(holder).is_some() {
+                return true;
+            }
+            poi.release_ticket(*site);
+            false
         });
-        if site.profession != profession {
-            *site = JobSite {
-                profession,
-                owner: None,
-            };
-        }
     }
 
+    /// The point of interest at `position` changed: whoever held it lets go.
+    pub fn forget(&mut self, position: &BlockPos) {
+        self.holders.remove(position);
+    }
+
+    /// Vanilla `PoiManager.take` for a job site: the site's profession when `owner` holds
+    /// its ticket afterwards; `None` when another living villager holds it, no ticket is
+    /// free, or it is not a site of `expected_profession`. A taken ticket nobody here
+    /// holds is a persisted claim from before a restart and goes to the claimant.
     pub fn claim(
         &mut self,
+        poi: &mut PoiStorage,
         position: BlockPos,
         block: &Block,
         owner: Weak<dyn EntityBase>,
         expected_profession: Option<VillagerProfession>,
     ) -> Option<VillagerProfession> {
-        self.update_block(position, block);
-        let site = self.job_sites.get_mut(&position)?;
-        if expected_profession.is_some_and(|profession| profession != site.profession) {
+        let profession = profession_for_block(block)?;
+        if expected_profession.is_some_and(|expected| expected != profession) {
             return None;
         }
-        if let Some(current_owner) = site.owner.as_ref().and_then(Self::live_owner)
-            && current_owner.get_entity().entity_uuid != owner.upgrade()?.get_entity().entity_uuid
-        {
+        let owner_uuid = owner.upgrade()?.get_entity().entity_uuid;
+        match self.holders.get(&position).and_then(Self::live_holder) {
+            Some(holder) if holder.get_entity().entity_uuid == owner_uuid => {
+                return Some(profession);
+            }
+            Some(_) => return None,
+            None => {}
+        }
+        let known_holder = self.holders.remove(&position).is_some();
+        if known_holder {
+            poi.release_ticket(position);
+        }
+        poi.get_type(position)?;
+        if !poi.acquire_ticket(position) && known_holder {
             return None;
         }
-        site.owner = Some(owner);
-        Some(site.profession)
+        self.holders.insert(position, owner);
+        Some(profession)
     }
 
-    pub fn release(&mut self, position: BlockPos, owner: uuid::Uuid) {
-        let Some(site) = self.job_sites.get_mut(&position) else {
-            return;
-        };
-        if site
-            .owner
-            .as_ref()
+    /// Vanilla `PoiManager.release` by the site's holder.
+    pub fn release(&mut self, poi: &mut PoiStorage, position: BlockPos, owner: uuid::Uuid) {
+        let held_by_other = self
+            .holders
+            .get(&position)
             .and_then(Weak::upgrade)
-            .is_none_or(|current| current.get_entity().entity_uuid == owner)
-        {
-            site.owner = None;
+            .is_some_and(|holder| holder.get_entity().entity_uuid != owner);
+        if held_by_other {
+            return;
+        }
+        if self.holders.remove(&position).is_some() {
+            poi.release_ticket(position);
         }
     }
 
-    #[must_use]
+    /// Vanilla `AcquirePoi`'s search: the job sites with a free ticket within `radius`,
+    /// closest first, of `expected_profession` when given.
     pub fn available_job_sites(
-        &self,
+        &mut self,
+        poi: &mut PoiStorage,
         origin: BlockPos,
         radius: i32,
         expected_profession: Option<VillagerProfession>,
     ) -> Vec<BlockPos> {
-        let radius_squared = i64::from(radius).pow(2);
-        let mut sites = self
-            .job_sites
-            .iter()
-            .filter(|(_, site)| {
-                expected_profession.is_none_or(|profession| profession == site.profession)
-                    && site.owner.as_ref().and_then(Self::live_owner).is_none()
-            })
-            .filter_map(|(position, _)| {
-                let delta = position.0 - origin.0;
-                let distance_squared = i64::from(delta.x).pow(2)
-                    + i64::from(delta.y).pow(2)
-                    + i64::from(delta.z).pow(2);
-                (distance_squared <= radius_squared).then_some((distance_squared, *position))
-            })
-            .collect::<Vec<_>>();
-        sites.sort_unstable_by_key(|(distance, _)| *distance);
-        sites.into_iter().map(|(_, position)| position).collect()
-    }
-
-    #[must_use]
-    pub fn get_nearest_job_site(&self, origin: BlockPos, radius: i32) -> Option<BlockPos> {
-        let radius_squared = i64::from(radius).pow(2);
-        let mut closest = None;
-        let mut closest_dist = radius_squared;
-
-        for position in self.job_sites.keys() {
+        self.release_dead_holders(poi);
+        let wanted = expected_profession.and_then(poi_type_for_profession);
+        let mut sites = poi.in_range(
+            origin,
+            radius,
+            |kind| {
+                kind.has_tag(&MINECRAFT_ACQUIRABLE_JOB_SITE)
+                    && wanted.is_none_or(|wanted| wanted == kind)
+            },
+            Occupancy::HasSpace,
+        );
+        sites.sort_by_key(|(position, _)| {
             let delta = position.0 - origin.0;
-            let distance_squared =
-                i64::from(delta.x).pow(2) + i64::from(delta.y).pow(2) + i64::from(delta.z).pow(2);
-            if distance_squared <= closest_dist {
-                closest = Some(*position);
-                closest_dist = distance_squared;
-            }
-        }
-        closest
+            i64::from(delta.x).pow(2) + i64::from(delta.y).pow(2) + i64::from(delta.z).pow(2)
+        });
+        sites.into_iter().map(|(position, _)| position).collect()
     }
+
+    /// The nearest job site within `radius`, held or not.
+    pub fn get_nearest_job_site(
+        poi: &mut PoiStorage,
+        origin: BlockPos,
+        radius: i32,
+    ) -> Option<BlockPos> {
+        poi.find_closest(
+            origin,
+            radius,
+            |kind| kind.has_tag(&MINECRAFT_ACQUIRABLE_JOB_SITE),
+            |_| true,
+            Occupancy::Any,
+        )
+    }
+}
+
+/// The job site of a profession (vanilla `VillagerProfession.heldJobSite`).
+#[must_use]
+pub const fn poi_type_for_profession(profession: VillagerProfession) -> Option<&'static PoiType> {
+    Some(match profession {
+        VillagerProfession::Armorer => &PoiType::ARMORER,
+        VillagerProfession::Butcher => &PoiType::BUTCHER,
+        VillagerProfession::Cartographer => &PoiType::CARTOGRAPHER,
+        VillagerProfession::Cleric => &PoiType::CLERIC,
+        VillagerProfession::Farmer => &PoiType::FARMER,
+        VillagerProfession::Fisherman => &PoiType::FISHERMAN,
+        VillagerProfession::Fletcher => &PoiType::FLETCHER,
+        VillagerProfession::Leatherworker => &PoiType::LEATHERWORKER,
+        VillagerProfession::Librarian => &PoiType::LIBRARIAN,
+        VillagerProfession::Mason => &PoiType::MASON,
+        VillagerProfession::Shepherd => &PoiType::SHEPHERD,
+        VillagerProfession::Toolsmith => &PoiType::TOOLSMITH,
+        VillagerProfession::Weaponsmith => &PoiType::WEAPONSMITH,
+        VillagerProfession::None | VillagerProfession::Nitwit => return None,
+    })
 }
 
 #[must_use]
@@ -186,18 +224,19 @@ mod tests {
         let lectern = BlockPos::new(48, 64, 0);
         let too_far = BlockPos::new(49, 64, 0);
         let composter = BlockPos::new(1, 64, 0);
+        let mut poi = PoiStorage::new(std::env::temp_dir().join("pumpkin_villager_poi_test"));
         let mut storage = VillagerPoiStorage::default();
 
-        storage.update_block(lectern, &Block::LECTERN);
-        storage.update_block(too_far, &Block::LECTERN);
-        storage.update_block(composter, &Block::COMPOSTER);
+        poi.add_type(lectern, &PoiType::LIBRARIAN);
+        poi.add_type(too_far, &PoiType::LIBRARIAN);
+        poi.add_type(composter, &PoiType::FARMER);
 
         assert_eq!(
-            storage.available_job_sites(origin, 48, Some(VillagerProfession::Librarian)),
+            storage.available_job_sites(&mut poi, origin, 48, Some(VillagerProfession::Librarian)),
             vec![lectern]
         );
         assert_eq!(
-            storage.available_job_sites(origin, 48, Some(VillagerProfession::Farmer)),
+            storage.available_job_sites(&mut poi, origin, 48, Some(VillagerProfession::Farmer)),
             vec![composter]
         );
     }

@@ -1117,11 +1117,7 @@ impl VillagerEntity {
 
         if profession == VillagerProfession::Nitwit || !is_adult {
             if let Some(site) = self.get_job_site() {
-                world
-                    .villager_poi
-                    .lock()
-                    .unwrap_or_else(std::sync::PoisonError::into_inner)
-                    .release(site, self.get_entity().entity_uuid);
+                world.release_job_site(site, self.get_entity().entity_uuid);
                 *self
                     .job_site
                     .lock()
@@ -1144,10 +1140,7 @@ impl VillagerEntity {
             let (block, _state) = world.get_block_and_state(&current_site);
             let expected = (profession != VillagerProfession::None).then_some(profession);
             let valid = world
-                .villager_poi
-                .lock()
-                .unwrap_or_else(std::sync::PoisonError::into_inner)
-                .claim(current_site, block, owner.clone(), expected)
+                .claim_job_site(current_site, block, owner.clone(), expected)
                 .is_some();
 
             if !valid {
@@ -1182,11 +1175,7 @@ impl VillagerEntity {
             let end = BlockPos::new(pos.0.x + 10, pos.0.y + 4, pos.0.z + 10);
             let mut candidates = Vec::new();
 
-            let indexed_sites = world
-                .villager_poi
-                .lock()
-                .unwrap_or_else(std::sync::PoisonError::into_inner)
-                .available_job_sites(pos, 48, expected);
+            let indexed_sites = world.available_job_sites(pos, 48, expected);
             let saved_sites = world
                 .portal_poi
                 .lock()
@@ -1243,10 +1232,7 @@ impl VillagerEntity {
                     continue;
                 }
                 if world
-                    .villager_poi
-                    .lock()
-                    .unwrap_or_else(std::sync::PoisonError::into_inner)
-                    .claim(position, block, owner.clone(), expected)
+                    .claim_job_site(position, block, owner.clone(), expected)
                     .is_some()
                 {
                     claimed = Some(position);
@@ -2205,10 +2191,7 @@ impl Mob for VillagerEntity {
         self.get_entity()
             .world
             .load()
-            .villager_poi
-            .lock()
-            .unwrap_or_else(std::sync::PoisonError::into_inner)
-            .release(position, self.get_entity().entity_uuid);
+            .release_job_site(position, self.get_entity().entity_uuid);
         if self.get_job_site() == Some(position) {
             *self
                 .job_site

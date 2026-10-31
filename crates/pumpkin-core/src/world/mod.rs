@@ -306,7 +306,7 @@ pub struct World {
     /// Vanilla's `PoiManager`: every point of interest of the world's blocks, persisted
     /// in the `poi` region files (portals, job sites, beds, bells, lightning rods, ...).
     pub portal_poi: std::sync::Mutex<portal::PortalPoiStorage>,
-    /// Villager job sites and their current owners.
+    /// The villagers holding job site tickets (the sites are in `portal_poi`).
     pub villager_poi: std::sync::Mutex<villager_poi::VillagerPoiStorage>,
     /// Active raids in this world.
     pub raids: std::sync::Mutex<raid::Raids>,
@@ -5902,11 +5902,6 @@ impl World {
                     neighbour_update_flags,
                 );
             }
-
-            self.villager_poi
-                .lock()
-                .unwrap_or_else(std::sync::PoisonError::into_inner)
-                .update_block(*position, new_block);
 
             self.update_poi_on_block_state_change(
                 position,
