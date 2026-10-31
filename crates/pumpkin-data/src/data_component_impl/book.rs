@@ -69,14 +69,27 @@ impl DataComponentImpl for WritableBookContentImpl {
 pub struct WrittenBookContentImpl {
     pub title: String,
     pub author: String,
+    /// 0 original, 1 copy of the original, 2 copy of a copy, 3 tattered.
+    pub generation: i32,
     pub pages: Vec<TextComponent>,
+    pub resolved: bool,
 }
 impl WrittenBookContentImpl {
     pub fn read_data(tag: &NbtTag) -> Option<Self> {
         let mut pages = Vec::new();
         let mut title = String::new();
         let mut author = String::new();
+        let mut generation = 0;
+        let mut resolved = false;
         if let NbtTag::Compound(c) = tag {
+            // Vanilla: `intRange(0, 3).optionalFieldOf("generation", 0)`.
+            if let Some(value) = c.get_int("generation") {
+                if !(0..=3).contains(&value) {
+                    return None;
+                }
+                generation = value;
+            }
+            resolved = c.get_bool("resolved").unwrap_or(false);
             if let Some(value) = c.get("title").and_then(read_text) {
                 title = value;
             }
@@ -94,7 +107,9 @@ impl WrittenBookContentImpl {
         Some(Self {
             title,
             author,
+            generation,
             pages,
+            resolved,
         })
     }
 }
@@ -103,8 +118,15 @@ impl DataComponentImpl for WrittenBookContentImpl {
         let mut compound = NbtCompound::new();
         compound.put("title", text_tag(&self.title));
         compound.put_string("author", self.author.clone());
+        // Optional fields with defaults are left out at their default, as vanilla's codec does.
+        if self.generation != 0 {
+            compound.put_int("generation", self.generation);
+        }
         let pages_tags: Vec<NbtTag> = self.pages.iter().map(text_component_tag).collect();
         compound.put("pages", NbtTag::List(pages_tags));
+        if self.resolved {
+            compound.put_bool("resolved", true);
+        }
         NbtTag::Compound(compound)
     }
     default_impl!(WrittenBookContent);
@@ -228,7 +250,9 @@ mod tests {
         let content = WrittenBookContentImpl {
             title: "Title".to_string(),
             author: "Author".to_string(),
+            generation: 1,
             pages: vec![TextComponent::text("one"), TextComponent::text("two")],
+            resolved: true,
         };
         let tag = content.write_data();
         let written_compound = match &tag {
@@ -241,5 +265,17 @@ mod tests {
         ));
         let read_back = WrittenBookContentImpl::read_data(&tag).unwrap();
         assert_eq!(read_back, content);
+        let original = WrittenBookContentImpl {
+            generation: 0,
+            resolved: false,
+            ..content
+        };
+        let NbtTag::Compound(written) = original.write_data() else {
+            panic!("expected a compound")
+        };
+        assert!(
+            written.get("generation").is_none() && written.get("resolved").is_none(),
+            "defaults are left out, as vanilla's optional fields"
+        );
     }
 }

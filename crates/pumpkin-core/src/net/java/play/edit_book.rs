@@ -35,10 +35,13 @@ impl JavaClient {
 
         if let Some(title) = title {
             let mut written_book = ItemStack::new(1, &Item::WRITTEN_BOOK);
+            // Vanilla signs an original (generation 0) with its components resolved.
             let content = WrittenBookContentImpl {
                 title,
                 author: player.gameprofile.name.clone(),
+                generation: 0,
                 pages: pages.into_iter().map(TextComponent::text).collect(),
+                resolved: true,
             };
             written_book
                 .patch
