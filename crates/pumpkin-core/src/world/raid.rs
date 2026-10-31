@@ -3,6 +3,7 @@ use std::sync::Arc;
 use std::sync::atomic::Ordering;
 use uuid::Uuid;
 
+use pumpkin_data::Block;
 use pumpkin_data::data_component_impl::EquipmentSlot;
 use pumpkin_data::effect::StatusEffect;
 use pumpkin_data::entity::EntityType;
@@ -10,8 +11,11 @@ use pumpkin_data::potion::Effect;
 use pumpkin_data::sound::Sound;
 use pumpkin_util::difficulty::Difficulty;
 use pumpkin_util::math::position::BlockPos;
+use pumpkin_util::math::vector2::Vector2;
 use pumpkin_util::math::vector3::Vector3;
 use pumpkin_util::text::TextComponent;
+use pumpkin_world::chunk::ChunkHeightmapType::WorldSurface;
+use rand::RngExt;
 
 use crate::entity::EntityBase;
 use crate::entity::mob::raider::create_ominous_banner;
@@ -19,6 +23,7 @@ use crate::entity::mob::spawn::finalize_spawn;
 use crate::entity::r#type::from_type;
 use crate::world::World;
 use crate::world::bossbar::{Bossbar, BossbarColor, BossbarDivisions};
+use crate::world::natural_spawner::is_spawn_position_ok;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum RaidStatus {
@@ -445,27 +450,51 @@ impl Raid {
     }
 
     #[must_use]
-    pub fn find_random_spawn_pos(&self, max_tries: usize) -> Option<BlockPos> {
+    /// Vanilla `findRandomSpawnPos`: a surface spot around the center, nearer as the cooldown
+    /// runs out, outside the village until the last seven seconds, in loaded chunks where
+    /// entities tick, on ground a ravager can stand on (or snow).
+    pub fn find_random_spawn_pos(&self, world: &Arc<World>, max_tries: usize) -> Option<BlockPos> {
         let seconds_remaining = self.raid_cooldown_ticks / 20;
         let how_far = 0.22 * (seconds_remaining as f32) - 0.24;
-        let start_angle = rand::random::<f32>() * std::f32::consts::PI * 2.0;
+        let mut rng = rand::rng();
+        let start_angle = rng.random::<f32>() * std::f32::consts::TAU;
+        let active_chunks = world
+            .active_chunks
+            .read()
+            .unwrap_or_else(std::sync::PoisonError::into_inner)
+            .clone();
 
         for i in 0..max_tries {
             let angle = start_angle + std::f32::consts::PI * (i as f32) / 8.0;
             let spawn_x = self.center.0.x
-                + ((angle.cos() * 32.0 * how_far) as i32)
-                + (rand::random::<i32>().rem_euclid(3)) * (how_far as i32);
+                + (angle.cos() * 32.0 * how_far).floor() as i32
+                + rng.random_range(0..3) * how_far.floor() as i32;
             let spawn_z = self.center.0.z
-                + ((angle.sin() * 32.0 * how_far) as i32)
-                + (rand::random::<i32>().rem_euclid(3)) * (how_far as i32);
-            let spawn_y = self.center.0.y;
-
-            if (spawn_y - self.center.0.y).abs() <= 96 {
-                let spawn_pos = BlockPos(Vector3::new(spawn_x, spawn_y, spawn_z));
+                + (angle.sin() * 32.0 * how_far).floor() as i32
+                + rng.random_range(0..3) * how_far.floor() as i32;
+            // `get_heightmap_height` is the top block, vanilla's height the air above it.
+            let spawn_y = world.get_heightmap_height(WorldSurface, spawn_x, spawn_z) + 1;
+            if (spawn_y - self.center.0.y).abs() > 96 {
+                continue;
+            }
+            let spawn_pos = BlockPos::new(spawn_x, spawn_y, spawn_z);
+            if world.is_village(&spawn_pos) && seconds_remaining > 7 {
+                continue;
+            }
+            if world.has_chunks_at(spawn_x - 10, spawn_z - 10, spawn_x + 10, spawn_z + 10)
+                && active_chunks.contains(&Vector2::new(spawn_x >> 4, spawn_z >> 4))
+                && Self::can_spawn_wave_at(world, &spawn_pos)
+            {
                 return Some(spawn_pos);
             }
         }
         None
+    }
+
+    /// Vanilla `RAVAGER_SPAWN_PLACEMENT_TYPE.isSpawnPositionOk`, or snow under air.
+    fn can_spawn_wave_at(world: &Arc<World>, pos: &BlockPos) -> bool {
+        is_spawn_position_ok(world, pos, &EntityType::RAVAGER)
+            || (world.get_block(&pos.down()) == &Block::SNOW && world.get_block_state(pos).is_air())
     }
 
     pub fn play_sound(&self, world: &World, pos: BlockPos) {
@@ -604,7 +633,7 @@ impl Raid {
                     }
                 } else {
                     if self.wave_spawn_pos.is_none() && self.raid_cooldown_ticks % 5 == 0 {
-                        self.wave_spawn_pos = self.find_random_spawn_pos(8);
+                        self.wave_spawn_pos = self.find_random_spawn_pos(world, 8);
                     }
 
                     if self.raid_cooldown_ticks == 300 || self.raid_cooldown_ticks % 20 == 0 {
@@ -632,15 +661,27 @@ impl Raid {
                 self.update_bossbar(world);
             }
 
+            // Vanilla: without a spawn spot after six tries the raid stops.
+            let mut sound_played = false;
+            let mut attempts = 0;
             while self.should_spawn_group() {
                 let spawn_pos = self
                     .wave_spawn_pos
-                    .or_else(|| self.find_random_spawn_pos(20))
-                    .unwrap_or(self.center);
-
-                self.started = true;
-                self.spawn_group(world, spawn_pos);
-                self.play_sound(world, spawn_pos);
+                    .or_else(|| self.find_random_spawn_pos(world, 20));
+                if let Some(spawn_pos) = spawn_pos {
+                    self.started = true;
+                    self.spawn_group(world, spawn_pos);
+                    if !sound_played {
+                        self.play_sound(world, spawn_pos);
+                        sound_played = true;
+                    }
+                } else {
+                    attempts += 1;
+                }
+                if attempts > 5 {
+                    self.stop(world);
+                    break;
+                }
             }
 
             let raiders_alive = self.get_total_raiders_alive();
