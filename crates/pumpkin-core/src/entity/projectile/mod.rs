@@ -176,7 +176,9 @@ impl ThrownItemEntity {
         self.move_and_collide(caller);
     }
 
-    fn move_and_collide(&self, caller: &dyn EntityBase) {
+    /// Moves by the velocity and handles the first block or entity hit on the way: fires the
+    /// hit event, runs `on_hit` of `caller` and removes the projectile.
+    pub(crate) fn move_and_collide(&self, caller: &dyn EntityBase) {
         let entity = self.get_entity();
         let world = entity.world.load();
 
