@@ -1010,11 +1010,9 @@ impl MobEntity {
             self.living_entity.no_action_time.store(0, Relaxed);
         }
 
+        // A custom name alone does not persist a mob: the name tag item sets
+        // `persistence_required` like vanilla.
         if self.persistence_required.load(Relaxed) || mob.requires_custom_persistence() {
-            return;
-        }
-
-        if (**entity.custom_name.load()).is_some() {
             return;
         }
 
@@ -1040,6 +1038,9 @@ impl MobEntity {
 
 const RANDOM_DESPAWN_IDLE_TICKS: i32 = 600;
 const RANDOM_DESPAWN_CHANCE: u32 = 800;
+/// Vanilla `PatrollingMonster.removeWhenFarAway`: a patrol member this far (squared) from
+/// the nearest player despawns.
+const PATROL_DESPAWN_DISTANCE_SQ: f64 = 16384.0;
 
 /// Least slippery block in the game data, which lets walking speed up the most.
 static LEAST_SLIPPERINESS: LazyLock<f32> = LazyLock::new(|| {
@@ -1194,6 +1195,15 @@ impl MobEntity {
     }
 }
 
+/// Vanilla `Mob.requiresCustomPersistence`: a passenger, a leashed mob or a raider in a raid
+/// never despawns and does not count for the mob caps.
+pub fn requires_custom_persistence_base<M: Mob + ?Sized>(mob: &M) -> bool {
+    let entity = mob.get_entity();
+    entity.has_vehicle()
+        || entity.is_leashed()
+        || mob.as_raider().is_some_and(raider::Raider::has_active_raid)
+}
+
 pub trait Mob: EntityBase + Send + Sync {
     fn get_random(&self) -> rand::rngs::ThreadRng {
         rand::rng()
@@ -1236,8 +1246,9 @@ pub trait Mob: EntityBase + Send + Sync {
             .has_line_of_sight(&mob_entity.living_entity.entity, target)
     }
 
+    /// Vanilla `Mob.requiresCustomPersistence` (see [`requires_custom_persistence_base`]).
     fn requires_custom_persistence(&self) -> bool {
-        false
+        requires_custom_persistence_base(self)
     }
 
     /// Whether daylight burns this mob. Default: entity tag `burn_in_daylight`.
@@ -1256,7 +1267,18 @@ pub trait Mob: EntityBase + Send + Sync {
         true
     }
 
-    fn remove_when_far_away(&self, _distance_sq: f64) -> bool {
+    /// Vanilla `Mob.removeWhenFarAway` with the `Animal`, `PatrollingMonster` and `Raider`
+    /// overrides: animals stay, raiders in a raid stay, patrol members only within range.
+    fn remove_when_far_away(&self, distance_sq: f64) -> bool {
+        if self
+            .as_raider()
+            .is_some_and(raider::Raider::has_active_raid)
+        {
+            return false;
+        }
+        if let Some(patrolling) = self.as_patrolling_monster() {
+            return !patrolling.is_patrolling() || distance_sq > PATROL_DESPAWN_DISTANCE_SQ;
+        }
         self.as_animal().is_none()
     }
 
