@@ -9,7 +9,10 @@ use pumpkin_nbt::compound::NbtCompound;
 use pumpkin_util::math::{position::BlockPos, vector3::Vector3};
 
 use crate::{
-    block::entities::BlockEntity, entity::EntityBase, entity::mob::spawn::finalize_spawn,
+    block::entities::BlockEntity,
+    entity::EntityBase,
+    entity::mob::spawn::{EntitySpawnReason, finalize_spawn},
+    entity::r#type::check_spawn_rules,
     world::World,
 };
 
@@ -34,6 +37,30 @@ impl MobSpawnerBlockEntity {
     pub const DEFAULT_SPAWN_RANGE: i32 = 4;
     pub const DEFAULT_MAX_NEARBY_ENTITIES: i32 = 6;
     pub const DEFAULT_REQUIRED_PLAYER_RANGE: i32 = 16;
+
+    /// Vanilla `BaseSpawner.serverTick`: the type's placement rule with the spawner reason.
+    fn placement_allows(
+        world: &Arc<World>,
+        entity_type: &'static EntityType,
+        spawn_pos: Vector3<f64>,
+    ) -> bool {
+        check_spawn_rules(
+            entity_type,
+            world,
+            EntitySpawnReason::Spawner,
+            &BlockPos::floored_v(spawn_pos),
+            world.is_thundering(),
+        )
+    }
+
+    /// Vanilla `BaseSpawner.serverTick`: the mob's own spawn rules and obstruction test.
+    fn mob_may_spawn(world: &Arc<World>, entity: &dyn EntityBase) -> bool {
+        entity.get_mob().is_none_or(|mob| {
+            mob.get_path_aware_entity()
+                .is_none_or(|mob| mob.can_spawn(world.clone()))
+                && mob.check_spawn_obstruction(world)
+        })
+    }
 
     #[must_use]
     pub const fn new(position: BlockPos, entity_type: Option<&'static EntityType>) -> Self {
@@ -168,6 +195,9 @@ impl BlockEntity for MobSpawnerBlockEntity {
                 )) {
                     continue;
                 }
+                if !Self::placement_allows(world, entity_type, spawn_pos) {
+                    continue;
+                }
                 let entity = crate::entity::r#type::from_type(
                     entity_type,
                     spawn_pos,
@@ -176,6 +206,9 @@ impl BlockEntity for MobSpawnerBlockEntity {
                 );
                 let yaw = rand::random::<f32>() * 360.0;
                 entity.get_entity().set_rotation(yaw, 0.0);
+                if !Self::mob_may_spawn(world, entity.as_ref()) {
+                    continue;
+                }
 
                 let mut event =
                     crate::plugin::api::events::entity::spawner_spawn::SpawnerSpawnEvent::new(
