@@ -5610,17 +5610,19 @@ impl Player {
         {
             speed *= ((self.get_haste_amplifier() + 1) as f32).mul_add(0.2, 1.0);
         }
-        // Fatigue
+        // Fatigue: 0.3 per level (vanilla `Math.pow(0.3, amplifier + 1)`)
         if let Some(fatigue) = self.living_entity.get_effect(&StatusEffect::MINING_FATIGUE) {
-            let fatigue_speed = match fatigue.amplifier {
-                0 => 0.3,
-                1 => 0.09,
-                2 => 0.0027,
-                _ => 8.1E-4,
-            };
-            speed *= fatigue_speed;
+            speed *= 0.3f64.powi(i32::from(fatigue.amplifier) + 1) as f32;
         }
-        // TODO: Handle when in water
+        speed *= self
+            .living_entity
+            .get_attribute_value(&Attributes::BLOCK_BREAK_SPEED) as f32;
+        if self.living_entity.entity.is_submerged_in_water() {
+            speed *= self
+                .living_entity
+                .get_attribute_value(&Attributes::SUBMERGED_MINING_SPEED)
+                as f32;
+        }
         if !self.living_entity.entity.on_ground.load(Ordering::Relaxed) {
             speed /= 5.0;
         }
