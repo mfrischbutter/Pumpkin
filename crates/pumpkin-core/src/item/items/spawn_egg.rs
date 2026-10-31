@@ -309,7 +309,7 @@ impl ItemBehaviour for SpawnEggItem {
                     .as_any()
                     .downcast_ref::<MobSpawnerBlockEntity>()
                 {
-                    spawner.set_entity_type(entity_type);
+                    spawner.set_entity_id(entity_type);
                     world.update_block_entity(&block_entity);
                     world.emit_game_event(GameEvent::BlockChange.name(), location.to_f64());
                     item.decrement_unless_creative(player.gamemode.load(), 1);

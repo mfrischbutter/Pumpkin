@@ -373,7 +373,8 @@ fn create_entity(
     entity
 }
 
-fn entity_type_from_nbt(nbt: &NbtCompound) -> Option<&'static EntityType> {
+/// Vanilla `EntityType.by(input)`: the type an entity compound's `id` names.
+pub fn entity_type_from_nbt(nbt: &NbtCompound) -> Option<&'static EntityType> {
     let Some(id) = nbt.get_string("id") else {
         debug!("Entity has no ID");
         return None;

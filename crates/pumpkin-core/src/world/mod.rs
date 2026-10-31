@@ -6143,9 +6143,12 @@ impl World {
         )
     }
 
+    /// Vanilla `LevelReader.getEffectiveSkyBrightness`: the sky light less the sky darken,
+    /// at least 0.
     #[must_use]
     pub fn get_effective_sky_brightness(&self, pos: &BlockPos) -> i32 {
         self.effective_sky_brightness_from(self.get_sky_light_level(pos))
+            .max(0)
     }
 
     fn effective_sky_brightness_from(&self, sky_light: u8) -> i32 {
