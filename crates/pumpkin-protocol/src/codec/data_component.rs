@@ -2492,14 +2492,18 @@ impl DataComponentCodec<Self> for MapPostProcessingImpl {
     }
 }
 
+/// Vanilla: a list of item stack templates (at most 1024). The projectiles
+/// are kept in their saved form, so each goes through an item stack.
 impl DataComponentCodec<Self> for ChargedProjectilesImpl {
     fn serialize(&self, seq: &mut impl NetworkWriteExt) -> Result<(), WritingError> {
-        seq.write_var_int(&VarInt::from(self.projectiles.len() as i32))?;
-        for _ in &self.projectiles {
-            seq.write_var_int(&VarInt(0))?;
-            seq.write_var_int(&VarInt(0))?;
-            seq.write_var_int(&VarInt(0))?;
-            seq.write_var_int(&VarInt(0))?;
+        let stacks: Vec<pumpkin_data::item_stack::ItemStack> = self
+            .projectiles
+            .iter()
+            .filter_map(pumpkin_data::item_stack::ItemStack::read_item_stack)
+            .collect();
+        seq.write_var_int(&VarInt::from(stacks.len() as i32))?;
+        for stack in &stacks {
+            serialize_item_stack_template(stack, seq)?;
         }
         Ok(())
     }
@@ -2509,8 +2513,10 @@ impl DataComponentCodec<Self> for ChargedProjectilesImpl {
         let len = read_count(seq, MAX_PROJECTILES)?;
         let mut projectiles = Vec::with_capacity(len);
         for _ in 0..len {
-            let _ = deserialize_item_stack_template(seq)?;
-            projectiles.push(pumpkin_nbt::compound::NbtCompound::new());
+            let stack = deserialize_item_stack_template(seq)?;
+            let mut compound = pumpkin_nbt::compound::NbtCompound::new();
+            stack.write_item_stack(&mut compound);
+            projectiles.push(compound);
         }
         Ok(Self { projectiles })
     }
@@ -2558,13 +2564,13 @@ impl DataComponentCodec<Self> for WrittenBookContentImpl {
         seq.write_string(&self.title)?;
         seq.write_bool(false)?;
         seq.write_string(&self.author)?;
-        seq.write_var_int(&VarInt(0))?;
+        seq.write_var_int(&VarInt(self.generation))?;
         seq.write_var_int(&VarInt::from(self.pages.len() as i32))?;
         for page in &self.pages {
             seq.write_slice(&page.encode_for_version(&JavaMinecraftVersion::V_26_2))?;
             seq.write_bool(false)?;
         }
-        seq.write_bool(true)
+        seq.write_bool(self.resolved)
     }
 
     fn deserialize(seq: &mut impl NetworkReadExt) -> Result<Self, ReadingError> {
@@ -2573,7 +2579,12 @@ impl DataComponentCodec<Self> for WrittenBookContentImpl {
             let _ = seq.get_str()?;
         }
         let author = seq.get_str()?.to_string();
-        let _generation = seq.get_var_int()?.0;
+        let generation = seq.get_var_int()?.0;
+        if !(0..=3).contains(&generation) {
+            return Err(ReadingError::Message(format!(
+                "book generation {generation} is not 0 to 3"
+            )));
+        }
         let pages_len = read_count(seq, usize::MAX)?;
         let mut pages = Vec::with_capacity(pages_len.min(MAX_INITIAL_COLLECTION_SIZE));
         for _ in 0..pages_len {
@@ -2587,11 +2598,13 @@ impl DataComponentCodec<Self> for WrittenBookContentImpl {
             }
             pages.push(comp);
         }
-        let _resolved = seq.get_bool()?;
+        let resolved = seq.get_bool()?;
         Ok(Self {
             title,
             author,
+            generation,
             pages,
+            resolved,
         })
     }
 }
@@ -3069,11 +3082,24 @@ impl DataComponentCodec<Self> for PotDecorationsImpl {
 }
 
 impl DataComponentCodec<Self> for ContainerImpl {
+    /// Vanilla: a list of optional item stack templates, one per slot up to
+    /// the last filled one, so the empty slots between keep their place.
     fn serialize(&self, seq: &mut impl NetworkWriteExt) -> Result<(), WritingError> {
-        seq.write_var_int(&VarInt::from(self.items.len() as i32))?;
-        for (_slot, stack) in &self.items {
-            seq.write_bool(true)?;
-            serialize_item_stack_template(stack, seq)?;
+        let len = self
+            .items
+            .iter()
+            .map(|(slot, _)| usize::from(*slot) + 1)
+            .max()
+            .unwrap_or(0);
+        seq.write_var_int(&VarInt::from(len as i32))?;
+        for slot in 0..len {
+            match self.items.iter().find(|(s, _)| usize::from(*s) == slot) {
+                Some((_, stack)) => {
+                    seq.write_bool(true)?;
+                    serialize_item_stack_template(stack, seq)?;
+                }
+                None => seq.write_bool(false)?,
+            }
         }
         Ok(())
     }
@@ -3593,6 +3619,83 @@ mod tests {
         let decoded = CustomNameImpl::deserialize(&mut encoded.as_slice())?;
         assert_eq!(decoded.name.0.style, component.name.0.style);
         assert_eq!(decoded.name.get_text(), "Styled item");
+        Ok(())
+    }
+
+    /// A book copy keeps its generation and the resolved flag on the wire
+    /// (Minecraft 26.3: `VAR_INT` generation, `BOOL` resolved).
+    #[test]
+    fn written_book_keeps_generation_on_wire() -> Result<(), Box<dyn std::error::Error>> {
+        let book = WrittenBookContentImpl {
+            title: "Tale".to_string(),
+            author: "Alex".to_string(),
+            generation: 2,
+            pages: vec![pumpkin_util::text::TextComponent::text("one")],
+            resolved: false,
+        };
+        let mut bytes = Vec::new();
+        book.serialize(&mut bytes)?;
+        let decoded = WrittenBookContentImpl::deserialize(&mut bytes.as_slice())?;
+        assert_eq!(
+            (decoded.generation, decoded.resolved, decoded.pages.len()),
+            (2, false, 1)
+        );
+        let mut bad = Vec::new();
+        WrittenBookContentImpl {
+            generation: 4,
+            ..book
+        }
+        .serialize(&mut bad)?;
+        assert!(
+            WrittenBookContentImpl::deserialize(&mut bad.as_slice()).is_err(),
+            "generation above 3"
+        );
+        Ok(())
+    }
+
+    /// A container keeps empty slots between its items on the wire (a list
+    /// of optional templates, one per slot up to the last filled one).
+    #[test]
+    fn container_keeps_its_slot_layout_on_wire() -> Result<(), Box<dyn std::error::Error>> {
+        use pumpkin_data::item::Item;
+        use pumpkin_data::item_stack::ItemStack;
+        let container = ContainerImpl {
+            items: vec![
+                (0, ItemStack::new(3, &Item::DIAMOND)),
+                (5, ItemStack::new(1, &Item::STICK)),
+            ],
+        };
+        let mut bytes = Vec::new();
+        container.serialize(&mut bytes)?;
+        let decoded = ContainerImpl::deserialize(&mut bytes.as_slice())?;
+        let slots: Vec<(u8, u8)> = decoded
+            .items
+            .iter()
+            .map(|(slot, stack)| (*slot, stack.item_count))
+            .collect();
+        assert_eq!(slots, [(0, 3), (5, 1)]);
+        assert_eq!(decoded.items[1].1.item.id, Item::STICK.id);
+        Ok(())
+    }
+
+    /// A loaded crossbow's projectiles survive the wire (they were written
+    /// as empty templates before).
+    #[test]
+    fn charged_projectiles_round_trip_on_wire() -> Result<(), Box<dyn std::error::Error>> {
+        use pumpkin_data::item::Item;
+        use pumpkin_data::item_stack::ItemStack;
+        let mut arrow = pumpkin_nbt::compound::NbtCompound::new();
+        ItemStack::new(1, &Item::ARROW).write_item_stack(&mut arrow);
+        let charged = ChargedProjectilesImpl {
+            projectiles: vec![arrow],
+        };
+        let mut bytes = Vec::new();
+        charged.serialize(&mut bytes)?;
+        let decoded = ChargedProjectilesImpl::deserialize(&mut bytes.as_slice())?;
+        assert_eq!(decoded.projectiles.len(), 1);
+        let back =
+            ItemStack::read_item_stack(&decoded.projectiles[0]).ok_or("not an item stack")?;
+        assert_eq!((back.item.id, back.item_count), (Item::ARROW.id, 1));
         Ok(())
     }
 
