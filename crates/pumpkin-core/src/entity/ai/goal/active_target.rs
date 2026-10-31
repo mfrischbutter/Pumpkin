@@ -13,11 +13,15 @@ use crate::entity::{EntityBase, mob::MobEntity};
 use crate::plugin::api::events::entity::entity_target::TargetReason;
 use crate::world::World;
 use pumpkin_data::attributes::Attributes;
+use pumpkin_util::math::boundingbox::BoundingBox;
 use rand::RngExt;
 use std::sync::Arc;
 use uuid::Uuid;
 
 const DEFAULT_RECIPROCAL_CHANCE: i32 = 10;
+
+/// Vanilla `getTargetSearchArea`: the box searched for candidates at the given follow range.
+pub type SearchAreaFn = fn(&dyn Mob, f64) -> BoundingBox;
 
 /// Extra gate on top of the target predicate, for mobs that pick targets conditionally.
 #[derive(Clone, Copy, Default, PartialEq, Eq, Debug)]
@@ -83,6 +87,7 @@ pub struct ActiveTargetGoal {
     gate: Option<MobFilter>,
     target_filter: Option<MobFilter>,
     selector: Option<TargetPredicateFn>,
+    search_area: Option<SearchAreaFn>,
 }
 
 impl ActiveTargetGoal {
@@ -117,6 +122,7 @@ impl ActiveTargetGoal {
             gate: None,
             target_filter: None,
             selector: None,
+            search_area: None,
         }
     }
 
@@ -153,6 +159,14 @@ impl ActiveTargetGoal {
     #[must_use]
     pub fn selecting(mut self: Box<Self>, selector: TargetPredicateFn) -> Box<Self> {
         self.selector = Some(selector);
+        self
+    }
+
+    /// Searches non-player candidates in this box instead of the mob's box grown by the
+    /// follow range. Players are found anywhere, as in vanilla.
+    #[must_use]
+    pub fn searching_in(mut self: Box<Self>, search_area: SearchAreaFn) -> Box<Self> {
+        self.search_area = Some(search_area);
         self
     }
 
@@ -197,6 +211,7 @@ impl ActiveTargetGoal {
             gate: None,
             target_filter: None,
             selector: None,
+            search_area: None,
         })
     }
 
@@ -225,7 +240,11 @@ impl ActiveTargetGoal {
 
         let entity = &mob_entity.living_entity.entity;
         let world = entity.world.load();
-        let area = SearchArea::from_eyes(entity, follow_range, follow_range).players_anywhere();
+        let mut area = SearchArea::from_eyes(entity, follow_range, follow_range);
+        if let Some(search_area) = self.search_area {
+            area.area = search_area(mob, follow_range);
+        }
+        let area = area.players_anywhere();
 
         // Pick the nearest candidate that passes the conditions, not the nearest overall.
         let target_type = self.target_type;

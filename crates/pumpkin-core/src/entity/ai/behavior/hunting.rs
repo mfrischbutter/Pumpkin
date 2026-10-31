@@ -1,6 +1,6 @@
 use pumpkin_data::entity::EntityType;
 
-use crate::entity::ai::goal::active_target::{ActiveTargetGoal, TargetCondition};
+use crate::entity::ai::goal::active_target::{ActiveTargetGoal, SearchAreaFn, TargetCondition};
 use crate::entity::ai::goal::goal_selector::GoalSelector;
 use crate::entity::ai::goal::revenge::MobFilter;
 use crate::entity::ai::target_match::TargetMatch;
@@ -26,6 +26,7 @@ pub struct Hunt {
     predicate: Option<TargetPredicateFn>,
     unseen_memory_ticks: Option<i32>,
     range_scale: f64,
+    search_area: Option<SearchAreaFn>,
 }
 
 impl Hunt {
@@ -42,6 +43,7 @@ impl Hunt {
             predicate: None,
             unseen_memory_ticks: None,
             range_scale: 1.0,
+            search_area: None,
         }
     }
 
@@ -94,6 +96,13 @@ impl Hunt {
         self
     }
 
+    /// See [`ActiveTargetGoal::searching_in`].
+    #[must_use]
+    pub const fn searching_in(mut self, search_area: SearchAreaFn) -> Self {
+        self.search_area = Some(search_area);
+        self
+    }
+
     fn build(self, mob: &MobEntity) -> Box<ActiveTargetGoal> {
         let mut goal = ActiveTargetGoal::with_default(mob, self.target, self.must_see)
             .every(self.reciprocal_chance)
@@ -110,6 +119,9 @@ impl Hunt {
         }
         if let Some(ticks) = self.unseen_memory_ticks {
             goal = goal.forget_unseen_after(ticks);
+        }
+        if let Some(search_area) = self.search_area {
+            goal = goal.searching_in(search_area);
         }
         goal
     }
