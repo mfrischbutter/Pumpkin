@@ -183,7 +183,9 @@ impl Player {
 
             let mut matched = Vec::new();
             for listener in listeners {
-                if predicate_matcher(&listener.conditions) {
+                if matches!(*listener.conditions, CriterionConditions::Any)
+                    || predicate_matcher(&listener.conditions)
+                {
                     matched.push((listener.advancement, listener.criterion));
                 }
             }

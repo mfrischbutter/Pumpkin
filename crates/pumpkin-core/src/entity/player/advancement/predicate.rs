@@ -1220,6 +1220,9 @@ pub enum CriterionConditions {
     },
     Impossible,
     Tick,
+    /// A criterion without conditions: any event of its trigger matches (vanilla's empty
+    /// `TriggerInstance`, e.g. "Husbandry" eating anything).
+    Any,
     Custom {
         trigger: String,
         conditions: Value,
@@ -1583,7 +1586,8 @@ impl From<pumpkin_data::advancement_data::AdvancementCondition> for CriterionCon
             AC::EffectsChanged => Self::EffectsChanged(None),
             AC::SpearMobs { count } => Self::SpearMobs { count },
             AC::Impossible => Self::Impossible,
-            AC::Empty | AC::Tick => Self::Tick,
+            AC::Empty => Self::Any,
+            AC::Tick => Self::Tick,
             AC::Custom(raw) => Self::parse("", raw),
         }
     }
@@ -2399,6 +2403,13 @@ mod tests {
             }
             _ => panic!("Expected Location variant"),
         }
+    }
+
+    #[test]
+    fn empty_conditions_match_any_event() {
+        let cond =
+            CriterionConditions::from(pumpkin_data::advancement_data::AdvancementCondition::Empty);
+        assert!(matches!(cond, CriterionConditions::Any));
     }
 
     #[test]
