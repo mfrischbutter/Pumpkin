@@ -56,15 +56,14 @@ impl PathfindToRaidGoal {
             }
         }
 
-        // TODO: this should count nearby POI sections instead.
-        world.nearest_job_site(pos, 32).is_none()
+        !world.is_village(&pos)
     }
 }
 
 impl Goal for PathfindToRaidGoal {
     fn can_start(&mut self, mob: &dyn Mob) -> bool {
         mob.get_mob_entity().get_target().is_none()
-            && !mob.get_entity().has_passengers()
+            && mob.mob_controlling_passenger().is_none()
             && Self::raid_is_calling(mob)
     }
 
