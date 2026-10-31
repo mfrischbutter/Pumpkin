@@ -1633,6 +1633,29 @@ pub trait Mob: EntityBase + Send + Sync {
         amount
     }
 
+    /// Like [`Self::modify_incoming_damage`], for mobs that also need the direct source and
+    /// the attacker.
+    fn modify_incoming_damage_with_context(
+        &self,
+        amount: f32,
+        damage_type: DamageType,
+        _source: Option<&dyn EntityBase>,
+        _cause: Option<&dyn EntityBase>,
+    ) -> f32 {
+        self.modify_incoming_damage(amount, damage_type)
+    }
+
+    /// Vanilla `isInvulnerableTo`, for species that override it. `source` is the direct
+    /// entity and `cause` the attacker.
+    fn mob_is_invulnerable_to(
+        &self,
+        damage_type: &DamageType,
+        _source: Option<&dyn EntityBase>,
+        cause: Option<&dyn EntityBase>,
+    ) -> bool {
+        self.get_entity().is_invulnerable_to(damage_type, cause)
+    }
+
     fn can_attack_with_owner(&self, _target: &dyn EntityBase, _owner: &dyn EntityBase) -> bool {
         true
     }
@@ -2320,15 +2343,14 @@ impl<T: Mob + Send + 'static> EntityBase for T {
             return false;
         }
         // Mob-specific damage modifier (e.g. shulker armor when closed).
-        let amount = self.modify_incoming_damage(amount, damage_type);
-        let damaged = self.get_mob_entity().living_entity.damage_with_context(
-            caller,
-            amount,
-            damage_type,
-            position,
-            source,
-            cause,
-        );
+        let amount = self.modify_incoming_damage_with_context(amount, damage_type, source, cause);
+        if self.mob_is_invulnerable_to(&damage_type, source, cause) {
+            return false;
+        }
+        let damaged = self
+            .get_mob_entity()
+            .living_entity
+            .damage_past_invulnerability(caller, amount, damage_type, position, source, cause);
         let result = damaged && self.on_damage_with_context(damage_type, source, cause);
         self.after_hurt(damage_type, source, cause);
         result
