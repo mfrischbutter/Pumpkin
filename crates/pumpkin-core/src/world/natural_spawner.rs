@@ -1,5 +1,6 @@
 use crate::block::PathComputationType;
 use crate::entity::EntityBase;
+use crate::entity::mob::Mob;
 use crate::entity::mob::spawn::finalize_spawn;
 use crate::entity::player::Player;
 use crate::entity::r#type::{check_spawn_rules, from_type};
@@ -768,7 +769,8 @@ pub fn spawn_category_for_position(
     let mut batch_buffer = Vec::new();
     let y_start = pos.0.y;
     let state = world.get_block_state(&pos);
-    if state.is_solid_block() || state.is_full_cube() {
+    // Vanilla `isRedstoneConductor`.
+    if state.is_solid_block() {
         return batch_buffer;
     }
 
@@ -855,9 +857,7 @@ pub fn spawn_category_for_position(
                         .set_rotation(rng().random::<f32>() * 360.0, 0.0);
 
                     let is_valid_for_mob = entity.get_mob().is_none_or(|mob| {
-                        let despawn_dist = f64::from(entity_type.category.despawn_distance);
-                        !(player_distance_sq > despawn_dist * despawn_dist
-                            && mob.remove_when_far_away(player_distance_sq))
+                        is_valid_position_for_mob(world, mob, player_distance_sq)
                     });
 
                     if is_valid_for_mob {
@@ -884,6 +884,25 @@ pub fn spawn_category_for_position(
         }
     }
     batch_buffer
+}
+
+/// Vanilla `NaturalSpawner.isValidPositionForMob`: a mob that would despawn at once is
+/// refused, then its own spawn rules (`PathAwareEntity::can_spawn`, the walk target value)
+/// and its obstruction test decide.
+fn is_valid_position_for_mob(
+    world: &Arc<World>,
+    mob: &dyn Mob,
+    nearest_player_distance_sq: f64,
+) -> bool {
+    let despawn_distance = f64::from(mob.get_entity().entity_type.category.despawn_distance);
+    if nearest_player_distance_sq > despawn_distance * despawn_distance
+        && mob.remove_when_far_away(nearest_player_distance_sq)
+    {
+        return false;
+    }
+    mob.get_path_aware_entity()
+        .is_none_or(|mob| mob.can_spawn(world.clone()))
+        && mob.check_spawn_obstruction(world)
 }
 
 #[must_use]
@@ -1067,7 +1086,8 @@ pub fn is_spawn_position_ok(
                 return false;
             }
             let above_state = world.get_block_state(&block_pos.up());
-            world.get_fluid(block_pos).has_tag(&MINECRAFT_WATER) && !above_state.is_full_cube()
+            // Vanilla: no redstone conductor above.
+            world.get_fluid(block_pos).has_tag(&MINECRAFT_WATER) && !above_state.is_solid_block()
         }
         SpawnLocation::OnGround => {
             if !within_bounds {
@@ -1108,7 +1128,7 @@ pub fn is_spawn_position_ok_cache(
 
             state.is_liquid()
                 && Block::from_state_id(state.id).has_tag(&MINECRAFT_WATER)
-                && !above_state.is_full_cube()
+                && !above_state.is_solid_block()
         }
         SpawnLocation::OnGround => {
             let down_pos = block_pos.down().0;
