@@ -4580,6 +4580,19 @@ impl Entity {
         Some(root)
     }
 
+    /// Vanilla `hasIndirectPassenger`: `other` rides this entity, directly or not.
+    #[must_use]
+    pub fn has_indirect_passenger(&self, other: &Self) -> bool {
+        let mut vehicle = other.get_vehicle();
+        while let Some(ridden) = vehicle {
+            if ridden.get_entity().entity_id == self.entity_id {
+                return true;
+            }
+            vehicle = ridden.get_entity().get_vehicle();
+        }
+        false
+    }
+
     /// Vanilla `isPassengerOfSameVehicle`: same root vehicle, or the same entity.
     #[must_use]
     pub fn is_passenger_of_same_vehicle(&self, other: &Self) -> bool {
