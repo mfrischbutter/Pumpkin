@@ -789,8 +789,7 @@ impl MobEntity {
         reason.is_spawner() || is_valid_spawn_floor(world.get_block_state(&pos.down()), entity_type)
     }
 
-    /// Vanilla `Monster.checkMonsterSpawnRules`. The difficulty test stands in for
-    /// vanilla's `EntityType.isAllowedInPeaceful` gate until the type data carries it.
+    /// Vanilla `Monster.checkMonsterSpawnRules`.
     pub fn check_monster_spawn_rules(
         entity_type: &'static EntityType,
         world: &World,
@@ -798,10 +797,6 @@ impl MobEntity {
         pos: &BlockPos,
         is_thundering: bool,
     ) -> bool {
-        if world.level_info.load().difficulty == Difficulty::Peaceful {
-            return false;
-        }
-
         if !reason.ignores_light_requirements()
             && !Self::is_dark_enough_to_spawn(world, pos, is_thundering)
         {
@@ -811,18 +806,13 @@ impl MobEntity {
         Self::check_mob_spawn_rules(entity_type, world, reason, pos)
     }
 
-    /// Vanilla `Monster.checkAnyLightMonsterSpawnRules`, with the same difficulty stand-in
-    /// as [`Self::check_monster_spawn_rules`].
+    /// Vanilla `Monster.checkAnyLightMonsterSpawnRules`.
     pub fn check_any_light_monster_spawn_rules(
         entity_type: &'static EntityType,
         world: &World,
         reason: EntitySpawnReason,
         pos: &BlockPos,
     ) -> bool {
-        if world.level_info.load().difficulty == Difficulty::Peaceful {
-            return false;
-        }
-
         Self::check_mob_spawn_rules(entity_type, world, reason, pos)
     }
 
@@ -986,6 +976,13 @@ impl MobEntity {
         let entity = &self.living_entity.entity;
 
         let world = entity.world.load();
+        // Vanilla `Mob.checkDespawn`: peaceful discards the types not allowed in it.
+        if !entity.entity_type.is_allowed_in_peaceful
+            && world.level_info.load().difficulty == Difficulty::Peaceful
+        {
+            mob.get_entity().remove();
+            return;
+        }
         let pos = entity.pos.load();
         let players = world.players.load();
 

@@ -2408,14 +2408,11 @@ impl World {
     }
 
     /// Vanilla `SPAWN_MOBS` and `ServerLevel.isSpawningMonsters`: whether mobs spawn at all
-    /// and whether enemies do. Peaceful stands in for vanilla's per-type gate until the
-    /// type data carries `isAllowedInPeaceful` (see `check_spawn_rules`).
+    /// and whether enemies do. Peaceful is a per-type matter (`check_spawn_rules`).
     fn natural_spawn_flags(&self) -> (bool, bool) {
         let info = self.level_info.load();
         let spawn_mobs = info.game_rules.spawn_mobs;
-        let spawn_enemies =
-            spawn_mobs && info.game_rules.spawn_monsters && info.difficulty != Difficulty::Peaceful;
-        (spawn_mobs, spawn_enemies)
+        (spawn_mobs, spawn_mobs && info.game_rules.spawn_monsters)
     }
 
     /// Vanilla `ServerLevel.tickCustomSpawners`: the overworld's custom spawners run after

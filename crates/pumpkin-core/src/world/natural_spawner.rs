@@ -1198,8 +1198,12 @@ pub(crate) fn is_valid_spawn_floor(
     }
 }
 
+/// Vanilla `EntityType.isBlockDangerous`.
 fn is_block_dangerous(entity_type: &'static EntityType, state: &'static BlockState) -> bool {
     let block = Block::from_state_id(state.id);
+    if block.has_tag(entity_type.immune_to) {
+        return false;
+    }
     if !entity_type.fire_immune && is_burning_block(block) {
         return true;
     }

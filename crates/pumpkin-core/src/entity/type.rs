@@ -448,9 +448,8 @@ pub fn self_and_passengers(entity: &Arc<dyn EntityBase>) -> Vec<Arc<dyn EntityBa
 #[expect(clippy::too_many_lines)]
 /// Vanilla `SpawnPlacements.checkSpawnRules`: the type's placement predicate.
 ///
-/// The `Monster`, `Animal` and species rules; a type without one spawns anywhere. Vanilla
-/// also refuses the `notInPeaceful` types in peaceful here; until the type data carries
-/// that flag the single rules test the difficulty themselves.
+/// Peaceful refuses the types not allowed in it; then the `Monster`, `Animal` and species
+/// rules decide, and a type without one spawns anywhere.
 pub fn check_spawn_rules(
     entity_type: &'static EntityType,
     world: &World,
@@ -458,6 +457,11 @@ pub fn check_spawn_rules(
     pos: &BlockPos,
     is_thundering: bool,
 ) -> bool {
+    if !entity_type.is_allowed_in_peaceful
+        && world.level_info.load().difficulty == pumpkin_util::Difficulty::Peaceful
+    {
+        return false;
+    }
     let id = entity_type.id;
 
     // Monsters (Standard Darkness + Peaceful check)
