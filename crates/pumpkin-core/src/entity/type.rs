@@ -40,7 +40,6 @@ use crate::entity::mob::giant::GiantEntity;
 use crate::entity::mob::guardian::GuardianEntity;
 use crate::entity::mob::hoglin::HoglinEntity;
 use crate::entity::mob::illusioner::IllusionerEntity;
-use crate::entity::mob::magma_cube::MagmaCubeEntity;
 use crate::entity::mob::phantom::PhantomEntity;
 use crate::entity::mob::piglin::PiglinEntity;
 use crate::entity::mob::piglin_brute::PiglinBruteEntity;
@@ -167,7 +166,7 @@ pub fn from_type(
         id if id == EntityType::SPIDER.id => SpiderEntity::new(entity),
         id if id == EntityType::CAVE_SPIDER.id => CaveSpiderEntity::new(entity),
         id if id == EntityType::GHAST.id => GhastEntity::new(entity),
-        id if id == EntityType::MAGMA_CUBE.id => MagmaCubeEntity::new(entity),
+        id if id == EntityType::MAGMA_CUBE.id => SlimeEntity::new(entity),
         id if id == EntityType::PHANTOM.id => PhantomEntity::new(entity),
         id if id == EntityType::WITCH.id => WitchEntity::new(entity),
         id if id == EntityType::PIGLIN.id => PiglinEntity::new(entity),

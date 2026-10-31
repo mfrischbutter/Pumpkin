@@ -330,19 +330,10 @@ fn get_entity_equipment_stack(entity: &dyn EntityBase, slot: &str) -> ItemStack 
 }
 
 fn get_cube_mob_size(entity: &dyn EntityBase) -> Option<i32> {
-    if let Some(slime) = entity
+    entity
         .cast_any()
         .downcast_ref::<crate::entity::mob::slime::SlimeEntity>()
-    {
-        return Some(slime.get_size());
-    }
-    if let Some(cube) = entity
-        .cast_any()
-        .downcast_ref::<crate::entity::mob::magma_cube::MagmaCubeEntity>()
-    {
-        return Some(cube.slime.get_size());
-    }
-    None
+        .map(crate::entity::mob::slime::SlimeEntity::get_size)
 }
 
 fn get_sheep_sheared(entity: &dyn EntityBase) -> Option<bool> {

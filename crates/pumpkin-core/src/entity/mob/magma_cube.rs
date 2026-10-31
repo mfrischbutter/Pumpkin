@@ -1,89 +1,40 @@
-use std::sync::Arc;
-use std::sync::atomic::Ordering;
+use pumpkin_data::sound::Sound;
 
-use pumpkin_data::{attributes::Attributes, sound::Sound};
+use crate::entity::mob::slime::{CubeSpecies, LavaJump, SizedSound};
 
-use crate::entity::{
-    Entity, EntityBase,
-    custom_sound::CustomSound,
-    mob::{Mob, MobEntity, slime::SlimeEntity},
+/// Vanilla `MagmaCube`: a Nether [`SlimeEntity`] with these overrides.
+///
+/// It waits four times as long between jumps, jumps higher the bigger it is, swims up lava
+/// fast, hurts what it touches at every size and wears armor.
+///
+/// Wiki: <https://minecraft.wiki/w/Magma_Cube>
+///
+/// [`SlimeEntity`]: crate::entity::mob::slime::SlimeEntity
+pub static MAGMA_CUBE: CubeSpecies = CubeSpecies {
+    hurt_sound: SizedSound {
+        tiny: Sound::EntityMagmaCubeHurtSmall,
+        big: Sound::EntityMagmaCubeHurt,
+    },
+    death_sound: SizedSound {
+        tiny: Sound::EntityMagmaCubeDeathSmall,
+        big: Sound::EntityMagmaCubeDeath,
+    },
+    squish_sound: SizedSound {
+        tiny: Sound::EntityMagmaCubeSquishSmall,
+        big: Sound::EntityMagmaCubeSquish,
+    },
+    jump_sound: SizedSound {
+        tiny: Sound::EntityMagmaCubeJump,
+        big: Sound::EntityMagmaCubeJump,
+    },
+    jump_delay_factor: 4,
+    squish_decay: 0.9,
+    tiny_deals_damage: true,
+    attack_damage_bonus: 2.0,
+    armor_per_size: Some(3),
+    jump_power_per_size: 0.1,
+    lava_jump: Some(LavaJump {
+        base: 0.22,
+        per_size: 0.05,
+    }),
 };
-
-pub struct MagmaCubeEntity {
-    pub slime: Arc<SlimeEntity>,
-}
-
-impl MagmaCubeEntity {
-    pub fn new(entity: Entity) -> Arc<Self> {
-        let slime = SlimeEntity::new(entity);
-        let size = slime.get_size();
-        {
-            let mut attributes = slime
-                .get_mob_entity()
-                .living_entity
-                .attributes
-                .write()
-                .unwrap_or_else(std::sync::PoisonError::into_inner);
-            if let Some(speed) = attributes.get_mut(&Attributes::MOVEMENT_SPEED.id) {
-                speed.base_value = 0.2;
-                speed.dirty.store(true, Ordering::Relaxed);
-            }
-            if let Some(damage) = attributes.get_mut(&Attributes::ATTACK_DAMAGE.id) {
-                damage.base_value = (size + 2) as f64;
-                damage.dirty.store(true, Ordering::Relaxed);
-            }
-            if let Some(armor) = attributes.get_mut(&Attributes::ARMOR.id) {
-                armor.base_value = (size * 3) as f64;
-                armor.dirty.store(true, Ordering::Relaxed);
-            }
-        }
-        Arc::new(Self { slime })
-    }
-}
-
-impl CustomSound for MagmaCubeEntity {
-    fn death_sound(&self) -> Option<Sound> {
-        let size = self.slime.get_size();
-        Some(if size == 1 {
-            Sound::EntityMagmaCubeDeathSmall
-        } else {
-            Sound::EntityMagmaCubeDeath
-        })
-    }
-    fn hurt_sound(&self) -> Option<Sound> {
-        let size = self.slime.get_size();
-        Some(if size == 1 {
-            Sound::EntityMagmaCubeHurtSmall
-        } else {
-            Sound::EntityMagmaCubeHurt
-        })
-    }
-}
-
-impl Mob for MagmaCubeEntity {
-    fn get_mob_entity(&self) -> &MobEntity {
-        self.slime.get_mob_entity()
-    }
-
-    fn mob_metadata(&self) -> Option<crate::entity::mob::MobMetadata> {
-        self.slime.mob_metadata()
-    }
-
-    fn mob_tick(&self, caller: &dyn EntityBase) {
-        self.slime.mob_tick(caller);
-    }
-
-    fn post_tick(&self) {
-        self.slime.post_tick();
-    }
-
-    fn mob_player_collision(&self, player: &Arc<crate::entity::player::Player>) {
-        let damaged = self
-            .slime
-            .get_mob_entity()
-            .try_attack(&*self.slime, &**player);
-        if damaged {
-            self.slime.on_attack(&**player);
-        }
-    }
-}

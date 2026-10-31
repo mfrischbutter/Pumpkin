@@ -30,7 +30,7 @@ fn entity_predicates_do_not_match_a_missing_entity() {
 use crate::entity::{
     Entity,
     ai::test_support::world,
-    mob::{Mob, magma_cube::MagmaCubeEntity},
+    mob::{Mob, slime::SlimeEntity},
     passive::{
         chicken::ChickenEntity,
         frog::FrogEntity,
@@ -204,7 +204,7 @@ async fn component_predicates_use_the_current_entity_color() {
 async fn damage_source_predicates_use_the_attackers_components() {
     let folder = tempfile::tempdir().unwrap();
     let world = world(&folder);
-    let cube = MagmaCubeEntity::new(Entity::new(
+    let cube = SlimeEntity::new(Entity::new(
         world.clone(),
         Vector3::default(),
         &EntityType::MAGMA_CUBE,
@@ -218,7 +218,7 @@ async fn damage_source_predicates_use_the_attackers_components() {
         "../../../../../assets/datapack/data/minecraft/loot_table/entities/magma_cube.json"
     );
     for size in [1, 2] {
-        cube.slime.set_size(size, true);
+        cube.set_size(size, true);
         for (variant, light) in [
             (FrogVariant::Temperate, &Item::OCHRE_FROGLIGHT),
             (FrogVariant::Warm, &Item::PEARLESCENT_FROGLIGHT),
@@ -855,12 +855,12 @@ async fn entity_properties_evaluates_flags_distance_and_type_specific() {
         Vector3::default(),
         &EntityType::SHEEP,
     ));
-    let cube = MagmaCubeEntity::new(Entity::new(
+    let cube = SlimeEntity::new(Entity::new(
         world,
         Vector3::new(10.0, 0.0, 0.0),
         &EntityType::MAGMA_CUBE,
     ));
-    cube.slime.set_size(4, false);
+    cube.set_size(4, false);
 
     // Test flags: is_sneaking
     sheep
@@ -909,7 +909,7 @@ async fn entity_properties_evaluates_flags_distance_and_type_specific() {
         1
     );
 
-    cube.slime.set_size(1, false);
+    cube.set_size(1, false);
     assert!(generate_dynamic_loot_with_context(&table_size, 0, &params_cube).is_empty());
 }
 
