@@ -1,4 +1,5 @@
 use rustc_hash::FxHashMap;
+use std::collections::hash_map::Entry;
 use std::io::{Cursor, Read, Write};
 use std::path::{Path, PathBuf};
 use tracing::{info, warn};
@@ -6,12 +7,34 @@ use tracing::{info, warn};
 use flate2::Compression;
 use flate2::read::ZlibDecoder;
 use flate2::write::ZlibEncoder;
+use pumpkin_data::poi_type::PoiType;
+use pumpkin_data::tag::PointOfInterestType::MINECRAFT_VILLAGE;
+use pumpkin_data::tag::Taggable;
 use pumpkin_util::math::position::BlockPos;
 use pumpkin_util::math::vector3::Vector3;
+use rustc_hash::FxHashSet;
 use serde::{Deserialize, Serialize};
 
 /// POI type identifier for nether portals
 pub const POI_TYPE_NETHER_PORTAL: &str = "minecraft:nether_portal";
+
+/// Vanilla `PoiManager.MAX_VILLAGE_DISTANCE`: a section more steps than this from a village
+/// section is not close to one.
+pub const MAX_VILLAGE_DISTANCE: i32 = 6;
+
+/// The section `(chunk x, section y, chunk z)` holding a position.
+#[must_use]
+pub const fn section_of(pos: &BlockPos) -> (i32, i32, i32) {
+    (pos.0.x >> 4, pos.0.y >> 4, pos.0.z >> 4)
+}
+
+/// The squared distance of a record from a position.
+fn distance_sq(entry: &PoiEntry, center: BlockPos) -> i64 {
+    let dx = i64::from(entry.x - center.0.x);
+    let dy = i64::from(entry.y - center.0.y);
+    let dz = i64::from(entry.z - center.0.z);
+    dx * dx + dy * dy + dz * dz
+}
 
 /// MCA format constants
 const SECTOR_SIZE: usize = 4096;
@@ -52,6 +75,59 @@ impl PoiEntry {
     pub const fn pos(&self) -> BlockPos {
         BlockPos(Vector3::new(self.x, self.y, self.z))
     }
+
+    /// A fresh record of `kind` with every ticket free (vanilla `PoiRecord`).
+    #[must_use]
+    pub fn new(pos: BlockPos, kind: &'static PoiType) -> Self {
+        Self {
+            x: pos.0.x,
+            y: pos.0.y,
+            z: pos.0.z,
+            poi_type: format!("minecraft:{}", kind.resource_name),
+            free_tickets: max_tickets(kind),
+        }
+    }
+
+    /// The registered type; `None` for a type this version does not know.
+    #[must_use]
+    pub fn kind(&self) -> Option<&'static PoiType> {
+        PoiType::from_name(&self.poi_type)
+    }
+
+    /// Vanilla `PoiRecord.hasSpace`.
+    #[must_use]
+    pub const fn has_space(&self) -> bool {
+        self.free_tickets > 0
+    }
+
+    /// Vanilla `PoiRecord.isOccupied`: at least one ticket is taken.
+    #[must_use]
+    pub fn is_occupied(&self) -> bool {
+        self.kind()
+            .is_some_and(|kind| self.free_tickets != max_tickets(kind))
+    }
+}
+
+fn max_tickets(kind: &PoiType) -> i32 {
+    i32::try_from(kind.max_tickets).unwrap_or(i32::MAX)
+}
+
+/// Which records a lookup accepts (vanilla `PoiManager.Occupancy`).
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+pub enum Occupancy {
+    HasSpace,
+    IsOccupied,
+    Any,
+}
+
+impl Occupancy {
+    fn accepts(self, entry: &PoiEntry) -> bool {
+        match self {
+            Self::HasSpace => entry.has_space(),
+            Self::IsOccupied => entry.is_occupied(),
+            Self::Any => true,
+        }
+    }
 }
 
 /// POI section data (serializable) - vanilla format
@@ -78,6 +154,9 @@ pub struct PoiChunkData {
 pub struct PoiRegion {
     /// Entries indexed by position
     entries: FxHashMap<(i32, i32, i32), PoiEntry>,
+    /// Sections whose records match their blocks (vanilla `PoiSection.isValid`), as
+    /// `(chunk x, section y, chunk z)`; a section without is scanned when its chunk loads.
+    sections: FxHashSet<(i32, i32, i32)>,
     /// Track which chunks are dirty
     dirty_chunks: rustc_hash::FxHashSet<(i32, i32)>,
     dirty: bool,
@@ -110,8 +189,26 @@ impl PoiRegion {
         let chunk_x = entry.x >> 4;
         let chunk_z = entry.z >> 4;
         self.dirty_chunks.insert((chunk_x, chunk_z));
+        self.sections.insert(section_of(&entry.pos()));
         let key = (entry.x, entry.y, entry.z);
         self.entries.insert(key, entry);
+        self.dirty = true;
+    }
+
+    fn has_section(&self, section: (i32, i32, i32)) -> bool {
+        self.sections.contains(&section)
+    }
+
+    /// The section's records now match its blocks.
+    fn mark_section(&mut self, section: (i32, i32, i32)) {
+        self.sections.insert(section);
+        self.dirty_chunks.insert((section.0, section.2));
+        self.dirty = true;
+    }
+
+    /// A record at `pos` changed.
+    fn touch(&mut self, pos: &BlockPos) {
+        self.dirty_chunks.insert((pos.0.x >> 4, pos.0.z >> 4));
         self.dirty = true;
     }
 
@@ -146,6 +243,21 @@ impl PoiRegion {
     fn get_chunk_data(&self, chunk_x: i32, chunk_z: i32) -> Option<PoiChunkData> {
         let mut sections: FxHashMap<String, PoiSectionData> = FxHashMap::default();
 
+        // A scanned section without points is saved as valid too, so it is not scanned again.
+        for (_, section_y, _) in self
+            .sections
+            .iter()
+            .filter(|(x, _, z)| *x == chunk_x && *z == chunk_z)
+        {
+            sections.insert(
+                section_y.to_string(),
+                PoiSectionData {
+                    valid: 1,
+                    records: Vec::new(),
+                },
+            );
+        }
+
         for entry in self.entries.values() {
             let entry_chunk_x = entry.x >> 4;
             let entry_chunk_z = entry.z >> 4;
@@ -155,10 +267,11 @@ impl PoiRegion {
             }
 
             let section_key = Self::section_key(&entry.pos());
+            let valid = i8::from(self.sections.contains(&section_of(&entry.pos())));
             let section = sections
                 .entry(section_key)
                 .or_insert_with(|| PoiSectionData {
-                    valid: 1,
+                    valid,
                     records: Vec::new(),
                 });
             section.records.push(entry.clone());
@@ -258,7 +371,7 @@ impl PoiRegion {
             return Ok(());
         }
 
-        if self.entries.is_empty() {
+        if self.entries.is_empty() && self.sections.is_empty() {
             // Don't save empty regions, delete the file if it exists
             if path.exists() {
                 std::fs::remove_file(path)?;
@@ -276,6 +389,9 @@ impl PoiRegion {
             rustc_hash::FxHashSet::default();
         for entry in self.entries.values() {
             chunks_with_data.insert((entry.x >> 4, entry.z >> 4));
+        }
+        for (chunk_x, _, chunk_z) in &self.sections {
+            chunks_with_data.insert((*chunk_x, *chunk_z));
         }
 
         for (chunk_x, chunk_z) in &chunks_with_data {
@@ -348,7 +464,7 @@ impl PoiRegion {
         Ok(())
     }
 
-    pub fn load(path: &Path) -> std::io::Result<Self> {
+    pub fn load(path: &Path, region_x: i32, region_z: i32) -> std::io::Result<Self> {
         if !path.exists() {
             return Ok(Self::new());
         }
@@ -406,7 +522,14 @@ impl PoiRegion {
 
             match Self::decompress_chunk_data(compressed) {
                 Ok(chunk_data) => {
-                    for (_section_key, section) in chunk_data.sections {
+                    let chunk_x = (region_x << 5) | (index & 31) as i32;
+                    let chunk_z = (region_z << 5) | (index >> 5) as i32;
+                    for (section_key, section) in chunk_data.sections {
+                        if section.valid != 0
+                            && let Ok(section_y) = section_key.parse::<i32>()
+                        {
+                            region.sections.insert((chunk_x, section_y, chunk_z));
+                        }
                         for entry in section.records {
                             let key = (entry.x, entry.y, entry.z);
                             region.entries.insert(key, entry);
@@ -430,6 +553,9 @@ pub struct PoiStorage {
     folder: PathBuf,
     /// Loaded regions, keyed by (`region_x`, `region_z`)
     regions: FxHashMap<(i32, i32), PoiRegion>,
+    /// Vanilla's village distance tracker: the sections within `MAX_VILLAGE_DISTANCE` of a
+    /// village section with their distance, recomputed after a change when next asked.
+    village_levels: Option<FxHashMap<(i32, i32, i32), i32>>,
 }
 
 impl PoiStorage {
@@ -438,6 +564,7 @@ impl PoiStorage {
         Self {
             folder: poi_folder,
             regions: FxHashMap::default(),
+            village_levels: None,
         }
     }
 
@@ -454,7 +581,7 @@ impl PoiStorage {
     fn get_or_load_region(&mut self, rx: i32, rz: i32) -> &mut PoiRegion {
         let path = self.region_path(rx, rz);
         self.regions.entry((rx, rz)).or_insert_with(|| {
-            PoiRegion::load(&path).unwrap_or_else(|e| {
+            PoiRegion::load(&path, rx, rz).unwrap_or_else(|e| {
                 if path.exists() {
                     warn!("Failed to load POI region {}: {}", path.display(), e);
                 }
@@ -477,6 +604,7 @@ impl PoiStorage {
             poi_type: poi_type.to_string(),
             free_tickets,
         });
+        self.village_levels = None;
     }
 
     pub fn add_portal(&mut self, pos: BlockPos) {
@@ -485,8 +613,239 @@ impl PoiStorage {
 
     pub fn remove(&mut self, pos: &BlockPos) -> bool {
         let (rx, rz) = Self::region_coords(pos);
+        let removed = self.get_or_load_region(rx, rz).remove(pos);
+        self.village_levels = None;
+        removed
+    }
+
+    /// Vanilla `PoiManager.add` for a registered type: a fresh record with every ticket
+    /// free; a record of the same type already at `pos` keeps its tickets.
+    pub fn add_type(&mut self, pos: BlockPos, kind: &'static PoiType) {
+        let (rx, rz) = Self::region_coords(&pos);
         let region = self.get_or_load_region(rx, rz);
-        region.remove(pos)
+        if region
+            .entries
+            .get(&PoiRegion::pos_key(&pos))
+            .and_then(PoiEntry::kind)
+            == Some(kind)
+        {
+            return;
+        }
+        region.add(PoiEntry::new(pos, kind));
+        self.village_levels = None;
+    }
+
+    /// Whether a section already holds point of interest data (vanilla
+    /// `PoiSection.isValid`); one without is scanned when its chunk loads.
+    pub fn section_has_data(&mut self, section: (i32, i32, i32)) -> bool {
+        self.get_or_load_region(section.0 >> 5, section.2 >> 5)
+            .has_section(section)
+    }
+
+    /// Vanilla `PoiSection.refresh` with the points the section's blocks hold: `found`
+    /// becomes the section's records; a record still at its position keeps its tickets.
+    pub fn refresh_section(
+        &mut self,
+        section: (i32, i32, i32),
+        found: Vec<(BlockPos, &'static PoiType)>,
+    ) {
+        let region = self.get_or_load_region(section.0 >> 5, section.2 >> 5);
+        let mut old: FxHashMap<_, _> = region
+            .entries
+            .extract_if(|(x, y, z), _| (x >> 4, y >> 4, z >> 4) == section)
+            .collect();
+        for (pos, kind) in found {
+            let entry = old
+                .remove(&PoiRegion::pos_key(&pos))
+                .unwrap_or_else(|| PoiEntry::new(pos, kind));
+            region.add(entry);
+        }
+        region.mark_section(section);
+        self.village_levels = None;
+    }
+
+    /// The regions a square of `radius` blocks around `center` reaches into.
+    fn regions_around(center: BlockPos, radius: i32) -> impl Iterator<Item = (i32, i32)> {
+        let min_rx = ((center.0.x - radius) >> 4) >> 5;
+        let max_rx = ((center.0.x + radius) >> 4) >> 5;
+        let min_rz = ((center.0.z - radius) >> 4) >> 5;
+        let max_rz = ((center.0.z + radius) >> 4) >> 5;
+        (min_rx..=max_rx).flat_map(move |rx| (min_rz..=max_rz).map(move |rz| (rx, rz)))
+    }
+
+    /// Vanilla `PoiManager.getInRange`: the points within `radius` blocks of `center`
+    /// whose type passes `kind` and whose tickets pass `occupancy`.
+    pub fn in_range(
+        &mut self,
+        center: BlockPos,
+        radius: i32,
+        kind: impl Fn(&'static PoiType) -> bool,
+        occupancy: Occupancy,
+    ) -> Vec<(BlockPos, &'static PoiType)> {
+        let radius_sq = i64::from(radius).pow(2);
+        let mut found = Vec::new();
+        for (rx, rz) in Self::regions_around(center, radius) {
+            let region = self.get_or_load_region(rx, rz);
+            for entry in region.entries.values() {
+                if (entry.x - center.0.x).abs() > radius || (entry.z - center.0.z).abs() > radius {
+                    continue;
+                }
+                let Some(entry_kind) = entry.kind() else {
+                    continue;
+                };
+                if !kind(entry_kind)
+                    || !occupancy.accepts(entry)
+                    || distance_sq(entry, center) > radius_sq
+                {
+                    continue;
+                }
+                found.push((entry.pos(), entry_kind));
+            }
+        }
+        found
+    }
+
+    /// Vanilla `PoiManager.getCountInRange`.
+    pub fn count_in_range(
+        &mut self,
+        center: BlockPos,
+        radius: i32,
+        kind: impl Fn(&'static PoiType) -> bool,
+        occupancy: Occupancy,
+    ) -> usize {
+        self.in_range(center, radius, kind, occupancy).len()
+    }
+
+    /// Vanilla `PoiManager.findClosest` with a position filter: the nearest point of
+    /// [`Self::in_range`] whose position passes `filter`.
+    pub fn find_closest(
+        &mut self,
+        center: BlockPos,
+        radius: i32,
+        kind: impl Fn(&'static PoiType) -> bool,
+        filter: impl Fn(&BlockPos) -> bool,
+        occupancy: Occupancy,
+    ) -> Option<BlockPos> {
+        self.in_range(center, radius, kind, occupancy)
+            .into_iter()
+            .map(|(pos, _)| pos)
+            .filter(|pos| filter(pos))
+            .min_by_key(|pos| {
+                let delta = pos.0 - center.0;
+                i64::from(delta.x).pow(2) + i64::from(delta.y).pow(2) + i64::from(delta.z).pow(2)
+            })
+    }
+
+    /// Vanilla `PoiManager.find`: any point of [`Self::in_range`] whose position passes
+    /// `filter`.
+    pub fn find_any(
+        &mut self,
+        center: BlockPos,
+        radius: i32,
+        kind: impl Fn(&'static PoiType) -> bool,
+        filter: impl Fn(&BlockPos) -> bool,
+        occupancy: Occupancy,
+    ) -> Option<BlockPos> {
+        self.in_range(center, radius, kind, occupancy)
+            .into_iter()
+            .map(|(pos, _)| pos)
+            .find(|pos| filter(pos))
+    }
+
+    /// Vanilla `PoiRecord.acquireTicket`: takes one of the point's tickets.
+    pub fn acquire_ticket(&mut self, pos: BlockPos) -> bool {
+        let (rx, rz) = Self::region_coords(&pos);
+        let region = self.get_or_load_region(rx, rz);
+        let Some(entry) = region.entries.get_mut(&PoiRegion::pos_key(&pos)) else {
+            return false;
+        };
+        if entry.free_tickets <= 0 {
+            return false;
+        }
+        entry.free_tickets -= 1;
+        region.touch(&pos);
+        self.village_levels = None;
+        true
+    }
+
+    /// Vanilla `PoiManager.release`: gives one ticket back; false when none was taken.
+    pub fn release_ticket(&mut self, pos: BlockPos) -> bool {
+        let (rx, rz) = Self::region_coords(&pos);
+        let region = self.get_or_load_region(rx, rz);
+        let Some(entry) = region.entries.get_mut(&PoiRegion::pos_key(&pos)) else {
+            return false;
+        };
+        if entry
+            .kind()
+            .is_none_or(|kind| entry.free_tickets >= max_tickets(kind))
+        {
+            return false;
+        }
+        entry.free_tickets += 1;
+        region.touch(&pos);
+        self.village_levels = None;
+        true
+    }
+
+    /// The type of the point at `pos`, if there is one (vanilla `PoiManager.getType`).
+    pub fn get_type(&mut self, pos: BlockPos) -> Option<&'static PoiType> {
+        let (rx, rz) = Self::region_coords(&pos);
+        self.get_or_load_region(rx, rz)
+            .entries
+            .get(&PoiRegion::pos_key(&pos))
+            .and_then(PoiEntry::kind)
+    }
+
+    /// Vanilla `PoiManager.sectionsToVillage`: how many sections (26-neighbour steps) the
+    /// nearest village section is away, 0 inside one and `MAX_VILLAGE_DISTANCE + 1` when none
+    /// is within reach. A village section holds an occupied point of the `village` tag.
+    pub fn sections_to_village(&mut self, section: (i32, i32, i32)) -> i32 {
+        if self.village_levels.is_none() {
+            let levels = self.compute_village_levels();
+            self.village_levels = Some(levels);
+        }
+        self.village_levels
+            .as_ref()
+            .and_then(|levels| levels.get(&section))
+            .copied()
+            .unwrap_or(MAX_VILLAGE_DISTANCE + 1)
+    }
+
+    fn compute_village_levels(&self) -> FxHashMap<(i32, i32, i32), i32> {
+        let mut levels = FxHashMap::default();
+        let mut frontier: Vec<(i32, i32, i32)> = self
+            .regions
+            .values()
+            .flat_map(|region| region.entries.values())
+            .filter(|entry| {
+                entry.is_occupied()
+                    && entry
+                        .kind()
+                        .is_some_and(|kind| kind.has_tag(&MINECRAFT_VILLAGE))
+            })
+            .map(|entry| section_of(&entry.pos()))
+            .collect();
+        for section in &frontier {
+            levels.insert(*section, 0);
+        }
+        for level in 1..=MAX_VILLAGE_DISTANCE {
+            let mut next = Vec::new();
+            for (x, y, z) in frontier {
+                for dx in -1..=1 {
+                    for dy in -1..=1 {
+                        for dz in -1..=1 {
+                            let neighbour = (x + dx, y + dy, z + dz);
+                            if let Entry::Vacant(entry) = levels.entry(neighbour) {
+                                entry.insert(level);
+                                next.push(neighbour);
+                            }
+                        }
+                    }
+                }
+            }
+            frontier = next;
+        }
+        levels
     }
 
     /// Get all POI positions within a square radius (for portal search)
@@ -666,6 +1025,53 @@ mod tests {
             storage
                 .find_closest_matching(BlockPos(Vector3::new(1000, 64, 100)), 16, |_| true)
                 .is_none()
+        );
+    }
+
+    /// Occupied village points make village sections; the distance counts 26-neighbour
+    /// steps up to `MAX_VILLAGE_DISTANCE`.
+    #[test]
+    fn village_distance_counts_sections_from_occupied_points() {
+        let mut storage = PoiStorage::new(std::env::temp_dir().join("pumpkin_poi_village_test"));
+        let bed = BlockPos(Vector3::new(8, 64, 8));
+        storage.add_type(bed, &PoiType::HOME);
+        assert_eq!(
+            storage.sections_to_village((0, 4, 0)),
+            MAX_VILLAGE_DISTANCE + 1
+        );
+        assert!(storage.acquire_ticket(bed));
+        assert_eq!(storage.sections_to_village((0, 4, 0)), 0);
+        assert_eq!(storage.sections_to_village((1, 5, 1)), 1);
+        assert_eq!(storage.sections_to_village((6, 4, 0)), MAX_VILLAGE_DISTANCE);
+        assert_eq!(
+            storage.sections_to_village((7, 4, 0)),
+            MAX_VILLAGE_DISTANCE + 1
+        );
+        assert!(storage.release_ticket(bed));
+        assert!(!storage.release_ticket(bed));
+        assert_eq!(
+            storage.sections_to_village((0, 4, 0)),
+            MAX_VILLAGE_DISTANCE + 1
+        );
+    }
+
+    /// A rescan keeps the tickets of a point that is still there and drops the rest.
+    #[test]
+    fn refresh_keeps_tickets_of_points_still_there() {
+        let mut storage = PoiStorage::new(std::env::temp_dir().join("pumpkin_poi_refresh_test"));
+        let kept = BlockPos(Vector3::new(1, 65, 1));
+        let gone = BlockPos(Vector3::new(2, 65, 2));
+        storage.add_type(kept, &PoiType::HOME);
+        storage.add_type(gone, &PoiType::HOME);
+        assert!(storage.acquire_ticket(kept));
+        assert!(!storage.section_has_data((5, 4, 5)));
+        storage.refresh_section((0, 4, 0), vec![(kept, &PoiType::HOME)]);
+        assert!(storage.section_has_data((0, 4, 0)));
+        assert_eq!(storage.get_type(gone), None);
+        assert!(!storage.acquire_ticket(kept));
+        assert_eq!(
+            storage.count_in_range(kept, 8, |_| true, Occupancy::IsOccupied),
+            1
         );
     }
 

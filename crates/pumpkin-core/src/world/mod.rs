@@ -192,6 +192,7 @@ pub mod entity_tracker;
 pub mod environment;
 pub mod natural_spawner;
 pub mod phantom_spawner;
+pub mod poi;
 pub mod scoreboard;
 pub mod structures;
 pub mod weather;
@@ -302,7 +303,8 @@ pub struct World {
     synced_block_event_queue: std::sync::Mutex<Vec<BlockEvent>>,
     /// A map of unsent block changes, keyed by block position.
     unsent_block_changes: std::sync::Mutex<HashMap<BlockPos, BlockStateId>>,
-    /// Persisted vanilla POI storage for portal and villager lookups.
+    /// Vanilla's `PoiManager`: every point of interest of the world's blocks, persisted
+    /// in the `poi` region files (portals, job sites, beds, bells, lightning rods, ...).
     pub portal_poi: std::sync::Mutex<portal::PortalPoiStorage>,
     /// Villager job sites and their current owners.
     pub villager_poi: std::sync::Mutex<villager_poi::VillagerPoiStorage>,
@@ -5906,18 +5908,11 @@ impl World {
                 .unwrap_or_else(std::sync::PoisonError::into_inner)
                 .update_block(*position, new_block);
 
-            if is_new_block {
-                let mut poi = self
-                    .portal_poi
-                    .lock()
-                    .unwrap_or_else(std::sync::PoisonError::into_inner);
-                if villager_poi::profession_for_block(old_block).is_some() {
-                    poi.remove(position);
-                }
-                if let Some(poi_type) = villager_poi::poi_type_for_block(new_block) {
-                    poi.add_with_free_tickets(*position, poi_type, 1);
-                }
-            }
+            self.update_poi_on_block_state_change(
+                position,
+                replaced_block_state_id,
+                block_state_id,
+            );
         }
 
         let old_state = replaced_block_state_id.to_state();
@@ -7977,6 +7972,7 @@ impl World {
             match change {
                 LoadedChunkChange::Loaded(pos) | LoadedChunkChange::Generated(pos) => {
                     let is_new = matches!(change, LoadedChunkChange::Generated(_));
+                    self.check_poi_consistency(pos);
                     if fire_load {
                         let mut event = ChunkLoad::new(self.clone(), pos, is_new);
                         server.plugin_manager.fire_blocking(server, &mut event);

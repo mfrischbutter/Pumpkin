@@ -152,26 +152,6 @@ pub fn profession_for_block(block: &Block) -> Option<VillagerProfession> {
     }
 }
 
-#[must_use]
-pub fn poi_type_for_block(block: &Block) -> Option<&'static str> {
-    Some(match profession_for_block(block)? {
-        VillagerProfession::Armorer => "minecraft:armorer",
-        VillagerProfession::Butcher => "minecraft:butcher",
-        VillagerProfession::Cartographer => "minecraft:cartographer",
-        VillagerProfession::Cleric => "minecraft:cleric",
-        VillagerProfession::Farmer => "minecraft:farmer",
-        VillagerProfession::Fisherman => "minecraft:fisherman",
-        VillagerProfession::Fletcher => "minecraft:fletcher",
-        VillagerProfession::Leatherworker => "minecraft:leatherworker",
-        VillagerProfession::Librarian => "minecraft:librarian",
-        VillagerProfession::Mason => "minecraft:mason",
-        VillagerProfession::Shepherd => "minecraft:shepherd",
-        VillagerProfession::Toolsmith => "minecraft:toolsmith",
-        VillagerProfession::Weaponsmith => "minecraft:weaponsmith",
-        VillagerProfession::None | VillagerProfession::Nitwit => return None,
-    })
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -196,16 +176,8 @@ mod tests {
 
         for (block, profession) in workstations {
             assert_eq!(profession_for_block(block), Some(profession));
-            assert_eq!(
-                poi_type_for_block(block).unwrap(),
-                format!(
-                    "minecraft:{}",
-                    profession.translation_key().rsplit('.').next().unwrap()
-                )
-            );
         }
         assert_eq!(profession_for_block(&Block::DIRT), None);
-        assert_eq!(poi_type_for_block(&Block::DIRT), None);
     }
 
     #[test]
