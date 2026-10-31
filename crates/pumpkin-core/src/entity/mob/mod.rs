@@ -1477,6 +1477,17 @@ pub trait Mob: EntityBase + Send + Sync {
     /// weak to apply.
     fn on_jump_from_ground(&self) {}
 
+    /// Vanilla `jumpInLiquid`: the push up while jumping in water, or in lava when `lava`.
+    fn jump_in_liquid(&self, _lava: bool) {
+        self.get_mob_entity().living_entity.jump_in_liquid();
+    }
+
+    /// Vanilla `push(Entity)`: `entity` pushes this mob. Overrides call
+    /// [`push_apart`](crate::entity::push_apart) first.
+    fn mob_push(&self, entity: &dyn EntityBase) {
+        crate::entity::push_apart(self, entity);
+    }
+
     fn travel_in_water(&self, caller: &dyn EntityBase, gravity: f64, falling: bool) {
         self.get_mob_entity()
             .living_entity
@@ -2173,6 +2184,10 @@ impl<T: Mob + Send + 'static> EntityBase for T {
 
     fn is_pushable(&self) -> bool {
         self.get_mob_entity().living_entity.is_pushable()
+    }
+
+    fn push(&self, entity: &dyn EntityBase) {
+        self.mob_push(entity);
     }
 
     fn on_lightning_strike(

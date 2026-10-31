@@ -1656,13 +1656,11 @@ impl LivingEntity {
             let on_ground = self.entity.on_ground.load(SeqCst);
 
             if (in_water || in_lava) && (!on_ground || fluid_height > swim_height) {
-                // Swim upward
-
-                let mut velo = self.entity.velocity.load();
-
-                velo.y += 0.04;
-
-                self.entity.velocity.store(velo);
+                // Vanilla tries the water branch first, so lava only counts outside water.
+                caller.get_mob().map_or_else(
+                    || self.jump_in_liquid(),
+                    |mob| mob.jump_in_liquid(!in_water),
+                );
             } else if (on_ground || in_water && fluid_height <= swim_height)
                 && self.jumping_cooldown.load(SeqCst) == 0
             {
@@ -2151,6 +2149,13 @@ impl LivingEntity {
         } else {
             0.4
         }
+    }
+
+    /// Vanilla `LivingEntity.jumpInLiquid`: swims up.
+    pub(crate) fn jump_in_liquid(&self) {
+        let mut velo = self.entity.velocity.load();
+        velo.y += 0.04;
+        self.entity.velocity.store(velo);
     }
 
     /// Vanilla `jumpFromGround`, with the mob's jump power and its follow-up.
