@@ -355,6 +355,11 @@ pub mod cat_variant;
 #[path = "generated/frog_variant.rs"]
 pub mod frog_variant;
 
+#[cfg(feature = "poi_type")]
+#[rustfmt::skip]
+#[path = "generated/poi_type.rs"]
+pub mod poi_type;
+
 #[cfg(feature = "cow_variant")]
 #[rustfmt::skip]
 #[path = "generated/cow_variant.rs"]

@@ -76,6 +76,7 @@ mod packet;
 mod painting_variant;
 mod particle;
 mod placed_feature;
+mod poi_type;
 mod potion;
 mod potion_brewing;
 mod processor_list;
@@ -212,6 +213,7 @@ pub fn main() {
         (chat_type::build, "chat_type.rs"),
         (decorated_pot_pattern::build, "decorated_pot_pattern.rs"),
         (frog_variant::build, "frog_variant.rs"),
+        (poi_type::build, "poi_type.rs"),
         (instrument::build, "instrument.rs"),
         (trim_material::build, "trim_material.rs"),
         (trim_pattern::build, "trim_pattern.rs"),
