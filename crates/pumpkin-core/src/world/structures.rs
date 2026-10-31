@@ -98,6 +98,22 @@ impl World {
         None
     }
 
+    /// Vanilla `StructureManager.getStructureWithPieceAt(pos, structures).isValid()`: a
+    /// start of one of `keys` with a piece whose bounding box holds `pos`.
+    pub fn structure_with_piece_at(&self, keys: &[StructureKeys], pos: &BlockPos) -> bool {
+        self.structure_references(pos.chunk_position())
+            .iter()
+            .filter(|(reference, _)| keys.contains(reference))
+            .any(|(_, collector)| {
+                collector
+                    .lock()
+                    .unwrap_or_else(std::sync::PoisonError::into_inner)
+                    .pieces
+                    .iter()
+                    .any(|piece| piece.bounding_box().contains_pos(&pos.0))
+            })
+    }
+
     /// Vanilla `StructureManager.getStructureAt(pos, structure).isValid()`: a start of
     /// `key` whose bounding box holds `pos`.
     pub fn is_inside_structure(&self, key: StructureKeys, pos: &BlockPos) -> bool {

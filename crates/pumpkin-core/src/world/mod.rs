@@ -184,6 +184,7 @@ use time::LevelTime;
 pub mod block_placer;
 pub mod border;
 pub mod bossbar;
+pub mod cat_spawner;
 pub mod client_biome;
 pub mod custom_bossbar;
 pub mod dragon_fight;
@@ -316,6 +317,8 @@ pub struct World {
     pub phantom_spawner: std::sync::Mutex<phantom_spawner::PhantomSpawner>,
     /// Vanilla `PatrolSpawner`, ticked in the overworld only.
     pub patrol_spawner: std::sync::Mutex<patrol_spawner::PatrolSpawner>,
+    /// Vanilla `CatSpawner`, ticked in the overworld only.
+    pub cat_spawner: std::sync::Mutex<cat_spawner::CatSpawner>,
     /// The structure starts reaching into each loaded chunk, for the spawn lists
     /// (vanilla's structure references, see `structures`).
     pub structure_reference_cache: DashMap<Vector2<i32>, Arc<[StructureReference]>>,
@@ -493,6 +496,7 @@ impl World {
             raids: std::sync::Mutex::new(raid::Raids::default()),
             phantom_spawner: std::sync::Mutex::new(phantom_spawner::PhantomSpawner::default()),
             patrol_spawner: std::sync::Mutex::new(patrol_spawner::PatrolSpawner::default()),
+            cat_spawner: std::sync::Mutex::new(cat_spawner::CatSpawner::default()),
             structure_reference_cache: DashMap::new(),
             dragon_fight,
             spawn_state: ArcSwap::new(Arc::new(SpawnState::empty())),
@@ -2444,6 +2448,10 @@ impl World {
             .unwrap_or_else(std::sync::PoisonError::into_inner)
             .tick(self, spawn_enemies);
         self.patrol_spawner
+            .lock()
+            .unwrap_or_else(std::sync::PoisonError::into_inner)
+            .tick(self, spawn_enemies);
+        self.cat_spawner
             .lock()
             .unwrap_or_else(std::sync::PoisonError::into_inner)
             .tick(self, spawn_enemies);
