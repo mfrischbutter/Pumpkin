@@ -102,6 +102,11 @@ impl Animal for StriderEntity {
 }
 
 impl Mob for StriderEntity {
+    /// Vanilla `Strider.checkSpawnObstruction`: only entities obstruct, the lava does not.
+    fn check_spawn_obstruction(&self, world: &crate::world::World) -> bool {
+        world.is_unobstructed(&self.get_mob_entity().living_entity.entity)
+    }
+
     fn mob_play_step_sound(&self, _pos: &BlockPos, _state: &BlockState) {
         let sound = if self.get_entity().touching_lava.load(Ordering::Relaxed) {
             Sound::EntityStriderStepLava

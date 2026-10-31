@@ -185,6 +185,11 @@ impl Mob for GuardianEntity {
         &self.mob_entity
     }
 
+    /// Vanilla `Guardian.checkSpawnObstruction`: only entities obstruct, the water does not.
+    fn check_spawn_obstruction(&self, world: &crate::world::World) -> bool {
+        world.is_unobstructed(&self.mob_entity.living_entity.entity)
+    }
+
     fn get_max_look_pitch_change(&self) -> f32 {
         MAX_HEAD_X_ROT
     }

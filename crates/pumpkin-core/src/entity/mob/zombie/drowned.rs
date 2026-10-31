@@ -78,6 +78,11 @@ impl Mob for DrownedEntity {
         &self.entity.mob_entity
     }
 
+    /// Vanilla `Drowned.checkSpawnObstruction`: only entities obstruct, the water does not.
+    fn check_spawn_obstruction(&self, world: &crate::world::World) -> bool {
+        world.is_unobstructed(&self.entity.mob_entity.living_entity.entity)
+    }
+
     fn spawn_as_baby(&self) -> bool {
         self.entity.spawn_as_baby()
     }

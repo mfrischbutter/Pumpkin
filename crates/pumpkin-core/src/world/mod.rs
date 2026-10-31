@@ -2508,6 +2508,27 @@ impl World {
         spawning_chunks
     }
 
+    /// Vanilla `LevelReader.isUnobstructed(Entity)`: no other entity overlaps `entity`'s box.
+    ///
+    /// An entity that is dead, does not block building or rides the same vehicle does not
+    /// count, nor does a spectator.
+    #[must_use]
+    pub fn is_unobstructed(&self, entity: &Entity) -> bool {
+        let bounds = entity.bounding_box.load();
+        let root_vehicle = entity.root_vehicle_id();
+        let unobstructed = |other: &dyn EntityBase| {
+            let other = other.get_entity();
+            !other.is_alive() || !other.blocks_building || other.root_vehicle_id() == root_vehicle
+        };
+        self.get_entities_at_box(&bounds)
+            .iter()
+            .all(|other| unobstructed(other.as_ref()))
+            && self
+                .get_players_at_box(&bounds)
+                .iter()
+                .all(|player| player.is_spectator() || unobstructed(player.as_ref()))
+    }
+
     pub fn contains_any_liquid(&self, bounding_box: BoundingBox) -> bool {
         let min_x = bounding_box.min.x.floor() as i32;
         let max_x = bounding_box.max.x.ceil() as i32;

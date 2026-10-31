@@ -193,6 +193,11 @@ impl CustomSound for NautilusEntity {
 }
 
 impl Mob for NautilusEntity {
+    /// Vanilla `AbstractNautilus.checkSpawnObstruction`: only entities obstruct, the water does not.
+    fn check_spawn_obstruction(&self, world: &crate::world::World) -> bool {
+        world.is_unobstructed(&self.get_mob_entity().living_entity.entity)
+    }
+
     /// Vanilla `AbstractNautilus.removeWhenFarAway`.
     fn remove_when_far_away(&self, _distance_sq: f64) -> bool {
         true

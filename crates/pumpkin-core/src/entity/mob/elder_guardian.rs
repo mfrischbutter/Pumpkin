@@ -67,6 +67,11 @@ impl Mob for ElderGuardianEntity {
         &self.mob_entity
     }
 
+    /// Vanilla `Guardian.checkSpawnObstruction`, inherited: only entities obstruct.
+    fn check_spawn_obstruction(&self, world: &crate::world::World) -> bool {
+        world.is_unobstructed(&self.mob_entity.living_entity.entity)
+    }
+
     fn get_max_look_pitch_change(&self) -> f32 {
         MAX_HEAD_X_ROT
     }

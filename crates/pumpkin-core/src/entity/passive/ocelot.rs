@@ -119,9 +119,7 @@ impl Mob for OcelotEntity {
     fn check_spawn_obstruction(&self, world: &World) -> bool {
         let entity = self.get_entity();
         let bounding_box = entity.bounding_box.load();
-        if !world.get_entities_at_box(&bounding_box).is_empty()
-            || world.contains_any_liquid(bounding_box)
-        {
+        if !world.is_unobstructed(entity) || world.contains_any_liquid(bounding_box) {
             return false;
         }
         let pos = entity.block_pos.load();
