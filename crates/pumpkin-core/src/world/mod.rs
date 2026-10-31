@@ -191,6 +191,7 @@ pub mod end_podium;
 pub mod entity_tracker;
 pub mod environment;
 pub mod natural_spawner;
+pub mod patrol_spawner;
 pub mod phantom_spawner;
 pub mod poi;
 pub mod scoreboard;
@@ -313,6 +314,8 @@ pub struct World {
     pub raids: std::sync::Mutex<raid::Raids>,
     /// Vanilla `PhantomSpawner`, ticked in the overworld only.
     pub phantom_spawner: std::sync::Mutex<phantom_spawner::PhantomSpawner>,
+    /// Vanilla `PatrolSpawner`, ticked in the overworld only.
+    pub patrol_spawner: std::sync::Mutex<patrol_spawner::PatrolSpawner>,
     /// The structure starts reaching into each loaded chunk, for the spawn lists
     /// (vanilla's structure references, see `structures`).
     pub structure_reference_cache: DashMap<Vector2<i32>, Arc<[StructureReference]>>,
@@ -489,6 +492,7 @@ impl World {
             villager_poi: std::sync::Mutex::new(villager_poi::VillagerPoiStorage::default()),
             raids: std::sync::Mutex::new(raid::Raids::default()),
             phantom_spawner: std::sync::Mutex::new(phantom_spawner::PhantomSpawner::default()),
+            patrol_spawner: std::sync::Mutex::new(patrol_spawner::PatrolSpawner::default()),
             structure_reference_cache: DashMap::new(),
             dragon_fight,
             spawn_state: ArcSwap::new(Arc::new(SpawnState::empty())),
@@ -2436,6 +2440,10 @@ impl World {
             return;
         }
         self.phantom_spawner
+            .lock()
+            .unwrap_or_else(std::sync::PoisonError::into_inner)
+            .tick(self, spawn_enemies);
+        self.patrol_spawner
             .lock()
             .unwrap_or_else(std::sync::PoisonError::into_inner)
             .tick(self, spawn_enemies);
@@ -5062,6 +5070,16 @@ impl World {
 
     pub fn get_closest_player(&self, pos: Vector3<f64>, radius: f64) -> Option<Arc<Player>> {
         self.get_nearest_player(pos, radius, |_| true)
+    }
+
+    /// Vanilla `LevelReader.hasChunksAt` for a block area: every chunk the area touches is
+    /// loaded.
+    #[must_use]
+    pub fn has_chunks_at(&self, min_x: i32, min_z: i32, max_x: i32, max_z: i32) -> bool {
+        (min_x >> 4..=max_x >> 4).all(|chunk_x| {
+            (min_z >> 4..=max_z >> 4)
+                .all(|chunk_z| self.level.is_chunk_loaded(&Vector2::new(chunk_x, chunk_z)))
+        })
     }
 
     /// Vanilla `EntityGetter.hasNearbyAlivePlayer`: a living, non-spectator player closer
