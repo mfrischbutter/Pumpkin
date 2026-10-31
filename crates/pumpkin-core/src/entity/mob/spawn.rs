@@ -12,6 +12,7 @@ use crate::entity::attributes::{Modifier, ModifierOperation};
 use crate::entity::mob::MobEntity;
 use crate::entity::mob::equipment::{EQUIPMENT_REGISTRY, RegionalDifficulty, equip_mob_on_spawn};
 use crate::entity::passive::fox::FoxVariant;
+use crate::entity::passive::llama::LlamaVariant;
 use crate::world::World;
 
 const RANDOM_SPAWN_BONUS_ID: &str = "minecraft:random_spawn_bonus";
@@ -78,6 +79,11 @@ pub enum SpawnGroupData {
     Rabbit {
         variant: RabbitVariant,
         size: u32,
+    },
+    /// Vanilla `LlamaGroupData`: the group's variant and how many joined so far.
+    Llama {
+        variant: LlamaVariant,
+        group_size: u32,
     },
 }
 

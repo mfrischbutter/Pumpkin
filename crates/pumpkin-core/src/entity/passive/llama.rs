@@ -28,7 +28,7 @@ use crate::entity::{
         ranged_attack::RangedAttackGoal, revenge::RevengeGoal, swim::SwimGoal, tempt::TemptGoal,
         wander_around::WanderAroundGoal,
     },
-    mob::{Mob, MobEntity, RangedAttackMob},
+    mob::{Mob, MobEntity, RangedAttackMob, spawn::SpawnGroupData},
     passive::{
         animal::{Animal, get_carpet_color_from_item},
         trader_llama::TraderLlamaEntity,
@@ -36,8 +36,10 @@ use crate::entity::{
     player::Player,
     projectile::llama_spit::LlamaSpitEntity,
 };
+use crate::world::World;
 
-const TEMPT_ITEMS: &[&Item] = &[&Item::HAY_BLOCK];
+/// Vanilla `Llama.setStrength`: strength stays within 1 to 5.
+const MAX_STRENGTH: i32 = 5;
 
 pub const FLAG_TAME: u8 = 2;
 pub const FLAG_BRED: u8 = 8;
@@ -83,6 +85,13 @@ impl LlamaVariant {
     }
 }
 
+/// Vanilla `Llama.setRandomStrength`: 1 to 3, or 1 to 5 with a 4% chance.
+fn random_strength() -> i32 {
+    let mut rng = rand::rng();
+    let max_strength = if rng.random::<f32>() < 0.04 { 5 } else { 3 };
+    1 + rng.random_range(0..max_strength)
+}
+
 /// Vanilla `Wolf.avoidLlama`: the stronger the llama, the likelier a wolf flees.
 pub fn scares_wolves(threat: &dyn EntityBase) -> bool {
     let any = threat.cast_any();
@@ -117,10 +126,8 @@ pub struct LlamaEntity {
 impl LlamaEntity {
     pub fn new(entity: Entity) -> Arc<Self> {
         let mob_entity = MobEntity::new(entity);
-        let mut rng = rand::rng();
         let variant = LlamaVariant::random_variant();
-        // TODO: vanilla rolls 1..=3, and 1..=5 with 4% chance.
-        let strength = rng.random_range(1..=5);
+        let strength = random_strength();
 
         let llama = Self {
             mob_entity,
@@ -147,16 +154,25 @@ impl LlamaEntity {
             let goal_selector = &mob_arc.mob_entity.goals_selector;
             let target_selector = &mob_arc.mob_entity.target_selector;
 
+            // Vanilla `Llama.registerGoals`, without RunAroundLikeCrazyGoal and
+            // LlamaFollowCaravanGoal yet.
             goal_selector.add_goal(0, Box::new(SwimGoal::default()));
-            goal_selector.add_goal(1, EscapeDangerGoal::new(1.2));
-            goal_selector.add_goal(2, BreedGoal::new(1.0));
             goal_selector.add_goal(
                 3,
                 Box::new(RangedAttackGoal::new(ranged_weak, 1.25, 40, 20.0)),
             );
-            goal_selector.add_goal(4, Box::new(TemptGoal::new(1.25, TEMPT_ITEMS, false)));
-            goal_selector.add_goal(5, Box::new(FollowParentGoal::new(1.0)));
-            goal_selector.add_goal(7, Box::new(WanderAroundGoal::new(0.7)));
+            goal_selector.add_goal(3, EscapeDangerGoal::new(1.2));
+            goal_selector.add_goal(4, BreedGoal::new(1.0));
+            goal_selector.add_goal(
+                5,
+                Box::new(TemptGoal::with_tag(
+                    1.25,
+                    &tag::Item::MINECRAFT_LLAMA_TEMPT_ITEMS,
+                    false,
+                )),
+            );
+            goal_selector.add_goal(6, Box::new(FollowParentGoal::new(1.0)));
+            goal_selector.add_goal(7, Box::new(WanderAroundGoal::water_avoiding(0.7)));
             goal_selector.add_goal(
                 8,
                 LookAtEntityGoal::with_default(mob_weak, &EntityType::PLAYER, 6.0),
@@ -190,6 +206,7 @@ impl LlamaEntity {
     }
 
     pub fn set_strength(&self, strength: i32) {
+        let strength = strength.clamp(1, MAX_STRENGTH);
         self.strength.store(strength, Ordering::Relaxed);
         let entity = self.get_entity();
         entity.set_synced_data(
@@ -254,12 +271,12 @@ impl LlamaEntity {
 
         spit.thrown.set_velocity(dx, dy + yo, dz, 1.5, 10.0);
 
-        if !entity.silent.load(Ordering::Relaxed) {
-            world.play_sound(Sound::EntityLlamaSpit, SoundCategory::Neutral, &mob_pos);
-        }
-
         let spit_arc: Arc<dyn EntityBase> = Arc::new(spit);
         world.spawn_entity(spit_arc);
+
+        let mut rng = self.get_random();
+        let pitch = (rng.random::<f32>() - rng.random::<f32>()).mul_add(0.2, 1.0);
+        self.play_entity_sound(Sound::EntityLlamaSpit, 1.0, pitch);
     }
 }
 
@@ -272,17 +289,89 @@ impl AgeableMob for LlamaEntity {
 impl Animal for LlamaEntity {
     fn is_food(&self, item_stack: &ItemStack) -> bool {
         item_stack.item.has_tag(&tag::Item::MINECRAFT_LLAMA_FOOD)
-            || item_stack
-                .item
-                .has_tag(&tag::Item::MINECRAFT_LLAMA_TEMPT_ITEMS)
-            || item_stack.item == &Item::WHEAT
-            || item_stack.item == &Item::HAY_BLOCK
+    }
+
+    /// Vanilla `Llama.canMate` with `AbstractHorse.canParent`: two tame, grown, unmounted
+    /// llamas at full health.
+    fn can_mate(&self, partner: &dyn EntityBase) -> bool {
+        partner
+            .cast_any()
+            .downcast_ref::<Self>()
+            .is_some_and(|llama| self.can_parent() && llama.can_parent())
+    }
+
+    /// Vanilla `Llama.getBreedOffspring`: up to the stronger parent's strength (one more
+    /// with a 3% chance) and a parent's variant.
+    fn get_breed_offspring(&self, partner: &dyn EntityBase) -> Arc<dyn EntityBase> {
+        let entity = self.get_entity();
+        let baby = Self::new(Entity::new(
+            entity.world.load_full(),
+            entity.pos.load(),
+            &EntityType::LLAMA,
+        ));
+        if let Some(partner) = partner.cast_any().downcast_ref::<Self>() {
+            let mut rng = self.get_random();
+            let stronger = self.get_strength().max(partner.get_strength());
+            let mut strength = rng.random_range(0..stronger.max(1)) + 1;
+            if rng.random::<f32>() < 0.03 {
+                strength += 1;
+            }
+            baby.set_strength(strength);
+            let parent = if rng.random::<bool>() { self } else { partner };
+            baby.set_variant(parent.get_variant());
+        }
+        baby
+    }
+}
+
+impl LlamaEntity {
+    /// Vanilla `AbstractHorse.canParent`.
+    fn can_parent(&self) -> bool {
+        let entity = self.get_entity();
+        let living = &self.mob_entity.living_entity;
+        !entity.has_passengers()
+            && !entity.has_vehicle()
+            && self.is_tame()
+            && !self.is_baby()
+            && living.health.load() >= living.get_max_health()
+            && self.mob_entity.is_in_love()
     }
 }
 
 impl Mob for LlamaEntity {
     fn is_tamed(&self) -> bool {
         self.is_tame()
+    }
+
+    /// Vanilla `Llama.finalizeSpawn`: a random strength and the group's variant.
+    fn finalize_spawn(
+        &self,
+        _world: &Arc<World>,
+        group_data: Option<SpawnGroupData>,
+    ) -> Option<SpawnGroupData> {
+        self.set_strength(random_strength());
+        let (variant, group_size) = match group_data {
+            Some(SpawnGroupData::Llama {
+                variant,
+                group_size,
+            }) => (variant, group_size),
+            _ => (LlamaVariant::random_variant(), 0),
+        };
+        self.set_variant(variant);
+        // `LlamaGroupData` is ageable group data that spawns babies after the first llama.
+        self.finalize_ageable_spawn(Some(SpawnGroupData::Ageable {
+            group_size,
+            should_spawn_baby: true,
+            baby_spawn_chance: self.default_baby_spawn_chance(),
+        }));
+        Some(SpawnGroupData::Llama {
+            variant,
+            group_size: group_size + 1,
+        })
+    }
+
+    fn get_ambient_sound(&self) -> Option<Sound> {
+        Some(Sound::EntityLlamaAmbient)
     }
 
     fn mob_play_step_sound(&self, _pos: &BlockPos, _state: &BlockState) {
@@ -409,5 +498,17 @@ impl Mob for LlamaEntity {
 impl RangedAttackMob for LlamaEntity {
     fn perform_ranged_attack(&self, target: &Arc<dyn EntityBase>, _power: f32) {
         self.spit(target);
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::random_strength;
+
+    #[test]
+    fn random_strength_stays_within_vanilla_bounds() {
+        for _ in 0..1000 {
+            assert!((1..=5).contains(&random_strength()));
+        }
     }
 }
