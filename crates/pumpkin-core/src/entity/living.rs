@@ -2511,6 +2511,9 @@ impl LivingEntity {
             if should_drop_loot && dyn_self.get_player().is_none() {
                 drops.extend(self.equipment_drops(looting_level));
             }
+            if should_drop_loot && let Some(mob) = dyn_self.get_mob() {
+                drops.extend(mob.custom_death_loot());
+            }
 
             let mut death_event =
                 EntityDeathEvent::new(self.entity.entity_id, dropped_exp as i32, drops);

@@ -1586,6 +1586,22 @@ pub trait Mob: EntityBase + Send + Sync {
         true
     }
 
+    /// Runs after every hurt that got past `pre_damage`, landed or not.
+    ///
+    /// This is the code after `super.hurtServer` in a vanilla override.
+    fn after_hurt(
+        &self,
+        _damage_type: DamageType,
+        _source: Option<&dyn EntityBase>,
+        _cause: Option<&dyn EntityBase>,
+    ) {
+    }
+
+    /// Vanilla `dropCustomDeathLoot` drops past the equipment, such as a carried block.
+    fn custom_death_loot(&self) -> Vec<ItemStack> {
+        Vec::new()
+    }
+
     fn on_attack(&self, _target: &dyn EntityBase) {}
 
     /// Runs after the living entity's `causeFallDamage`, like a vanilla override calling super first.
@@ -2313,10 +2329,9 @@ impl<T: Mob + Send + 'static> EntityBase for T {
             source,
             cause,
         );
-        if damaged {
-            return self.on_damage_with_context(damage_type, source, cause);
-        }
-        damaged
+        let result = damaged && self.on_damage_with_context(damage_type, source, cause);
+        self.after_hurt(damage_type, source, cause);
+        result
     }
 
     fn interact(&self, player: &Arc<Player>, item_stack: &mut ItemStack) -> bool {
