@@ -30,6 +30,12 @@ pub trait Animal: Mob {
         )
     }
 
+    /// Vanilla `canMate` past the shared checks (another animal of this type, both in love):
+    /// species add their own conditions, such as both being tame.
+    fn can_mate(&self, _partner: &dyn EntityBase) -> bool {
+        true
+    }
+
     /// Animals prefer grass, then bright spots.
     fn animal_walk_target_value(&self, pos: &pumpkin_util::math::position::BlockPos) -> f32 {
         let world = self.get_mob_entity().living_entity.entity.world.load();

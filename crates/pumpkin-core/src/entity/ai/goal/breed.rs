@@ -50,6 +50,9 @@ impl BreedGoal {
             candidate.is_in_love()
                 && candidate.is_breeding_ready()
                 && !candidate.is_panicking()
+                && mob
+                    .as_animal()
+                    .is_none_or(|animal| animal.can_mate(candidate))
                 && conditions.test(&world, Some(mob), candidate)
         })
     }
