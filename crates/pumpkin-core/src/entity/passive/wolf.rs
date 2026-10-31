@@ -5,9 +5,11 @@ use std::sync::{
 
 use pumpkin_data::BlockState;
 use pumpkin_data::damage::DamageType;
+use pumpkin_data::dye_color::DyeColor;
 use pumpkin_data::entity::EntityType;
 use pumpkin_data::item::Item;
 use pumpkin_data::item_stack::ItemStack;
+use pumpkin_data::sound::Sound;
 use pumpkin_data::tag::{self, Taggable};
 use pumpkin_data::wolf_sound_variant::WolfSoundVariant;
 use pumpkin_data::wolf_variant::WolfVariant;
@@ -38,15 +40,24 @@ use crate::entity::{
     mob::{
         Mob, MobEntity,
         neutral::{NeutralData, NeutralMob},
+        spawn::SpawnGroupData,
     },
     passive::{
-        animal::Animal,
+        animal::{Animal, get_mixed_color},
         llama::scares_wolves,
         tamable::{TamableAnimal, TamableData, is_untamed},
     },
     player::Player,
 };
 use crate::plugin::api::events::entity::entity_target::TargetReason;
+use crate::world::World;
+
+/// Vanilla `Wolf.START_HEALTH`: a wild wolf's max health.
+const START_HEALTH: f32 = 8.0;
+/// Vanilla `Wolf.TAME_HEALTH`: a tame wolf's max health.
+const TAME_HEALTH: f32 = 40.0;
+/// Vanilla `Wolf.getSoundVolume`.
+const SOUND_VOLUME: f32 = 0.4;
 
 const WOLF_PREY: TargetMatch =
     TargetMatch::AnyOf(&[&EntityType::SHEEP, &EntityType::RABBIT, &EntityType::FOX]);
@@ -150,6 +161,20 @@ impl WolfEntity {
         self.set_mob_target(None, TargetReason::ForgotTarget);
     }
 
+    fn sound_variant(&self) -> WolfSoundVariant {
+        WolfSoundVariant::from_id(self.sound_variant.load(Ordering::Relaxed)).unwrap_or_default()
+    }
+
+    /// Vanilla `TamableAnimal.feed`: heals twice the food's nutrition, or 2.
+    fn feed(&self, player: &Player, item_stack: &mut ItemStack, ambient: Sound) {
+        let heal = item_stack
+            .get_data_component::<pumpkin_data::data_component_impl::FoodImpl>()
+            .map_or(2.0, |food| 2.0 * food.nutrition as f32);
+        item_stack.decrement_unless_creative(player.gamemode.load(), 1);
+        self.mob_entity.living_entity.heal(heal);
+        self.play_eating_sound(ambient);
+    }
+
     pub fn get_tame_flags(&self) -> u8 {
         let mut flags = 0u8;
         if self.is_in_sitting_pose() {
@@ -173,11 +198,70 @@ impl Animal for WolfEntity {
         let item = item_stack.get_item();
         item.has_tag(&tag::Item::MINECRAFT_WOLF_FOOD) || item == &Item::BONE
     }
+
+    /// Vanilla `Wolf.canMate`: two tame wolves, the partner not sitting.
+    fn can_mate(&self, partner: &dyn EntityBase) -> bool {
+        self.is_tame()
+            && partner
+                .cast_any()
+                .downcast_ref::<Self>()
+                .is_some_and(|wolf| wolf.is_tame() && !wolf.is_in_sitting_pose())
+    }
+
+    /// Vanilla `Wolf.getBreedOffspring`: a parent's variant, the owner and a mixed collar from
+    /// tame parents, and a random sound variant.
+    fn get_breed_offspring(&self, partner: &dyn EntityBase) -> Arc<dyn EntityBase> {
+        let entity = self.get_entity();
+        let world = entity.world.load_full();
+        let baby = Self::new(Entity::new(
+            world.clone(),
+            entity.pos.load(),
+            &EntityType::WOLF,
+        ));
+        if let Some(partner) = partner.cast_any().downcast_ref::<Self>() {
+            let parent = if self.get_random().random::<bool>() {
+                self
+            } else {
+                partner
+            };
+            baby.set_variant_id(parent.variant.load(Ordering::Relaxed));
+            if self.is_tame() {
+                baby.set_owner(self.get_owner());
+                baby.set_tame(true);
+                baby.apply_taming_side_effects();
+                let collar = get_mixed_color(
+                    &world,
+                    DyeColor::from(self.get_collar_color()),
+                    DyeColor::from(partner.get_collar_color()),
+                );
+                baby.set_collar_color(collar.id());
+            }
+        }
+        baby.set_sound_variant(random_sound_variant());
+        baby
+    }
+}
+
+/// Vanilla `WolfSoundVariants.pickRandomSoundVariant`.
+fn random_sound_variant() -> WolfSoundVariant {
+    let all = WolfSoundVariant::ALL;
+    all[rand::rng().random_range(0..all.len())]
 }
 
 impl TamableAnimal for WolfEntity {
     fn get_tamable_data(&self) -> &TamableData {
         &self.tamable_data
+    }
+
+    /// Vanilla `Wolf.applyTamingSideEffects`: a tamed wolf gets 40 health, a wild one 8.
+    fn apply_taming_side_effects(&self) {
+        let living = &self.mob_entity.living_entity;
+        if self.is_tame() {
+            living.set_max_health(TAME_HEALTH);
+            living.set_health(TAME_HEALTH);
+        } else {
+            living.set_max_health(START_HEALTH);
+        }
     }
 }
 
@@ -188,14 +272,42 @@ impl NeutralMob for WolfEntity {
 }
 
 impl Mob for WolfEntity {
+    /// Vanilla `Wolf.finalizeSpawn`: a random sound variant.
+    fn finalize_spawn(
+        &self,
+        _world: &Arc<World>,
+        group_data: Option<SpawnGroupData>,
+    ) -> Option<SpawnGroupData> {
+        self.set_sound_variant(random_sound_variant());
+        self.finalize_spawn_super(group_data)
+    }
+
     fn on_damage(&self, _damage_type: DamageType, _source: Option<&dyn EntityBase>) {
         self.order_to_sit(false);
     }
 
     fn mob_play_step_sound(&self, _pos: &BlockPos, _state: &BlockState) {
-        let sound_variant = WolfSoundVariant::from_id(self.sound_variant.load(Ordering::Relaxed))
-            .unwrap_or_default();
+        let sound_variant = self.sound_variant();
         self.play_entity_sound(sound_variant.step_sound(self.is_baby()), 0.15, 1.0);
+    }
+
+    /// Vanilla `Wolf.getAmbientSound`: a growl when angry, else a pant (a whine when tame and
+    /// hurt) one time in three.
+    fn get_ambient_sound(&self) -> Option<Sound> {
+        let sounds = self.sound_variant();
+        let baby = self.is_baby();
+        if self.is_angry() {
+            return Some(sounds.growl_sound(baby));
+        }
+        if self.get_random().random_range(0..3) == 0 {
+            let hurt = self.mob_entity.living_entity.health.load() < 20.0;
+            return Some(if self.is_tame() && hurt {
+                sounds.whine_sound(baby)
+            } else {
+                sounds.pant_sound(baby)
+            });
+        }
+        Some(sounds.ambient_sound(baby))
     }
 
     fn as_ageable(&self) -> Option<&dyn AgeableMob> {
@@ -377,17 +489,14 @@ impl Mob for WolfEntity {
 
     fn mob_interact(&self, player: &Arc<Player>, item_stack: &mut ItemStack) -> bool {
         let item = item_stack.get_item();
-        let sound_variant = WolfSoundVariant::from_id(self.sound_variant.load(Ordering::Relaxed))
-            .unwrap_or_default();
+        let sound_variant = self.sound_variant();
         let ambient = sound_variant.ambient_sound(self.is_baby());
         if self.is_tame() {
             if self.is_food(item_stack)
                 && self.mob_entity.living_entity.health.load()
                     < self.mob_entity.living_entity.get_max_health()
             {
-                item_stack.decrement_unless_creative(player.gamemode.load(), 1);
-                self.mob_entity.living_entity.heal(2.0);
-                self.play_eating_sound(ambient);
+                self.feed(player, item_stack, ambient);
                 return true;
             }
 
@@ -419,7 +528,7 @@ impl Mob for WolfEntity {
                 }
                 return parent_interaction;
             }
-        } else if item == &Item::BONE && !self.mob_entity.is_attacking() {
+        } else if item == &Item::BONE && !self.is_angry() {
             item_stack.decrement_unless_creative(player.gamemode.load(), 1);
             let mut rng = rand::rng();
             if rng.random_range(0..3) == 0 && self.approve_taming(player) {
@@ -440,16 +549,18 @@ impl Mob for WolfEntity {
 impl CustomSound for WolfEntity {
     fn death_sound(&self) -> Option<pumpkin_data::sound::Sound> {
         let is_baby = self.is_baby();
-        let sound_variant = WolfSoundVariant::from_id(self.sound_variant.load(Ordering::Relaxed))
-            .unwrap_or_default();
+        let sound_variant = self.sound_variant();
         Some(sound_variant.death_sound(is_baby))
     }
 
     fn hurt_sound(&self) -> Option<pumpkin_data::sound::Sound> {
         let is_baby = self.is_baby();
-        let sound_variant = WolfSoundVariant::from_id(self.sound_variant.load(Ordering::Relaxed))
-            .unwrap_or_default();
+        let sound_variant = self.sound_variant();
         Some(sound_variant.hurt_sound(is_baby))
+    }
+
+    fn sound_volume(&self) -> f32 {
+        SOUND_VOLUME
     }
 }
 
