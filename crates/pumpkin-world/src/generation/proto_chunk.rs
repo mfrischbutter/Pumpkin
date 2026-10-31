@@ -4,14 +4,11 @@ use std::sync::{Arc, LazyLock, Mutex};
 use pumpkin_data::block_properties::is_air;
 use pumpkin_data::chunk::DoublePerlinNoiseParameters;
 use pumpkin_data::fluid::{Fluid, FluidState};
-use pumpkin_data::structures::{
-    Structure, StructureKeys, StructurePlacementType, StructureSet, WeightedEntry,
-};
+use pumpkin_data::structures::{Structure, StructureKeys, StructureSet, WeightedEntry};
 use pumpkin_data::tag::RegistryKey;
 use pumpkin_data::{Block, BlockState, block_properties::blocks_movement, chunk::Biome};
 use pumpkin_data::{BlockId, BlockStateId, tag};
 use pumpkin_util::random::xoroshiro128::XoroshiroSplitter;
-use pumpkin_util::random::{RandomImpl, get_large_feature_seed, legacy_rand::LegacyRand};
 use pumpkin_util::{
     HeightMap,
     math::{block_box::BlockBox, position::BlockPos, vector3::Vector3},
@@ -52,6 +49,7 @@ use crate::generation::noise::{CHUNK_DIM, ChunkNoiseGenerator, LAVA_BLOCK, WATER
 use crate::generation::section_coords::section_to_block;
 use crate::generation::structure::lazily_generate_structure;
 use crate::generation::structure::placement::should_generate_structure;
+use crate::generation::structure::references::{structure_references, weighted_structure_order};
 use crate::generation::structure::structures::{
     StructureGeneratorContext, StructureInstance, StructurePiecesCollector, create_chunk_random,
 };
@@ -1522,38 +1520,6 @@ impl ProtoChunk {
     }
 
     /// Returns the deterministic weighted fallback order for structures in a set.
-    fn weighted_structure_order(
-        entries: &[WeightedEntry],
-        seed: u64,
-        chunk_x: i32,
-        chunk_z: i32,
-    ) -> Vec<WeightedEntry> {
-        let mut candidates = entries.to_vec();
-        let large_feature_seed = get_large_feature_seed(seed, chunk_x, chunk_z);
-        let mut random = LegacyRand::from_seed(large_feature_seed);
-        let mut total_weight: u32 = candidates.iter().map(|entry| entry.weight).sum();
-        let mut ordered = Vec::with_capacity(candidates.len());
-
-        while !candidates.is_empty() {
-            let mut roll = random.next_bounded_i32(total_weight as i32);
-            let mut selected_idx = 0;
-
-            for (index, entry) in candidates.iter().enumerate() {
-                roll -= entry.weight as i32;
-                if roll < 0 {
-                    selected_idx = index;
-                    break;
-                }
-            }
-
-            let selected = candidates.remove(selected_idx);
-            total_weight -= selected.weight;
-            ordered.push(selected);
-        }
-
-        ordered
-    }
-
     /// Creates the structure starts owned by this chunk.
     pub fn set_structure_starts(&mut self, generator: &super::generator::VanillaGenerator) {
         debug_assert_eq!(self.stage, StagedChunkEnum::Biomes);
@@ -1596,7 +1562,7 @@ impl ProtoChunk {
                 continue;
             }
 
-            for entry in Self::weighted_structure_order(set.structures, seed, self.x, self.z) {
+            for entry in weighted_structure_order(set.structures, seed, self.x, self.z) {
                 if self.try_set_structure_start(
                     global_cache,
                     settings.sea_level,
@@ -1676,152 +1642,23 @@ impl ProtoChunk {
     }
 
     /// Adds references to nearby structure starts that intersect this chunk.
-    #[expect(clippy::too_many_lines)]
     pub fn set_structure_references(&mut self, generator: &super::generator::VanillaGenerator) {
         debug_assert_eq!(self.stage, StagedChunkEnum::StructureStart);
-        let random_config = &generator.random_config;
-        let settings = generator.settings;
-        let noise_router = &generator.base_router;
-        let global_cache = &generator.global_structure_cache;
-        let calculator = &generator.structure_calculator;
-
-        let start_x = chunk_pos::start_block_x(self.x);
-        let start_z = chunk_pos::start_block_z(self.z);
-        let end_x = start_x + 15;
-        let end_z = start_z + 15;
-
-        let seed = random_config.structure_seed as i64;
-
-        let base_supplier: &dyn BiomeSupplier = &generator.biome_supplier;
-        let blender = Blender::empty();
-        let biome_supplier = blender.get_biome_supplier(base_supplier);
-        let mut multi_noise_sampler = MultiNoiseSampler::generate(&noise_router.multi_noise);
-
-        let mut height_sampler =
-            crate::generation::structure::height_sampler::NoiseHeightSampler::new(generator);
-
-        let mut references = Vec::new();
-        // Constant across every chunk in the dimension, so hoist it out of the loop
-        // and out of the (cached) structure-start computation below.
         // Matches vanilla WorldGenerationContext:
         // minY = Math.max(heightAccessor.getMinY(), generator.getMinY())
         // height = Math.min(heightAccessor.getHeight(), generator.getGenDepth())
         let chunk_min_y = (self.generation_bottom_y() as i32).max(self.bottom_y() as i32);
         let chunk_height = self.generation_height().min(self.height());
-
-        for (set_index, set) in StructureSet::ALL.iter().enumerate() {
-            if !generator.enabled_structure_sets.contains(&set_index) {
-                continue;
-            }
-
-            let mut candidate_chunks = Vec::new();
-
-            match &set.placement.placement_type {
-                StructurePlacementType::RandomSpread(spread) => {
-                    let min_rx = pumpkin_util::math::floor_div(self.x - 8, spread.spacing);
-                    let max_rx = pumpkin_util::math::floor_div(self.x + 8, spread.spacing);
-                    let min_rz = pumpkin_util::math::floor_div(self.z - 8, spread.spacing);
-                    let max_rz = pumpkin_util::math::floor_div(self.z + 8, spread.spacing);
-
-                    for rx in min_rx..=max_rx {
-                        for rz in min_rz..=max_rz {
-                            candidate_chunks.push(
-                                crate::generation::structure::placement::get_structure_chunk_in_region(
-                                    spread,
-                                    seed,
-                                    rx,
-                                    rz,
-                                    generator.structure_salts[set_index],
-                                )
-                            );
-                        }
-                    }
-                }
-                StructurePlacementType::ConcentricRings(_) => {
-                    for &(cx, cz) in global_cache.get_stronghold_chunks() {
-                        if (cx - self.x).abs() <= 8 && (cz - self.z).abs() <= 8 {
-                            candidate_chunks.push((cx, cz));
-                        }
-                    }
-                }
-            }
-
-            for (candidate_chunk_x, candidate_chunk_z) in candidate_chunks {
-                if !should_generate_structure(
-                    set_index,
-                    calculator,
-                    &generator.structure_salts,
-                    candidate_chunk_x,
-                    candidate_chunk_z,
-                    global_cache,
-                ) {
-                    continue;
-                }
-
-                if (candidate_chunk_x - self.x).abs() <= 8
-                    && (candidate_chunk_z - self.z).abs() <= 8
-                {
-                    let entries = if set.structures.len() == 1 {
-                        set.structures.to_vec()
-                    } else {
-                        Self::weighted_structure_order(
-                            set.structures,
-                            random_config.structure_seed,
-                            candidate_chunk_x,
-                            candidate_chunk_z,
-                        )
-                    };
-
-                    for entry in entries {
-                        let structure = Structure::get(&entry.structure);
-
-                        // A structure's placement depends only on its start chunk and the
-                        // world seed, so cache it: otherwise every surrounding chunk whose
-                        // references overlap it would re-run the (expensive) jigsaw
-                        // expansion. `context` is only built on a cache miss.
-                        let start_data = global_cache.get_or_compute_structure_start(
-                            entry.structure,
-                            candidate_chunk_x,
-                            candidate_chunk_z,
-                            || {
-                                let context = StructureGeneratorContext {
-                                    seed,
-                                    chunk_x: candidate_chunk_x,
-                                    chunk_z: candidate_chunk_z,
-                                    random: create_chunk_random(
-                                        seed,
-                                        candidate_chunk_x,
-                                        candidate_chunk_z,
-                                    ),
-                                    sea_level: settings.sea_level,
-                                    min_y: chunk_min_y,
-                                    height: chunk_height,
-                                    height_sampler: Some(&mut height_sampler),
-                                    structure_key: Some(entry.structure),
-                                };
-                                lazily_generate_structure(
-                                    &entry.structure,
-                                    structure,
-                                    context,
-                                    &biome_supplier,
-                                    &mut multi_noise_sampler,
-                                )
-                            },
-                        );
-
-                        if let Some(start_data) = start_data {
-                            if start_data
-                                .get_adjusted_bounding_box(&entry.structure)
-                                .intersects_raw_xz(start_x, start_z, end_x, end_z)
-                            {
-                                references.push((entry.structure, start_data.collector.clone()));
-                            }
-                            break;
-                        }
-                    }
-                }
-            }
-        }
+        let enabled_sets = (0..StructureSet::ALL.len())
+            .filter(|set_index| generator.enabled_structure_sets.contains(set_index));
+        let references = structure_references(
+            generator,
+            self.x,
+            self.z,
+            chunk_min_y,
+            chunk_height,
+            enabled_sets,
+        );
 
         for (key, pos) in references {
             self.structure_starts

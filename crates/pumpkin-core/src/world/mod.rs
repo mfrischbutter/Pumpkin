@@ -193,6 +193,7 @@ pub mod environment;
 pub mod natural_spawner;
 pub mod phantom_spawner;
 pub mod scoreboard;
+pub mod structures;
 pub mod weather;
 
 pub use environment::EnvironmentAttributes;
@@ -202,6 +203,7 @@ use crate::world::natural_spawner::{SpawnState, spawn_for_chunk};
 use pumpkin_config::lighting::LightingEngineConfig;
 use pumpkin_data::effect::StatusEffect;
 use pumpkin_world::chunk::ChunkHeightmapType::{self, MotionBlocking};
+use pumpkin_world::generation::structure::references::StructureReference;
 use uuid::Uuid;
 use weather::Weather;
 
@@ -308,6 +310,9 @@ pub struct World {
     pub raids: std::sync::Mutex<raid::Raids>,
     /// Vanilla `PhantomSpawner`, ticked in the overworld only.
     pub phantom_spawner: std::sync::Mutex<phantom_spawner::PhantomSpawner>,
+    /// The structure starts reaching into each loaded chunk, for the spawn lists
+    /// (vanilla's structure references, see `structures`).
+    pub structure_reference_cache: DashMap<Vector2<i32>, Arc<[StructureReference]>>,
     /// End Dragon fight manager (only present in `THE_END` dimension).
     pub dragon_fight: Option<std::sync::Mutex<dragon_fight::DragonFight>>,
     pub spawn_state: ArcSwap<SpawnState>,
@@ -481,6 +486,7 @@ impl World {
             villager_poi: std::sync::Mutex::new(villager_poi::VillagerPoiStorage::default()),
             raids: std::sync::Mutex::new(raid::Raids::default()),
             phantom_spawner: std::sync::Mutex::new(phantom_spawner::PhantomSpawner::default()),
+            structure_reference_cache: DashMap::new(),
             dragon_fight,
             spawn_state: ArcSwap::new(Arc::new(SpawnState::empty())),
             active_chunks: RwLock::new(Arc::default()),
@@ -574,6 +580,7 @@ impl World {
                     }
                 }
                 pumpkin_world::level::LoadedChunkChange::Unloaded(pos) => {
+                    self.forget_structure_references(pos);
                     if !self.level.is_chunk_loaded(&pos) {
                         tracker.loaded_active_chunks.remove(&pos);
                     }
