@@ -1,6 +1,7 @@
 use crate::block::PathComputationType;
 use crate::entity::EntityBase;
 use crate::entity::mob::spawn::finalize_spawn;
+use crate::entity::player::Player;
 use crate::entity::r#type::{check_spawn_rules, from_type};
 use crate::world::World;
 use arc_swap::ArcSwap;
@@ -26,12 +27,52 @@ use pumpkin_world::chunk::{ChunkData, ChunkHeightmapType};
 use pumpkin_world::generation::proto_chunk::GenerationCache;
 use rand::seq::IndexedRandom;
 use rand::{RngExt, rng};
+use rustc_hash::FxHashSet;
 use std::fmt;
 use std::sync::Arc;
 use std::sync::atomic::{AtomicI32, Ordering::Relaxed};
 use uuid::Uuid;
 
+/// Vanilla `NaturalSpawner.SPAWN_DISTANCE_CHUNK`: chunks within this distance of a
+/// player's chunk count for the mob caps and may spawn.
+pub const SPAWN_DISTANCE_CHUNK: i32 = 8;
+/// Vanilla `NaturalSpawner.SPAWN_DISTANCE_BLOCK`: a chunk spawns only while a
+/// non-spectator player is this close to its centre.
+pub const SPAWN_DISTANCE_BLOCK: i32 = 128;
+/// The chunks around one player: the global cap is `max * spawnable chunks / 289`.
 const MAGIC_NUMBER: i32 = 17 * 17;
+
+/// Vanilla's natural spawn chunk tracker (`DistanceManager`).
+///
+/// Every chunk within `SPAWN_DISTANCE_CHUNK` of a player's chunk, loaded or not. Its size
+/// scales the global mob caps, so they do not depend on the simulation distance.
+#[must_use]
+pub fn spawn_candidate_chunks(
+    player_chunks: impl IntoIterator<Item = Vector2<i32>>,
+) -> FxHashSet<Vector2<i32>> {
+    let mut chunks = FxHashSet::default();
+    for center in player_chunks {
+        for dx in -SPAWN_DISTANCE_CHUNK..=SPAWN_DISTANCE_CHUNK {
+            for dz in -SPAWN_DISTANCE_CHUNK..=SPAWN_DISTANCE_CHUNK {
+                chunks.insert(center.add_raw(dx, dz));
+            }
+        }
+    }
+    chunks
+}
+
+/// Vanilla `ChunkMap.playerIsCloseEnoughForSpawning`: not a spectator, and the chunk's
+/// centre is within `SPAWN_DISTANCE_BLOCK` of the player (horizontally).
+#[must_use]
+pub fn is_player_close_enough_for_spawning(player: &Player, chunk_pos: Vector2<i32>) -> bool {
+    if player.is_spectator() {
+        return false;
+    }
+    let player_pos = player.position();
+    let dx = f64::from((chunk_pos.x << 4) + 8) - player_pos.x;
+    let dz = f64::from((chunk_pos.y << 4) + 8) - player_pos.z;
+    dx * dx + dz * dz < f64::from(SPAWN_DISTANCE_BLOCK * SPAWN_DISTANCE_BLOCK)
+}
 
 pub struct MobCounts([AtomicI32; 8]);
 
@@ -114,12 +155,6 @@ impl fmt::Debug for LocalMobCapCalculator {
 }
 
 impl LocalMobCapCalculator {
-    const fn calc_distance(chunk_pos: Vector2<i32>, player_pos: &Vector3<f64>) -> f64 {
-        let dx = ((chunk_pos.x << 4) + 8) as f64 - player_pos.x;
-        let dy = ((chunk_pos.y << 4) + 8) as f64 - player_pos.z;
-        dx * dx + dy * dy
-    }
-
     fn get_players_near(&self, world: &World, chunk_pos: Vector2<i32>) -> Arc<[i32]> {
         if let Some(players) = self.players_near_chunk.get(&chunk_pos) {
             return players.value().clone();
@@ -127,10 +162,7 @@ impl LocalMobCapCalculator {
 
         let mut players = Vec::new();
         for player in world.players.load().iter() {
-            if player.gamemode.load() == GameMode::Spectator {
-                continue;
-            }
-            if Self::calc_distance(chunk_pos, &player.position()) < 16384.0 {
+            if is_player_close_enough_for_spawning(player, chunk_pos) {
                 players.push(player.entity_id());
             }
         }
@@ -1154,6 +1186,18 @@ fn is_burning_block(block: &Block) -> bool {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn spawn_candidate_chunks_match_the_vanilla_footprint() {
+        let one = spawn_candidate_chunks([Vector2::new(0, 0)]);
+        assert_eq!(one.len(), MAGIC_NUMBER as usize);
+        assert!(one.contains(&Vector2::new(8, -8)));
+        assert!(!one.contains(&Vector2::new(9, 0)));
+        // Two players in adjacent chunks share 17 x 16 chunks.
+        let two = spawn_candidate_chunks([Vector2::new(0, 0), Vector2::new(1, 0)]);
+        assert_eq!(two.len(), 17 * 18);
+        assert!(spawn_candidate_chunks([]).is_empty());
+    }
 
     #[test]
     fn potential_change_is_finite_beyond_i32_range() {
