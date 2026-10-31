@@ -1,15 +1,19 @@
 use std::sync::Arc;
 
 use super::{Goal, to_goal_ticks};
+use crate::entity::EntityBase;
 use crate::entity::mob::Mob;
 use crate::entity::mob::enderman::EndermanEntity;
-use pumpkin_data::Block;
-use pumpkin_data::block_properties::is_air;
+use crate::world::World;
+use crate::world::game_event::GameEventContext;
+use pumpkin_data::game_event::GameEvent;
+use pumpkin_data::{Block, BlockStateId};
 use pumpkin_util::math::boundingbox::BoundingBox;
 use pumpkin_util::math::position::BlockPos;
 use pumpkin_world::world::BlockFlags;
 use rand::RngExt;
 
+/// Vanilla `EndermanLeaveBlockGoal`: puts the carried block down nearby.
 pub struct PlaceBlockGoal {
     enderman: Arc<EndermanEntity>,
 }
@@ -17,6 +21,43 @@ pub struct PlaceBlockGoal {
 impl PlaceBlockGoal {
     pub const fn new(enderman: Arc<EndermanEntity>) -> Self {
         Self { enderman }
+    }
+
+    /// Vanilla `canPlaceBlock`: air above a full block, where the block survives.
+    ///
+    /// Bedrock below and entities other than the enderman itself are in the way.
+    fn can_place_block(&self, world: &Arc<World>, pos: &BlockPos, carried: BlockStateId) -> bool {
+        if !world.get_block_state(pos).is_air() {
+            return false;
+        }
+        let (below_block, below_state) = world.get_block_and_state(&pos.down());
+        if below_state.is_air() || below_block == &Block::BEDROCK || !below_state.is_full_cube() {
+            return false;
+        }
+        if !world.block_registry.can_place_at(
+            None,
+            Some(&**world),
+            &**world,
+            None,
+            Block::from_state_id(carried),
+            carried.to_state(),
+            pos,
+            None,
+            None,
+        ) {
+            return false;
+        }
+
+        let cell = BoundingBox::from_block(pos);
+        let enderman_id = self.enderman.get_entity().entity_id;
+        world
+            .get_entities_at_box(&cell)
+            .iter()
+            .all(|entity| entity.get_entity().entity_id == enderman_id)
+            && world
+                .get_players_at_box(&cell)
+                .iter()
+                .all(|player| player.is_spectator())
     }
 }
 
@@ -40,7 +81,7 @@ impl Goal for PlaceBlockGoal {
     }
 
     fn tick(&mut self, mob: &dyn Mob) {
-        let Some(block_state_id) = self.enderman.get_carried_block() else {
+        let Some(carried) = self.enderman.get_carried_block() else {
             return;
         };
 
@@ -56,32 +97,22 @@ impl Goal for PlaceBlockGoal {
             )
         };
 
-        let world = entity.world.load();
+        let world = entity.world.load_full();
         let target_pos = BlockPos::new(bx, by, bz);
-
-        let state_id = world.get_block_state_id(&target_pos);
-        if !is_air(state_id) {
+        let carried = world.update_from_neighbor_shapes(carried, &target_pos);
+        if !self.can_place_block(&world, &target_pos, carried) {
             return;
         }
 
-        let below_pos = BlockPos::new(bx, by - 1, bz);
-        let (below_block, below_state) = world.get_block_and_state(&below_pos);
-        if !below_state.is_solid() || !below_state.is_full_cube() || below_block == &Block::BEDROCK
-        {
-            return;
-        }
-
-        // Never place into an occupied block.
-        let world_clone = entity.world.load_full();
-        if !world_clone
-            .get_entities_at_box(&BoundingBox::from_block(&target_pos))
-            .is_empty()
-        {
-            return;
-        }
-
-        // TODO: also check the carried block can survive there.
-        world_clone.set_block_state(&target_pos, block_state_id, BlockFlags::NOTIFY_ALL);
+        world.set_block_state(&target_pos, carried, BlockFlags::NOTIFY_ALL);
+        let source: &dyn EntityBase = mob;
+        world.emit_game_event_with_context(
+            GameEvent::BlockPlace.name(),
+            target_pos.to_centered_f64(),
+            &GameEventContext {
+                source_entity: Some(source),
+            },
+        );
         self.enderman.set_carried_block(None);
     }
 }

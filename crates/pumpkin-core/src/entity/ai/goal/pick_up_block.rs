@@ -1,14 +1,18 @@
 use std::sync::Arc;
 
 use super::{Goal, to_goal_ticks};
+use crate::entity::EntityBase;
 use crate::entity::mob::Mob;
 use crate::entity::mob::enderman::EndermanEntity;
+use crate::world::game_event::GameEventContext;
 use pumpkin_data::BlockStateId;
+use pumpkin_data::game_event::GameEvent;
 use pumpkin_data::tag::{self, Taggable};
 use pumpkin_util::math::{position::BlockPos, vector3::Vector3};
 use pumpkin_world::world::BlockFlags;
 use rand::RngExt;
 
+/// Vanilla `EndermanTakeBlockGoal`: picks up a holdable block nearby.
 pub struct PickUpBlockGoal {
     enderman: Arc<EndermanEntity>,
 }
@@ -92,8 +96,15 @@ impl Goal for PickUpBlockGoal {
             return;
         }
 
-        // TODO: Emit game event (BLOCK_DESTROY)
         world.set_block_state(&target_pos, BlockStateId::AIR, BlockFlags::NOTIFY_ALL);
+        let source: &dyn EntityBase = mob;
+        world.emit_game_event_with_context(
+            GameEvent::BlockDestroy.name(),
+            target_pos.to_centered_f64(),
+            &GameEventContext {
+                source_entity: Some(source),
+            },
+        );
         self.enderman.set_carried_block(Some(default_state_id));
     }
 }

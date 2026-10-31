@@ -3,8 +3,9 @@ use std::sync::Arc;
 use super::{Controls, Goal};
 use crate::entity::EntityBase;
 use crate::entity::mob::Mob;
-use crate::entity::mob::enderman::{EndermanEntity, PLAYER_EYE_HEIGHT};
+use crate::entity::mob::enderman::EndermanEntity;
 
+/// Vanilla `EndermanFreezeWhenLookedAt`: stands still while the target player stares.
 pub struct ChasePlayerGoal {
     enderman: Arc<EndermanEntity>,
     target: Option<Arc<dyn EntityBase>>,
@@ -59,8 +60,9 @@ impl Goal for ChasePlayerGoal {
 
     fn tick(&mut self, mob: &dyn Mob) {
         if let Some(target) = &self.target {
-            let player_pos = target.get_entity().pos.load();
-            let eye_y = player_pos.y + PLAYER_EYE_HEIGHT;
+            let target_entity = target.get_entity();
+            let player_pos = target_entity.pos.load();
+            let eye_y = target_entity.get_eye_y();
             let mut look_control = mob
                 .get_mob_entity()
                 .look_control
