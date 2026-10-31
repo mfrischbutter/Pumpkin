@@ -3,6 +3,7 @@ use std::sync::{
     atomic::{AtomicBool, AtomicI32, Ordering},
 };
 
+use crate::entity::mob::requires_custom_persistence_base;
 use pumpkin_data::entity::EntityType;
 use pumpkin_data::item::Item;
 use pumpkin_data::item_stack::ItemStack;
@@ -225,6 +226,16 @@ impl Animal for AxolotlEntity {
 }
 
 impl Mob for AxolotlEntity {
+    /// Vanilla `Axolotl.removeWhenFarAway`: only wild, unnamed axolotls despawn.
+    fn remove_when_far_away(&self, _distance_sq: f64) -> bool {
+        !self.is_from_bucket() && self.get_entity().custom_name.load().is_none()
+    }
+
+    /// Vanilla `Axolotl.requiresCustomPersistence`: a bucketed axolotl stays.
+    fn requires_custom_persistence(&self) -> bool {
+        requires_custom_persistence_base(self) || self.is_from_bucket()
+    }
+
     fn as_ageable(&self) -> Option<&dyn AgeableMob> {
         Some(self)
     }

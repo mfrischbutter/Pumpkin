@@ -1,3 +1,4 @@
+use crate::entity::mob::requires_custom_persistence_base;
 use crossbeam::atomic::AtomicCell;
 use std::sync::{
     Arc, Mutex,
@@ -192,6 +193,16 @@ impl CustomSound for NautilusEntity {
 }
 
 impl Mob for NautilusEntity {
+    /// Vanilla `AbstractNautilus.removeWhenFarAway`.
+    fn remove_when_far_away(&self, _distance_sq: f64) -> bool {
+        true
+    }
+
+    /// Vanilla `AbstractNautilus.requiresCustomPersistence`: a tame nautilus stays.
+    fn requires_custom_persistence(&self) -> bool {
+        requires_custom_persistence_base(self) || self.is_tame()
+    }
+
     fn is_tamed(&self) -> bool {
         self.is_tame()
     }

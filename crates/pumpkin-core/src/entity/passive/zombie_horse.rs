@@ -123,6 +123,11 @@ impl Animal for ZombieHorseEntity {
 }
 
 impl Mob for ZombieHorseEntity {
+    /// Vanilla `ZombieHorse.removeWhenFarAway`.
+    fn remove_when_far_away(&self, _distance_sq: f64) -> bool {
+        true
+    }
+
     fn is_tamed(&self) -> bool {
         self.is_tame()
     }

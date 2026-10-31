@@ -105,6 +105,11 @@ impl Animal for OcelotEntity {
 }
 
 impl Mob for OcelotEntity {
+    /// Vanilla `Ocelot.removeWhenFarAway`: wild ocelots despawn after two minutes.
+    fn remove_when_far_away(&self, _distance_sq: f64) -> bool {
+        !self.is_trusting() && self.get_entity().tick_count.load(Ordering::Relaxed) > 2400
+    }
+
     fn as_animal(&self) -> Option<&dyn Animal> {
         Some(self)
     }

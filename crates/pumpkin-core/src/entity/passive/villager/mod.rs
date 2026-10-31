@@ -1859,6 +1859,11 @@ impl VillagerEntity {
 }
 
 impl Mob for VillagerEntity {
+    /// Vanilla `Villager.removeWhenFarAway`.
+    fn remove_when_far_away(&self, _distance_sq: f64) -> bool {
+        false
+    }
+
     #[expect(clippy::too_many_lines)]
     fn mob_write_nbt(&self, nbt: &mut NbtCompound) {
         {

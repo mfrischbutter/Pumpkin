@@ -165,6 +165,11 @@ impl HoglinEntity {
 }
 
 impl Mob for HoglinEntity {
+    /// Vanilla `Hoglin.removeWhenFarAway`.
+    fn remove_when_far_away(&self, _distance_sq: f64) -> bool {
+        true
+    }
+
     fn mob_play_step_sound(&self, _pos: &BlockPos, _state: &BlockState) {
         self.play_entity_sound(Sound::EntityHoglinStep, 0.15, 1.0);
     }

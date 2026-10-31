@@ -7,6 +7,7 @@ use crate::entity::ai::behavior::hunting::{self, Hunt};
 use crate::entity::ai::target_match::TargetMatch;
 use crate::entity::attributes::Modifier;
 use crate::entity::attributes::ModifierOperation;
+use crate::entity::mob::requires_custom_persistence_base;
 use pumpkin_data::{BlockStateId, attributes::Attributes};
 
 use crossbeam::atomic::AtomicCell;
@@ -389,6 +390,11 @@ impl NeutralMob for EndermanEntity {
 }
 
 impl Mob for EndermanEntity {
+    /// Vanilla `Enderman.requiresCustomPersistence`: an enderman carrying a block stays.
+    fn requires_custom_persistence(&self) -> bool {
+        requires_custom_persistence_base(self) || self.carried_block.load().is_some()
+    }
+
     fn as_neutral(&self) -> Option<&dyn NeutralMob> {
         Some(self)
     }

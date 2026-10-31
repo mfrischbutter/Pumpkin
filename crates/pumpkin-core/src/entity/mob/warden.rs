@@ -150,6 +150,11 @@ impl WardenEntity {
 }
 
 impl Mob for WardenEntity {
+    /// Vanilla `Warden.removeWhenFarAway`.
+    fn remove_when_far_away(&self, _distance_sq: f64) -> bool {
+        false
+    }
+
     fn mob_play_step_sound(&self, _pos: &BlockPos, _state: &BlockState) {
         self.play_entity_sound(Sound::EntityWardenStep, 10.0, 1.0);
     }
