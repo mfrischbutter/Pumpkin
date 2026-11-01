@@ -365,6 +365,10 @@ impl Mob for CatEntity {
                     {
                         self.set_collar_color(dye.color.id());
                         item_stack.decrement_unless_creative(player.gamemode.load(), 1);
+                        // Vanilla `Cat.mobInteract`: a dyed collar keeps the cat loaded.
+                        self.mob_entity
+                            .persistence_required
+                            .store(true, Ordering::Relaxed);
                         return true;
                     }
                 } else if is_food
@@ -388,6 +392,10 @@ impl Mob for CatEntity {
             }
         } else if is_food {
             item_stack.decrement_unless_creative(player.gamemode.load(), 1);
+            // Vanilla `Cat.mobInteract`: a fed cat stays loaded, tamed or not.
+            self.mob_entity
+                .persistence_required
+                .store(true, Ordering::Relaxed);
             self.play_eating_sound();
 
             let mut rng = rand::rng();
@@ -410,8 +418,16 @@ impl Mob for CatEntity {
             return true;
         }
 
-        self.mob_entity
-            .mob_interact(player, item_stack, self.can_be_leashed())
+        // Vanilla `Cat.mobInteract`: any consuming interaction keeps the cat loaded.
+        let interacted = self
+            .mob_entity
+            .mob_interact(player, item_stack, self.can_be_leashed());
+        if interacted {
+            self.mob_entity
+                .persistence_required
+                .store(true, Ordering::Relaxed);
+        }
+        interacted
     }
 
     fn remove_when_far_away(&self, _distance_sq: f64) -> bool {

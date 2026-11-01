@@ -188,6 +188,10 @@ impl Mob for ZombieHorseEntity {
     }
 
     fn mob_interact(&self, player: &Arc<Player>, item_stack: &mut ItemStack) -> bool {
+        // Vanilla `ZombieHorse.interact`: every click keeps it loaded.
+        self.mob_entity
+            .persistence_required
+            .store(true, std::sync::atomic::Ordering::Relaxed);
         if crate::entity::mob::saddle::try_equip_saddle(self, player, item_stack) {
             return true;
         }

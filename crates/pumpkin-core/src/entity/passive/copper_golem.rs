@@ -118,6 +118,11 @@ impl CopperGolemEntity {
             next_weathering_tick: AtomicI64::new(-1),
         };
         let mob_arc = Arc::new(golem);
+        // Vanilla `CopperGolem`'s constructor: a copper golem never counts as transient.
+        mob_arc
+            .mob_entity
+            .persistence_required
+            .store(true, Ordering::Relaxed);
         let mob_weak: Weak<dyn Mob> = {
             let mob_arc: Arc<dyn Mob> = mob_arc.clone();
             Arc::downgrade(&mob_arc)

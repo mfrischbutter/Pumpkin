@@ -570,6 +570,11 @@ impl Mob for ShulkerEntity {
         &self.mob_entity
     }
 
+    /// Vanilla `AbstractGolem.removeWhenFarAway`: a shulker never despawns.
+    fn remove_when_far_away(&self, _distance_sq: f64) -> bool {
+        false
+    }
+
     /// Vanilla `getDeltaMovement` is always zero, so a shulker never falls.
     fn get_mob_gravity(&self) -> f64 {
         0.0

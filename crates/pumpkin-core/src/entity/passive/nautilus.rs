@@ -345,6 +345,10 @@ impl Mob for NautilusEntity {
     fn mob_interact(&self, player: &Arc<Player>, item_stack: &mut ItemStack) -> bool {
         let mob_entity = &self.mob_entity;
         let entity = &mob_entity.living_entity.entity;
+        // Vanilla `AbstractNautilus.interact`: every click keeps it loaded.
+        mob_entity
+            .persistence_required
+            .store(true, std::sync::atomic::Ordering::Relaxed);
 
         if !self.is_tame() && self.is_food(item_stack) {
             item_stack.decrement_unless_creative(player.gamemode.load(), 1);
