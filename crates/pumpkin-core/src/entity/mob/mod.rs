@@ -1750,6 +1750,11 @@ pub trait Mob: EntityBase + Send + Sync {
 
     fn on_attack(&self, _target: &dyn EntityBase) {}
 
+    /// Vanilla `canBeSeenAsEnemy` overrides: `false` hides the mob from targeting.
+    fn mob_can_be_seen_as_enemy(&self) -> bool {
+        true
+    }
+
     /// Runs after the living entity's `causeFallDamage`, like a vanilla override calling super first.
     fn mob_cause_fall_damage(&self, _fall_distance: f32) {}
 
@@ -2410,6 +2415,12 @@ impl<T: Mob + Send + 'static> EntityBase for T {
 
     fn set_variant_name(&self, name: &str) {
         self.mob_set_variant_name(name);
+    }
+
+    fn can_be_seen_as_enemy(&self) -> bool {
+        self.mob_can_be_seen_as_enemy()
+            && !self.get_entity().invulnerable.load(Relaxed)
+            && self.can_be_seen_by_anyone()
     }
 
     fn apply_implicit_component(

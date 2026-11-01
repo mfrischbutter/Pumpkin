@@ -88,6 +88,11 @@ pub enum SpawnGroupData {
         variant: RabbitVariant,
         size: u32,
     },
+    /// Vanilla `AxolotlGroupData`: the group's two variants and how many joined so far.
+    Axolotl {
+        variants: [crate::entity::passive::axolotl::AxolotlVariant; 2],
+        group_size: u32,
+    },
     /// Vanilla `LlamaGroupData`: the group's variant and how many joined so far.
     Llama {
         variant: LlamaVariant,

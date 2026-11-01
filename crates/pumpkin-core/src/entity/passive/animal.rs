@@ -78,6 +78,11 @@ pub trait Animal: Mob {
         mob_entity.set_love_ticks(in_love, love_cause);
     }
 
+    /// Vanilla `Animal.usePlayerItem`: feeding uses up one of the stack.
+    fn use_player_item(&self, player: &Player, item_stack: &mut ItemStack) {
+        item_stack.decrement_unless_creative(player.gamemode.load(), 1);
+    }
+
     fn animal_interact(
         &self,
         player: &Arc<Player>,
@@ -93,7 +98,7 @@ pub trait Animal: Mob {
                 .load(std::sync::atomic::Ordering::Relaxed);
 
             if age >= 0 && mob_entity.is_breeding_ready() && !mob_entity.is_in_love() {
-                item_stack.decrement_unless_creative(player.gamemode.load(), 1);
+                self.use_player_item(player, item_stack);
 
                 let Some(ticks) = self.approve_love(Some(player.entity_id()), 600) else {
                     return true;
@@ -121,7 +126,7 @@ pub trait Animal: Mob {
             }
 
             if age < 0 {
-                item_stack.decrement_unless_creative(player.gamemode.load(), 1);
+                self.use_player_item(player, item_stack);
                 let speedup = (-age / 10).max(1);
                 mob_entity
                     .living_entity

@@ -558,7 +558,7 @@ fn activities(_mob: &dyn Mob) -> Vec<ActivityData> {
                         ))),
                         1,
                     ),
-                    (Box::new(baby_follow_adult(5, 16, 1.25)), 1),
+                    (Box::new(baby_follow_adult(5, 16, |_| 1.25)), 1),
                 ])),
                 Box::new(Timed::new(RandomLookAround::new(
                     (150, 250),

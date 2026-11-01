@@ -7,6 +7,7 @@ use super::memory::{MemoryModuleId, types};
 use super::{BrainTick, VisibilityContext};
 
 pub mod armadillo_scare;
+pub mod axolotl_attackables;
 pub mod dummy;
 pub mod hurt_by;
 pub mod nearest_adult;
@@ -37,6 +38,7 @@ pub enum SensorType {
     FoodTemptations,
     NearestAdult,
     ArmadilloScareDetected,
+    AxolotlAttackables,
 }
 
 impl SensorType {
@@ -51,6 +53,7 @@ impl SensorType {
             Self::FoodTemptations => "minecraft:food_temptations",
             Self::NearestAdult => "minecraft:nearest_adult",
             Self::ArmadilloScareDetected => "minecraft:armadillo_scare_detected",
+            Self::AxolotlAttackables => "minecraft:axolotl_attackables",
         }
     }
 
@@ -63,7 +66,8 @@ impl SensorType {
             | Self::HurtBy
             | Self::NearestItems
             | Self::FoodTemptations
-            | Self::NearestAdult => DEFAULT_SCAN_RATE,
+            | Self::NearestAdult
+            | Self::AxolotlAttackables => DEFAULT_SCAN_RATE,
             // Vanilla scans for scary mobs every 5 ticks.
             Self::ArmadilloScareDetected => 5,
         }
@@ -79,6 +83,7 @@ impl SensorType {
             Self::FoodTemptations => Box::new(tempting::TemptingSensor),
             Self::NearestAdult => Box::new(nearest_adult::AdultSensor),
             Self::ArmadilloScareDetected => Box::new(armadillo_scare::ArmadilloScareSensor),
+            Self::AxolotlAttackables => Box::new(axolotl_attackables::AxolotlAttackablesSensor),
         }
     }
 

@@ -127,13 +127,24 @@ const MAKE_LOVE_CONDITIONS: [(MemoryModuleId, MemoryStatus); 5] = [
 /// Vanilla `AnimalMakeLove`: an animal in love walks to a visible partner in love and, after
 /// 60 to 110 ticks close together, they have a baby.
 pub struct AnimalMakeLove {
+    speed: f32,
     spawn_child_at: i64,
 }
 
 impl AnimalMakeLove {
     #[must_use]
     pub const fn new() -> Self {
-        Self { spawn_child_at: 0 }
+        Self {
+            speed: 1.0,
+            spawn_child_at: 0,
+        }
+    }
+
+    /// Vanilla's `speedModifier` argument, 1.0 by default.
+    #[must_use]
+    pub const fn with_speed(mut self, speed: f32) -> Self {
+        self.speed = speed;
+        self
     }
 
     fn find_partner(tick: &BrainTick<'_>) -> Option<Arc<dyn EntityBase>> {
@@ -152,14 +163,24 @@ impl AnimalMakeLove {
         })
     }
 
-    fn walk_to_each_other(mob: &dyn Mob, partner: &Arc<dyn EntityBase>, tick: &mut BrainTick<'_>) {
+    fn walk_to_each_other(
+        &self,
+        mob: &dyn Mob,
+        partner: &Arc<dyn EntityBase>,
+        tick: &mut BrainTick<'_>,
+    ) {
+        let speed = self.speed;
         tick.state.set(
             types::LOOK_TARGET,
             Arc::new(EntityTracker::new(partner.clone(), true)) as Arc<dyn PositionTracker>,
         );
         tick.state.set(
             types::WALK_TARGET,
-            WalkTarget::new(Arc::new(EntityTracker::new(partner.clone(), false)), 1.0, 2),
+            WalkTarget::new(
+                Arc::new(EntityTracker::new(partner.clone(), false)),
+                speed,
+                2,
+            ),
         );
         if let Some(partner_mob) = partner.get_mob() {
             let me = tick.world.get_entity_by_id(mob.get_entity().entity_id);
@@ -174,7 +195,7 @@ impl AnimalMakeLove {
                         );
                         brain.set(
                             types::WALK_TARGET,
-                            WalkTarget::new(Arc::new(EntityTracker::new(me, false)), 1.0, 2),
+                            WalkTarget::new(Arc::new(EntityTracker::new(me, false)), speed, 2),
                         );
                     }
                 });
@@ -217,7 +238,7 @@ impl Behavior for AnimalMakeLove {
                 .get_mob_entity()
                 .with_brain(partner_mob, |brain| brain.set(types::BREED_TARGET, me));
         }
-        Self::walk_to_each_other(tick.mob, &partner, tick);
+        self.walk_to_each_other(tick.mob, &partner, tick);
         self.spawn_child_at = tick.time + 60 + i64::from(tick.mob.get_random().random_range(0..50));
     }
 
@@ -240,7 +261,7 @@ impl Behavior for AnimalMakeLove {
         let Some(partner) = tick.state.get(types::BREED_TARGET).cloned() else {
             return;
         };
-        Self::walk_to_each_other(tick.mob, &partner, tick);
+        self.walk_to_each_other(tick.mob, &partner, tick);
         let distance = tick
             .mob
             .get_entity()
@@ -273,7 +294,7 @@ impl Behavior for AnimalMakeLove {
 /// Vanilla `BabyFollowAdult`: a baby walks to the nearest visible adult when it is between
 /// `min` and `max` blocks away.
 #[must_use]
-pub fn baby_follow_adult(min: i32, max: i32, speed: f32) -> OneShot {
+pub fn baby_follow_adult(min: i32, max: i32, speed: fn(&dyn Mob) -> f32) -> OneShot {
     OneShot::new(
         "BabyFollowAdult",
         vec![
@@ -313,7 +334,11 @@ pub fn baby_follow_adult(min: i32, max: i32, speed: f32) -> OneShot {
             );
             tick.state.set(
                 types::WALK_TARGET,
-                WalkTarget::new(Arc::new(EntityTracker::new(adult, false)), speed, min - 1),
+                WalkTarget::new(
+                    Arc::new(EntityTracker::new(adult, false)),
+                    speed(tick.mob),
+                    min - 1,
+                ),
             );
             true
         },

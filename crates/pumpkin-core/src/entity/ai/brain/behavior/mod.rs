@@ -8,6 +8,7 @@ pub mod animal;
 pub mod animal_panic;
 pub mod count_down_cooldown_ticks;
 pub mod do_nothing;
+pub mod fight;
 pub mod gate;
 pub mod go_and_give_items_to_target;
 pub mod go_to_wanted_item;
@@ -21,12 +22,17 @@ pub mod shuffling_list;
 pub mod stay_close_to_target;
 pub mod swim;
 pub mod timed;
+pub mod try_find_liquid;
 pub mod utils;
 
 pub use animal::{AnimalMakeLove, FollowTemptation, RandomLookAround, baby_follow_adult};
 pub use animal_panic::AnimalPanic;
 pub use count_down_cooldown_ticks::CountDownCooldownTicks;
 pub use do_nothing::DoNothing;
+pub use fight::{
+    erase_memory_if, melee_attack, set_walk_target_from_attack_target, start_attacking,
+    stop_attacking_if_target_invalid,
+};
 pub use gate::{GateBehavior, OrderPolicy, RunningPolicy, run_one, run_one_with_conditions};
 pub use go_and_give_items_to_target::GoAndGiveItemsToTarget;
 pub use look_at_target_sink::LookAtTargetSink;
@@ -35,6 +41,7 @@ pub use one_shot::{OneShot, Trigger};
 pub use shuffling_list::ShufflingList;
 pub use swim::Swim;
 pub use timed::{Behavior, DEFAULT_DURATION, Timed};
+pub use try_find_liquid::try_find_liquid;
 
 pub type PositionGetter = fn(&mut BrainTick<'_>) -> Option<Arc<dyn PositionTracker>>;
 
