@@ -28,7 +28,6 @@ use crate::entity::marker::MarkerEntity;
 use crate::entity::mob::bat::{self, BatEntity};
 use crate::entity::mob::blaze::BlazeEntity;
 use crate::entity::mob::breeze::BreezeEntity;
-use crate::entity::mob::cave_spider::CaveSpiderEntity;
 use crate::entity::mob::creaking::CreakingEntity;
 use crate::entity::mob::creeper::CreeperEntity;
 use crate::entity::mob::elder_guardian::ElderGuardianEntity;
@@ -163,8 +162,9 @@ pub fn from_type(
         id if id == EntityType::ENDERMAN.id => EndermanEntity::new(entity),
 
         id if id == EntityType::BLAZE.id => BlazeEntity::new(entity),
-        id if id == EntityType::SPIDER.id => SpiderEntity::new(entity),
-        id if id == EntityType::CAVE_SPIDER.id => CaveSpiderEntity::new(entity),
+        id if id == EntityType::SPIDER.id || id == EntityType::CAVE_SPIDER.id => {
+            SpiderEntity::new(entity)
+        }
         id if id == EntityType::GHAST.id => GhastEntity::new(entity),
         id if id == EntityType::MAGMA_CUBE.id => SlimeEntity::new(entity),
         id if id == EntityType::PHANTOM.id => PhantomEntity::new(entity),

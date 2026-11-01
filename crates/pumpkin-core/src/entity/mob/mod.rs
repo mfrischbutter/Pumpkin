@@ -52,7 +52,6 @@ use uuid::Uuid;
 pub mod bat;
 pub mod blaze;
 pub mod breeze;
-pub mod cave_spider;
 pub mod conversion;
 pub mod creaking;
 pub mod creeper;

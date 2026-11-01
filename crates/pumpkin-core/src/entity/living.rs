@@ -1201,6 +1201,12 @@ impl LivingEntity {
         {
             return false;
         }
+        // Vanilla `Spider.canBeAffected`, inherited by the cave spider.
+        if (entity_type == &EntityType::SPIDER || entity_type == &EntityType::CAVE_SPIDER)
+            && effect.effect_type == &StatusEffect::POISON
+        {
+            return false;
+        }
         // Vanilla `Parched.canBeAffected`.
         if entity_type == &EntityType::PARCHED && effect.effect_type == &StatusEffect::WEAKNESS {
             return false;

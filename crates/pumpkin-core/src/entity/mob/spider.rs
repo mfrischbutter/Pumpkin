@@ -17,10 +17,11 @@ use crate::entity::ai::target_match::TargetMatch;
 use crate::entity::{
     Entity, EntityBase,
     ai::goal::{
-        active_target::TargetCondition, look_around::RandomLookAroundGoal,
-        look_at_entity::LookAtEntityGoal, revenge::RevengeGoal, spider_attack::SpiderAttackGoal,
-        swim::SwimGoal, wander_around::WanderAroundGoal,
+        active_target::TargetCondition, leap_at_target::LeapAtTargetGoal,
+        look_around::RandomLookAroundGoal, look_at_entity::LookAtEntityGoal, revenge::RevengeGoal,
+        spider_attack::SpiderAttackGoal, swim::SwimGoal, wander_around::WanderAroundGoal,
     },
+    ai::pathfinder::Navigator,
     mob::{
         Mob, MobEntity,
         equipment::RegionalDifficulty,
@@ -51,6 +52,7 @@ pub const SPIDER_HUNTS: &[Hunt] = &[
         .when(TargetCondition::NoDaylight),
 ];
 
+/// Vanilla `Spider` and its subclass `CaveSpider`.
 pub struct SpiderEntity {
     pub mob_entity: MobEntity,
     pub is_climbing: AtomicBool,
@@ -58,7 +60,12 @@ pub struct SpiderEntity {
 
 impl SpiderEntity {
     pub fn new(entity: Entity) -> Arc<Self> {
-        let mob_entity = MobEntity::new(entity);
+        let mut mob_entity = MobEntity::new(entity);
+        // Vanilla `Spider.createNavigation`.
+        *mob_entity
+            .navigator
+            .get_mut()
+            .unwrap_or_else(std::sync::PoisonError::into_inner) = Navigator::wall_climber();
         let spider = Self {
             mob_entity,
             is_climbing: AtomicBool::new(false),
@@ -73,10 +80,12 @@ impl SpiderEntity {
             let goal_selector = &mob_arc.mob_entity.goals_selector;
             let target_selector = &mob_arc.mob_entity.target_selector;
 
+            // Vanilla `Spider.registerGoals`.
             goal_selector.add_goal(1, Box::new(SwimGoal::default()));
             fleeing::apply(goal_selector, SPIDER_FLEES);
-            goal_selector.add_goal(3, SpiderAttackGoal::new(1.0, false));
-            goal_selector.add_goal(5, Box::new(WanderAroundGoal::new(0.8)));
+            goal_selector.add_goal(3, Box::new(LeapAtTargetGoal::new(0.4)));
+            goal_selector.add_goal(4, SpiderAttackGoal::new(1.0, true));
+            goal_selector.add_goal(5, Box::new(WanderAroundGoal::water_avoiding(0.8)));
             goal_selector.add_goal(
                 6,
                 LookAtEntityGoal::with_default(mob_weak, &EntityType::PLAYER, 8.0),
@@ -88,6 +97,10 @@ impl SpiderEntity {
         };
 
         mob_arc
+    }
+
+    const fn is_cave_spider(&self) -> bool {
+        self.mob_entity.living_entity.entity.entity_type.id == EntityType::CAVE_SPIDER.id
     }
 
     pub fn is_climbing(&self) -> bool {
@@ -157,12 +170,49 @@ impl Mob for SpiderEntity {
         self.play_entity_sound(Sound::EntitySpiderStep, 0.15, 1.0);
     }
 
+    /// Vanilla `CaveSpider.finalizeSpawn` skips all of `Spider.finalizeSpawn` and the mob's.
     fn finalize_spawn(
         &self,
         world: &Arc<World>,
         group_data: Option<SpawnGroupData>,
     ) -> Option<SpawnGroupData> {
+        if self.is_cave_spider() {
+            return group_data;
+        }
         finalize_spider_spawn(&self.mob_entity, world, group_data)
+    }
+
+    /// Vanilla `CaveSpider.doHurtTarget`: poison for 7 seconds on normal, 15 on hard.
+    fn on_attack(&self, target: &dyn EntityBase) {
+        if !self.is_cave_spider() {
+            return;
+        }
+        let Some(living) = target.get_living_entity() else {
+            return;
+        };
+        let seconds = match self
+            .mob_entity
+            .living_entity
+            .entity
+            .world
+            .load()
+            .level_info
+            .load()
+            .difficulty
+        {
+            Difficulty::Normal => 7,
+            Difficulty::Hard => 15,
+            _ => return,
+        };
+        living.add_effect(Effect {
+            effect_type: &StatusEffect::POISON,
+            duration: seconds * 20,
+            amplifier: 0,
+            ambient: false,
+            show_particles: true,
+            show_icon: true,
+            blend: false,
+        });
     }
 
     fn get_mob_entity(&self) -> &MobEntity {
@@ -177,14 +227,12 @@ impl Mob for SpiderEntity {
         Some(meta)
     }
 
+    /// Vanilla `Spider.tick`: it climbs while it runs into a wall.
     fn mob_tick(&self, _caller: &dyn EntityBase) {
         let entity = &self.mob_entity.living_entity.entity;
         if !entity.is_alive() {
             return;
         }
-
-        let vel = entity.velocity.load();
-        let is_colliding_horizontally = vel.x.abs() < 1e-4 && vel.z.abs() < 1e-4;
-        self.set_climbing(is_colliding_horizontally);
+        self.set_climbing(entity.horizontal_collision.load(Ordering::Relaxed));
     }
 }
