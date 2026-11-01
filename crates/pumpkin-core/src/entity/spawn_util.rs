@@ -27,7 +27,8 @@ impl SpawnStrategy {
     }
 }
 
-fn is_face_full_up(state: &BlockState) -> bool {
+/// Vanilla `Block.isFaceFull(getCollisionShape(...), Direction.UP)`, what `entityCanStandOn` checks.
+pub(crate) fn is_face_full_up(state: &BlockState) -> bool {
     state.is_full_cube()
         || state.get_block_collision_shapes().any(|shape| {
             shape.max.y >= 1.0
