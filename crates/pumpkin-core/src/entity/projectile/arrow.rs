@@ -1,4 +1,5 @@
 use crate::entity::projectile::owner::ProjectileOwner;
+use std::borrow::Cow;
 use std::sync::Arc;
 use std::sync::RwLock;
 use std::sync::atomic::{AtomicBool, AtomicU8, AtomicU32, AtomicU64, Ordering};
@@ -12,7 +13,10 @@ use crate::{
 };
 use bytes::BufMut;
 use pumpkin_data::damage::DamageType;
-use pumpkin_data::data_component_impl::PotionDurationScaleImpl;
+use pumpkin_data::data_component_impl::{
+    PotionContentsImpl, PotionDurationScaleImpl, StatusEffectInstance,
+};
+use pumpkin_data::effect::StatusEffect;
 use pumpkin_data::entity::EntityType;
 use pumpkin_data::item::Item;
 use pumpkin_data::item_stack::ItemStack;
@@ -369,6 +373,37 @@ impl ArrowEntity {
         } else {
             self.entity.extinguish();
         }
+    }
+
+    /// Vanilla `Arrow.addEffect` with `new MobEffectInstance(effect, duration)`: the effect
+    /// joins the custom effects of the arrow's item and colors the arrow.
+    pub fn add_effect(&self, effect: &'static StatusEffect, duration: i32) {
+        let mut item_stack = self
+            .item_stack
+            .write()
+            .unwrap_or_else(std::sync::PoisonError::into_inner);
+        let mut contents = item_stack
+            .get_data_component::<PotionContentsImpl>()
+            .cloned()
+            .unwrap_or(PotionContentsImpl {
+                potion_id: None,
+                custom_color: None,
+                custom_effects: Vec::new(),
+                custom_name: None,
+            });
+        contents.custom_effects.push(StatusEffectInstance {
+            effect_id: Cow::Borrowed(effect.minecraft_name),
+            amplifier: 0,
+            duration,
+            ambient: false,
+            show_particles: true,
+            show_icon: true,
+        });
+        item_stack.set_data_component(contents);
+        let color = Self::get_effect_color(&item_stack);
+        drop(item_stack);
+        self.entity
+            .set_synced_data(pumpkin_data::tracked_data::arrow::ID_EFFECT_COLOR, color);
     }
 
     #[must_use]
