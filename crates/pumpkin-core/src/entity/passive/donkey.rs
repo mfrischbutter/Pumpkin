@@ -34,7 +34,6 @@ const TEMPT_ITEMS: &[&Item] = &[
 ];
 
 pub const FLAG_TAME: u8 = 2;
-pub const FLAG_SADDLE: u8 = 4;
 pub const FLAG_BRED: u8 = 8;
 pub const FLAG_EATING: u8 = 16;
 pub const FLAG_STANDING: u8 = 32;
@@ -108,15 +107,6 @@ impl DonkeyEntity {
 
     pub fn set_tame(&self, val: bool) {
         self.set_flag(FLAG_TAME, val);
-    }
-
-    #[must_use]
-    pub fn is_saddled(&self) -> bool {
-        self.has_flag(FLAG_SADDLE)
-    }
-
-    pub fn set_saddled(&self, val: bool) {
-        self.set_flag(FLAG_SADDLE, val);
     }
 
     #[must_use]
@@ -206,6 +196,21 @@ impl Mob for DonkeyEntity {
         &self.mob_entity
     }
 
+    /// Vanilla `AbstractHorse.canUseSlot(SADDLE)`: a tamed adult.
+    fn can_be_saddled(&self) -> bool {
+        self.get_entity().is_alive() && !self.is_baby() && self.is_tame()
+    }
+
+    /// Vanilla `AbstractHorse.getControllingPassenger`: a player in a saddle.
+    fn mob_controlling_player(&self) -> Option<Arc<Player>> {
+        crate::entity::passive::horse::saddled_rider(self)
+    }
+
+    /// Vanilla `AbstractHorse.tickRidden`, the turn to the rider's look.
+    fn mob_tick_ridden(&self, controller: &Player) {
+        crate::entity::mob::saddle::face_rider(self, controller, 0.5);
+    }
+
     fn mob_init_data_tracker(&self) {
         let entity = self.get_entity();
         let is_baby = entity.age.load(Ordering::Relaxed) < 0;
@@ -238,16 +243,7 @@ impl Mob for DonkeyEntity {
             return true;
         }
 
-        if self.is_tame() && item == &Item::SADDLE && !self.is_saddled() && !self.is_baby() {
-            self.set_saddled(true);
-            item_stack.decrement_unless_creative(player.gamemode.load(), 1);
-            let entity = self.get_entity();
-            let world = entity.world.load();
-            world.play_sound(
-                Sound::EntityHorseSaddle,
-                SoundCategory::Neutral,
-                &entity.pos.load(),
-            );
+        if crate::entity::mob::saddle::try_equip_saddle(self, player, item_stack) {
             return true;
         }
 

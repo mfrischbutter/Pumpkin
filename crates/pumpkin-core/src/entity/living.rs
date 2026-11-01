@@ -1620,6 +1620,20 @@ impl LivingEntity {
         world.broadcast_editioned(&je_packet, &be_packet);
     }
 
+    /// Vanilla `isEffectiveAi` and `travelRidden`: a mob a player steers is moved by that
+    /// player's client, so it neither thinks nor moves itself here. `true` while ridden so.
+    fn tick_ridden(&self, caller: &dyn EntityBase) -> bool {
+        let Some(mob) = caller.get_mob().filter(|_| self.entity.is_alive()) else {
+            return false;
+        };
+        let Some(rider) = mob.mob_controlling_player() else {
+            return false;
+        };
+        mob.mob_tick_ridden(&rider);
+        self.entity.velocity.store(Vector3::default());
+        true
+    }
+
     fn tick_movement(&self, caller: &dyn EntityBase) {
         if let Some(mob) = caller.get_mob() {
             mob.before_mob_ai_step();
@@ -1640,11 +1654,14 @@ impl LivingEntity {
 
         self.movement_input.store(movement_input);
 
+        let ridden = self.tick_ridden(caller);
+
         if caller.is_immobile() {
             self.jumping.store(false, Relaxed);
             let input = self.movement_input.load();
             self.movement_input.store(Vector3::new(0.0, input.y, 0.0));
-        } else if let Some(mob) = caller.get_mob()
+        } else if !ridden
+            && let Some(mob) = caller.get_mob()
             && !mob.get_mob_entity().is_no_ai()
         {
             // Prepare old motion before controllers produce this tick's inputs.
@@ -1706,7 +1723,7 @@ impl LivingEntity {
             )
         });
 
-        if !effective_ai || caller.get_mob().is_some_and(|mob| mob.travel(caller)) {
+        if ridden || !effective_ai || caller.get_mob().is_some_and(|mob| mob.travel(caller)) {
         } else if (touching_water || self.entity.touching_lava.load(SeqCst))
             && should_swim_in_fluids
             && !stands_on_fluid

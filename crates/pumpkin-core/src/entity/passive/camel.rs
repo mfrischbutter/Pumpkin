@@ -7,7 +7,7 @@ use pumpkin_data::BlockState;
 use pumpkin_data::entity::EntityType;
 use pumpkin_data::item::Item;
 use pumpkin_data::item_stack::ItemStack;
-use pumpkin_data::sound::{Sound, SoundCategory};
+use pumpkin_data::sound::Sound;
 use pumpkin_data::tag::{self, Taggable};
 use pumpkin_nbt::compound::NbtCompound;
 use pumpkin_util::math::position::BlockPos;
@@ -28,7 +28,6 @@ use crate::entity::{
 const TEMPT_ITEMS: &[&Item] = &[&Item::CACTUS];
 
 pub const FLAG_TAME: u8 = 2;
-pub const FLAG_SADDLE: u8 = 4;
 pub const FLAG_BRED: u8 = 8;
 pub const FLAG_EATING: u8 = 16;
 pub const FLAG_STANDING: u8 = 32;
@@ -91,15 +90,6 @@ impl CamelEntity {
     }
 
     #[must_use]
-    pub fn is_saddled(&self) -> bool {
-        self.has_flag(FLAG_SADDLE)
-    }
-
-    pub fn set_saddled(&self, val: bool) {
-        self.set_flag(FLAG_SADDLE, val);
-    }
-
-    #[must_use]
     pub fn is_dashing(&self) -> bool {
         self.dashing.load(Ordering::Relaxed)
     }
@@ -149,18 +139,34 @@ impl Mob for CamelEntity {
 
     fn mob_write_nbt(&self, nbt: &mut NbtCompound) {
         self.write_ageable_nbt(nbt);
-        nbt.put_bool("Saddle", self.is_saddled());
     }
 
     fn mob_read_nbt(&self, nbt: &NbtCompound) {
         self.read_ageable_nbt(nbt);
-        if let Some(saddle) = nbt.get_bool("Saddle") {
-            self.set_saddled(saddle);
-        }
+        crate::entity::mob::saddle::read_legacy_saddle(self, nbt);
     }
 
     fn get_mob_entity(&self) -> &MobEntity {
         &self.mob_entity
+    }
+
+    /// Vanilla `AbstractHorse.canUseSlot(SADDLE)`; camels count as tamed.
+    fn can_be_saddled(&self) -> bool {
+        self.get_entity().is_alive() && !self.is_baby()
+    }
+
+    fn saddle_sound(&self) -> Sound {
+        Sound::EntityCamelSaddle
+    }
+
+    /// Vanilla `AbstractHorse.getControllingPassenger`: a player in a saddle.
+    fn mob_controlling_player(&self) -> Option<Arc<Player>> {
+        crate::entity::passive::horse::saddled_rider(self)
+    }
+
+    /// Vanilla `AbstractHorse.tickRidden`, the turn to the rider's look.
+    fn mob_tick_ridden(&self, controller: &Player) {
+        crate::entity::mob::saddle::face_rider(self, controller, 0.5);
     }
 
     fn mob_init_data_tracker(&self) {
@@ -177,18 +183,7 @@ impl Mob for CamelEntity {
     }
 
     fn mob_interact(&self, player: &Arc<Player>, item_stack: &mut ItemStack) -> bool {
-        let item = item_stack.get_item();
-
-        if item == &Item::SADDLE && !self.is_saddled() && !self.is_baby() {
-            self.set_saddled(true);
-            item_stack.decrement_unless_creative(player.gamemode.load(), 1);
-            let entity = self.get_entity();
-            let world = entity.world.load();
-            world.play_sound(
-                Sound::EntityCamelSaddle,
-                SoundCategory::Neutral,
-                &entity.pos.load(),
-            );
+        if crate::entity::mob::saddle::try_equip_saddle(self, player, item_stack) {
             return true;
         }
 

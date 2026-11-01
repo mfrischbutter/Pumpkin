@@ -6,9 +6,8 @@ use std::sync::{
 use crossbeam::atomic::AtomicCell;
 use pumpkin_data::BlockState;
 use pumpkin_data::entity::EntityType;
-use pumpkin_data::item::Item;
 use pumpkin_data::item_stack::ItemStack;
-use pumpkin_data::sound::{Sound, SoundCategory};
+use pumpkin_data::sound::Sound;
 use pumpkin_nbt::compound::NbtCompound;
 use pumpkin_util::math::position::BlockPos;
 use uuid::Uuid;
@@ -27,7 +26,6 @@ use crate::entity::{
 };
 
 pub const FLAG_TAME: u8 = 2;
-pub const FLAG_SADDLE: u8 = 4;
 pub const FLAG_EATING: u8 = 16;
 pub const FLAG_STANDING: u8 = 32;
 pub const FLAG_OPEN_MOUTH: u8 = 64;
@@ -106,15 +104,6 @@ impl SkeletonHorseEntity {
 
     pub fn set_tame(&self, val: bool) {
         self.set_flag(FLAG_TAME, val);
-    }
-
-    #[must_use]
-    pub fn is_saddled(&self) -> bool {
-        self.has_flag(FLAG_SADDLE)
-    }
-
-    pub fn set_saddled(&self, val: bool) {
-        self.set_flag(FLAG_SADDLE, val);
     }
 
     /// Vanilla `SkeletonHorse.isTrap`.
@@ -222,6 +211,21 @@ impl Mob for SkeletonHorseEntity {
         &self.mob_entity
     }
 
+    /// Vanilla `AbstractHorse.canUseSlot(SADDLE)`: a tamed adult.
+    fn can_be_saddled(&self) -> bool {
+        self.get_entity().is_alive() && !self.is_baby() && self.is_tame()
+    }
+
+    /// Vanilla `AbstractHorse.getControllingPassenger`: a player in a saddle.
+    fn mob_controlling_player(&self) -> Option<Arc<Player>> {
+        crate::entity::passive::horse::saddled_rider(self)
+    }
+
+    /// Vanilla `AbstractHorse.tickRidden`, the turn to the rider's look.
+    fn mob_tick_ridden(&self, controller: &Player) {
+        crate::entity::mob::saddle::face_rider(self, controller, 0.5);
+    }
+
     fn mob_init_data_tracker(&self) {
         let entity = self.get_entity();
         let is_baby = entity.age.load(Ordering::Relaxed) < 0;
@@ -238,18 +242,7 @@ impl Mob for SkeletonHorseEntity {
     }
 
     fn mob_interact(&self, player: &Arc<Player>, item_stack: &mut ItemStack) -> bool {
-        let item = item_stack.get_item();
-
-        if self.is_tame() && item == &Item::SADDLE && !self.is_saddled() && !self.is_baby() {
-            self.set_saddled(true);
-            item_stack.decrement_unless_creative(player.gamemode.load(), 1);
-            let entity = self.get_entity();
-            let world = entity.world.load();
-            world.play_sound(
-                Sound::EntityHorseSaddle,
-                SoundCategory::Neutral,
-                &entity.pos.load(),
-            );
+        if crate::entity::mob::saddle::try_equip_saddle(self, player, item_stack) {
             return true;
         }
 

@@ -77,6 +77,7 @@ pub mod piglin_brute;
 pub mod pillager;
 pub mod raider;
 pub mod ravager;
+pub mod saddle;
 pub mod shulker;
 pub mod silverfish;
 pub mod skeleton;
@@ -1457,15 +1458,30 @@ pub trait Mob: EntityBase + Send + Sync {
         None
     }
 
+    /// Vanilla `Mob.isSaddled`: a saddle in the saddle slot.
     fn is_saddled(&self) -> bool {
-        false
+        saddle::has_saddle(self.get_mob_entity())
     }
 
+    /// Vanilla `canUseSlot(EquipmentSlot.SADDLE)`: whether a saddle can be put on now.
     fn can_be_saddled(&self) -> bool {
         false
     }
 
-    fn set_saddled(&self, _saddled: bool) {}
+    /// Vanilla `getEquipSound` for the saddle slot.
+    fn saddle_sound(&self) -> pumpkin_data::sound::Sound {
+        pumpkin_data::sound::Sound::EntityHorseSaddle
+    }
+
+    /// Vanilla `getControllingPassenger` overrides that give the reins to a player, such as a
+    /// saddled pig ridden with a carrot on a stick. That player's client moves the mob, so its
+    /// own AI and physics rest.
+    fn mob_controlling_player(&self) -> Option<Arc<crate::entity::player::Player>> {
+        None
+    }
+
+    /// Vanilla `tickRidden`, each tick a player steers the mob.
+    fn mob_tick_ridden(&self, _controller: &crate::entity::player::Player) {}
 
     /// Vanilla `Mob.checkSpawnObstruction`: no liquid in the bounding box and no entity in
     /// the way.
@@ -2559,7 +2575,9 @@ impl<T: Mob + Send + 'static> EntityBase for T {
     }
 
     fn get_controlling_passenger(&self) -> Option<Arc<dyn EntityBase>> {
-        self.mob_controlling_passenger()
+        self.mob_controlling_player()
+            .map(|player| player as Arc<dyn EntityBase>)
+            .or_else(|| self.mob_controlling_passenger())
     }
 
     fn projectile_receives_side_effects_on_hit(&self, was_hurt: bool) -> bool {

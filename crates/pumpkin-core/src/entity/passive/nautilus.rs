@@ -34,7 +34,6 @@ pub struct NautilusEntity {
     pub owner: AtomicCell<Option<Uuid>>,
     pub is_dashing: AtomicBool,
     pub dash_cooldown: AtomicI32,
-    pub is_saddled: AtomicBool,
     pub inventory: Mutex<Vec<ItemStack>>,
 }
 
@@ -47,7 +46,6 @@ impl NautilusEntity {
             owner: AtomicCell::new(None),
             is_dashing: AtomicBool::new(false),
             dash_cooldown: AtomicI32::new(0),
-            is_saddled: AtomicBool::new(false),
             inventory: Mutex::new(vec![ItemStack::new(0, &pumpkin_data::item::Item::AIR); 9]),
         };
 
@@ -244,7 +242,6 @@ impl Mob for NautilusEntity {
 
     fn mob_write_nbt(&self, nbt: &mut NbtCompound) {
         nbt.put_bool("IsTame", self.is_tame.load(Ordering::Relaxed));
-        nbt.put_bool("Saddled", self.is_saddled.load(Ordering::Relaxed));
         nbt.put_int("DashCooldown", self.dash_cooldown.load(Ordering::Relaxed));
         if let Some(owner) = self.owner.load() {
             nbt.put_uuid("Owner", owner);
@@ -255,8 +252,12 @@ impl Mob for NautilusEntity {
         if let Some(is_tame) = nbt.get_bool("IsTame") {
             self.is_tame.store(is_tame, Ordering::Relaxed);
         }
-        if let Some(saddled) = nbt.get_bool("Saddled") {
-            self.is_saddled.store(saddled, Ordering::Relaxed);
+        if nbt.get_bool("Saddled") == Some(true) && !self.is_saddled() {
+            // Older Pumpkin saves kept the saddle as a flag.
+            self.mob_entity.set_item_slot_and_drop_when_killed(
+                &pumpkin_data::data_component_impl::EquipmentSlot::SADDLE,
+                ItemStack::new(1, &pumpkin_data::item::Item::SADDLE),
+            );
         }
         if let Some(dash) = nbt.get_int("DashCooldown") {
             self.dash_cooldown.store(dash, Ordering::Relaxed);
@@ -377,17 +378,7 @@ impl Mob for NautilusEntity {
         }
 
         if self.is_tame() && !player.get_entity().is_sneaking() {
-            if !self.is_saddled.load(Ordering::Relaxed)
-                && item_stack.item == &pumpkin_data::item::Item::SADDLE
-            {
-                item_stack.decrement_unless_creative(player.gamemode.load(), 1);
-                self.is_saddled.store(true, Ordering::Relaxed);
-                let world = entity.world.load();
-                world.play_sound(
-                    Sound::ItemNautilusSaddleEquip,
-                    SoundCategory::Neutral,
-                    &entity.pos.load(),
-                );
+            if crate::entity::mob::saddle::try_equip_saddle(self, player, item_stack) {
                 return true;
             }
 
@@ -403,15 +394,21 @@ impl Mob for NautilusEntity {
         self.animal_interact(player, item_stack, self.get_ambient_sound())
     }
 
-    fn is_saddled(&self) -> bool {
-        self.is_saddled.load(Ordering::Relaxed)
-    }
-
+    /// Vanilla `AbstractNautilus.canUseSlot(SADDLE)`: a tamed adult.
     fn can_be_saddled(&self) -> bool {
-        self.mob_entity.living_entity.entity.is_alive()
+        let living = &self.mob_entity.living_entity;
+        living.entity.is_alive() && !living.is_baby() && self.is_tame()
     }
 
-    fn set_saddled(&self, saddled: bool) {
-        self.is_saddled.store(saddled, Ordering::Relaxed);
+    fn saddle_sound(&self) -> Sound {
+        Sound::ItemNautilusSaddleEquip
+    }
+
+    /// Vanilla `AbstractNautilus.getControllingPassenger`: a player in a saddle.
+    fn mob_controlling_player(&self) -> Option<Arc<Player>> {
+        if !self.is_saddled() {
+            return None;
+        }
+        crate::entity::mob::saddle::first_passenger_player(self)
     }
 }

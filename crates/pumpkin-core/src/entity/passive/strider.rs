@@ -8,7 +8,7 @@ use pumpkin_data::entity::EntityType;
 use pumpkin_data::fluid::Fluid;
 use pumpkin_data::item::Item;
 use pumpkin_data::item_stack::ItemStack;
-use pumpkin_data::sound::{Sound, SoundCategory};
+use pumpkin_data::sound::Sound;
 use pumpkin_data::tag::{self, Taggable};
 use pumpkin_nbt::compound::NbtCompound;
 use pumpkin_util::math::boundingbox::BoundingBox;
@@ -31,7 +31,7 @@ use crate::entity::{
         wander_around::WanderAroundGoal,
     },
     item_steerable::{ItemBasedSteering, ItemSteerable},
-    mob::{Mob, MobEntity, spawn::SpawnGroupData},
+    mob::{Mob, MobEntity, saddle, spawn::SpawnGroupData},
     passive::animal::Animal,
     player::Player,
 };
@@ -52,7 +52,6 @@ pub struct StriderEntity {
     pub mob_entity: MobEntity,
     pub ageable_data: AgeableData,
     pub steering: ItemBasedSteering,
-    pub saddled: AtomicBool,
     pub suffocating: AtomicBool,
     /// Vanilla `isBeingTempted`, kept by [`StriderTemptGoal`].
     tempted: Arc<AtomicBool>,
@@ -67,7 +66,6 @@ impl StriderEntity {
             mob_entity,
             ageable_data: AgeableData::default(),
             steering: ItemBasedSteering::default(),
-            saddled: AtomicBool::new(false),
             suffocating: AtomicBool::new(false),
             tempted: tempted.clone(),
         };
@@ -317,7 +315,10 @@ impl Mob for StriderEntity {
                     ItemStack::new(1, &Item::WARPED_FUNGUS_ON_A_STICK),
                 );
             }
-            self.set_saddled(true);
+            self.mob_entity.set_item_slot_and_drop_when_killed(
+                &EquipmentSlot::SADDLE,
+                ItemStack::new(1, &Item::SADDLE),
+            );
             0.0
         } else if baby {
             let jockey = from_type(&EntityType::STRIDER, pos, world, Uuid::new_v4());
@@ -353,16 +354,11 @@ impl Mob for StriderEntity {
 
     fn mob_write_nbt(&self, nbt: &mut NbtCompound) {
         self.write_ageable_nbt(nbt);
-        nbt.put_bool("Saddle", self.is_saddled());
     }
 
     fn mob_read_nbt(&self, nbt: &NbtCompound) {
         self.read_ageable_nbt(nbt);
-        if let Some(saddle) = nbt.get_bool("Saddle") {
-            self.set_saddled(saddle);
-        } else if let Some(saddle_byte) = nbt.get_byte("Saddle") {
-            self.set_saddled(saddle_byte == 1);
-        }
+        saddle::read_legacy_saddle(self, nbt);
     }
 
     fn get_mob_entity(&self) -> &MobEntity {
@@ -373,16 +369,28 @@ impl Mob for StriderEntity {
         Some(self)
     }
 
-    fn is_saddled(&self) -> bool {
-        self.saddled.load(Ordering::Relaxed)
-    }
-
+    /// Vanilla `Strider.canUseSlot(SADDLE)`.
     fn can_be_saddled(&self) -> bool {
         self.mob_entity.living_entity.entity.is_alive() && !self.is_baby()
     }
 
-    fn set_saddled(&self, saddled: bool) {
-        self.saddled.store(saddled, Ordering::Relaxed);
+    fn saddle_sound(&self) -> Sound {
+        Sound::EntityStriderSaddle
+    }
+
+    /// Vanilla `Strider.getControllingPassenger`: a rider holding a warped fungus on a stick.
+    fn mob_controlling_player(&self) -> Option<Arc<Player>> {
+        if !self.is_saddled() {
+            return None;
+        }
+        saddle::first_passenger_player(self)
+            .filter(|player| saddle::is_holding(player, &Item::WARPED_FUNGUS_ON_A_STICK))
+    }
+
+    /// Vanilla `Strider.tickRidden`.
+    fn mob_tick_ridden(&self, controller: &Player) {
+        saddle::face_rider(self, controller, 0.5);
+        self.steering.tick_boost();
     }
 
     fn mob_init_data_tracker(&self) {
@@ -398,18 +406,6 @@ impl Mob for StriderEntity {
     }
 
     fn mob_interact(&self, player: &Arc<Player>, item_stack: &mut ItemStack) -> bool {
-        let item = item_stack.get_item();
-
-        if item == &Item::SADDLE && self.can_be_saddled() && !self.is_saddled() {
-            self.set_saddled(true);
-            item_stack.decrement_unless_creative(player.gamemode.load(), 1);
-            let entity = self.get_entity();
-            let world = entity.world.load();
-            let pos = entity.pos.load();
-            world.play_sound(Sound::EntityStriderSaddle, SoundCategory::Neutral, &pos);
-            return true;
-        }
-
         let has_food = self.is_food(item_stack);
         if self.is_saddled() && !has_food {
             let world = player.world();
@@ -438,13 +434,23 @@ impl Mob for StriderEntity {
                 pitch,
             );
         }
-        consumed
+        consumed || saddle::try_equip_saddle(self, player, item_stack)
     }
 }
 
 impl ItemSteerable for StriderEntity {
+    /// Vanilla `Strider.boost`: the boost time goes to the rider's client, which moves it.
     fn boost(&self) -> bool {
-        self.steering.boost()
+        let boosted = self.steering.boost();
+        if boosted {
+            self.get_entity().set_synced_data(
+                pumpkin_data::tracked_data::strider::DATA_BOOST_TIME,
+                pumpkin_protocol::codec::var_int::VarInt(
+                    self.steering.boost_time_total.load(Ordering::Relaxed),
+                ),
+            );
+        }
+        boosted
     }
 
     fn as_any(&self) -> &dyn std::any::Any {

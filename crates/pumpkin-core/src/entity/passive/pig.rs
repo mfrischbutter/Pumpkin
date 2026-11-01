@@ -1,6 +1,6 @@
 use std::sync::{
     Arc, Weak,
-    atomic::{AtomicBool, AtomicU8, Ordering},
+    atomic::{AtomicU8, Ordering},
 };
 
 use pumpkin_data::BlockState;
@@ -26,7 +26,7 @@ use crate::entity::{
         look_around::RandomLookAroundGoal, look_at_entity::LookAtEntityGoal, swim::SwimGoal,
         tempt::TemptGoal, wander_around::WanderAroundGoal,
     },
-    mob::{Mob, MobEntity, spawn::SpawnGroupData},
+    mob::{Mob, MobEntity, saddle, spawn::SpawnGroupData},
     passive::animal::Animal,
     player::Player,
 };
@@ -41,7 +41,6 @@ pub struct PigEntity {
     pub mob_entity: MobEntity,
     pub ageable_data: crate::entity::ageable::AgeableData,
     pub steering: ItemBasedSteering,
-    pub saddled: AtomicBool,
     pub variant: AtomicU8,
     pub sound_variant: AtomicU8,
 }
@@ -53,7 +52,6 @@ impl PigEntity {
             mob_entity,
             ageable_data: crate::entity::ageable::AgeableData::default(),
             steering: ItemBasedSteering::default(),
-            saddled: AtomicBool::new(false),
             variant: AtomicU8::new(PigVariant::default().id()),
             sound_variant: AtomicU8::new(PigSoundVariant::Classic as u8),
         };
@@ -279,7 +277,6 @@ impl Mob for PigEntity {
     }
 
     fn mob_write_nbt(&self, nbt: &mut NbtCompound) {
-        nbt.put_bool("Saddle", self.is_saddled());
         let variant_id = u32::from(self.variant.load(Ordering::Relaxed));
         let variant_str =
             self.resolve_dynamic_entry_id("minecraft:pig_variant", variant_id, |id| {
@@ -296,9 +293,7 @@ impl Mob for PigEntity {
     }
 
     fn mob_read_nbt(&self, nbt: &NbtCompound) {
-        if let Some(saddle) = nbt.get_byte("Saddle") {
-            self.set_saddled(saddle == 1);
-        }
+        saddle::read_legacy_saddle(self, nbt);
         if let Some(variant_str) = nbt.get_string("variant")
             && let Some(id) =
                 self.resolve_dynamic_raw_id("minecraft:pig_variant", variant_str, |n| {
@@ -324,16 +319,28 @@ impl Mob for PigEntity {
         Some(self)
     }
 
-    fn is_saddled(&self) -> bool {
-        self.saddled.load(Ordering::Relaxed)
-    }
-
+    /// Vanilla `Pig.canUseSlot(SADDLE)`.
     fn can_be_saddled(&self) -> bool {
         self.mob_entity.living_entity.entity.is_alive() && !self.is_baby()
     }
 
-    fn set_saddled(&self, saddled: bool) {
-        self.saddled.store(saddled, Ordering::Relaxed);
+    fn saddle_sound(&self) -> Sound {
+        Sound::EntityPigSaddle
+    }
+
+    /// Vanilla `Pig.getControllingPassenger`: a rider holding a carrot on a stick.
+    fn mob_controlling_player(&self) -> Option<Arc<Player>> {
+        if !self.is_saddled() {
+            return None;
+        }
+        saddle::first_passenger_player(self)
+            .filter(|player| saddle::is_holding(player, &Item::CARROT_ON_A_STICK))
+    }
+
+    /// Vanilla `Pig.tickRidden`.
+    fn mob_tick_ridden(&self, controller: &Player) {
+        saddle::face_rider(self, controller, 0.5);
+        self.steering.tick_boost();
     }
 
     fn mob_interact(&self, player: &Arc<Player>, item_stack: &mut ItemStack) -> bool {
@@ -363,26 +370,21 @@ impl Mob for PigEntity {
             return true;
         }
 
-        if item_stack.get_item() == &Item::SADDLE && self.can_be_saddled() && !self.is_saddled() {
-            self.set_saddled(true);
-            item_stack.decrement_unless_creative(player.gamemode.load(), 1);
-            let entity = self.get_entity();
-            let world = entity.world.load();
-            let pos = entity.pos.load();
-            world.play_sound(
-                Sound::EntityPigSaddle,
-                pumpkin_data::sound::SoundCategory::Neutral,
-                &pos,
-            );
-            return true;
-        }
-        false
+        saddle::try_equip_saddle(self, player, item_stack)
     }
 }
 
 impl ItemSteerable for PigEntity {
+    /// Vanilla `Pig.boost`: the boost time goes to the rider's client, which moves the pig.
     fn boost(&self) -> bool {
-        self.steering.boost()
+        let boosted = self.steering.boost();
+        if boosted {
+            self.get_entity().set_synced_data(
+                pumpkin_data::tracked_data::pig::DATA_BOOST_TIME,
+                VarInt(self.steering.boost_time_total.load(Ordering::Relaxed)),
+            );
+        }
+        boosted
     }
 
     fn as_any(&self) -> &dyn std::any::Any {
