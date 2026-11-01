@@ -47,8 +47,8 @@ use pumpkin_protocol::{
     codec::var_int::VarInt,
     codec::var_ulong::VarULong,
     java::client::play::{
-        CEntityPositionSync, CEntityVelocity, CPlayerPosition, CSetEntityMetadata, CSetPassengers,
-        CSpawnEntity, Metadata, MetadataSerializer,
+        CEntityVelocity, CPlayerPosition, CSetEntityMetadata, CSetPassengers, CSpawnEntity,
+        Metadata, MetadataSerializer,
     },
 };
 use pumpkin_util::math::vector3::Axis;
@@ -4173,41 +4173,20 @@ impl Entity {
         position: Vector3<f64>,
         yaw: Option<f32>,
         pitch: Option<f32>,
-        world: &World,
+        _world: &World,
     ) {
-        // Update server-side position and bounding box
+        // Vanilla `teleportTo` only moves the entity: its `ServerEntity` sees the jump on the
+        // next tracker tick and sends a full position sync. Sending one here and resetting the
+        // tracker's base raced the tracker, which could send a delta from the old base after
+        // the sync and leave clients off by the teleport distance.
         self.set_pos(position);
         if let Some(yaw) = yaw {
             self.yaw.store(yaw);
+            self.head_yaw.store(yaw);
         }
         if let Some(pitch) = pitch {
             self.set_pitch(pitch);
         }
-        // Update cache so we don't send rubberbanding deltas
-        self.last_sent_pos.store(position);
-        // TODO: use `pumpkin_util::math::pack_degrees`.
-        if let Some(yaw) = yaw {
-            self.last_sent_yaw
-                .store((yaw * 256.0 / 360.0).rem_euclid(256.0) as u8, Relaxed);
-            self.last_sent_head_yaw
-                .store((yaw * 256.0 / 360.0).rem_euclid(256.0) as u8, Relaxed);
-        }
-        if let Some(pitch) = pitch {
-            self.last_sent_pitch
-                .store((pitch * 256.0 / 360.0).rem_euclid(256.0) as u8, Relaxed);
-        }
-        let chunk_pos = self.chunk_pos.load();
-        world.broadcast_to_chunk(
-            chunk_pos,
-            &CEntityPositionSync::new(
-                self.entity_id.into(),
-                position,
-                self.velocity.load(),
-                yaw.unwrap_or(self.yaw.load()),
-                pitch.unwrap_or(self.pitch.load()),
-                self.on_ground.load(Ordering::SeqCst),
-            ),
-        );
     }
 
     pub fn get_eye_pos(&self) -> Vector3<f64> {

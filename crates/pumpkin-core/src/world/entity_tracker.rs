@@ -180,7 +180,13 @@ impl TrackedEntity {
 
             if self.entity.is_passenger() {
                 if rot_changed {
-                    self.send_move(entity, MoveSync::Rot, yaw, pitch, world);
+                    self.send_move(
+                        entity,
+                        MoveSync::Rot,
+                        entity.pos.load(),
+                        (yaw, pitch),
+                        world,
+                    );
                     entity.last_sent_yaw.store(yaw, Relaxed);
                     entity.last_sent_pitch.store(pitch, Relaxed);
                 }
@@ -194,7 +200,7 @@ impl TrackedEntity {
                     self.send_motion(entity, world);
                 }
                 if let Some(sync) = sync {
-                    self.send_move(entity, sync, yaw, pitch, world);
+                    self.send_move(entity, sync, pos, (yaw, pitch), world);
                 }
                 entity.send_dirty_entity_data();
                 if let Some(sync) = sync {
@@ -281,7 +287,17 @@ impl TrackedEntity {
     }
 
     /// Java only -> Bedrock uses [`Self::send_bedrock_move`].
-    fn send_move(&self, entity: &Entity, sync: MoveSync, yaw: u8, pitch: u8, world: &World) {
+    /// Sends `sync` for the position `pos` the delta was taken from: re-reading the entity
+    /// here could send a newer position than the base the tracker keeps, after which a move
+    /// back to that base is never sent.
+    fn send_move(
+        &self,
+        entity: &Entity,
+        sync: MoveSync,
+        pos: Vector3<f64>,
+        (yaw, pitch): (u8, u8),
+        world: &World,
+    ) {
         let on_ground = entity.on_ground.load(Relaxed);
         let id = VarInt(self.entity_id);
         match sync {
@@ -301,7 +317,7 @@ impl TrackedEntity {
             MoveSync::Absolute => self.send_to_tracking_players(
                 &CEntityPositionSync::new(
                     id,
-                    entity.pos.load(),
+                    pos,
                     entity.velocity.load(),
                     entity.yaw.load(),
                     entity.pitch.load(),
