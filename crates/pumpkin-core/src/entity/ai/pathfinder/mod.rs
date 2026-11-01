@@ -922,6 +922,45 @@ impl PathNavigation {
         }
     }
 
+    /// Vanilla `PathNavigation.followThePath` for a mob in a liquid, without the stuck detection.
+    fn follow_the_path_in_liquid(
+        &mut self,
+        entity: &LivingEntity,
+        mob_pos: Vector3<f64>,
+        max_vertical_distance: f64,
+    ) {
+        let current_pos = entity.entity.pos.load();
+        let width = entity.entity.width();
+        self.max_distance_to_waypoint = Self::waypoint_margin(width);
+        let margin = f64::from(self.max_distance_to_waypoint);
+        let Some(path) = &mut self.path else {
+            return;
+        };
+        let Some(pos) = path.get_next_node_pos() else {
+            return;
+        };
+        let reached = ((current_pos.x - (f64::from(pos.0.x) + 0.5)).abs() < margin
+            && (current_pos.z - (f64::from(pos.0.z) + 0.5)).abs() < margin
+            && (current_pos.y - f64::from(pos.0.y)).abs() < max_vertical_distance)
+            || (path
+                .get_next_node()
+                .is_some_and(|node| Self::can_cut_corner(node.path_type))
+                && Self::should_target_next_node_in_direction(mob_pos, path, || {
+                    path.get_next_entity_pos(width).is_some_and(|target| {
+                        Self::can_move_directly(
+                            &entity.entity.world.load(),
+                            mob_pos,
+                            target,
+                            entity.entity.height(),
+                            false,
+                        )
+                    })
+                }));
+        if reached {
+            path.advance();
+        }
+    }
+
     /// Vanilla `PathNavigation.canCutCorner`.
     #[must_use]
     pub const fn can_cut_corner(path_type: PathType) -> bool {
@@ -1679,52 +1718,30 @@ impl PathNavigationTrait for WaterBoundPathNavigation {
             self.inner.stop();
             return None;
         }
-        let current_pos = entity.entity.pos.load();
-        let mob_pos = current_pos.add_raw(0.0, f64::from(entity.entity.height()) * 0.5, 0.0);
-        let can_update = self.inner.can_update_path(entity);
-        let width = entity.entity.width();
-        self.inner.max_distance_to_waypoint = PathNavigation::waypoint_margin(width);
-        if let Some(path) = &mut self.inner.path
-            && let Some(pos) = path.get_next_node_pos()
-        {
-            let reached = if can_update {
-                let margin = f64::from(self.inner.max_distance_to_waypoint);
-                ((current_pos.x - (f64::from(pos.0.x) + 0.5)).abs() < margin
-                    && (current_pos.z - (f64::from(pos.0.z) + 0.5)).abs() < margin
-                    && (current_pos.y - f64::from(pos.0.y)).abs()
-                        < Self::MAX_VERTICAL_DISTANCE_TO_WAYPOINT)
-                    || (path
-                        .get_next_node()
-                        .is_some_and(|node| PathNavigation::can_cut_corner(node.path_type))
-                        && PathNavigation::should_target_next_node_in_direction(
-                            mob_pos,
-                            path,
-                            || {
-                                path.get_next_entity_pos(width).is_some_and(|target| {
-                                    PathNavigation::can_move_directly(
-                                        &entity.entity.world.load(),
-                                        mob_pos,
-                                        target,
-                                        entity.entity.height(),
-                                        false,
-                                    )
-                                })
-                            },
-                        ))
-            } else {
-                path.get_next_entity_pos(width).is_some_and(|target| {
+        let mob_pos =
+            entity
+                .entity
+                .pos
+                .load()
+                .add_raw(0.0, f64::from(entity.entity.height()) * 0.5, 0.0);
+        if self.inner.can_update_path(entity) {
+            self.inner.follow_the_path_in_liquid(
+                entity,
+                mob_pos,
+                Self::MAX_VERTICAL_DISTANCE_TO_WAYPOINT,
+            );
+            self.inner.do_stuck_detection(mob_pos, entity);
+        } else if let Some(path) = &mut self.inner.path
+            && path
+                .get_next_entity_pos(entity.entity.width())
+                .is_some_and(|target| {
                     mob_pos.y > target.y
                         && !entity.entity.on_ground.load(Ordering::Relaxed)
                         && mob_pos.x.floor() == target.x.floor()
                         && mob_pos.z.floor() == target.z.floor()
                 })
-            };
-            if reached {
-                path.advance();
-            }
-        }
-        if can_update {
-            self.inner.do_stuck_detection(mob_pos, entity);
+        {
+            path.advance();
         }
         self.inner.target(entity)
     }
@@ -2130,6 +2147,11 @@ impl PathNavigationTrait for AmphibiousPathNavigation {
         self.inner.set_progress(goal);
     }
 
+    /// Vanilla `AmphibiousPathNavigation.isStableDestination`: anything with a block below.
+    fn is_stable_destination(&self, world: &World, pos: &BlockPos) -> bool {
+        !world.get_block_state(&pos.down()).is_air()
+    }
+
     fn set_speed(&mut self, speed: f64) {
         self.inner.set_speed(speed);
     }
@@ -2192,34 +2214,19 @@ impl PathNavigationTrait for AmphibiousPathNavigation {
         if entity.entity.touching_water.load(Ordering::Relaxed) {
             self.inner.tick_count += 1;
             self.inner.update_path(entity);
-
-            let mob_pos = Vector3::new(
-                entity.entity.pos.load().x,
-                entity.entity.pos.load().y + f64::from(entity.entity.height()) * 0.5,
-                entity.entity.pos.load().z,
-            );
-            self.inner.do_stuck_detection(mob_pos, entity);
-
             if self.is_done() {
                 self.inner.stop();
-            } else if let Some(path) = &mut self.inner.path
-                && let Some(pos) = path.get_next_node_pos()
-            {
-                let target_pos = Vector3::new(
-                    f64::from(pos.0.x) + 0.5,
-                    f64::from(pos.0.y) + 0.5,
-                    f64::from(pos.0.z) + 0.5,
-                );
-                let current_pos = entity.entity.pos.load();
-                let dx = target_pos.x - current_pos.x;
-                let dy = target_pos.y - current_pos.y;
-                let dz = target_pos.z - current_pos.z;
-                let dist_sq = dx * dx + dy * dy + dz * dz;
-
-                if dist_sq < 0.5 * 0.5 {
-                    path.advance();
-                }
+                return None;
             }
+            let mob_pos =
+                entity
+                    .entity
+                    .pos
+                    .load()
+                    .add_raw(0.0, f64::from(entity.entity.height()) * 0.5, 0.0);
+            self.inner
+                .follow_the_path_in_liquid(entity, mob_pos, NODE_REACH_Y);
+            self.inner.do_stuck_detection(mob_pos, entity);
         } else {
             self.inner.tick_ground(entity)?;
         }
@@ -2455,6 +2462,43 @@ mod tests {
         world.level.shutdown().await;
         assert!(steering_target.is_none());
         assert!(navigation.is_done());
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn amphibious_navigation_leaves_its_start_node_in_water() -> TestResult {
+        let folder = tempfile::tempdir()?;
+        let world = world(&folder);
+        let living = living(world.clone(), &EntityType::AXOLOTL);
+        living.entity.touching_water.store(true, Ordering::Relaxed);
+        let start = BlockPos::new(0, 64, 0);
+        let next = BlockPos::new(0, 64, 1);
+        let path = Path::new(vec![Node::new(start), Node::new(next)], next, true);
+        let mut navigation = AmphibiousPathNavigation::new(false);
+        navigation.move_to_path(Some(path), 1.0, &living);
+        let steering_target = navigation.tick(&living);
+        world.level.shutdown().await;
+        let steering_target = steering_target.ok_or("no steering target")?;
+        assert!((steering_target.position.z - 1.5).abs() < 1.0e-9);
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn amphibious_destinations_may_be_in_open_water() -> TestResult {
+        let folder = tempfile::tempdir()?;
+        let world = world(&folder);
+        let chunk = pumpkin_world::chunk::ChunkData::empty_sync(0, 0);
+        chunk.set_block_absolute_y(0, 63, 0, pumpkin_data::Block::WATER.default_state.id);
+        world
+            .level
+            .loaded_chunks
+            .insert(pumpkin_util::math::vector2::Vector2::new(0, 0), chunk);
+        let navigation = AmphibiousPathNavigation::new(false);
+        let over_water = navigation.is_stable_destination(&world, &BlockPos::new(0, 64, 0));
+        let over_air = navigation.is_stable_destination(&world, &BlockPos::new(1, 64, 0));
+        world.level.shutdown().await;
+        assert!(over_water);
+        assert!(!over_air);
         Ok(())
     }
 
