@@ -4,6 +4,7 @@ use std::sync::{Arc, Mutex};
 use pumpkin_data::block_properties::{TrialSpawnerLikeProperties, TrialSpawnerState};
 use pumpkin_data::effect::StatusEffect;
 use pumpkin_data::entity::EntityType;
+use pumpkin_data::item_stack::ItemStack;
 use pumpkin_data::potion::Effect;
 use pumpkin_data::sound::{Sound, SoundCategory};
 use pumpkin_data::trial_spawner::TrialSpawnerKey;
@@ -13,6 +14,7 @@ use pumpkin_nbt::tag::NbtTag;
 use pumpkin_util::Difficulty;
 use pumpkin_util::math::position::BlockPos;
 use pumpkin_util::math::vector3::Vector3;
+use pumpkin_world::clip::{ClipBlock, ClipContext, ClipFluid};
 use rand::RngExt;
 use uuid::Uuid;
 
@@ -20,10 +22,11 @@ use super::BlockEntity;
 use super::mob_spawner::{CustomSpawnRules, EquipmentTable, entity_position, equip};
 use crate::block::blocks::redstone::dispenser::spawn_item;
 use crate::data::datapack::dynamic_registry_loader::json_to_nbt_tag;
-use crate::entity::EntityBase;
 use crate::entity::mob::spawn::{EntitySpawnReason, finalize_spawn};
+use crate::entity::ominous_item_spawner::OminousItemSpawnerEntity;
 use crate::entity::player::Player;
 use crate::entity::r#type::{check_spawn_rules, load_entity};
+use crate::entity::{Entity, EntityBase};
 use crate::world::World;
 use crate::world::level_accessor::LevelAccessor;
 use pumpkin_data::game_event::GameEvent;
@@ -231,6 +234,14 @@ pub struct WeightedSpawnData {
 #[derive(Clone, Debug)]
 pub struct WeightedLootTable {
     pub data: String,
+    pub weight: i32,
+}
+
+/// One of the ominous items an ominous trial spawner dispenses: vanilla's
+/// `WeightedList<ItemStack>` entry, a single item weighted by the rolled count.
+#[derive(Clone, Debug)]
+pub struct WeightedItem {
+    pub item: ItemStack,
     pub weight: i32,
 }
 
@@ -676,6 +687,8 @@ pub struct TrialSpawnerStateData {
     pub total_mobs_spawned: i32,
     pub next_spawn_data: Option<SpawnData>,
     pub ejecting_loot_table: Option<String>,
+    /// Vanilla `dispensing`: the ominous items once rolled, not saved.
+    pub dispensing: Option<Vec<WeightedItem>>,
 }
 
 impl TrialSpawnerStateData {
@@ -1194,6 +1207,152 @@ impl TrialSpawner {
         Some(entity.get_entity().entity_uuid)
     }
 
+    /// Vanilla `TrialSpawnerState.spawnOminousOminousItemSpawner`: once the item cooldown
+    /// has passed, one of the ominous items gets an ominous item spawner above a player of
+    /// the trial or one of its mobs, with the begin sound, and the cooldown restarts.
+    fn spawn_ominous_item_spawner(
+        &mut self,
+        world: &Arc<World>,
+        spawner_pos: BlockPos,
+        game_time: i64,
+    ) {
+        let Some(item) = self.pick_dispensing_item(world, spawner_pos) else {
+            return;
+        };
+        if game_time < self.data.cooldown_ends_at {
+            return;
+        }
+        let Some(pos) = self.position_to_spawn_spawner(world, spawner_pos) else {
+            return;
+        };
+        world.spawn_entity(Arc::new(OminousItemSpawnerEntity::create(
+            world.clone(),
+            pos,
+            item,
+        )));
+        let mut rng = rand::rng();
+        let pitch = (rng.random::<f32>() - rng.random::<f32>()) * 0.2 + 1.0;
+        world.play_sound_fine(
+            Sound::BlockTrialSpawnerSpawnItemBegin,
+            SoundCategory::Blocks,
+            &BlockPos::floored_v(pos).to_centered_f64(),
+            1.0,
+            pitch,
+        );
+        self.data.cooldown_ends_at = game_time + TICKS_BETWEEN_ITEM_SPAWNERS;
+    }
+
+    /// Vanilla `TrialSpawnerStateData.getDispensingItems` and the pick from it: the ominous
+    /// item table rolled once per spawner, seeded by the world seed and the coarse position,
+    /// every drop weighted by its count.
+    fn pick_dispensing_item(
+        &mut self,
+        world: &Arc<World>,
+        spawner_pos: BlockPos,
+    ) -> Option<ItemStack> {
+        if self.data.dispensing.is_none() {
+            let table = self.active_config().items_to_drop_when_ominous.as_deref()?;
+            let drops = world.get_loot_table(table)?.generate_loot_with_context(
+                low_resolution_position(world, spawner_pos),
+                &crate::world::loot::LootContextParameters {
+                    world: Some(world),
+                    ..Default::default()
+                },
+            );
+            if drops.is_empty() {
+                return None;
+            }
+            self.data.dispensing = Some(
+                drops
+                    .iter()
+                    .map(|drop| WeightedItem {
+                        item: drop.copy_with_count(1),
+                        weight: i32::from(drop.item_count),
+                    })
+                    .collect(),
+            );
+        }
+        let items = self.data.dispensing.as_deref()?;
+        let total_weight: i32 = items.iter().map(|entry| entry.weight).sum();
+        if total_weight <= 0 {
+            return None;
+        }
+        let mut roll = rand::rng().random_range(0..total_weight);
+        for entry in items {
+            if roll < entry.weight {
+                return Some(entry.item.clone());
+            }
+            roll -= entry.weight;
+        }
+        None
+    }
+
+    /// Vanilla `calculatePositionToSpawnSpawner`: the players of the trial in survival,
+    /// alive and within the player range; above one of them or one of the spawner's mobs.
+    fn position_to_spawn_spawner(
+        &self,
+        world: &Arc<World>,
+        spawner_pos: BlockPos,
+    ) -> Option<Vector3<f64>> {
+        let range_sq = f64::from(self.config.required_player_range.pow(2));
+        let centre = spawner_pos.to_centered_f64();
+        let players: Vec<Arc<dyn EntityBase>> = self
+            .data
+            .registered_players
+            .iter()
+            .filter_map(|uuid| world.get_player_by_uuid(*uuid))
+            .filter(|player| {
+                !player.is_creative()
+                    && !player.is_spectator()
+                    && player.living_entity.entity.is_alive()
+                    && player.position().squared_distance_to_vec(&centre) <= range_sq
+            })
+            .map(|player| player as Arc<dyn EntityBase>)
+            .collect();
+        if players.is_empty() {
+            return None;
+        }
+        let target =
+            self.select_entity_to_spawn_item_above(world, players, spawner_pos, range_sq)?;
+        position_above(world, target.get_entity())
+    }
+
+    /// Vanilla `selectEntityToSpawnItemAbove`: by a coin flip one of the spawner's living
+    /// mobs within the player range, or one of the players.
+    fn select_entity_to_spawn_item_above(
+        &self,
+        world: &Arc<World>,
+        players: Vec<Arc<dyn EntityBase>>,
+        spawner_pos: BlockPos,
+        range_sq: f64,
+    ) -> Option<Arc<dyn EntityBase>> {
+        let mut rng = rand::rng();
+        let eligible = if rng.random_bool(0.5) {
+            let centre = spawner_pos.to_centered_f64();
+            self.data
+                .current_mobs
+                .iter()
+                .filter_map(|uuid| world.get_entity_by_uuid(*uuid))
+                .filter(|mob| {
+                    let entity = mob.get_entity();
+                    entity.is_alive()
+                        && entity.pos.load().squared_distance_to_vec(&centre) <= range_sq
+                })
+                .collect()
+        } else {
+            players
+        };
+        if eligible.is_empty() {
+            return None;
+        }
+        let index = if eligible.len() == 1 {
+            0
+        } else {
+            rng.random_range(0..eligible.len())
+        };
+        eligible.into_iter().nth(index)
+    }
+
     /// The active config without borrowing the whole spawner.
     const fn config_for(config: &TrialSpawnerFullConfig, ominous: bool) -> &TrialSpawnerConfig {
         if ominous {
@@ -1305,8 +1464,9 @@ impl TrialSpawner {
                 // Vanilla `countAdditionalPlayers` before this tick's detection.
                 let additional_players = self.data.registered_players.len().saturating_sub(1);
                 self.try_detect_players(world, spawner_pos, state);
-                // The ominous item spawners want the OminousItemSpawner entity, which does not
-                // exist here yet.
+                if self.is_ominous {
+                    self.spawn_ominous_item_spawner(world, spawner_pos, game_time);
+                }
                 let (total_mobs, simultaneous_mobs, ticks_between_spawn) = {
                     let config = self.active_config();
                     (
@@ -1410,6 +1570,38 @@ impl TrialSpawner {
     pub const fn override_peaceful_and_mob_spawn_rule(&mut self) {
         self.override_peaceful_and_mob_spawn_rule = true;
     }
+}
+
+/// Vanilla `TrialSpawnerState.calculatePositionAbove`: a visual clip from the entity two to
+/// five blocks up past its height; the centre of the block below the hit, when that block
+/// has no collision.
+fn position_above(world: &World, entity: &Entity) -> Option<Vector3<f64>> {
+    let entity_pos = entity.pos.load();
+    let up = entity.height() + 2.0 + rand::rng().random_range(0..4) as f32;
+    let try_pos = entity_pos.add_raw(0.0, f64::from(up), 0.0);
+    let hit = world.clip(&ClipContext::new(
+        entity_pos,
+        try_pos,
+        ClipBlock::Visual,
+        ClipFluid::None,
+    ));
+    let down = hit.block_pos.to_centered_f64().add_raw(0.0, -1.0, 0.0);
+    world
+        .get_block_state(&BlockPos::floored_v(down))
+        .collision_shapes
+        .is_empty()
+        .then_some(down)
+}
+
+/// Vanilla `TrialSpawnerStateData.lowResolutionPosition`: the world seed plus the packed
+/// position in cells of 30 x 20 x 30 blocks.
+fn low_resolution_position(world: &World, pos: BlockPos) -> i64 {
+    let cell = BlockPos::new(
+        (pos.0.x as f32 / 30.0).floor() as i32,
+        (pos.0.y as f32 / 20.0).floor() as i32,
+        (pos.0.z as f32 / 30.0).floor() as i32,
+    );
+    (world.level.seed.0 as i64).wrapping_add(cell.as_long())
 }
 
 pub struct TrialSpawnerBlockEntity {

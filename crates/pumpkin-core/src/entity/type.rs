@@ -57,6 +57,7 @@ use crate::entity::mob::zoglin::ZoglinEntity;
 use crate::entity::mob::zombie::zombie_villager::ZombieVillagerEntity;
 use crate::entity::mob::zombie::{drowned::DrownedEntity, husk::HuskEntity, zombie::ZombieEntity};
 use crate::entity::mob::zombified_piglin::ZombifiedPiglinEntity;
+use crate::entity::ominous_item_spawner::OminousItemSpawnerEntity;
 use crate::entity::passive::allay::AllayEntity;
 use crate::entity::passive::armadillo::ArmadilloEntity;
 use crate::entity::passive::axolotl::AxolotlEntity;
@@ -271,6 +272,9 @@ pub fn from_type(
             Arc::new(FallingEntity::new(entity, Block::SAND.default_state.id))
         }
         id if id == EntityType::EXPERIENCE_ORB.id => Arc::new(ExperienceOrbEntity::new(entity, 1)),
+        id if id == EntityType::OMINOUS_ITEM_SPAWNER.id => {
+            Arc::new(OminousItemSpawnerEntity::new(entity))
+        }
         id if id == EntityType::TNT.id => Arc::new(TNTEntity::new(
             entity,
             TNTEntity::DEFAULT_POWER,

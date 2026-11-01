@@ -22,6 +22,7 @@ pub mod fishing_bobber;
 pub mod lingering_potion;
 pub mod llama_spit;
 pub mod owner;
+pub mod projectile_item;
 pub mod shulker_bullet;
 pub mod small_fireball;
 pub mod snowball;

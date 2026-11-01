@@ -98,6 +98,11 @@ impl EntityReference {
         self.set_uuid(None);
     }
 
+    /// Points at `entity`, or at nothing.
+    pub fn set(&self, entity: Option<&Entity>) {
+        self.set_uuid(entity.map(|entity| entity.entity_uuid));
+    }
+
     fn set_uuid(&self, uuid: Option<Uuid>) {
         self.uuid.store(uuid);
         *self.resolved.lock().unwrap_or_else(PoisonError::into_inner) = None;
@@ -126,6 +131,11 @@ impl ProjectileOwner {
             owner: EntityReference::new(owner),
             left_owner: AtomicBool::new(false),
         }
+    }
+
+    /// Vanilla `Projectile.setOwner`.
+    pub fn set(&self, owner: Option<&Entity>) {
+        self.owner.set(owner);
     }
 
     /// Vanilla `checkLeftOwner`, once per tick before moving.

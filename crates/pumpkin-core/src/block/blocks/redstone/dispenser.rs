@@ -1,8 +1,6 @@
-use crate::entity::projectile::owner::ProjectileOwner;
-use rand::{Rng, RngExt, rng};
+use rand::{RngExt, rng};
 use std::sync::Arc;
 use std::sync::Mutex;
-use std::sync::atomic::AtomicBool;
 
 use crate::block::blocks::carved_pumpkin::find_golem_pattern;
 use crate::block::blocks::redstone::block_receives_redstone_power;
@@ -16,16 +14,9 @@ use crate::block::{
 use crate::entity::decoration::armor_stand::ArmorStandEntity;
 use crate::entity::item::ItemEntity;
 use crate::entity::passive::sheep::SheepEntity;
-use crate::entity::projectile::ThrownItemEntity;
-use crate::entity::projectile::arrow::{ArrowEntity, ArrowPickup};
-use crate::entity::projectile::egg::EggEntity;
-use crate::entity::projectile::experience_bottle::ExperienceBottleEntity;
-use crate::entity::projectile::firework_rocket::FireworkRocketEntity;
-use crate::entity::projectile::lingering_potion::LingeringPotionEntity;
-use crate::entity::projectile::small_fireball::SmallFireballEntity;
-use crate::entity::projectile::snowball::SnowballEntity;
-use crate::entity::projectile::splash_potion::SplashPotionEntity;
-use crate::entity::projectile::wind_charge::{WIND_CHARGE_GRAVITY, WindChargeEntity};
+use crate::entity::projectile::projectile_item::{
+    DispenseConfig, DispensePosition, dispense_config, shoot_projectile_item, triangle,
+};
 use crate::entity::tnt::TNTEntity;
 use crate::entity::vehicle::boat::BoatEntity;
 use crate::entity::vehicle::minecart::MinecartEntity;
@@ -109,10 +100,6 @@ struct DispenseContext<'a> {
     world: &'a Arc<World>,
     position: &'a BlockPos,
     facing: Facing,
-}
-
-fn triangle<R: Rng>(rng: &mut R, min: f64, max: f64) -> f64 {
-    (rng.random::<f64>() - rng.random::<f64>()).mul_add(max, min)
 }
 
 const fn to_normal(facing: Facing) -> Vector3<f64> {
@@ -282,17 +269,6 @@ impl BlockBehaviour for DispenserBlock {
 }
 
 impl DispenserBlock {
-    // Velocity values match the vanilla dispenser projectile settings.
-    const DEFAULT_PROJECTILE_POWER: f64 = 1.1;
-    const DEFAULT_PROJECTILE_UNCERTAINTY: f64 = 6.0;
-    const POTION_PROJECTILE_POWER: f64 = 1.375;
-    const POTION_PROJECTILE_UNCERTAINTY: f64 = 3.0;
-    // Fire charges and wind charges share these values.
-    const FIREBALL_PROJECTILE_POWER: f64 = 1.0;
-    const FIREBALL_PROJECTILE_UNCERTAINTY: f64 = 6.666_666_5;
-    const FIREWORK_PROJECTILE_POWER: f64 = 0.5;
-    const FIREWORK_PROJECTILE_UNCERTAINTY: f64 = 1.0;
-
     fn dispense(ctx: &DispenseContext<'_>, dispenser: &DispenserBlockEntity, item: &mut ItemStack) {
         let mut event = crate::plugin::api::events::block::block_dispense::BlockDispenseEvent::new(
             *ctx.position,
@@ -309,16 +285,10 @@ impl DispenserBlock {
 
         // Still missing some specific dispenser behavior that you can find here:
         // https://minecraft.wiki/w/Dispenser#Usage
-        let arrows = [
-            Item::ARROW.id,
-            Item::TIPPED_ARROW.id,
-            Item::SPECTRAL_ARROW.id,
-        ];
         let boats = BoatItem::ids();
 
-        if arrows.contains(&item.item.id) {
-            // Arrows
-            Self::fire_arrow(ctx, item);
+        if let Some(config) = Self::projectile_config(item.item) {
+            Self::dispense_projectile(ctx, item, &config);
         } else if boats.contains(&item.item.id) {
             // Boats
             if !Self::dispense_boat(ctx, item) {
@@ -337,20 +307,6 @@ impl DispenserBlock {
         } else if item.item.id == Item::TNT.id {
             // TNT
             Self::dispense_tnt(ctx, item);
-        } else if item.item.id == Item::SNOWBALL.id {
-            Self::dispense_snowball(ctx, item);
-        } else if item.item.id == Item::EGG.id {
-            Self::dispense_egg(ctx, item);
-        } else if item.item.id == Item::SPLASH_POTION.id {
-            Self::dispense_splash_potion(ctx, item);
-        } else if item.item.id == Item::LINGERING_POTION.id {
-            Self::dispense_lingering_potion(ctx, item);
-        } else if item.item.id == Item::FIRE_CHARGE.id {
-            Self::dispense_fire_charge(ctx, item);
-        } else if item.item.id == Item::WIND_CHARGE.id {
-            Self::dispense_wind_charge(ctx, item);
-        } else if item.item.id == Item::FIREWORK_ROCKET.id {
-            Self::dispense_firework_rocket(ctx, item);
         } else if item.item.id == Item::BUCKET.id {
             // Empty buckets pick up the fluid in front of the dispenser
             Self::dispense_empty_bucket(ctx, dispenser, item);
@@ -401,30 +357,11 @@ impl DispenserBlock {
         } else if Self::dispense_equipment(ctx, item) {
             // Armor, elytra, heads, saddles, horse/wolf armor and llama carpets
             Self::play_dispense_effects(ctx, WorldEvent::SoundDispenserDispense);
-        } else if item.item.id == Item::EXPERIENCE_BOTTLE.id {
-            // Experience bottles (bottles o' enchanting) are thrown like splash potions
-            Self::dispense_experience_bottle(ctx, item);
         } else {
             // TODO: Bone meal, chests onto llamas, brushes onto armadillos
             // Default / Drop
             Self::drop_item(ctx, item);
         }
-    }
-
-    fn projectile_spawn_position(ctx: &DispenseContext<'_>) -> Vector3<f64> {
-        ctx.position
-            .to_centered_f64()
-            .add(&(to_normal(ctx.facing) * 0.7))
-    }
-
-    fn launch_thrown(
-        ctx: &DispenseContext<'_>,
-        thrown: &ThrownItemEntity,
-        power: f64,
-        uncertainty: f64,
-    ) {
-        let facing = to_normal(ctx.facing);
-        thrown.set_velocity(facing.x, facing.y + 0.1, facing.z, power, uncertainty);
     }
 
     fn finish_projectile_launch(
@@ -445,31 +382,62 @@ impl DispenserBlock {
         );
     }
 
-    fn fire_arrow(ctx: &DispenseContext<'_>, item: &mut ItemStack) {
+    /// Vanilla `DispenseItemBehavior.bootStrap`'s `registerProjectileBehavior` calls: the
+    /// projectile items a dispenser shoots (not the trident), with their launch settings.
+    fn projectile_config(item: &Item) -> Option<DispenseConfig> {
+        const SHOT: [&Item; 13] = [
+            &Item::ARROW,
+            &Item::TIPPED_ARROW,
+            &Item::SPECTRAL_ARROW,
+            &Item::EGG,
+            &Item::BLUE_EGG,
+            &Item::BROWN_EGG,
+            &Item::SNOWBALL,
+            &Item::EXPERIENCE_BOTTLE,
+            &Item::SPLASH_POTION,
+            &Item::LINGERING_POTION,
+            &Item::FIREWORK_ROCKET,
+            &Item::FIRE_CHARGE,
+            &Item::WIND_CHARGE,
+        ];
+        SHOT.iter()
+            .any(|shot| shot.id == item.id)
+            .then(|| dispense_config(item))
+            .flatten()
+    }
+
+    /// Vanilla `ProjectileDispenseBehavior`: the projectile leaves from the config's
+    /// position, shot along the facing and a tenth upwards.
+    fn dispense_projectile(
+        ctx: &DispenseContext<'_>,
+        item: &mut ItemStack,
+        config: &DispenseConfig,
+    ) {
         let projectile = item.split(1);
-
         let facing = to_normal(ctx.facing);
-        let arrow_entity = Entity::new(
-            ctx.world.clone(),
-            Self::projectile_spawn_position(ctx),
-            ArrowEntity::entity_type_for_item(projectile.item),
-        );
-        let arrow =
-            ArrowEntity::new_with_item(arrow_entity, None, &projectile, ArrowPickup::Allowed);
-        arrow.apply_on_projectile_spawned(&projectile);
-
-        arrow.set_velocity(
-            facing.x,
-            facing.y + 0.1,
-            facing.z,
-            Self::DEFAULT_PROJECTILE_POWER,
-            Self::DEFAULT_PROJECTILE_UNCERTAINTY,
-        );
-
+        let centre = ctx.position.to_centered_f64();
+        let position = match config.position {
+            DispensePosition::Default => centre.add(&(facing * 0.7)).add_raw(0.0, 0.1, 0.0),
+            DispensePosition::FullBlock => centre.add(&facing),
+            DispensePosition::JustOutside => centre.add(&(facing * 0.500_009_999_999_747_4)),
+        };
+        let Some(entity) = shoot_projectile_item(
+            ctx.world,
+            position,
+            &projectile,
+            facing,
+            facing.add_raw(0.0, 0.1, 0.0),
+            config,
+            None,
+        ) else {
+            return;
+        };
         Self::finish_projectile_launch(
             ctx,
-            Arc::new(arrow),
-            WorldEvent::SoundDispenserProjectileLaunch,
+            entity,
+            config
+                .override_dispense_event
+                .unwrap_or(WorldEvent::SoundDispenserProjectileLaunch),
         );
     }
 
@@ -609,183 +577,6 @@ impl DispenserBlock {
 
         ctx.world
             .sync_world_event(WorldEvent::SoundDispenserDispense, *ctx.position, 0);
-    }
-
-    fn dispense_snowball(ctx: &DispenseContext<'_>, item: &mut ItemStack) {
-        let projectile = item.split(1);
-        let entity = Entity::new(
-            ctx.world.clone(),
-            Self::projectile_spawn_position(ctx),
-            &EntityType::SNOWBALL,
-        );
-        let snowball = SnowballEntity::new(entity);
-        snowball.set_item_stack(projectile);
-        Self::launch_thrown(
-            ctx,
-            &snowball.thrown,
-            Self::DEFAULT_PROJECTILE_POWER,
-            Self::DEFAULT_PROJECTILE_UNCERTAINTY,
-        );
-        Self::finish_projectile_launch(
-            ctx,
-            Arc::new(snowball),
-            WorldEvent::SoundDispenserProjectileLaunch,
-        );
-    }
-
-    fn dispense_egg(ctx: &DispenseContext<'_>, item: &mut ItemStack) {
-        let projectile = item.split(1);
-        let entity = Entity::new(
-            ctx.world.clone(),
-            Self::projectile_spawn_position(ctx),
-            &EntityType::EGG,
-        );
-        let egg = EggEntity::new(entity);
-        egg.set_item_stack(projectile);
-        Self::launch_thrown(
-            ctx,
-            &egg.thrown,
-            Self::DEFAULT_PROJECTILE_POWER,
-            Self::DEFAULT_PROJECTILE_UNCERTAINTY,
-        );
-        Self::finish_projectile_launch(
-            ctx,
-            Arc::new(egg),
-            WorldEvent::SoundDispenserProjectileLaunch,
-        );
-    }
-
-    fn dispense_splash_potion(ctx: &DispenseContext<'_>, item: &mut ItemStack) {
-        let projectile = item.split(1);
-        let entity = Entity::new(
-            ctx.world.clone(),
-            Self::projectile_spawn_position(ctx),
-            &EntityType::SPLASH_POTION,
-        );
-        let potion = SplashPotionEntity::new(entity);
-        potion.set_item_stack(projectile);
-        Self::launch_thrown(
-            ctx,
-            &potion.thrown,
-            Self::POTION_PROJECTILE_POWER,
-            Self::POTION_PROJECTILE_UNCERTAINTY,
-        );
-        Self::finish_projectile_launch(
-            ctx,
-            Arc::new(potion),
-            WorldEvent::SoundDispenserProjectileLaunch,
-        );
-    }
-
-    fn dispense_lingering_potion(ctx: &DispenseContext<'_>, item: &mut ItemStack) {
-        let projectile = item.split(1);
-        let entity = Entity::new(
-            ctx.world.clone(),
-            Self::projectile_spawn_position(ctx),
-            &EntityType::LINGERING_POTION,
-        );
-        let potion = LingeringPotionEntity::new(entity);
-        potion.set_item_stack(projectile);
-        Self::launch_thrown(
-            ctx,
-            &potion.thrown,
-            Self::POTION_PROJECTILE_POWER,
-            Self::POTION_PROJECTILE_UNCERTAINTY,
-        );
-        Self::finish_projectile_launch(
-            ctx,
-            Arc::new(potion),
-            WorldEvent::SoundDispenserProjectileLaunch,
-        );
-    }
-
-    fn dispense_fire_charge(ctx: &DispenseContext<'_>, item: &mut ItemStack) {
-        let _ = item.split(1);
-        let entity = Entity::new(
-            ctx.world.clone(),
-            Self::projectile_spawn_position(ctx),
-            &EntityType::SMALL_FIREBALL,
-        );
-        let fireball = SmallFireballEntity::new(entity);
-        let facing = to_normal(ctx.facing);
-        let dir = Vector3::new(
-            triangle(&mut rng(), facing.x, 0.114_850_000_000_000_01),
-            triangle(&mut rng(), facing.y, 0.114_850_000_000_000_01),
-            triangle(&mut rng(), facing.z, 0.114_850_000_000_000_01),
-        )
-        .normalize();
-        fireball.get_entity().set_velocity(dir);
-        let len = dir.horizontal_length();
-        fireball.get_entity().set_rotation(
-            dir.x.atan2(dir.z) as f32 * 57.295_776,
-            dir.y.atan2(len) as f32 * 57.295_776,
-        );
-        Self::finish_projectile_launch(ctx, Arc::new(fireball), WorldEvent::SoundBlazeFireball);
-    }
-
-    fn dispense_wind_charge(ctx: &DispenseContext<'_>, item: &mut ItemStack) {
-        let _ = item.split(1);
-        let entity = Entity::new(
-            ctx.world.clone(),
-            Self::projectile_spawn_position(ctx),
-            &EntityType::WIND_CHARGE,
-        );
-        let thrown = ThrownItemEntity {
-            entity,
-            owner: ProjectileOwner::none(),
-            collides_with_projectiles: false,
-            has_hit: AtomicBool::new(false),
-            gravity: WIND_CHARGE_GRAVITY,
-        };
-        Self::launch_thrown(
-            ctx,
-            &thrown,
-            Self::FIREBALL_PROJECTILE_POWER,
-            Self::FIREBALL_PROJECTILE_UNCERTAINTY,
-        );
-        Self::finish_projectile_launch(
-            ctx,
-            Arc::new(WindChargeEntity::new_normal(thrown)),
-            WorldEvent::SoundWindChargeShoot,
-        );
-    }
-
-    fn dispense_firework_rocket(ctx: &DispenseContext<'_>, item: &mut ItemStack) {
-        let launched_stack = item.split(1);
-        let facing = to_normal(ctx.facing);
-        // Vanilla spawns fireworks closer to the dispenser face and slightly above center.
-        let position = ctx
-            .position
-            .to_centered_f64()
-            .add(&(facing * (0.7 * 0.5125)))
-            .add(&Vector3::new(0.0, 0.08, 0.0));
-        let entity = Entity::new(ctx.world.clone(), position, &EntityType::FIREWORK_ROCKET);
-        let rocket = FireworkRocketEntity::new_with_stack(entity, launched_stack);
-        rocket.set_shot_at_angle(true);
-
-        // `FireworkRocketEntity` does not expose its inner projectile, so replicate
-        // `ThrownItemEntity::set_velocity` here.
-        let deviation = 0.017_227_5 * Self::FIREWORK_PROJECTILE_UNCERTAINTY;
-        let velocity = Vector3::new(facing.x, facing.y + 0.1, facing.z)
-            .normalize()
-            .add_raw(
-                triangle(&mut rng(), 0.0, deviation),
-                triangle(&mut rng(), 0.0, deviation),
-                triangle(&mut rng(), 0.0, deviation),
-            )
-            .multiply(
-                Self::FIREWORK_PROJECTILE_POWER,
-                Self::FIREWORK_PROJECTILE_POWER,
-                Self::FIREWORK_PROJECTILE_POWER,
-            );
-        let rocket_entity = rocket.get_entity();
-        rocket_entity.set_velocity(velocity);
-        rocket_entity.set_rotation(
-            velocity.x.atan2(velocity.z) as f32 * 57.295_776,
-            velocity.y.atan2(velocity.horizontal_length()) as f32 * 57.295_776,
-        );
-
-        Self::finish_projectile_launch(ctx, Arc::new(rocket), WorldEvent::SoundFireworkShoot);
     }
 
     fn dispense_empty_bucket(
@@ -1093,28 +884,6 @@ impl DispenserBlock {
         );
 
         Some(true)
-    }
-
-    fn dispense_experience_bottle(ctx: &DispenseContext<'_>, item: &mut ItemStack) {
-        let projectile = item.split(1);
-        let entity = Entity::new(
-            ctx.world.clone(),
-            Self::projectile_spawn_position(ctx),
-            &EntityType::EXPERIENCE_BOTTLE,
-        );
-        let bottle = ExperienceBottleEntity::new(entity);
-        bottle.set_item_stack(projectile);
-        Self::launch_thrown(
-            ctx,
-            &bottle.thrown,
-            Self::POTION_PROJECTILE_POWER,
-            Self::POTION_PROJECTILE_UNCERTAINTY,
-        );
-        Self::finish_projectile_launch(
-            ctx,
-            Arc::new(bottle),
-            WorldEvent::SoundDispenserProjectileLaunch,
-        );
     }
 
     fn dispense_mob_head(ctx: &DispenseContext<'_>, item: &mut ItemStack, block: &'static Block) {
