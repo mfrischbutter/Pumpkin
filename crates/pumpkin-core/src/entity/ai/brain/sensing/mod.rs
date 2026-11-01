@@ -8,9 +8,11 @@ use super::{BrainTick, VisibilityContext};
 
 pub mod dummy;
 pub mod hurt_by;
+pub mod nearest_adult;
 pub mod nearest_items;
 pub mod nearest_living_entities;
 pub mod nearest_players;
+pub mod tempting;
 
 pub use dummy::DummySensor;
 pub use hurt_by::HurtBySensor;
@@ -31,6 +33,8 @@ pub enum SensorType {
     NearestPlayers,
     HurtBy,
     NearestItems,
+    FoodTemptations,
+    NearestAdult,
 }
 
 impl SensorType {
@@ -42,6 +46,8 @@ impl SensorType {
             Self::NearestPlayers => "minecraft:nearest_players",
             Self::HurtBy => "minecraft:hurt_by",
             Self::NearestItems => "minecraft:nearest_items",
+            Self::FoodTemptations => "minecraft:food_temptations",
+            Self::NearestAdult => "minecraft:nearest_adult",
         }
     }
 
@@ -52,7 +58,9 @@ impl SensorType {
             | Self::NearestLivingEntities
             | Self::NearestPlayers
             | Self::HurtBy
-            | Self::NearestItems => DEFAULT_SCAN_RATE,
+            | Self::NearestItems
+            | Self::FoodTemptations
+            | Self::NearestAdult => DEFAULT_SCAN_RATE,
         }
     }
 
@@ -63,6 +71,8 @@ impl SensorType {
             Self::NearestPlayers => Box::new(PlayerSensor),
             Self::HurtBy => Box::new(HurtBySensor),
             Self::NearestItems => Box::new(nearest_items::NearestItemSensor),
+            Self::FoodTemptations => Box::new(tempting::TemptingSensor),
+            Self::NearestAdult => Box::new(nearest_adult::AdultSensor),
         }
     }
 

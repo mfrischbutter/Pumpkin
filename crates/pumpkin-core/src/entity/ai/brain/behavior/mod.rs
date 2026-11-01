@@ -4,6 +4,7 @@ use super::BrainTick;
 use super::memory::MemoryModuleId;
 use super::memory::position_tracker::PositionTracker;
 
+pub mod animal;
 pub mod animal_panic;
 pub mod count_down_cooldown_ticks;
 pub mod do_nothing;
@@ -22,6 +23,7 @@ pub mod swim;
 pub mod timed;
 pub mod utils;
 
+pub use animal::{AnimalMakeLove, FollowTemptation, RandomLookAround, baby_follow_adult};
 pub use animal_panic::AnimalPanic;
 pub use count_down_cooldown_ticks::CountDownCooldownTicks;
 pub use do_nothing::DoNothing;

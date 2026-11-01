@@ -95,7 +95,8 @@ impl BreedGoal {
         }
     }
 
-    fn breed(mob: &dyn Mob, mate: &dyn EntityBase) {
+    /// The baby (or egg) two animals make, shared with the brain's `AnimalMakeLove`.
+    pub(crate) fn breed(mob: &dyn Mob, mate: &dyn EntityBase) {
         if mob
             .as_animal()
             .is_some_and(crate::entity::passive::animal::Animal::breeds_eggs)
