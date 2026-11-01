@@ -153,21 +153,13 @@ impl MooshroomEntity {
         let pos = entity.pos.load();
         world.play_sound(Sound::EntityMooshroomShear, SoundCategory::Players, &pos);
 
-        let cow_entity = Entity::new(world.clone(), pos, &EntityType::COW);
-        cow_entity.set_rotation(entity.yaw.load(), entity.pitch.load());
-        let cow = crate::entity::passive::cow::CowEntity::new(cow_entity);
-        cow.mob_entity
-            .living_entity
-            .health
-            .store(self.mob_entity.living_entity.health.load());
-        if let Some(custom_name) = &**entity.custom_name.load() {
-            cow.mob_entity
-                .living_entity
-                .entity
-                .set_custom_name(custom_name.clone());
-        }
-        entity.remove();
-        world.spawn_entity(cow);
+        // Vanilla `MushroomCow.shear`.
+        let _ = crate::entity::mob::conversion::convert_to(
+            self,
+            &EntityType::COW,
+            crate::entity::mob::conversion::ConversionParams::single(false, false),
+            |_| {},
+        );
 
         let mushroom_item = if self.get_variant() == MooshroomVariant::Brown {
             &Item::BROWN_MUSHROOM

@@ -957,46 +957,26 @@ impl PiglinEntity {
 
         self.drop_inventory();
 
-        let zombified = crate::entity::r#type::from_type(
+        // Vanilla `AbstractPiglin.finishConversion`: nausea for 10 seconds.
+        let _ = crate::entity::mob::conversion::convert_to(
+            self,
             &EntityType::ZOMBIFIED_PIGLIN,
-            pos,
-            &world,
-            uuid::Uuid::new_v4(),
+            crate::entity::mob::conversion::ConversionParams::single(true, true),
+            |converted| {
+                converted
+                    .get_mob_entity()
+                    .living_entity
+                    .add_effect(pumpkin_data::potion::Effect {
+                        effect_type: &pumpkin_data::effect::StatusEffect::NAUSEA,
+                        duration: 200,
+                        amplifier: 0,
+                        ambient: false,
+                        show_particles: true,
+                        show_icon: true,
+                        blend: false,
+                    });
+            },
         );
-
-        let zombified_base = zombified.get_entity();
-        zombified_base.set_rotation(entity.yaw.load(), entity.pitch.load());
-        zombified_base.head_yaw.store(entity.head_yaw.load());
-        zombified_base.velocity.store(entity.velocity.load());
-
-        if let Some(living) = zombified.get_living_entity() {
-            living.set_health(self.mob_entity.living_entity.health.load());
-        }
-
-        if let Some(custom_name) = &**entity.custom_name.load() {
-            zombified_base.set_custom_name(custom_name.clone());
-        }
-
-        {
-            let src_equip = self
-                .mob_entity
-                .living_entity
-                .entity_equipment
-                .lock()
-                .unwrap_or_else(std::sync::PoisonError::into_inner);
-            if let Some(living) = zombified.get_living_entity() {
-                let mut dst_equip = living
-                    .entity_equipment
-                    .lock()
-                    .unwrap_or_else(std::sync::PoisonError::into_inner);
-                for (slot, item) in &src_equip.equipment {
-                    dst_equip.put(slot, item.clone());
-                }
-            }
-        }
-
-        world.spawn_entity(zombified);
-        entity.remove();
     }
 }
 

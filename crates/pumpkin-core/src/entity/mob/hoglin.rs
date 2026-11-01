@@ -132,35 +132,26 @@ impl HoglinEntity {
             );
         }
 
-        let zoglin = crate::entity::r#type::from_type(
+        // Vanilla `Hoglin.finishConversion`: nausea for 10 seconds.
+        let _ = crate::entity::mob::conversion::convert_to(
+            self,
             &EntityType::ZOGLIN,
-            pos,
-            &world,
-            uuid::Uuid::new_v4(),
+            crate::entity::mob::conversion::ConversionParams::single(true, false),
+            |converted| {
+                converted
+                    .get_mob_entity()
+                    .living_entity
+                    .add_effect(pumpkin_data::potion::Effect {
+                        effect_type: &pumpkin_data::effect::StatusEffect::NAUSEA,
+                        duration: 200,
+                        amplifier: 0,
+                        ambient: false,
+                        show_particles: true,
+                        show_icon: true,
+                        blend: false,
+                    });
+            },
         );
-
-        let zoglin_base = zoglin.get_entity();
-        zoglin_base.set_rotation(entity.yaw.load(), entity.pitch.load());
-        zoglin_base.head_yaw.store(entity.head_yaw.load());
-        zoglin_base.velocity.store(entity.velocity.load());
-
-        if let Some(living) = zoglin.get_living_entity() {
-            living.set_health(self.mob_entity.living_entity.health.load());
-        }
-
-        if let Some(custom_name) = &**entity.custom_name.load() {
-            zoglin_base.set_custom_name(custom_name.clone());
-        }
-
-        // Vanilla ConversionType.SINGLE keeps the baby state.
-        if self.is_baby.load(Ordering::Relaxed)
-            && let Some(mob) = zoglin.get_mob()
-        {
-            mob.spawn_as_baby();
-        }
-
-        world.spawn_entity(zoglin);
-        entity.remove();
     }
 }
 
