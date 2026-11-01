@@ -1,17 +1,13 @@
-use std::sync::{
-    Arc, Weak,
-    atomic::{AtomicI32, AtomicU8, Ordering},
-};
+use std::sync::{Arc, Weak, atomic::Ordering};
 
-use crossbeam::atomic::AtomicCell;
 use pumpkin_data::BlockState;
 use pumpkin_data::entity::EntityType;
 use pumpkin_data::item_stack::ItemStack;
 use pumpkin_data::sound::Sound;
 use pumpkin_nbt::compound::NbtCompound;
 use pumpkin_util::math::position::BlockPos;
-use uuid::Uuid;
 
+use crate::entity::passive::abstract_horse::{self as horse_base, AbstractHorse, HorseData};
 use crate::entity::{
     Entity, EntityBase,
     ageable::{AgeableData, AgeableMob},
@@ -24,17 +20,10 @@ use crate::entity::{
     player::Player,
 };
 
-pub const FLAG_TAME: u8 = 2;
-pub const FLAG_EATING: u8 = 16;
-pub const FLAG_STANDING: u8 = 32;
-pub const FLAG_OPEN_MOUTH: u8 = 64;
-
 pub struct ZombieHorseEntity {
     pub mob_entity: MobEntity,
     pub ageable_data: AgeableData,
-    pub flags: AtomicU8,
-    pub temper: AtomicI32,
-    pub owner: AtomicCell<Option<Uuid>>,
+    horse: HorseData,
 }
 
 impl ZombieHorseEntity {
@@ -43,9 +32,7 @@ impl ZombieHorseEntity {
         let horse = Self {
             mob_entity,
             ageable_data: AgeableData::default(),
-            flags: AtomicU8::new(0),
-            temper: AtomicI32::new(0),
-            owner: AtomicCell::new(None),
+            horse: HorseData::default(),
         };
         let mob_arc = Arc::new(horse);
         let mob_weak: Weak<dyn Mob> = {
@@ -70,28 +57,12 @@ impl ZombieHorseEntity {
     }
 
     #[must_use]
-    pub fn has_flag(&self, flag: u8) -> bool {
-        (self.flags.load(Ordering::Relaxed) & flag) != 0
-    }
-
-    pub fn set_flag(&self, flag: u8, val: bool) {
-        let current = self.flags.load(Ordering::Relaxed);
-        let new_flags = if val { current | flag } else { current & !flag };
-        self.flags.store(new_flags, Ordering::Relaxed);
-        let entity = self.get_entity();
-        entity.set_synced_data(
-            pumpkin_data::tracked_data::zombie_horse::DATA_ID_FLAGS,
-            new_flags as i8,
-        );
-    }
-
-    #[must_use]
     pub fn is_tame(&self) -> bool {
-        self.has_flag(FLAG_TAME)
+        horse_base::is_tamed(self)
     }
 
     pub fn set_tame(&self, val: bool) {
-        self.set_flag(FLAG_TAME, val);
+        horse_base::set_flag(self, horse_base::FLAG_TAME, val);
     }
 }
 
@@ -111,6 +82,20 @@ impl Animal for ZombieHorseEntity {
     }
 }
 
+impl AbstractHorse for ZombieHorseEntity {
+    fn horse_data(&self) -> &HorseData {
+        &self.horse
+    }
+
+    fn horse_eating_sound(&self) -> Option<Sound> {
+        Some(Sound::EntityZombieHorseEat)
+    }
+
+    fn horse_angry_sound(&self) -> Option<Sound> {
+        Some(Sound::EntityZombieHorseAngry)
+    }
+}
+
 impl Mob for ZombieHorseEntity {
     /// Vanilla `ZombieHorse.getAmbientSound`.
     fn get_ambient_sound(&self) -> Option<pumpkin_data::sound::Sound> {
@@ -127,7 +112,7 @@ impl Mob for ZombieHorseEntity {
     }
 
     fn mob_play_step_sound(&self, pos: &BlockPos, state: &BlockState) {
-        super::horse::play_horse_step_sound(self, pos, state, true);
+        horse_base::play_step_sound(self, pos, state, true);
     }
 
     fn as_ageable(&self) -> Option<&dyn AgeableMob> {
@@ -144,28 +129,35 @@ impl Mob for ZombieHorseEntity {
 
     fn mob_write_nbt(&self, nbt: &mut NbtCompound) {
         self.write_ageable_nbt(nbt);
-        nbt.put_bool("Tame", self.is_tame());
-        nbt.put_int("Temper", self.temper.load(Ordering::Relaxed));
-        if let Some(owner) = self.owner.load() {
-            nbt.put_uuid("Owner", owner);
-        }
+        horse_base::write_horse_nbt(self, nbt);
     }
 
     fn mob_read_nbt(&self, nbt: &NbtCompound) {
         self.read_ageable_nbt(nbt);
-        if let Some(tame) = nbt.get_bool("Tame") {
-            self.set_tame(tame);
-        }
-        if let Some(temper) = nbt.get_int("Temper") {
-            self.temper.store(temper, Ordering::Relaxed);
-        }
-        if let Some(owner) = nbt.get_uuid("Owner") {
-            self.owner.store(Some(owner));
-        }
+        horse_base::read_horse_nbt(self, nbt);
     }
 
     fn get_mob_entity(&self) -> &MobEntity {
         &self.mob_entity
+    }
+
+    fn mob_tick(&self, _caller: &dyn EntityBase) {
+        horse_base::horse_tick(self);
+        horse_base::horse_ai_step(self);
+    }
+
+    fn as_abstract_horse(&self) -> Option<&dyn AbstractHorse> {
+        Some(self)
+    }
+
+    fn is_mob_immobile(&self) -> bool {
+        horse_base::is_immobile(self)
+    }
+
+    fn mob_start_rider_jump(&self, _strength: i32) {
+        if self.is_saddled() {
+            horse_base::on_rider_jump(self);
+        }
     }
 
     /// Vanilla `AbstractHorse.canUseSlot(SADDLE)`: a tamed adult.
@@ -175,7 +167,7 @@ impl Mob for ZombieHorseEntity {
 
     /// Vanilla `AbstractHorse.getControllingPassenger`: a player in a saddle.
     fn mob_controlling_player(&self) -> Option<Arc<Player>> {
-        crate::entity::passive::horse::saddled_rider(self)
+        horse_base::saddled_rider(self)
     }
 
     /// Vanilla `AbstractHorse.tickRidden`, the turn to the rider's look.
@@ -191,7 +183,7 @@ impl Mob for ZombieHorseEntity {
         }
         entity.set_synced_data(
             pumpkin_data::tracked_data::zombie_horse::DATA_ID_FLAGS,
-            self.flags.load(Ordering::Relaxed) as i8,
+            horse_base::flags(self) as i8,
         );
     }
 

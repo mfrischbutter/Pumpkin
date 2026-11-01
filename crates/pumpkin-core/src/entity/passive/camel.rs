@@ -161,7 +161,7 @@ impl Mob for CamelEntity {
 
     /// Vanilla `AbstractHorse.getControllingPassenger`: a player in a saddle.
     fn mob_controlling_player(&self) -> Option<Arc<Player>> {
-        crate::entity::passive::horse::saddled_rider(self)
+        crate::entity::passive::abstract_horse::saddled_rider(self)
     }
 
     /// Vanilla `AbstractHorse.tickRidden`, the turn to the rider's look.

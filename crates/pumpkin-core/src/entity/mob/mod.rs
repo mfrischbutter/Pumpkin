@@ -1842,6 +1842,16 @@ pub trait Mob: EntityBase + Send + Sync {
         None
     }
 
+    /// Members of the horse family, vanilla `instanceof AbstractHorse`.
+    fn as_abstract_horse(
+        &self,
+    ) -> Option<&dyn crate::entity::passive::abstract_horse::AbstractHorse> {
+        None
+    }
+
+    /// Vanilla `PlayerRideableJumping.handleStartJump`: the rider of this mount jumps.
+    fn mob_start_rider_jump(&self, _strength: i32) {}
+
     fn as_animal(&self) -> Option<&dyn crate::entity::passive::animal::Animal> {
         None
     }

@@ -63,12 +63,12 @@ use crate::entity::passive::axolotl::AxolotlEntity;
 use crate::entity::passive::bee::BeeEntity;
 use crate::entity::passive::camel::CamelEntity;
 use crate::entity::passive::cat::CatEntity;
+use crate::entity::passive::chested_horse::{self, ChestedHorseEntity};
 use crate::entity::passive::chicken::ChickenEntity;
 use crate::entity::passive::cod::CodEntity;
 use crate::entity::passive::copper_golem::CopperGolemEntity;
 use crate::entity::passive::cow::CowEntity;
 use crate::entity::passive::dolphin::DolphinEntity;
-use crate::entity::passive::donkey::DonkeyEntity;
 use crate::entity::passive::fox::FoxEntity;
 use crate::entity::passive::frog::FrogEntity;
 use crate::entity::passive::glow_squid::GlowSquidEntity;
@@ -78,7 +78,6 @@ use crate::entity::passive::horse::HorseEntity;
 use crate::entity::passive::iron_golem::IronGolemEntity;
 use crate::entity::passive::llama::LlamaEntity;
 use crate::entity::passive::mooshroom::MooshroomEntity;
-use crate::entity::passive::mule::MuleEntity;
 use crate::entity::passive::nautilus::NautilusEntity;
 use crate::entity::passive::ocelot::OcelotEntity;
 use crate::entity::passive::panda::PandaEntity;
@@ -199,8 +198,10 @@ pub fn from_type(
         id if id == EntityType::VILLAGER.id => VillagerEntity::new(entity),
         id if id == EntityType::SQUID.id => SquidEntity::new(entity),
         id if id == EntityType::HORSE.id => HorseEntity::new(entity),
-        id if id == EntityType::DONKEY.id => DonkeyEntity::new(entity),
-        id if id == EntityType::MULE.id => MuleEntity::new(entity),
+        id if id == EntityType::DONKEY.id => {
+            ChestedHorseEntity::new(entity, &chested_horse::DONKEY)
+        }
+        id if id == EntityType::MULE.id => ChestedHorseEntity::new(entity, &chested_horse::MULE),
         id if id == EntityType::ZOMBIE_HORSE.id => ZombieHorseEntity::new(entity),
         id if id == EntityType::SKELETON_HORSE.id => SkeletonHorseEntity::new(entity),
         id if id == EntityType::LLAMA.id => LlamaEntity::new(entity),

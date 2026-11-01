@@ -1,17 +1,16 @@
 use std::sync::{
     Arc, Weak,
-    atomic::{AtomicBool, AtomicI32, AtomicU8, Ordering},
+    atomic::{AtomicBool, AtomicI32, Ordering},
 };
 
-use crossbeam::atomic::AtomicCell;
 use pumpkin_data::BlockState;
 use pumpkin_data::entity::EntityType;
 use pumpkin_data::item_stack::ItemStack;
 use pumpkin_data::sound::Sound;
 use pumpkin_nbt::compound::NbtCompound;
 use pumpkin_util::math::position::BlockPos;
-use uuid::Uuid;
 
+use crate::entity::passive::abstract_horse::{self as horse_base, AbstractHorse, HorseData};
 use crate::entity::{
     Entity, EntityBase,
     ageable::{AgeableData, AgeableMob},
@@ -25,20 +24,13 @@ use crate::entity::{
     player::Player,
 };
 
-pub const FLAG_TAME: u8 = 2;
-pub const FLAG_EATING: u8 = 16;
-pub const FLAG_STANDING: u8 = 32;
-pub const FLAG_OPEN_MOUTH: u8 = 64;
-
 /// An untouched trap horse leaves after this many ticks (vanilla `SkeletonHorse.aiStep`).
 const TRAP_DESPAWN_TICKS: i32 = 18_000;
 
 pub struct SkeletonHorseEntity {
     pub mob_entity: MobEntity,
     pub ageable_data: AgeableData,
-    pub flags: AtomicU8,
-    pub temper: AtomicI32,
-    pub owner: AtomicCell<Option<Uuid>>,
+    horse: HorseData,
     /// Vanilla `isTrap`: a horse lightning left, waiting for a player to come close.
     pub trap: AtomicBool,
     /// Vanilla `trapTime`: the ticks spent waiting as a trap.
@@ -51,9 +43,7 @@ impl SkeletonHorseEntity {
         let horse = Self {
             mob_entity,
             ageable_data: AgeableData::default(),
-            flags: AtomicU8::new(0),
-            temper: AtomicI32::new(0),
-            owner: AtomicCell::new(None),
+            horse: HorseData::default(),
             trap: AtomicBool::new(false),
             trap_time: AtomicI32::new(0),
         };
@@ -82,28 +72,12 @@ impl SkeletonHorseEntity {
     }
 
     #[must_use]
-    pub fn has_flag(&self, flag: u8) -> bool {
-        (self.flags.load(Ordering::Relaxed) & flag) != 0
-    }
-
-    pub fn set_flag(&self, flag: u8, val: bool) {
-        let current = self.flags.load(Ordering::Relaxed);
-        let new_flags = if val { current | flag } else { current & !flag };
-        self.flags.store(new_flags, Ordering::Relaxed);
-        let entity = self.get_entity();
-        entity.set_synced_data(
-            pumpkin_data::tracked_data::skeleton_horse::DATA_ID_FLAGS,
-            new_flags as i8,
-        );
-    }
-
-    #[must_use]
     pub fn is_tame(&self) -> bool {
-        self.has_flag(FLAG_TAME)
+        horse_base::is_tamed(self)
     }
 
     pub fn set_tame(&self, val: bool) {
-        self.set_flag(FLAG_TAME, val);
+        horse_base::set_flag(self, horse_base::FLAG_TAME, val);
     }
 
     /// Vanilla `SkeletonHorse.isTrap`.
@@ -134,6 +108,12 @@ impl Animal for SkeletonHorseEntity {
     }
 }
 
+impl AbstractHorse for SkeletonHorseEntity {
+    fn horse_data(&self) -> &HorseData {
+        &self.horse
+    }
+}
+
 impl Mob for SkeletonHorseEntity {
     /// Vanilla `SkeletonHorse.getAmbientSound`.
     fn get_ambient_sound(&self) -> Option<pumpkin_data::sound::Sound> {
@@ -149,6 +129,8 @@ impl Mob for SkeletonHorseEntity {
     }
 
     fn mob_tick(&self, _caller: &dyn EntityBase) {
+        horse_base::horse_tick(self);
+        horse_base::horse_ai_step(self);
         // Vanilla `SkeletonHorse.aiStep`: a trap nobody springs leaves after its time.
         if !self.mob_entity.persistence_required.load(Ordering::Relaxed)
             && self.is_trap()
@@ -159,7 +141,7 @@ impl Mob for SkeletonHorseEntity {
     }
 
     fn mob_play_step_sound(&self, pos: &BlockPos, state: &BlockState) {
-        super::horse::play_horse_step_sound(self, pos, state, true);
+        horse_base::play_step_sound(self, pos, state, true);
     }
 
     fn mob_play_swim_sound(&self, volume: f32) {
@@ -180,26 +162,14 @@ impl Mob for SkeletonHorseEntity {
 
     fn mob_write_nbt(&self, nbt: &mut NbtCompound) {
         self.write_ageable_nbt(nbt);
-        nbt.put_bool("Tame", self.is_tame());
-        nbt.put_int("Temper", self.temper.load(Ordering::Relaxed));
-        if let Some(owner) = self.owner.load() {
-            nbt.put_uuid("Owner", owner);
-        }
+        horse_base::write_horse_nbt(self, nbt);
         nbt.put_bool("SkeletonTrap", self.is_trap());
         nbt.put_int("SkeletonTrapTime", self.trap_time.load(Ordering::Relaxed));
     }
 
     fn mob_read_nbt(&self, nbt: &NbtCompound) {
         self.read_ageable_nbt(nbt);
-        if let Some(tame) = nbt.get_bool("Tame") {
-            self.set_tame(tame);
-        }
-        if let Some(temper) = nbt.get_int("Temper") {
-            self.temper.store(temper, Ordering::Relaxed);
-        }
-        if let Some(owner) = nbt.get_uuid("Owner") {
-            self.owner.store(Some(owner));
-        }
+        horse_base::read_horse_nbt(self, nbt);
         self.set_trap(nbt.get_bool("SkeletonTrap").unwrap_or(false));
         self.trap_time.store(
             nbt.get_int("SkeletonTrapTime").unwrap_or(0),
@@ -211,6 +181,20 @@ impl Mob for SkeletonHorseEntity {
         &self.mob_entity
     }
 
+    fn as_abstract_horse(&self) -> Option<&dyn AbstractHorse> {
+        Some(self)
+    }
+
+    fn is_mob_immobile(&self) -> bool {
+        horse_base::is_immobile(self)
+    }
+
+    fn mob_start_rider_jump(&self, _strength: i32) {
+        if self.is_saddled() {
+            horse_base::on_rider_jump(self);
+        }
+    }
+
     /// Vanilla `AbstractHorse.canUseSlot(SADDLE)`: a tamed adult.
     fn can_be_saddled(&self) -> bool {
         self.get_entity().is_alive() && !self.is_baby() && self.is_tame()
@@ -218,7 +202,7 @@ impl Mob for SkeletonHorseEntity {
 
     /// Vanilla `AbstractHorse.getControllingPassenger`: a player in a saddle.
     fn mob_controlling_player(&self) -> Option<Arc<Player>> {
-        crate::entity::passive::horse::saddled_rider(self)
+        horse_base::saddled_rider(self)
     }
 
     /// Vanilla `AbstractHorse.tickRidden`, the turn to the rider's look.
@@ -237,7 +221,7 @@ impl Mob for SkeletonHorseEntity {
         }
         entity.set_synced_data(
             pumpkin_data::tracked_data::skeleton_horse::DATA_ID_FLAGS,
-            self.flags.load(Ordering::Relaxed) as i8,
+            horse_base::flags(self) as i8,
         );
     }
 

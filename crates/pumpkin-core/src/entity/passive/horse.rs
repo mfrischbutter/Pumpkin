@@ -1,98 +1,61 @@
 use std::sync::{
     Arc, Weak,
-    atomic::{AtomicI32, AtomicU8, Ordering},
+    atomic::{AtomicI32, Ordering},
 };
 
-use crossbeam::atomic::AtomicCell;
-use pumpkin_data::block_state::SoundType;
+use pumpkin_data::BlockState;
+use pumpkin_data::damage::DamageType;
 use pumpkin_data::entity::EntityType;
-use pumpkin_data::item::Item;
 use pumpkin_data::item_stack::ItemStack;
 use pumpkin_data::sound::Sound;
 use pumpkin_data::tag::{self, Taggable};
-use pumpkin_data::{Block, BlockState};
 use pumpkin_nbt::compound::NbtCompound;
 use pumpkin_protocol::codec::var_int::VarInt;
 use pumpkin_util::math::position::BlockPos;
 use rand::RngExt;
-use uuid::Uuid;
 
+use crate::entity::custom_sound::CustomSound;
+use crate::entity::passive::abstract_horse::{self as horse_base, AbstractHorse, HorseData};
+use crate::entity::passive::chested_horse::{self, ChestedHorseEntity};
 use crate::entity::{
     Entity, EntityBase,
     ageable::{AgeableData, AgeableMob},
-    ai::goal::{
-        breed::BreedGoal, escape_danger::EscapeDangerGoal, follow_parent::FollowParentGoal,
-        look_around::RandomLookAroundGoal, look_at_entity::LookAtEntityGoal, swim::SwimGoal,
-        tempt::TemptGoal, wander_around::WanderAroundGoal,
-    },
-    mob::{Mob, MobEntity},
+    mob::{Mob, MobEntity, spawn::SpawnGroupData},
     passive::animal::Animal,
     player::Player,
 };
+use crate::world::World;
 
-const TEMPT_ITEMS: &[&Item] = &[
-    &Item::GOLDEN_APPLE,
-    &Item::ENCHANTED_GOLDEN_APPLE,
-    &Item::GOLDEN_CARROT,
-];
-
-pub const FLAG_TAME: u8 = 2;
-pub const FLAG_BRED: u8 = 8;
-pub const FLAG_EATING: u8 = 16;
-pub const FLAG_STANDING: u8 = 32;
-pub const FLAG_OPEN_MOUTH: u8 = 64;
+/// Vanilla `Variant`: seven coat colours.
+const COLORS: i32 = 7;
+/// Vanilla `Markings`: five patterns.
+const MARKINGS: i32 = 5;
 
 pub struct HorseEntity {
     pub mob_entity: MobEntity,
     pub ageable_data: AgeableData,
     pub variant: AtomicI32,
-    pub flags: AtomicU8,
-    pub temper: AtomicI32,
-    pub owner: AtomicCell<Option<Uuid>>,
+    horse: HorseData,
 }
 
 impl HorseEntity {
     pub fn new(entity: Entity) -> Arc<Self> {
-        let mob_entity = MobEntity::new(entity);
-        let mut rng = rand::rng();
-        let color = rng.random_range(0..7);
-        let style = rng.random_range(0..5);
-        let variant = color | (style << 8);
-
         let horse = Self {
-            mob_entity,
+            mob_entity: MobEntity::new(entity),
             ageable_data: AgeableData::default(),
-            variant: AtomicI32::new(variant),
-            flags: AtomicU8::new(0),
-            temper: AtomicI32::new(0),
-            owner: AtomicCell::new(None),
+            variant: AtomicI32::new(0),
+            horse: HorseData::default(),
         };
         let mob_arc = Arc::new(horse);
         let mob_weak: Weak<dyn Mob> = {
             let mob_arc: Arc<dyn Mob> = mob_arc.clone();
             Arc::downgrade(&mob_arc)
         };
-
-        {
-            let goal_selector = &mob_arc.mob_entity.goals_selector;
-
-            // TODO: RunAroundLikeCrazyGoal at 1, the only way to tame by riding.
-            goal_selector.add_goal(0, Box::new(SwimGoal::default()));
-            goal_selector.add_goal(1, EscapeDangerGoal::new(1.2));
-            goal_selector.add_goal(2, BreedGoal::new(1.0));
-            goal_selector.add_goal(3, Box::new(TemptGoal::new(1.25, TEMPT_ITEMS, false)));
-            goal_selector.add_goal(4, Box::new(FollowParentGoal::new(1.0)));
-            goal_selector.add_goal(6, Box::new(WanderAroundGoal::new(0.7)));
-            goal_selector.add_goal(
-                7,
-                LookAtEntityGoal::with_default(mob_weak, &EntityType::PLAYER, 6.0),
-            );
-            goal_selector.add_goal(8, Box::new(RandomLookAroundGoal::default()));
-        };
-
+        horse_base::register_horse_goals(&mob_arc.mob_entity.goals_selector, mob_weak, true);
         mob_arc
     }
 
+    /// The packed variant: colour in the low byte, markings in the next.
     #[must_use]
     pub fn get_variant(&self) -> i32 {
         self.variant.load(Ordering::Relaxed)
@@ -100,36 +63,38 @@ impl HorseEntity {
 
     pub fn set_variant(&self, variant: i32) {
         self.variant.store(variant, Ordering::Relaxed);
-        let entity = self.get_entity();
-        entity.set_synced_data(
+        self.get_entity().set_synced_data(
             pumpkin_data::tracked_data::horse::DATA_ID_TYPE_VARIANT,
             VarInt(variant),
         );
     }
 
-    #[must_use]
-    pub fn has_flag(&self, flag: u8) -> bool {
-        (self.flags.load(Ordering::Relaxed) & flag) != 0
-    }
-
-    pub fn set_flag(&self, flag: u8, val: bool) {
-        let current = self.flags.load(Ordering::Relaxed);
-        let new_flags = if val { current | flag } else { current & !flag };
-        self.flags.store(new_flags, Ordering::Relaxed);
-        let entity = self.get_entity();
-        entity.set_synced_data(
-            pumpkin_data::tracked_data::horse::DATA_ID_FLAGS,
-            new_flags as i8,
-        );
+    fn set_variant_and_markings(&self, color: i32, markings: i32) {
+        self.set_variant((color & 0xFF) | ((markings << 8) & 0xFF00));
     }
 
     #[must_use]
     pub fn is_tame(&self) -> bool {
-        self.has_flag(FLAG_TAME)
+        horse_base::is_tamed(self)
     }
 
-    pub fn set_tame(&self, val: bool) {
-        self.set_flag(FLAG_TAME, val);
+    /// Vanilla `Horse.getBreedOffspring` for two horses: each of colour and markings comes
+    /// from a parent, now and then at random.
+    fn foal_variant(&self, partner: &Self) -> (i32, i32) {
+        let mut rng = self.get_random();
+        let mine = self.get_variant();
+        let theirs = partner.get_variant();
+        let color = match rng.random_range(0..9) {
+            0..4 => mine & 0xFF,
+            4..8 => theirs & 0xFF,
+            _ => rng.random_range(0..COLORS),
+        };
+        let markings = match rng.random_range(0..5) {
+            0..2 => (mine >> 8) & 0xFF,
+            2..4 => (theirs >> 8) & 0xFF,
+            _ => rng.random_range(0..MARKINGS),
+        };
+        (color, markings)
     }
 }
 
@@ -144,75 +109,109 @@ impl AgeableMob for HorseEntity {
 }
 
 impl Animal for HorseEntity {
+    /// Vanilla `AbstractHorse.isFood`.
     fn is_food(&self, item_stack: &ItemStack) -> bool {
         item_stack.item.has_tag(&tag::Item::MINECRAFT_HORSE_FOOD)
-            || item_stack.item == &Item::WHEAT
-            || item_stack.item == &Item::SUGAR
-            || item_stack.item == &Item::HAY_BLOCK
-            || item_stack.item == &Item::APPLE
-            || item_stack.item == &Item::GOLDEN_CARROT
-            || item_stack.item == &Item::GOLDEN_APPLE
-            || item_stack.item == &Item::ENCHANTED_GOLDEN_APPLE
+    }
+
+    /// Vanilla `Horse.canMate`: with a horse or a donkey, both ready to parent.
+    fn can_mate(&self, partner: &dyn EntityBase) -> bool {
+        let Some(other) = partner.get_mob().and_then(|mob| mob.as_abstract_horse()) else {
+            return false;
+        };
+        let kind = partner.get_entity().entity_type;
+        (kind == &EntityType::HORSE || kind == &EntityType::DONKEY)
+            && horse_base::can_parent(self)
+            && horse_base::can_parent(other)
+    }
+
+    /// Vanilla `Horse.getBreedOffspring`: a mule with a donkey, else a foal with the parents'
+    /// looks; stats from both.
+    fn get_breed_offspring(&self, partner: &dyn EntityBase) -> Arc<dyn EntityBase> {
+        let entity = self.get_entity();
+        let new_entity = |kind| Entity::new(entity.world.load_full(), entity.pos.load(), kind);
+        let baby: Arc<dyn EntityBase> = if partner.get_entity().entity_type == &EntityType::DONKEY {
+            let mule = ChestedHorseEntity::new(new_entity(&EntityType::MULE), &chested_horse::MULE);
+            horse_base::set_offspring_attributes(self, partner, mule.as_ref());
+            mule
+        } else {
+            let foal = Self::new(new_entity(&EntityType::HORSE));
+            let (color, markings) = partner.cast_any().downcast_ref::<Self>().map_or_else(
+                || (self.get_variant() & 0xFF, 0),
+                |other| self.foal_variant(other),
+            );
+            foal.set_variant_and_markings(color, markings);
+            horse_base::set_offspring_attributes(self, partner, foal.as_ref());
+            foal
+        };
+        if let Some(foal) = baby.get_mob().and_then(|mob| mob.as_abstract_horse()) {
+            horse_base::set_bred(foal);
+        }
+        baby
     }
 }
 
-/// Vanilla `AbstractHorse.getControllingPassenger`: the first passenger steers a saddled
-/// horse when it is a player.
-pub(crate) fn saddled_rider(horse: &dyn Mob) -> Option<Arc<Player>> {
-    if !horse.is_saddled() {
-        return None;
+impl AbstractHorse for HorseEntity {
+    fn horse_data(&self) -> &HorseData {
+        &self.horse
     }
-    crate::entity::mob::saddle::first_passenger_player(horse)
-}
 
-/// Vanilla `AbstractHorse.playStepSound`, shared by every horse that doesn't override it.
-pub(crate) fn play_horse_step_sound(
-    horse: &dyn Mob,
-    pos: &BlockPos,
-    state: &BlockState,
-    can_gallop: bool,
-) {
-    if state.is_liquid() {
-        return;
+    fn horse_eating_sound(&self) -> Option<Sound> {
+        Some(if self.is_baby() {
+            Sound::EntityBabyHorseEat
+        } else {
+            Sound::EntityHorseEat
+        })
     }
-    let entity = horse.get_entity();
-    let above = entity.world.load().get_block_state(&pos.up());
-    let sound_type = if above.id.to_block() == &Block::SNOW {
-        above.get_sound_type()
-    } else {
-        state.get_sound_type()
-    };
-    let volume = sound_type.volume * 0.15;
-    // TODO: gallop once ridden horses move: `tickRidden` resets the gallop counter while the
-    // rider isn't pressing forward, which is always the case without ridden movement.
-    let ridden = entity.has_passengers() && can_gallop;
-    let sound = if ridden || is_wood_sound_type(sound_type) {
-        Sound::EntityHorseStepWood
-    } else if entity.age.load(Ordering::Relaxed) < 0 {
-        Sound::EntityBabyHorseStep
-    } else {
-        Sound::EntityHorseStep
-    };
-    horse.play_entity_sound(sound, volume, sound_type.pitch);
+
+    fn horse_angry_sound(&self) -> Option<Sound> {
+        Some(if self.is_baby() {
+            Sound::EntityBabyHorseAngry
+        } else {
+            Sound::EntityHorseAngry
+        })
+    }
 }
 
-/// Vanilla `AbstractHorse.isWoodSoundType`.
-fn is_wood_sound_type(sound_type: &SoundType) -> bool {
-    matches!(
-        sound_type.name,
-        "WOOD" | "NETHER_WOOD" | "STEM" | "CHERRY_WOOD" | "BAMBOO_WOOD"
-    )
+impl CustomSound for HorseEntity {
+    fn hurt_sound(&self) -> Option<Sound> {
+        Some(if self.is_baby() {
+            Sound::EntityBabyHorseHurt
+        } else {
+            Sound::EntityHorseHurt
+        })
+    }
+
+    fn death_sound(&self) -> Option<Sound> {
+        Some(if self.is_baby() {
+            Sound::EntityBabyHorseDeath
+        } else {
+            Sound::EntityHorseDeath
+        })
+    }
+
+    fn sound_volume(&self) -> f32 {
+        0.8
+    }
 }
 
-// TODO: random health, speed and jump at spawn and averaged for foals (`AbstractHorse`); needs attribute NBT.
 impl Mob for HorseEntity {
     /// Vanilla `Horse.getAmbientSound`.
-    fn get_ambient_sound(&self) -> Option<pumpkin_data::sound::Sound> {
-        Some(if self.get_mob_entity().living_entity.is_baby() {
-            pumpkin_data::sound::Sound::EntityBabyHorseAmbient
+    fn get_ambient_sound(&self) -> Option<Sound> {
+        Some(if self.is_baby() {
+            Sound::EntityBabyHorseAmbient
         } else {
-            pumpkin_data::sound::Sound::EntityHorseAmbient
+            Sound::EntityHorseAmbient
         })
+    }
+
+    /// Vanilla `AbstractHorse.getAmbientSoundInterval`.
+    fn get_ambient_sound_interval(&self) -> i32 {
+        400
+    }
+
+    fn as_custom_sound(&self) -> Option<&dyn CustomSound> {
+        Some(self)
     }
 
     fn is_tamed(&self) -> bool {
@@ -220,7 +219,7 @@ impl Mob for HorseEntity {
     }
 
     fn mob_play_step_sound(&self, pos: &BlockPos, state: &BlockState) {
-        play_horse_step_sound(self, pos, state, true);
+        horse_base::play_step_sound(self, pos, state, true);
     }
 
     fn as_ageable(&self) -> Option<&dyn AgeableMob> {
@@ -231,30 +230,56 @@ impl Mob for HorseEntity {
         Some(self)
     }
 
+    fn as_abstract_horse(&self) -> Option<&dyn AbstractHorse> {
+        Some(self)
+    }
+
+    fn is_mob_immobile(&self) -> bool {
+        horse_base::is_immobile(self)
+    }
+
+    fn mob_tick(&self, _caller: &dyn EntityBase) {
+        horse_base::horse_tick(self);
+        horse_base::horse_ai_step(self);
+    }
+
+    fn on_damage(&self, _damage_type: DamageType, _source: Option<&dyn EntityBase>) {
+        horse_base::on_hurt(self);
+    }
+
+    fn mob_start_rider_jump(&self, _strength: i32) {
+        if self.is_saddled() {
+            horse_base::on_rider_jump(self);
+        }
+    }
+
+    /// Vanilla `Horse.finalizeSpawn` with `AbstractHorse.randomizeAttributes`: random stats,
+    /// colour and markings.
+    fn finalize_spawn(
+        &self,
+        _world: &Arc<World>,
+        group_data: Option<SpawnGroupData>,
+    ) -> Option<SpawnGroupData> {
+        let (color, markings) = {
+            let mut rng = self.get_random();
+            (rng.random_range(0..COLORS), rng.random_range(0..MARKINGS))
+        };
+        self.set_variant_and_markings(color, markings);
+        horse_base::randomize_attributes(self);
+        self.finalize_spawn_super(group_data)
+    }
+
     fn mob_write_nbt(&self, nbt: &mut NbtCompound) {
         self.write_ageable_nbt(nbt);
+        horse_base::write_horse_nbt(self, nbt);
         nbt.put_int("Variant", self.get_variant());
-        nbt.put_bool("Tame", self.is_tame());
-        nbt.put_int("Temper", self.temper.load(Ordering::Relaxed));
-        if let Some(owner) = self.owner.load() {
-            nbt.put_uuid("Owner", owner);
-        }
     }
 
     fn mob_read_nbt(&self, nbt: &NbtCompound) {
         self.read_ageable_nbt(nbt);
-        if let Some(variant) = nbt.get_int("Variant") {
-            self.set_variant(variant);
-        }
-        if let Some(tame) = nbt.get_bool("Tame") {
-            self.set_tame(tame);
-        }
-        if let Some(temper) = nbt.get_int("Temper") {
-            self.temper.store(temper, Ordering::Relaxed);
-        }
-        if let Some(owner) = nbt.get_uuid("Owner") {
-            self.owner.store(Some(owner));
-        }
+        horse_base::read_horse_nbt(self, nbt);
+        self.set_variant(nbt.get_int("Variant").unwrap_or(0));
+        crate::entity::mob::saddle::read_legacy_saddle(self, nbt);
     }
 
     fn get_mob_entity(&self) -> &MobEntity {
@@ -268,7 +293,7 @@ impl Mob for HorseEntity {
 
     /// Vanilla `AbstractHorse.getControllingPassenger`: a player in a saddle.
     fn mob_controlling_player(&self) -> Option<Arc<Player>> {
-        crate::entity::passive::horse::saddled_rider(self)
+        horse_base::saddled_rider(self)
     }
 
     /// Vanilla `AbstractHorse.tickRidden`, the turn to the rider's look.
@@ -278,8 +303,7 @@ impl Mob for HorseEntity {
 
     fn mob_init_data_tracker(&self) {
         let entity = self.get_entity();
-        let is_baby = entity.age.load(Ordering::Relaxed) < 0;
-        if is_baby {
+        if entity.age.load(Ordering::Relaxed) < 0 {
             entity.set_synced_data(pumpkin_data::tracked_data::horse::DATA_BABY_ID, true);
         }
         entity.set_synced_data(
@@ -288,26 +312,14 @@ impl Mob for HorseEntity {
         );
         entity.set_synced_data(
             pumpkin_data::tracked_data::horse::DATA_ID_FLAGS,
-            self.flags.load(Ordering::Relaxed) as i8,
+            horse_base::flags(self) as i8,
         );
     }
 
+    /// Vanilla `Horse.mobInteract`: armour goes on a tamed horse.
     fn mob_interact(&self, player: &Arc<Player>, item_stack: &mut ItemStack) -> bool {
-        if crate::entity::mob::saddle::try_equip_saddle(self, player, item_stack) {
-            return true;
-        }
-
-        if !self.is_baby() && !self.is_food(item_stack) {
-            let world = player.world();
-            let ent = &self.mob_entity.living_entity.entity;
-            if let Some(vehicle) = world.get_entity_by_id(ent.entity_id)
-                && let Some(passenger) = world.get_player_by_id(player.entity_id())
-            {
-                ent.add_passenger(vehicle, passenger as Arc<dyn EntityBase>);
-                return true;
-            }
-        }
-
-        self.animal_interact(player, item_stack, Sound::EntityHorseAmbient)
+        horse_base::horse_interact(self, player, item_stack, |stack| {
+            horse_base::try_equip_body_armor(self, player, stack)
+        })
     }
 }
