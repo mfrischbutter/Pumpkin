@@ -56,7 +56,6 @@ pub mod conversion;
 pub mod creaking;
 pub mod creeper;
 pub mod crossbow_attack_mob;
-pub mod elder_guardian;
 pub mod enderman;
 pub mod endermite;
 pub mod equipment;
