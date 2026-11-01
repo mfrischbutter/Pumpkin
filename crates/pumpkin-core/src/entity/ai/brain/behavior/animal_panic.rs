@@ -15,6 +15,10 @@ const ENTRY_CONDITIONS: [(MemoryModuleId, MemoryStatus); 2] = [
 
 pub struct AnimalPanic {
     speed_multiplier: f32,
+    /// Vanilla `panicCausingDamageTypes`.
+    panic_causes: &'static tag::Tag,
+    /// What a species does when the panic starts, e.g. a camel standing up.
+    on_start: Option<fn(&dyn crate::entity::mob::Mob)>,
 }
 
 impl AnimalPanic {
@@ -25,7 +29,25 @@ impl AnimalPanic {
 
     #[must_use]
     pub const fn new(speed_multiplier: f32) -> Self {
-        Self { speed_multiplier }
+        Self {
+            speed_multiplier,
+            panic_causes: &tag::DamageType::MINECRAFT_PANIC_CAUSES,
+            on_start: None,
+        }
+    }
+
+    /// Panics on `causes` instead of `#minecraft:panic_causes`.
+    #[must_use]
+    pub const fn with_panic_causes(mut self, causes: &'static tag::Tag) -> Self {
+        self.panic_causes = causes;
+        self
+    }
+
+    /// Runs `on_start` for the mob when it starts to panic.
+    #[must_use]
+    pub const fn on_start(mut self, on_start: fn(&dyn crate::entity::mob::Mob)) -> Self {
+        self.on_start = Some(on_start);
+        self
     }
 
     fn look_for_water(tick: &BrainTick<'_>) -> Option<Vector3<f64>> {
@@ -72,14 +94,16 @@ impl Behavior for AnimalPanic {
     }
 
     fn check_extra_start_conditions(&mut self, tick: &mut BrainTick<'_>) -> bool {
-        tick.state.get(types::HURT_BY).is_some_and(|damage| {
-            damage
-                .damage_type
-                .has_tag(&tag::DamageType::MINECRAFT_PANIC_CAUSES)
-        }) || tick.state.has_memory_value(types::IS_PANICKING.id())
+        tick.state
+            .get(types::HURT_BY)
+            .is_some_and(|damage| damage.damage_type.has_tag(self.panic_causes))
+            || tick.state.has_memory_value(types::IS_PANICKING.id())
     }
 
     fn start(&mut self, tick: &mut BrainTick<'_>) {
+        if let Some(on_start) = self.on_start {
+            on_start(tick.mob);
+        }
         tick.state.set(types::IS_PANICKING, true);
         tick.state.erase(types::WALK_TARGET.id());
         tick.mob.get_mob_entity().steered().navigator().stop();

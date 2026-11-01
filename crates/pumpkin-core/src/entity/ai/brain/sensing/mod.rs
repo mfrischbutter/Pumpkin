@@ -6,6 +6,7 @@ use crate::entity::ai::target_predicate::TargetPredicate;
 use super::memory::{MemoryModuleId, types};
 use super::{BrainTick, VisibilityContext};
 
+pub mod armadillo_scare;
 pub mod dummy;
 pub mod hurt_by;
 pub mod nearest_adult;
@@ -35,6 +36,7 @@ pub enum SensorType {
     NearestItems,
     FoodTemptations,
     NearestAdult,
+    ArmadilloScareDetected,
 }
 
 impl SensorType {
@@ -48,6 +50,7 @@ impl SensorType {
             Self::NearestItems => "minecraft:nearest_items",
             Self::FoodTemptations => "minecraft:food_temptations",
             Self::NearestAdult => "minecraft:nearest_adult",
+            Self::ArmadilloScareDetected => "minecraft:armadillo_scare_detected",
         }
     }
 
@@ -61,6 +64,8 @@ impl SensorType {
             | Self::NearestItems
             | Self::FoodTemptations
             | Self::NearestAdult => DEFAULT_SCAN_RATE,
+            // Vanilla scans for scary mobs every 5 ticks.
+            Self::ArmadilloScareDetected => 5,
         }
     }
 
@@ -73,6 +78,7 @@ impl SensorType {
             Self::NearestItems => Box::new(nearest_items::NearestItemSensor),
             Self::FoodTemptations => Box::new(tempting::TemptingSensor),
             Self::NearestAdult => Box::new(nearest_adult::AdultSensor),
+            Self::ArmadilloScareDetected => Box::new(armadillo_scare::ArmadilloScareSensor),
         }
     }
 
