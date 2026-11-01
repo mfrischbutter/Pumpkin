@@ -738,32 +738,11 @@ impl PiglinEntity {
     }
 
     fn pick_up_nearby_items(&self) {
-        let living = &self.mob_entity.living_entity;
-        let entity = &living.entity;
-        if !self.mob_entity.can_pick_up_loot()
-            || !entity.is_alive()
-            || living.health.load() <= 0.0
-            || living.dead.load(Ordering::Relaxed)
-        {
-            return;
-        }
-        let world = entity.world.load();
-        if !world.level_info.load().game_rules.mob_griefing {
-            return;
-        }
-
-        let reach = entity.bounding_box.load().expand(1.0, 0.0, 1.0);
-        for candidate in world.get_entities_at_box(&reach) {
-            let Some(item) = candidate.get_item_entity() else {
-                continue;
-            };
-            if item.get_entity().is_alive()
-                && !item.has_pickup_delay()
-                && self.wants_item_entity(item)
-            {
+        self.mob_entity.for_each_item_in_pickup_reach(|item| {
+            if self.wants_item_entity(item) {
                 self.pick_up_item(item);
             }
-        }
+        });
     }
 
     fn pick_up_item(&self, item: &ItemEntity) {

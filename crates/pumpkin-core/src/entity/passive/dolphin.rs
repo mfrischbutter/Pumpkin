@@ -140,21 +140,9 @@ impl DolphinEntity {
     /// in reach goes into its empty mouth and always drops.
     fn pick_up_items(&self) {
         let mob_entity = &self.mob_entity;
-        let entity = &mob_entity.living_entity.entity;
-        let world = entity.world.load();
-        if !mob_entity.can_pick_up_loot() || !world.level_info.load().game_rules.mob_griefing {
-            return;
-        }
-        if !held_item(self).is_empty() {
-            return;
-        }
-        let reach = entity.bounding_box.load().expand(1.0, 0.0, 1.0);
-        for candidate in world.get_entities_at_box(&reach) {
-            let Some(item) = candidate.cast_any().downcast_ref::<ItemEntity>() else {
-                continue;
-            };
-            if !item.get_entity().is_alive() || item.has_pickup_delay() {
-                continue;
+        mob_entity.for_each_item_in_pickup_reach(|item| {
+            if !held_item(self).is_empty() {
+                return;
             }
             let stack = item
                 .get_item_stack()
@@ -162,15 +150,14 @@ impl DolphinEntity {
                 .unwrap_or_else(std::sync::PoisonError::into_inner)
                 .clone();
             if stack.is_empty() {
-                continue;
+                return;
             }
             mob_entity
                 .living_entity
                 .send_pickup_animation(item.get_entity(), u32::from(stack.item_count));
             mob_entity.set_item_slot_and_drop_when_killed(&EquipmentSlot::MAIN_HAND, stack);
             item.get_entity().remove();
-            return;
-        }
+        });
     }
 }
 

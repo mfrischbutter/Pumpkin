@@ -330,6 +330,37 @@ impl MobEntity {
         self.set_mob_flag(Self::CAN_PICK_UP_LOOT_FLAG, value);
     }
 
+    /// The scan of vanilla `Mob.aiStep`: hands `pick_up` each living item in reach (a block
+    /// around, not above) without a pickup delay, while the mob can pick up loot, lives and
+    /// `mobGriefing` is on. `pick_up` decides whether the mob wants it.
+    pub fn for_each_item_in_pickup_reach(
+        &self,
+        mut pick_up: impl FnMut(&crate::entity::item::ItemEntity),
+    ) {
+        let living = &self.living_entity;
+        let entity = &living.entity;
+        if !self.can_pick_up_loot()
+            || !entity.is_alive()
+            || living.health.load() <= 0.0
+            || living.dead.load(Relaxed)
+        {
+            return;
+        }
+        let world = entity.world.load();
+        if !world.level_info.load().game_rules.mob_griefing {
+            return;
+        }
+        let reach = entity.bounding_box.load().expand(1.0, 0.0, 1.0);
+        for candidate in world.get_entities_at_box(&reach) {
+            let Some(item) = candidate.get_item_entity() else {
+                continue;
+            };
+            if item.get_entity().is_alive() && !item.has_pickup_delay() {
+                pick_up(item);
+            }
+        }
+    }
+
     pub fn is_left_handed(&self) -> bool {
         (self.mob_flags.load(Relaxed) & Self::LEFT_HANDED_FLAG) != 0
     }
