@@ -2,7 +2,9 @@ use crate::entity::projectile::owner::ProjectileOwner;
 use std::sync::RwLock;
 use std::sync::atomic::AtomicBool;
 
-use crate::entity::projectile::splash_potion::extinguish_fire_if_water_potion;
+use crate::entity::projectile::splash_potion::{
+    extinguish_fire_if_water_potion, rehydrate_axolotls_if_water_potion,
+};
 use crate::{
     entity::{Entity, EntityBase, projectile::ThrownItemEntity},
     server::Server,
@@ -126,6 +128,7 @@ impl EntityBase for LingeringPotionEntity {
         // If no effects, just splash (like water bottles)
         if effects.is_empty() {
             extinguish_fire_if_water_potion(&world, hit_pos, &stack);
+            rehydrate_axolotls_if_water_potion(&world, self.get_entity(), &stack);
             return;
         }
 

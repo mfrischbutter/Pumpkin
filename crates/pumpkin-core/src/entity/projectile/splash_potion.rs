@@ -99,6 +99,27 @@ pub(crate) fn extinguish_fire_if_water_potion(
     }
 }
 
+/// The end of vanilla `AbstractThrownPotion.affectEntitiesAround`: a water bottle wets the
+/// axolotls around it.
+pub(crate) fn rehydrate_axolotls_if_water_potion(
+    world: &Arc<crate::world::World>,
+    potion: &Entity,
+    stack: &ItemStack,
+) {
+    if !is_water_potion(stack) {
+        return;
+    }
+    let area = potion.bounding_box.load().expand(4.0, 2.0, 4.0);
+    for entity in world.get_entities_at_box(&area) {
+        if let Some(axolotl) = entity
+            .cast_any()
+            .downcast_ref::<crate::entity::passive::axolotl::AxolotlEntity>()
+        {
+            axolotl.rehydrate();
+        }
+    }
+}
+
 impl EntityBase for SplashPotionEntity {
     fn get_projectile_owner(&self) -> Option<&ProjectileOwner> {
         Some(&self.thrown.owner)
@@ -154,6 +175,7 @@ impl EntityBase for SplashPotionEntity {
             .unwrap_or_else(std::sync::PoisonError::into_inner)
             .clone();
         extinguish_fire_if_water_potion(&world, hit_pos, &stack);
+        rehydrate_axolotls_if_water_potion(&world, self.get_entity(), &stack);
 
         // Send impact entity status (plays break particles)
         world.send_entity_status(
