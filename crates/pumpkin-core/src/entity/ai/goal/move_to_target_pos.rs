@@ -105,14 +105,29 @@ impl<M: MoveToTargetPos> MoveToTargetPosGoal<M> {
         false
     }
 
+    /// Vanilla `getMoveToTarget`: the block above the target, unless the target says
+    /// otherwise.
     #[must_use]
     pub fn get_target_pos(&self) -> BlockPos {
-        self.target_pos.up()
+        if self
+            .move_to_target_pos
+            .get()
+            .is_none_or(MoveToTargetPos::moves_above_target)
+        {
+            self.target_pos.up()
+        } else {
+            self.target_pos
+        }
     }
 
+    /// Vanilla `shouldRecalculatePath`.
     #[must_use]
-    pub const fn should_reset_path(&self) -> bool {
-        self.trying_time % 40 == 0
+    pub fn should_reset_path(&self) -> bool {
+        let interval = self
+            .move_to_target_pos
+            .get()
+            .map_or(40, MoveToTargetPos::path_recalculation_interval);
+        self.trying_time % interval == 0
     }
 
     #[must_use]
@@ -143,6 +158,17 @@ pub trait MoveToTargetPos: Send + Sync {
 
     fn get_desired_distance_to_target(&self) -> f64 {
         1.0
+    }
+
+    /// Whether the mob walks onto the block above the target, vanilla's default
+    /// `getMoveToTarget`.
+    fn moves_above_target(&self) -> bool {
+        true
+    }
+
+    /// Ticks between new paths to the target, vanilla `shouldRecalculatePath`.
+    fn path_recalculation_interval(&self) -> i32 {
+        40
     }
 }
 

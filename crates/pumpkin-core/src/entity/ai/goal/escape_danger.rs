@@ -27,6 +27,8 @@ pub struct EscapeDangerGoal {
     target: Option<Vector3<f64>>,
     running: bool,
     panic_causes: PanicCauses,
+    /// Vanilla `TurtlePanicGoal`: look for water this far first, not only when burning.
+    water_first: Option<i32>,
 }
 
 impl EscapeDangerGoal {
@@ -45,7 +47,15 @@ impl EscapeDangerGoal {
             target: None,
             running: false,
             panic_causes,
+            water_first: None,
         })
+    }
+
+    /// Always looks for water within `distance` first, like vanilla `TurtlePanicGoal`.
+    #[must_use]
+    pub fn water_first(mut self: Box<Self>, distance: i32) -> Box<Self> {
+        self.water_first = Some(distance);
+        self
     }
 
     #[must_use]
@@ -63,8 +73,9 @@ impl EscapeDangerGoal {
             .is_some_and(|damage_type| damage_type.has_tag(panic_causes))
     }
 
-    /// Nearest water within 5 blocks horizontally, only when the mob is not stuck in a block.
-    fn look_for_water(mob: &dyn Mob) -> Option<BlockPos> {
+    /// Nearest water within `search_xz` blocks horizontally, only when the mob is not stuck in
+    /// a block.
+    fn look_for_water(mob: &dyn Mob, search_xz: i32) -> Option<BlockPos> {
         let entity = mob.get_entity();
         let world = entity.world.load();
         let mob_pos = entity.block_pos.load();
@@ -79,9 +90,9 @@ impl EscapeDangerGoal {
         }
 
         let mut best: Option<(i32, BlockPos)> = None;
-        for dx in -WATER_SEARCH_XZ..=WATER_SEARCH_XZ {
+        for dx in -search_xz..=search_xz {
             for dy in -WATER_SEARCH_Y..=WATER_SEARCH_Y {
-                for dz in -WATER_SEARCH_XZ..=WATER_SEARCH_XZ {
+                for dz in -search_xz..=search_xz {
                     let pos = BlockPos::new(mob_pos.0.x + dx, mob_pos.0.y + dy, mob_pos.0.z + dz);
                     if !TryFindWaterGoal::is_water(&world, &pos) {
                         continue;
@@ -126,8 +137,11 @@ impl Goal for EscapeDangerGoal {
             return false;
         }
 
-        if mob.get_entity().fire_ticks.load(Relaxed) > 0
-            && let Some(water) = Self::look_for_water(mob)
+        let water_search = self
+            .water_first
+            .or_else(|| (mob.get_entity().fire_ticks.load(Relaxed) > 0).then_some(WATER_SEARCH_XZ));
+        if let Some(search_xz) = water_search
+            && let Some(water) = Self::look_for_water(mob, search_xz)
         {
             self.target = Some(water.to_f64());
             return true;

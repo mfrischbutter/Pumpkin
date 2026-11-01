@@ -36,6 +36,14 @@ pub trait Animal: Mob {
         true
     }
 
+    /// Vanilla `TurtleBreedGoal.breed`: `true` when breeding gives this animal an egg to lay
+    /// instead of a baby; it is told so by [`Self::on_bred_egg`].
+    fn breeds_eggs(&self) -> bool {
+        false
+    }
+
+    fn on_bred_egg(&self) {}
+
     /// Animals prefer grass, then bright spots.
     fn animal_walk_target_value(&self, pos: &pumpkin_util::math::position::BlockPos) -> f32 {
         let world = self.get_mob_entity().living_entity.entity.world.load();

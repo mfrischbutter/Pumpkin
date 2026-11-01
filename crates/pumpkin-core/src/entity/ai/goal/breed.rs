@@ -57,7 +57,52 @@ impl BreedGoal {
         })
     }
 
+    /// Vanilla `TurtleBreedGoal.breed`: the love cause is credited, this animal carries an egg,
+    /// both parents rest and the experience drops; no baby.
+    fn breed_egg(mob: &dyn Mob, mate: &dyn EntityBase) {
+        let mob_entity = mob.get_mob_entity();
+        let entity = mob.get_entity();
+        let world = entity.world.load();
+        let world_full = entity.world.load_full();
+        let online = |uuid: &Uuid| world.get_player_by_uuid(*uuid).is_some();
+        let love_cause = mob_entity.breeder.load().filter(online).or_else(|| {
+            mate.get_mob()
+                .and_then(|mate| mate.get_mob_entity().breeder.load())
+                .filter(online)
+        });
+        if let Some(player) = love_cause.and_then(|uuid| world.get_player_by_uuid(uuid)) {
+            player.increment_stat(
+                pumpkin_data::statistic::StatisticCategory::Custom,
+                pumpkin_data::statistic::CustomStatistic::AnimalsBred as i32,
+                1,
+            );
+            player.trigger_advancement(AdvancementTrigger::BredAnimal {
+                parent_type: format!("minecraft:{}", entity.entity_type.resource_name),
+            });
+        }
+        if let Some(animal) = mob.as_animal() {
+            animal.on_bred_egg();
+        }
+        mob_entity.reset_love_ticks();
+        mob_entity
+            .breeding_cooldown
+            .store(6000, std::sync::atomic::Ordering::Relaxed);
+        mate.reset_love();
+        mate.set_breeding_cooldown(6000);
+        let experience = mob.get_random().random_range(1..8u32);
+        if world.level_info.load().game_rules.mob_drops {
+            ExperienceOrbEntity::spawn(&world_full, entity.pos.load(), experience);
+        }
+    }
+
     fn breed(mob: &dyn Mob, mate: &dyn EntityBase) {
+        if mob
+            .as_animal()
+            .is_some_and(crate::entity::passive::animal::Animal::breeds_eggs)
+        {
+            Self::breed_egg(mob, mate);
+            return;
+        }
         let mob_entity = mob.get_mob_entity();
         let entity = mob.get_entity();
         let world = entity.world.load();
