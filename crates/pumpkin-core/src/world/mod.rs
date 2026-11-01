@@ -1836,7 +1836,9 @@ impl World {
         let level_for_entities = self.level.clone();
 
         let t_entities = std::time::Instant::now();
-        let tickable: Vec<_> = entities_to_tick
+        // Vanilla `ServerLevel.tick`: every loaded entity checks its despawn, only those
+        // within the simulation distance (`inEntityTickingRange`) tick.
+        let (tickable, resting): (Vec<_>, Vec<_>) = entities_to_tick
             .par_iter()
             .filter_map(|entity| {
                 let entity_pos = entity.get_entity().pos.load();
@@ -1844,15 +1846,16 @@ impl World {
                     get_section_cord(entity_pos.x.floor() as i32),
                     get_section_cord(entity_pos.z.floor() as i32),
                 );
-                if !active_chunks.contains(&entity_chunk) {
-                    return None;
-                }
-                if !level_for_entities.is_chunk_loaded(&entity_chunk) {
-                    return None;
-                }
-                Some((entity, entity_chunk))
+                level_for_entities
+                    .is_chunk_loaded(&entity_chunk)
+                    .then_some((entity, entity_chunk))
             })
-            .collect();
+            .partition(|(_, entity_chunk)| active_chunks.contains(entity_chunk));
+        for (entity, _) in resting {
+            if let Some(mob) = entity.get_mob() {
+                mob.get_mob_entity().check_despawn(mob);
+            }
+        }
 
         // Entities that can affect each other tick in list order; separate islands run in
         // parallel.
@@ -2443,7 +2446,7 @@ impl World {
         // 5. Spawning chunks, one after another in shuffled order like vanilla
         // `ServerChunkCache.tickChunks`: the spawn state's charge cache and local caps
         // are shared by every chunk of the pass.
-        let mut spawning_chunks = self.collect_spawning_chunks(&active_chunks);
+        let mut spawning_chunks = self.collect_spawning_chunks();
         spawning_chunks.shuffle(&mut rng());
         for (pos, chunk) in &spawning_chunks {
             self.tick_spawning_chunk(*pos, chunk, &spawn_list, &spawn_state);
@@ -2490,22 +2493,19 @@ impl World {
             .tick(self);
     }
 
-    /// Vanilla `ChunkMap.collectSpawningChunks`: the loaded active chunks within
-    /// [`natural_spawner::SPAWN_DISTANCE_CHUNK`] of a player's chunk that have a
-    /// non-spectator player within [`natural_spawner::SPAWN_DISTANCE_BLOCK`] of their
-    /// centre.
-    fn collect_spawning_chunks(
-        &self,
-        active_chunks: &FxHashSet<Vector2<i32>>,
-    ) -> Vec<(Vector2<i32>, Arc<ChunkData>)> {
+    /// Vanilla `ServerChunkCache.tickChunks` with `anyPlayerCloseEnoughForSpawning`: the
+    /// loaded chunks within [`natural_spawner::SPAWN_DISTANCE_CHUNK`] of a player's chunk
+    /// that have a non-spectator player within [`natural_spawner::SPAWN_DISTANCE_BLOCK`] of
+    /// their centre. Vanilla's entity ticking visibility reaches the view distance (the
+    /// player loading ticket), so the simulation distance does not bound spawning.
+    fn collect_spawning_chunks(&self) -> Vec<(Vector2<i32>, Arc<ChunkData>)> {
         let natural_spawn_chunks = self.natural_spawn_chunks.load();
         let players = self.players.load();
         let mut spawning_chunks = Vec::new();
         for pos in natural_spawn_chunks.iter() {
-            if !active_chunks.contains(pos)
-                || !players.iter().any(|player| {
-                    natural_spawner::is_player_close_enough_for_spawning(player, *pos)
-                })
+            if !players
+                .iter()
+                .any(|player| natural_spawner::is_player_close_enough_for_spawning(player, *pos))
             {
                 continue;
             }

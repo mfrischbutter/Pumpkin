@@ -914,13 +914,10 @@ pub fn is_right_distance_to_player_and_spawn_point(
     let chunk_x = get_section_cord(pos.0.x);
     let chunk_z = get_section_cord(pos.0.z);
     let target_chunk = Vector2::new(chunk_x, chunk_z);
-    // Vanilla `canSpawnEntitiesInChunk`: the chunk ticks entities and lies inside the border.
+    // Vanilla `canSpawnEntitiesInChunk`: the chunk is loaded (entities are visible as far
+    // as the view distance) and lies inside the border.
     target_chunk == *chunk_pos
-        || (world
-            .active_chunks
-            .read()
-            .unwrap_or_else(std::sync::PoisonError::into_inner)
-            .contains(&target_chunk)
+        || (world.level.is_chunk_loaded(&target_chunk)
             && world
                 .worldborder
                 .lock()
