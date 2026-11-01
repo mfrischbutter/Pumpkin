@@ -447,6 +447,13 @@ fn make_brain(camel: &CamelEntity, packed: &PackedMemories) -> Brain {
     .make_brain(camel, packed)
 }
 
+/// Vanilla `CamelPanic.start`: a panicking camel is up at once.
+fn stand_up_to_flee(mob: &dyn Mob) {
+    if let Some(camel) = as_camel(mob) {
+        camel.stand_up_instantly();
+    }
+}
+
 fn refuses_to_move(mob: &dyn Mob) -> bool {
     as_camel(mob).is_some_and(CamelEntity::refuse_to_move)
 }
@@ -462,7 +469,7 @@ fn activities(_mob: &dyn Mob) -> Vec<ActivityData> {
             0,
             vec![
                 Box::new(Timed::new(Swim::new(0.8))),
-                Box::new(Timed::new(AnimalPanic::new(4.0))),
+                Box::new(Timed::new(AnimalPanic::new(4.0).on_start(stand_up_to_flee))),
                 Box::new(Timed::new(LookAtTargetSink::new(45, 90))),
                 Box::new(Timed::new(MoveToTargetSink::default())),
                 Box::new(CountDownCooldownTicks::new(
