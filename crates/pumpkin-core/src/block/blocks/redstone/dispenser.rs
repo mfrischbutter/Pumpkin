@@ -3,7 +3,6 @@ use rand::{Rng, RngExt, rng};
 use std::sync::Arc;
 use std::sync::Mutex;
 use std::sync::atomic::AtomicBool;
-use uuid::Uuid;
 
 use crate::block::blocks::carved_pumpkin::find_golem_pattern;
 use crate::block::blocks::redstone::block_receives_redstone_power;
@@ -28,7 +27,6 @@ use crate::entity::projectile::snowball::SnowballEntity;
 use crate::entity::projectile::splash_potion::SplashPotionEntity;
 use crate::entity::projectile::wind_charge::{WIND_CHARGE_GRAVITY, WindChargeEntity};
 use crate::entity::tnt::TNTEntity;
-use crate::entity::r#type::from_type;
 use crate::entity::vehicle::boat::BoatEntity;
 use crate::entity::vehicle::minecart::MinecartEntity;
 use crate::entity::{Entity, EntityBase};
@@ -41,7 +39,7 @@ use crate::item::items::bucket::{
 use crate::item::items::honeycomb::try_wax_block;
 use crate::item::items::ignite::ignition::Ignition;
 use crate::item::items::minecart::MinecartItem;
-use crate::item::items::spawn_egg::prepare_egg_mob;
+use crate::item::items::spawn_egg::{can_spawn, spawn_from_item};
 use crate::plugin::api::events::entity::creature_spawn::CreatureSpawnReason;
 use crate::world::World;
 
@@ -75,7 +73,6 @@ use pumpkin_macros::pumpkin_block;
 use pumpkin_util::math::boundingbox::{BoundingBox, EntityDimensions};
 use pumpkin_util::math::position::BlockPos;
 use pumpkin_util::math::vector3::Vector3;
-use pumpkin_util::math::wrap_degrees;
 use pumpkin_util::text::TextComponent;
 use pumpkin_world::tick::TickPriority;
 use pumpkin_world::world::BlockFlags;
@@ -586,20 +583,27 @@ impl DispenserBlock {
             return;
         };
 
-        let spawn_pos = Self::target_position(ctx).to_f64();
-
-        let mob = from_type(entity_type, spawn_pos, ctx.world, Uuid::new_v4());
-        let yaw = wrap_degrees(rng().random::<f32>() * 360.0) % 360.0;
-        mob.get_entity().set_rotation(yaw, 0.0);
-        // A dispenser has no acting player, matching vanilla's null `user` for this source.
-        prepare_egg_mob(item, &mob, ctx.world, None);
-
-        // Vanilla SpawnEggItemBehavior keeps the egg when nothing spawned.
-        if ctx
-            .world
-            .spawn_creature(mob, CreatureSpawnReason::DispenseEgg, None)
+        // Vanilla `SpawnEggItemBehavior`: the mob at the facing block, sinking onto it unless
+        // the dispenser faces up; the egg stays when the type may not spawn or a plugin
+        // cancelled the spawn. A dispenser has no acting player.
+        if can_spawn(entity_type, ctx.world)
+            && spawn_from_item(
+                entity_type,
+                item,
+                ctx.world,
+                None,
+                &Self::target_position(ctx),
+                ctx.facing != Facing::Up,
+                false,
+                CreatureSpawnReason::DispenseEgg,
+            )
+            .is_some()
         {
             item.decrement(1);
+            ctx.world.emit_game_event(
+                GameEvent::EntityPlace.name(),
+                ctx.position.to_centered_f64(),
+            );
         }
 
         ctx.world
@@ -1222,6 +1226,14 @@ impl DispenserBlock {
             let stack = item.split(1);
             equipment.put(slot, stack.clone());
             drop(equipment);
+            // Vanilla `EquipmentDispenseItemBehavior`: a mob keeps the piece as a guaranteed
+            // drop and stays loaded.
+            if let Some(mob) = entity.get_mob() {
+                let mob = mob.get_mob_entity();
+                mob.set_guaranteed_drop(slot);
+                mob.persistence_required
+                    .store(true, std::sync::atomic::Ordering::Relaxed);
+            }
 
             living.send_equipment_changes(&[(slot.clone(), stack)]);
             ctx.world.play_sound_event(

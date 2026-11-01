@@ -1,3 +1,4 @@
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, Weak};
 
 use pumpkin_data::BlockState;
@@ -11,6 +12,10 @@ use pumpkin_nbt::compound::NbtCompound;
 use pumpkin_util::math::position::BlockPos;
 use pumpkin_util::math::vector3::Vector3;
 
+use crate::entity::bucketable::{
+    Bucketable, bucket_mob_pickup, load_age_from_bucket_tag, save_age_to_bucket_tag,
+};
+use crate::entity::mob::requires_custom_persistence_base;
 use crate::entity::{
     Entity, EntityBase,
     ageable::{AgeableData, AgeableMob},
@@ -30,6 +35,8 @@ const TEMPT_ITEMS: &[&Item] = &[&Item::SLIME_BALL];
 pub struct TadpoleEntity {
     pub mob_entity: MobEntity,
     pub ageable_data: AgeableData,
+    /// Vanilla `AbstractFish.fromBucket`: a released tadpole stays.
+    from_bucket: AtomicBool,
 }
 
 impl TadpoleEntity {
@@ -38,6 +45,7 @@ impl TadpoleEntity {
         let tadpole = Self {
             mob_entity,
             ageable_data: AgeableData::default(),
+            from_bucket: AtomicBool::new(false),
         };
         let mob_arc = Arc::new(tadpole);
         let mob_weak: Weak<dyn Mob> = {
@@ -69,6 +77,41 @@ impl TadpoleEntity {
     }
 }
 
+impl Bucketable for TadpoleEntity {
+    fn is_from_bucket(&self) -> bool {
+        self.from_bucket.load(Ordering::Relaxed)
+    }
+
+    fn set_from_bucket(&self, from_bucket: bool) {
+        self.from_bucket.store(from_bucket, Ordering::Relaxed);
+        self.get_entity().set_synced_data(
+            pumpkin_data::tracked_data::abstract_fish::FROM_BUCKET,
+            from_bucket,
+        );
+    }
+
+    fn bucket_item(&self) -> &'static Item {
+        &Item::TADPOLE_BUCKET
+    }
+
+    /// Vanilla `Tadpole.getPickupSound`.
+    fn pickup_sound(&self) -> Sound {
+        Sound::ItemBucketFillTadpole
+    }
+
+    /// Vanilla `Tadpole.saveToBucketTag`: the age and its lock go along.
+    fn save_to_bucket_tag(&self, bucket: &mut ItemStack) {
+        self.save_default_data_to_bucket_tag(bucket);
+        save_age_to_bucket_tag(self, bucket);
+    }
+
+    /// Vanilla `Tadpole.loadFromBucketTag`.
+    fn load_from_bucket_tag(&self, nbt: &NbtCompound) {
+        self.load_default_data_from_bucket_tag(nbt);
+        load_age_from_bucket_tag(self, nbt);
+    }
+}
+
 impl AgeableMob for TadpoleEntity {
     fn get_ageable_data(&self) -> &AgeableData {
         &self.ageable_data
@@ -93,12 +136,40 @@ impl Mob for TadpoleEntity {
         Some(self)
     }
 
+    fn as_bucketable(&self) -> Option<&dyn Bucketable> {
+        Some(self)
+    }
+
+    /// Vanilla `Tadpole.mobInteract`: the water bucket picks it up first.
+    fn mob_interact_with_hand(
+        &self,
+        player: &Arc<Player>,
+        item_stack: &mut ItemStack,
+        _hand: pumpkin_util::Hand,
+    ) -> Option<bool> {
+        bucket_mob_pickup(player, item_stack, self)
+    }
+
+    /// Vanilla `AbstractFish.removeWhenFarAway`: a bucketed or named tadpole stays.
+    fn remove_when_far_away(&self, _distance_sq: f64) -> bool {
+        !self.is_from_bucket() && self.get_entity().custom_name.load().is_none()
+    }
+
+    /// Vanilla `AbstractFish.requiresCustomPersistence`.
+    fn requires_custom_persistence(&self) -> bool {
+        requires_custom_persistence_base(self) || self.is_from_bucket()
+    }
+
     fn mob_write_nbt(&self, nbt: &mut NbtCompound) {
         self.write_ageable_nbt(nbt);
+        nbt.put_bool("FromBucket", self.is_from_bucket());
     }
 
     fn mob_read_nbt(&self, nbt: &NbtCompound) {
         self.read_ageable_nbt(nbt);
+        if let Some(from_bucket) = nbt.get_bool("FromBucket") {
+            self.set_from_bucket(from_bucket);
+        }
     }
 
     fn get_mob_entity(&self) -> &MobEntity {

@@ -13,7 +13,15 @@ use crate::entity::mob::MobEntity;
 use crate::entity::mob::equipment::{EQUIPMENT_REGISTRY, RegionalDifficulty, equip_mob_on_spawn};
 use crate::entity::passive::fox::FoxVariant;
 use crate::entity::passive::llama::LlamaVariant;
+use crate::entity::r#type::from_type;
 use crate::world::World;
+use crate::world::level_accessor::LevelAccessor;
+use pumpkin_data::entity::EntityType;
+use pumpkin_util::math::boundingbox::{BoundingBox, EntityDimensions};
+use pumpkin_util::math::position::BlockPos;
+use pumpkin_util::math::vector3::Vector3;
+use pumpkin_util::math::wrap_degrees;
+use uuid::Uuid;
 
 const RANDOM_SPAWN_BONUS_ID: &str = "minecraft:random_spawn_bonus";
 
@@ -190,4 +198,85 @@ impl MobEntity {
             std::sync::atomic::Ordering::Relaxed,
         );
     }
+}
+
+/// Vanilla `VoxelShape.collideX`'s tolerance.
+const COLLISION_EPSILON: f64 = 1.0E-7;
+
+/// Vanilla `EntityType.getYOffset`: how far a mob set one block above `spawn_pos` sinks onto
+/// the block collision shapes of that block (and of the one below when it moved up a face)
+/// before it rests: `1 + Shapes.collide(Y, box, shapes, -1 or -2)`.
+fn spawn_y_offset(
+    level: &dyn LevelAccessor,
+    spawn_pos: &BlockPos,
+    moved_up: bool,
+    entity_box: &BoundingBox,
+) -> f64 {
+    let (lowest, mut distance): (BlockPos, f64) = if moved_up {
+        (spawn_pos.down(), -2.0)
+    } else {
+        (*spawn_pos, -1.0)
+    };
+    for pos in BlockPos::iterate(lowest, *spawn_pos) {
+        let state = level.get_block_state(&pos);
+        for shape in state
+            .get_block_collision_shapes_at(&pos)
+            .map(|shape| shape.at_pos(pos))
+        {
+            if distance.abs() < COLLISION_EPSILON {
+                return 1.0;
+            }
+            let overlaps = shape.min.x < entity_box.max.x - COLLISION_EPSILON
+                && shape.max.x > entity_box.min.x + COLLISION_EPSILON
+                && shape.min.z < entity_box.max.z - COLLISION_EPSILON
+                && shape.max.z > entity_box.min.z + COLLISION_EPSILON;
+            if !overlaps {
+                continue;
+            }
+            // The box only moves down to the top of a shape below its bottom.
+            let to_top = shape.max.y - entity_box.min.y;
+            if to_top <= COLLISION_EPSILON {
+                distance = distance.max(to_top);
+            }
+        }
+    }
+    1.0 + distance
+}
+
+/// Vanilla `EntityType.create` before its `finalizeSpawn`.
+///
+/// The entity at the block's bottom centre with a random yaw. With `try_move_down` it is
+/// set one block up and sinks onto the block's collision shapes, two blocks far when it
+/// `moved_up` onto a top face.
+#[must_use]
+pub fn create_at(
+    entity_type: &'static EntityType,
+    world: &Arc<World>,
+    spawn_pos: &BlockPos,
+    try_move_down: bool,
+    moved_up: bool,
+) -> Arc<dyn EntityBase> {
+    let x = f64::from(spawn_pos.0.x) + 0.5;
+    let z = f64::from(spawn_pos.0.z) + 0.5;
+    let y_offset = if try_move_down {
+        let dimensions = EntityDimensions::new(
+            entity_type.dimension[0],
+            entity_type.dimension[1],
+            entity_type.eye_height,
+        );
+        let raised = BoundingBox::new_from_pos(x, f64::from(spawn_pos.0.y + 1), z, &dimensions);
+        spawn_y_offset(world.as_ref(), spawn_pos, moved_up, &raised)
+    } else {
+        0.0
+    };
+    let entity = from_type(
+        entity_type,
+        Vector3::new(x, f64::from(spawn_pos.0.y) + y_offset, z),
+        world,
+        Uuid::new_v4(),
+    );
+    entity
+        .get_entity()
+        .set_rotation(wrap_degrees(rand::random::<f32>() * 360.0), 0.0);
+    entity
 }

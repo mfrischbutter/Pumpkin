@@ -8,7 +8,7 @@ use pumpkin_data::{
 };
 use pumpkin_nbt::compound::NbtCompound;
 
-use super::{mob::Mob, player::Player};
+use super::{ageable::AgeableMob, mob::Mob, player::Player};
 
 pub trait Bucketable: Mob {
     fn is_from_bucket(&self) -> bool;
@@ -47,6 +47,11 @@ pub trait Bucketable: Mob {
     }
 
     fn load_from_bucket_tag(&self, nbt: &NbtCompound) {
+        self.load_default_data_from_bucket_tag(nbt);
+    }
+
+    /// Vanilla `Bucketable.loadDefaultDataFromBucketTag`.
+    fn load_default_data_from_bucket_tag(&self, nbt: &NbtCompound) {
         let entity = self.get_entity();
         let mob = self.get_mob_entity();
         if let Some(value) = nbt.get_bool("NoAI") {
@@ -71,6 +76,25 @@ pub trait Bucketable: Mob {
             mob.living_entity.set_health(health);
         }
     }
+}
+
+/// The age part of vanilla `Axolotl.saveToBucketTag` and `Tadpole.saveToBucketTag`.
+pub fn save_age_to_bucket_tag(mob: &dyn AgeableMob, bucket: &mut ItemStack) {
+    let mut nbt = bucket
+        .get_data_component::<BucketEntityDataImpl>()
+        .and_then(|data| data.nbt.clone())
+        .unwrap_or_default();
+    nbt.put_int("Age", mob.get_age());
+    nbt.put_bool("AgeLocked", mob.is_age_locked());
+    bucket.set_data_component(BucketEntityDataImpl { nbt: Some(nbt) });
+}
+
+/// The age part of vanilla `loadFromBucketTag`: `Age` when given, `AgeLocked` with its default.
+pub fn load_age_from_bucket_tag(mob: &dyn AgeableMob, nbt: &NbtCompound) {
+    if let Some(age) = nbt.get_int("Age") {
+        mob.set_age(age);
+    }
+    mob.set_age_locked(nbt.get_bool("AgeLocked").unwrap_or(false));
 }
 
 pub fn bucket_mob_pickup(

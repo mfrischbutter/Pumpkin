@@ -3,12 +3,15 @@ use std::sync::{
     atomic::{AtomicBool, AtomicI32, Ordering},
 };
 
+use crate::entity::bucketable::{
+    Bucketable, bucket_mob_pickup, load_age_from_bucket_tag, save_age_to_bucket_tag,
+};
 use crate::entity::mob::requires_custom_persistence_base;
 use crate::world::level_accessor::LevelAccessor;
 use pumpkin_data::entity::EntityType;
 use pumpkin_data::item::Item;
 use pumpkin_data::item_stack::ItemStack;
-use pumpkin_data::sound::{Sound, SoundCategory};
+use pumpkin_data::sound::Sound;
 use pumpkin_data::tag::{self, Taggable};
 use pumpkin_nbt::compound::NbtCompound;
 use pumpkin_protocol::codec::var_int::VarInt;
@@ -212,6 +215,41 @@ impl AxolotlEntity {
     }
 }
 
+/// Vanilla `Axolotl.useRareVariant`: one bred baby in this many takes the rare variant.
+const RARE_VARIANT_ODDS: i32 = 1200;
+
+impl Bucketable for AxolotlEntity {
+    fn is_from_bucket(&self) -> bool {
+        self.from_bucket.load(Ordering::Relaxed)
+    }
+
+    fn set_from_bucket(&self, from_bucket: bool) {
+        Self::set_from_bucket(self, from_bucket);
+    }
+
+    fn bucket_item(&self) -> &'static Item {
+        &Item::AXOLOTL_BUCKET
+    }
+
+    /// Vanilla `Axolotl.getPickupSound`.
+    fn pickup_sound(&self) -> Sound {
+        Sound::ItemBucketFillAxolotl
+    }
+
+    /// Vanilla `Axolotl.saveToBucketTag`: the age and its lock go along (the hunting cooldown
+    /// is the brain's).
+    fn save_to_bucket_tag(&self, bucket: &mut ItemStack) {
+        self.save_default_data_to_bucket_tag(bucket);
+        save_age_to_bucket_tag(self, bucket);
+    }
+
+    /// Vanilla `Axolotl.loadFromBucketTag`.
+    fn load_from_bucket_tag(&self, nbt: &NbtCompound) {
+        self.load_default_data_from_bucket_tag(nbt);
+        load_age_from_bucket_tag(self, nbt);
+    }
+}
+
 impl AgeableMob for AxolotlEntity {
     fn get_ageable_data(&self) -> &AgeableData {
         &self.ageable_data
@@ -223,6 +261,33 @@ impl Animal for AxolotlEntity {
         item_stack.item.has_tag(&tag::Item::MINECRAFT_AXOLOTL_FOOD)
             || item_stack.item == &Item::TROPICAL_FISH_BUCKET
             || item_stack.item == &Item::TROPICAL_FISH
+    }
+
+    /// Vanilla `Axolotl.getBreedOffspring`: one baby in 1200 takes the rare blue variant, the
+    /// others one parent's; a bred baby stays loaded.
+    fn get_breed_offspring(&self, partner: &dyn EntityBase) -> Arc<dyn EntityBase> {
+        let entity = self.get_entity();
+        let baby = Self::new(Entity::new(
+            entity.world.load_full(),
+            entity.pos.load(),
+            &EntityType::AXOLOTL,
+        ));
+        let mut rng = rand::rng();
+        let variant = if rng.random_range(0..RARE_VARIANT_ODDS) == 0 {
+            AxolotlVariant::Blue
+        } else if rng.random::<bool>() {
+            self.get_variant()
+        } else {
+            partner
+                .cast_any()
+                .downcast_ref::<Self>()
+                .map_or_else(|| self.get_variant(), Self::get_variant)
+        };
+        baby.set_variant(variant);
+        baby.get_mob_entity()
+            .persistence_required
+            .store(true, Ordering::Relaxed);
+        baby
     }
 }
 
@@ -259,9 +324,23 @@ impl Mob for AxolotlEntity {
         Some(self)
     }
 
+    fn as_bucketable(&self) -> Option<&dyn Bucketable> {
+        Some(self)
+    }
+
+    /// Vanilla `Axolotl.mobInteract`: the water bucket picks it up first.
+    fn mob_interact_with_hand(
+        &self,
+        player: &Arc<Player>,
+        item_stack: &mut ItemStack,
+        _hand: pumpkin_util::Hand,
+    ) -> Option<bool> {
+        bucket_mob_pickup(player, item_stack, self)
+    }
+
     fn mob_write_nbt(&self, nbt: &mut NbtCompound) {
         nbt.put_int("Variant", self.get_variant().id());
-        nbt.put_bool("FromBucket", self.is_from_bucket());
+        nbt.put_bool("FromBucket", Self::is_from_bucket(self));
     }
 
     fn mob_read_nbt(&self, nbt: &NbtCompound) {
@@ -309,30 +388,6 @@ impl Mob for AxolotlEntity {
     }
 
     fn mob_interact(&self, player: &Arc<Player>, item_stack: &mut ItemStack) -> bool {
-        let item = item_stack.get_item();
-
-        if item == &Item::WATER_BUCKET {
-            let entity = self.get_entity();
-            let world = entity.world.load();
-            if let Some(server) = world.server.upgrade() {
-                let mut event = crate::plugin::api::events::player::player_bucket_entity::PlayerBucketEntityEvent {
-                    player: player.clone(),
-                    entity_id: entity.entity_id,
-                    bucket_item: "axolotl_bucket".to_string(),
-                    cancelled: false,
-                };
-                server.plugin_manager.fire_blocking(&server, &mut event);
-                if event.cancelled {
-                    return false;
-                }
-            }
-            item_stack.decrement_unless_creative(player.gamemode.load(), 1);
-            let pos = entity.pos.load();
-            world.play_sound(Sound::ItemBucketFillAxolotl, SoundCategory::Neutral, &pos);
-            entity.remove();
-            return true;
-        }
-
         self.animal_interact(player, item_stack, Sound::EntityAxolotlIdleAir)
     }
 }

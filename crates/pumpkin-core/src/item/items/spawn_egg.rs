@@ -3,7 +3,7 @@ use std::sync::Arc;
 
 use crate::block::entities::mob_spawner::MobSpawnerBlockEntity;
 use crate::entity::EntityBase;
-use crate::entity::mob::spawn::finalize_spawn;
+use crate::entity::mob::spawn::{create_at, finalize_spawn};
 use crate::entity::player::Player;
 use crate::entity::r#type::from_type;
 use crate::item::{ItemBehaviour, ItemMetadata};
@@ -21,19 +21,19 @@ use pumpkin_data::data_component_impl::{
     WolfSoundVariantImpl, WolfVariantImpl, ZombieNautilusVariantImpl,
 };
 use pumpkin_data::dye_color::DyeColor;
+use pumpkin_data::entity::EntityType;
 use pumpkin_data::entity::entity_from_egg;
-use pumpkin_data::entity::{EntityType, MobCategory};
 use pumpkin_data::game_event::GameEvent;
 use pumpkin_data::item::Item;
 use pumpkin_data::item_stack::ItemStack;
-use pumpkin_data::statistic::StatisticCategory;
+use pumpkin_data::translation;
 use pumpkin_data::{Block, BlockDirection};
 use pumpkin_inventory::player::player_inventory::PlayerInventory;
 use pumpkin_nbt::compound::NbtCompound;
 use pumpkin_util::math::position::BlockPos;
 use pumpkin_util::math::vector3::Vector3;
-use pumpkin_util::math::wrap_degrees;
 use pumpkin_util::permission::PermissionLvl;
+use pumpkin_util::text::TextComponent;
 use pumpkin_util::{Difficulty, Hand};
 use uuid::Uuid;
 
@@ -45,11 +45,9 @@ impl ItemMetadata for SpawnEggItem {
     }
 }
 
-fn is_disallowed_in_peaceful(entity_type: &EntityType, world: &World) -> bool {
-    entity_type.category == &MobCategory::MONSTER
-        && entity_type != &EntityType::PIGLIN
-        && entity_type != &EntityType::SHULKER
-        && world.level_info.load().difficulty == Difficulty::Peaceful
+/// Vanilla `EntityType.canSpawn`: a type not allowed in peaceful needs another difficulty.
+pub(crate) fn can_spawn(entity_type: &EntityType, world: &World) -> bool {
+    entity_type.is_allowed_in_peaceful || world.level_info.load().difficulty != Difficulty::Peaceful
 }
 
 /// Vanilla's `EntityTypes.OP_ONLY_CUSTOM_DATA`: types whose `entity_data` only a server
@@ -110,8 +108,10 @@ fn apply_entity_data(item: &ItemStack, mob: &dyn EntityBase, user: Option<&Playe
     if only_op_can_set_nbt(entity_type) && !user.is_some_and(can_place_op_nbt) {
         return;
     }
+    // Vanilla `TypedEntityData.loadInto` keeps the entity's own UUID; a `Pos` in the data
+    // moves the mob like any loaded position.
     let mut nbt = nbt.clone();
-    for key in ["id", "UUID", "Pos"] {
+    for key in ["id", "UUID"] {
         nbt.child_tags.remove(key);
     }
     if !nbt.is_empty() {
@@ -226,6 +226,32 @@ pub(crate) fn prepare_egg_mob(
     apply_entity_variant(item, mob.as_ref(), user);
 }
 
+/// Vanilla `EntityType.spawn(level, itemStack, user, pos, reason, tryMoveDown, movedUp)`: the
+/// mob created at the spot, finalized and configured from the item, added to the world and
+/// making its ambient sound; `None` when a plugin cancelled the spawn.
+#[expect(clippy::too_many_arguments)]
+pub(crate) fn spawn_from_item(
+    entity_type: &'static EntityType,
+    item: &ItemStack,
+    world: &Arc<World>,
+    user: Option<&Player>,
+    spawn_pos: &BlockPos,
+    try_move_down: bool,
+    moved_up: bool,
+    reason: CreatureSpawnReason,
+) -> Option<Arc<dyn EntityBase>> {
+    let mob = create_at(entity_type, world, spawn_pos, try_move_down, moved_up);
+    prepare_egg_mob(item, &mob, world, user);
+    let player = user.and_then(|user| world.get_player_by_uuid(user.gameprofile.id));
+    if !world.spawn_creature(mob.clone(), reason, player) {
+        return None;
+    }
+    if let Some(mob) = mob.get_mob() {
+        mob.play_ambient_sound();
+    }
+    Some(mob)
+}
+
 impl ItemBehaviour for SpawnEggItem {
     fn normal_use(&self, item: &Item, player: &Player) {
         let (yaw, pitch) = player.rotation();
@@ -252,7 +278,7 @@ impl ItemBehaviour for SpawnEggItem {
             if hit_block != &Block::WATER && hit_block != &Block::LAVA {
                 return;
             }
-            if is_disallowed_in_peaceful(entity_type, &world) {
+            if !can_spawn(entity_type, &world) {
                 return;
             }
 
@@ -261,21 +287,19 @@ impl ItemBehaviour for SpawnEggItem {
                 return;
             }
 
-            let pos = Vector3::new(
-                f64::from(hit_pos.0.x) + 0.5,
-                f64::from(hit_pos.0.y),
-                f64::from(hit_pos.0.z) + 0.5,
-            );
-            let spawn_yaw = wrap_degrees(rand::random::<f32>() * 360.0) % 360.0;
-            let mob = from_type(entity_type, pos, &world, Uuid::new_v4());
-            mob.get_entity().set_rotation(spawn_yaw, 0.0);
-
-            prepare_egg_mob(&stack, &mob, &world, Some(player));
-            if !world.spawn_creature(
-                mob,
+            // Vanilla `spawnMob(type, player, stack, level, pos, false, false)`.
+            if spawn_from_item(
+                entity_type,
+                &stack,
+                &world,
+                Some(player),
+                &hit_pos,
+                false,
+                false,
                 CreatureSpawnReason::SpawnerEgg,
-                world.get_player_by_uuid(player.gameprofile.id),
-            ) {
+            )
+            .is_none()
+            {
                 return;
             }
 
@@ -286,8 +310,7 @@ impl ItemBehaviour for SpawnEggItem {
                 Hand::Left => PlayerInventory::OFF_HAND_SLOT,
             };
             player.sync_hand_slot(slot_index, stack);
-            world.emit_game_event(GameEvent::EntityPlace.name(), pos);
-            player.increment_stat(StatisticCategory::Used, i32::from(item.id), 1);
+            world.emit_game_event(GameEvent::EntityPlace.name(), hit_pos.to_centered_f64());
         }
     }
 
@@ -303,32 +326,46 @@ impl ItemBehaviour for SpawnEggItem {
     ) -> BlockActionResult {
         if let Some(entity_type) = entity_from_egg(item.item.id) {
             let world = player.world();
-
-            if let Some(block_entity) = player.world().get_block_entity(&location) {
-                if let Some(spawner) = block_entity
-                    .as_any()
-                    .downcast_ref::<MobSpawnerBlockEntity>()
-                {
-                    spawner.set_entity_id(entity_type);
-                    world.update_block_entity(&block_entity);
-                    world.emit_game_event(GameEvent::BlockChange.name(), location.to_f64());
-                    item.decrement_unless_creative(player.gamemode.load(), 1);
-                    return BlockActionResult::Success;
-                }
-                if let Some(trial_spawner) = block_entity
-                    .as_any()
-                    .downcast_ref::<crate::block::entities::trial_spawner::TrialSpawnerBlockEntity>()
-                {
-                    trial_spawner.set_entity_type(entity_type, &world);
-                    world.update_block_entity(&block_entity);
-                    world.emit_game_event(GameEvent::BlockChange.name(), location.to_f64());
-                    item.decrement_unless_creative(player.gamemode.load(), 1);
-                    return BlockActionResult::Success;
-                }
+            if !can_spawn(entity_type, &world) {
+                return BlockActionResult::Fail;
             }
 
-            if is_disallowed_in_peaceful(entity_type, &world) {
-                return BlockActionResult::Fail;
+            if let Some(block_entity) = world.get_block_entity(&location) {
+                let spawner = block_entity
+                    .as_any()
+                    .downcast_ref::<MobSpawnerBlockEntity>();
+                let trial_spawner = block_entity
+                    .as_any()
+                    .downcast_ref::<crate::block::entities::trial_spawner::TrialSpawnerBlockEntity>(
+                );
+                if spawner.is_some() || trial_spawner.is_some() {
+                    // Vanilla: the egg sets the spawner's entity while spawner blocks work; an
+                    // operator's egg with entity data sets the data too.
+                    if !world.level_info.load().game_rules.spawner_blocks_work {
+                        player.send_system_message(&TextComponent::translate(
+                            translation::java::ADVMODE_NOTENABLED_SPAWNER,
+                            Vec::new(),
+                        ));
+                        return BlockActionResult::Fail;
+                    }
+                    let entity_data = item
+                        .get_data_component::<EntityDataImpl>()
+                        .and_then(|data| data.nbt.clone())
+                        .filter(|_| can_place_op_nbt(player));
+                    if let Some(spawner) = spawner {
+                        match &entity_data {
+                            Some(data) => spawner.set_entity_data(entity_type, data),
+                            None => spawner.set_entity_id(entity_type),
+                        }
+                    } else if let Some(trial_spawner) = trial_spawner {
+                        trial_spawner.set_entity_type(entity_type, &world);
+                    }
+                    world.update_block_entity(&block_entity);
+                    world.emit_game_event(GameEvent::BlockChange.name(), location.to_f64());
+                    // Vanilla `itemStack.shrink(1)`: the egg goes, in creative too.
+                    item.decrement(1);
+                    return BlockActionResult::Success;
+                }
             }
 
             let target_state = world.get_block_state(&location);
@@ -337,61 +374,75 @@ impl ItemBehaviour for SpawnEggItem {
             } else {
                 BlockPos(location.0 + face.to_offset())
             };
-            let pos = Vector3::new(
-                f64::from(spawn_block_pos.0.x) + 0.5,
-                f64::from(spawn_block_pos.0.y),
-                f64::from(spawn_block_pos.0.z) + 0.5,
-            );
-            let yaw = wrap_degrees(rand::random::<f32>() * 360.0) % 360.0;
-
-            let mob = from_type(entity_type, pos, &world, Uuid::new_v4());
-
-            mob.get_entity().set_rotation(yaw, 0.0);
-
-            prepare_egg_mob(item, &mob, &world, Some(player));
-
-            if world.spawn_creature(
-                mob,
+            // Vanilla `spawnMob(..., tryMoveDown, movedUp)`: the mob sinks onto the block, two
+            // blocks far when the egg went up a top face.
+            let moved_up = spawn_block_pos != location && face == BlockDirection::Up;
+            if spawn_from_item(
+                entity_type,
+                item,
+                &world,
+                Some(player),
+                &spawn_block_pos,
+                true,
+                moved_up,
                 CreatureSpawnReason::SpawnerEgg,
-                world.get_player_by_uuid(player.gameprofile.id),
-            ) {
-                item.decrement_unless_creative(player.gamemode.load(), 1);
-                world.emit_game_event(GameEvent::EntityPlace.name(), spawn_block_pos.to_f64());
+            )
+            .is_none()
+            {
+                return BlockActionResult::Fail;
             }
+            item.decrement_unless_creative(player.gamemode.load(), 1);
+            world.emit_game_event(
+                GameEvent::EntityPlace.name(),
+                spawn_block_pos.to_centered_f64(),
+            );
             BlockActionResult::Success
         } else {
             BlockActionResult::Pass
         }
     }
 
+    /// Vanilla `SpawnEggItem.spawnOffspringFromSpawnEgg`: an egg on a mob of its type
+    /// breeds a baby at the parent's spot.
     fn use_on_entity(&self, item: &mut ItemStack, player: &Player, entity: Arc<dyn EntityBase>) {
-        if let Some(entity_type) = entity_from_egg(item.item.id)
-            && entity.get_entity().entity_type.id == entity_type.id
+        let Some(entity_type) = entity_from_egg(item.item.id) else {
+            return;
+        };
+        if entity.get_entity().entity_type.id != entity_type.id {
+            return;
+        }
+        let Some(parent) = entity.get_mob() else {
+            return;
+        };
+        let world = player.world();
+        let pos = entity.get_entity().pos.load();
+        // An ageable parent breeds its offspring; any other type is created anew, which
+        // peaceful refuses for a type not allowed in it.
+        let offspring = if let Some(animal) = parent.as_animal() {
+            animal.get_breed_offspring(entity.as_ref())
+        } else {
+            if !can_spawn(entity_type, &world) {
+                return;
+            }
+            from_type(entity_type, pos, &world, Uuid::new_v4())
+        };
+        // `setBaby(true)` then `isBaby`: no baby form, no offspring.
+        if !offspring
+            .get_mob()
+            .is_some_and(crate::entity::mob::Mob::spawn_as_baby)
         {
-            let world = player.world();
-            if is_disallowed_in_peaceful(entity_type, &world) {
-                return;
-            }
-            let pos = entity.get_entity().pos.load();
-            let mob = from_type(entity_type, pos, &world, Uuid::new_v4());
-            // no baby form, no offspring.
-            if !mob
-                .get_mob()
-                .is_some_and(crate::entity::mob::Mob::spawn_as_baby)
-            {
-                return;
-            }
-            mob.get_entity()
-                .set_rotation(rand::random::<f32>() * 360.0, 0.0);
-            apply_entity_variant(item, mob.as_ref(), Some(player));
-            if world.spawn_creature(
-                mob,
-                CreatureSpawnReason::SpawnerEgg,
-                world.get_player_by_uuid(player.gameprofile.id),
-            ) {
-                item.decrement_unless_creative(player.gamemode.load(), 1);
-                world.emit_game_event(GameEvent::EntityPlace.name(), pos);
-            }
+            return;
+        }
+        offspring.get_entity().set_pos(pos);
+        offspring.get_entity().set_rotation(0.0, 0.0);
+        // Vanilla `applyComponentsFromItemStack`: the components, not the entity data.
+        apply_variant(item, offspring.as_ref());
+        if world.spawn_creature(
+            offspring,
+            CreatureSpawnReason::SpawnerEgg,
+            world.get_player_by_uuid(player.gameprofile.id),
+        ) {
+            item.decrement_unless_creative(player.gamemode.load(), 1);
         }
     }
 

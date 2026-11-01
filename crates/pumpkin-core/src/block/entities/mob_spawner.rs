@@ -99,8 +99,8 @@ const fn within((min, max): (i32, i32), value: i32) -> bool {
 }
 
 /// Vanilla `InclusiveRange.INT.lenientOptionalFieldOf(name, LIGHT_RANGE)`: a compound of
-/// `min_inclusive` and `max_inclusive` or a list of the two; anything else, or a range
-/// outside the light range, is the whole light range.
+/// `min_inclusive` and `max_inclusive`, a list of the two, or one value for both bounds;
+/// anything else, or a range outside the light range, is the whole light range.
 fn light_limit(nbt: &NbtCompound, name: &str) -> (i32, i32) {
     let range = match nbt.get(name) {
         Some(NbtTag::Compound(range)) => range
@@ -109,6 +109,7 @@ fn light_limit(nbt: &NbtCompound, name: &str) -> (i32, i32) {
         Some(NbtTag::List(list)) if list.len() == 2 => {
             list[0].extract_int().zip(list[1].extract_int())
         }
+        Some(NbtTag::Int(value)) => Some((*value, *value)),
         _ => None,
     };
     range
@@ -313,6 +314,19 @@ impl MobSpawnerBlockEntity {
             .unwrap_or_else(PoisonError::into_inner)
             .get_or_insert(drawn)
             .set_entity_id(entity_type);
+    }
+
+    /// Vanilla `BaseSpawner.setEntityData`: an operator's spawn egg with entity data writes
+    /// the type's id and merges the data into the next spawn data's entity.
+    pub fn set_entity_data(&self, entity_type: &'static EntityType, data: &NbtCompound) {
+        let drawn = self.draw_potential().unwrap_or_default();
+        let mut next = self
+            .next_spawn_data
+            .lock()
+            .unwrap_or_else(PoisonError::into_inner);
+        let spawn_data = next.get_or_insert(drawn);
+        spawn_data.set_entity_id(entity_type);
+        spawn_data.entity.merge(data);
     }
 
     /// Vanilla `getOrCreateNextSpawnData`.

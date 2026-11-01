@@ -2,7 +2,7 @@ use std::sync::Arc;
 use std::sync::atomic::Ordering;
 
 use crate::{
-    entity::{EntityBase, player::Player, r#type::from_type},
+    entity::{EntityBase, mob::spawn::create_at, player::Player},
     item::{ItemBehaviour, ItemMetadata},
 };
 use pumpkin_data::{
@@ -25,7 +25,6 @@ use pumpkin_util::{
     math::{position::BlockPos, vector3::Vector3},
 };
 use pumpkin_world::{tick::TickPriority, world::BlockFlags};
-use uuid::Uuid;
 
 use crate::world::World;
 
@@ -625,6 +624,10 @@ impl ItemBehaviour for FilledBucketItem {
 
             world.play_sound(get_empty_sound(item), sound_category, &place_pos.to_f64());
             world.emit_game_event(GameEvent::FluidPlace.name(), place_pos.to_f64());
+            if get_mob_for_bucket(item).is_some() {
+                // Vanilla `MobBucketItem.checkExtraContent`.
+                world.emit_game_event(GameEvent::EntityPlace.name(), place_pos.to_f64());
+            }
         } else if get_mob_for_bucket(item).is_some() && should_evaporate_in_nether(item, &world) {
             world.play_sound(
                 get_empty_sound(item),
@@ -635,30 +638,20 @@ impl ItemBehaviour for FilledBucketItem {
         }
 
         if let Some((entity_type, _)) = get_mob_for_bucket(item) {
-            let spawn_coord = Vector3::new(
-                f64::from(place_pos.0.x) + 0.5,
-                f64::from(place_pos.0.y),
-                f64::from(place_pos.0.z) + 0.5,
-            );
-            let mob = from_type(entity_type, spawn_coord, &world, Uuid::new_v4());
-            if mob.get_mob().and_then(|mob| mob.as_bucketable()).is_some() {
-                crate::entity::mob::spawn::finalize_spawn(&mob, &world, None);
-                apply_mob_bucket_components(&used_stack, mob.as_ref(), player);
-                if world.spawn_creature(
-                    mob.clone(),
-                    crate::plugin::api::events::entity::creature_spawn::CreatureSpawnReason::Bucket,
-                    world.get_player_by_uuid(player.gameprofile.id),
-                ) && let Some(fish) = mob.get_mob().and_then(|mob| mob.as_fish())
-                {
-                    fish.play_ambient_sound();
-                }
-            } else {
-                apply_mob_bucket_components(&used_stack, mob.as_ref(), player);
-                world.spawn_entity(mob);
+            // Vanilla `MobBucketItem.spawn`: created like `EntityType.create(..., BUCKET, true,
+            // false)`, finalized, configured from the bucket, added with its ambient sound.
+            let mob = create_at(entity_type, &world, &place_pos, true, false);
+            crate::entity::mob::spawn::finalize_spawn(&mob, &world, None);
+            apply_mob_bucket_components(&used_stack, mob.as_ref(), player);
+            if world.spawn_creature(
+                mob.clone(),
+                crate::plugin::api::events::entity::creature_spawn::CreatureSpawnReason::Bucket,
+                world.get_player_by_uuid(player.gameprofile.id),
+            ) && let Some(mob) = mob.get_mob()
+            {
+                mob.play_ambient_sound();
             }
         }
-
-        player.increment_stat(StatisticCategory::Used, i32::from(item.id), 1);
 
         let Some(result) = result else {
             if !infinite_materials {
@@ -670,34 +663,6 @@ impl ItemBehaviour for FilledBucketItem {
         let mut updated_stack = player.inventory.get_stack_in_hand(hand);
         give_filled_bucket_stack(&mut updated_stack, player, result, false);
         player.inventory.set_stack_in_hand(hand, updated_stack);
-    }
-
-    fn use_on_entity(&self, item: &mut ItemStack, player: &Player, entity: Arc<dyn EntityBase>) {
-        if entity
-            .get_mob()
-            .and_then(|mob| mob.as_bucketable())
-            .is_some()
-        {
-            return;
-        }
-        if item.item.id == Item::WATER_BUCKET.id {
-            let entity_type = entity.get_entity().entity_type;
-            let result_item = if entity_type == &EntityType::AXOLOTL {
-                Some((&Item::AXOLOTL_BUCKET, Sound::ItemBucketFillAxolotl))
-            } else if entity_type == &EntityType::TADPOLE {
-                Some((&Item::TADPOLE_BUCKET, Sound::ItemBucketFillTadpole))
-            } else {
-                None
-            };
-
-            if let Some((mob_bucket, sound)) = result_item {
-                let ent = entity.get_entity();
-                let world = ent.world.load();
-                world.play_sound(sound, SoundCategory::Neutral, &ent.pos.load());
-                fill_mob_bucket_stack(item, player, mob_bucket, entity.as_ref());
-                ent.remove();
-            }
-        }
     }
 
     fn as_any(&self) -> &dyn std::any::Any {

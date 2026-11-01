@@ -322,6 +322,21 @@ impl Animal for TraderLlamaEntity {
             || item_stack.item == &Item::WHEAT
             || item_stack.item == &Item::HAY_BLOCK
     }
+
+    /// Vanilla `TraderLlama.makeNewLlama`: a bred trader llama stays loaded. The strength and
+    /// variant it inherits (`Llama.getBreedOffspring`) are the llama port's.
+    fn get_breed_offspring(&self, _partner: &dyn EntityBase) -> Arc<dyn EntityBase> {
+        let entity = self.get_entity();
+        let baby = Self::new(Entity::new(
+            entity.world.load_full(),
+            entity.pos.load(),
+            &EntityType::TRADER_LLAMA,
+        ));
+        baby.get_mob_entity()
+            .persistence_required
+            .store(true, Ordering::Relaxed);
+        baby
+    }
 }
 
 impl Mob for TraderLlamaEntity {
