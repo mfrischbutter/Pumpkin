@@ -1328,6 +1328,12 @@ pub trait Mob: EntityBase + Send + Sync {
         true
     }
 
+    /// Vanilla `onClimbable` overrides: `Some` decides alone (a spider climbs walls, not
+    /// ladders), `None` keeps the climbable block check.
+    fn mob_on_climbable(&self) -> Option<bool> {
+        None
+    }
+
     /// Vanilla `canFreeze` overrides: `false` for a mob that does not freeze in powder snow
     /// even though its type is not freeze immune (a skeleton converts instead).
     fn mob_can_freeze(&self) -> bool {

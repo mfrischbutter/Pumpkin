@@ -40,6 +40,7 @@ use crate::world::loot::LootContextParameters;
 use crossbeam::atomic::AtomicCell;
 use pumpkin_data::AttributeModifierSlot;
 use pumpkin_data::attributes::Attributes;
+use pumpkin_data::block_properties::{LadderLikeProperties, OakTrapdoorLikeProperties};
 use pumpkin_data::data_component_impl::Operation;
 use pumpkin_data::data_component_impl::food::{ConsumableImpl, ConsumeEffect};
 use pumpkin_data::data_component_impl::{
@@ -2046,64 +2047,48 @@ impl LivingEntity {
     pub(crate) fn make_move(&self, caller: &dyn EntityBase) {
         self.entity.move_entity(caller, self.entity.velocity.load());
 
-        self.check_climbing();
+        self.check_climbing(caller);
     }
 
-    fn check_climbing(&self) {
-        // If spectator: return false
-
-        // TODO
-        // let mut pos = self.entity.block_pos.load();
-
-        // let world = self.entity.world.read().await;
-
-        // let (block, state) = world.get_block_and_state(&pos);
-
-        // let name = block.properties(state.id).map(|props| props.name());
-
-        // if let Some(name) = name {
-        //     if name == "LadderLikeProperties"
-        //         || name == "ScaffoldingLikeProperties"
-        //         || name == "CaveVinesLikeProperties"
-        //         || name == "CaveVinesPlantLikeProperties"
-        //     {
-        //         self.climbing.store(true, Relaxed);
-
-        //         self.climbing_pos.store(Some(pos));
-
-        //         return;
-        //     }
-
-        //     if name == "OakTrapdoorLikeProperties" {
-        //         let trapdoor = OakTrapdoorLikeProperties::from_state_id(state.id);
-
-        //         pos.0.y -= 1;
-
-        //         let (down_block, down_state) = world.get_block_and_state(&pos);
-
-        //         let is_ladder = down_block
-        //             .properties(down_state.id)
-        //             .is_some_and(|down_props| down_props.name() == "LadderLikeProperties");
-
-        //         if is_ladder {
-        //             let ladder = LadderLikeProperties::from_state_id(down_state.id);
-
-        //             if trapdoor.r#facing == ladder.r#facing {
-        //                 self.climbing.store(true, Relaxed);
-
-        //                 self.climbing_pos.store(Some(pos));
-
-        //                 return;
-        //             }
-        //         }
-        //     }
-        // }
-
-        self.climbing.store(false, Relaxed);
-
-        if self.entity.on_ground.load(SeqCst) {
+    /// Vanilla `LivingEntity.onClimbable`, or a mob's override (`Mob::mob_on_climbable`).
+    fn check_climbing(&self, caller: &dyn EntityBase) {
+        let climbing = caller
+            .get_mob()
+            .and_then(crate::entity::mob::Mob::mob_on_climbable)
+            .unwrap_or_else(|| self.in_climbable_block(caller));
+        self.climbing.store(climbing, Relaxed);
+        if !climbing && self.entity.on_ground.load(SeqCst) {
             self.climbing_pos.store(None);
         }
+    }
+
+    /// The block part of vanilla `onClimbable`: a climbable block, or an open trapdoor above a
+    /// ladder facing the same way (`trapdoorUsableAsLadder`); not while gliding through it.
+    fn in_climbable_block(&self, caller: &dyn EntityBase) -> bool {
+        if caller.is_spectator() {
+            return false;
+        }
+        let pos = self.entity.block_pos.load();
+        let world = self.entity.world.load();
+        let (block, state) = world.get_block_and_state(&pos);
+        if self.entity.is_fall_flying() && block.has_tag(&tag::Block::MINECRAFT_CAN_GLIDE_THROUGH) {
+            return false;
+        }
+        let usable = if block.has_tag(&tag::Block::MINECRAFT_CLIMBABLE) {
+            true
+        } else if block.has_tag(&tag::Block::MINECRAFT_TRAPDOORS) {
+            let trapdoor = OakTrapdoorLikeProperties::from_state_id(state.id);
+            let (below, below_state) = world.get_block_and_state(&pos.down());
+            trapdoor.open
+                && below == &Block::LADDER
+                && LadderLikeProperties::from_state_id(below_state.id).facing == trapdoor.facing
+        } else {
+            false
+        };
+        if usable {
+            self.climbing_pos.store(Some(pos));
+        }
+        usable
     }
 
     fn apply_climbing_speed(&self) {

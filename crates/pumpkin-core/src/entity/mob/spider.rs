@@ -232,6 +232,11 @@ impl Mob for SpiderEntity {
         Some(meta)
     }
 
+    /// Vanilla `Spider.onClimbable`.
+    fn mob_on_climbable(&self) -> Option<bool> {
+        Some(self.is_climbing())
+    }
+
     /// Vanilla `Spider.tick`: it climbs while it runs into a wall.
     fn mob_tick(&self, _caller: &dyn EntityBase) {
         let entity = &self.mob_entity.living_entity.entity;
