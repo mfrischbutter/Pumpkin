@@ -43,6 +43,14 @@ impl OneShot {
             status: Status::Stopped,
         }
     }
+
+    /// Vanilla `BehaviorBuilder.triggerIf`: only fires while `condition` holds for the mob.
+    #[must_use]
+    pub fn only_if(mut self, condition: fn(&dyn crate::entity::mob::Mob) -> bool) -> Self {
+        let mut trigger = std::mem::replace(&mut self.trigger, Box::new(|_| false));
+        self.trigger = Box::new(move |tick| condition(tick.mob) && trigger(tick));
+        self
+    }
 }
 
 impl OneShot {
