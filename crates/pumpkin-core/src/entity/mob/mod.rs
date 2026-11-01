@@ -2675,17 +2675,26 @@ const ANIMAL_GRASS_PATHFINDING_FAVOR: f32 = 10.0;
 
 pub trait PathAwareEntity: Mob + Send + Sync {
     /// Vanilla `PathfinderMob.getWalkTargetValue`: 0 for a mob; an animal prefers grass and
-    /// otherwise pays the light cost (`Animal.getWalkTargetValue`). `Monster`'s light cost
-    /// has no shared class marker here and stays with the species.
+    /// otherwise pays the light cost (`Animal.getWalkTargetValue`); a monster is drawn to
+    /// the dark (`Monster.getWalkTargetValue`).
     fn get_pathfinding_favor(&self, block_pos: BlockPos, level: &dyn LevelAccessor) -> f32 {
-        if self.as_animal().is_none() {
-            return DEFAULT_PATHFINDING_FAVOR;
+        if self.as_animal().is_some() {
+            return if level.get_block(&block_pos.down()) == &Block::GRASS_BLOCK {
+                ANIMAL_GRASS_PATHFINDING_FAVOR
+            } else {
+                level.get_pathfinding_cost_from_light_levels(&block_pos)
+            };
         }
-        if level.get_block(&block_pos.down()) == &Block::GRASS_BLOCK {
-            ANIMAL_GRASS_PATHFINDING_FAVOR
-        } else {
-            level.get_pathfinding_cost_from_light_levels(&block_pos)
+        if self
+            .get_mob_entity()
+            .living_entity
+            .entity
+            .entity_type
+            .monster
+        {
+            return -level.get_pathfinding_cost_from_light_levels(&block_pos);
         }
+        DEFAULT_PATHFINDING_FAVOR
     }
 
     /// Vanilla `PathfinderMob.checkSpawnRules`: the walk target value at the mob's position
