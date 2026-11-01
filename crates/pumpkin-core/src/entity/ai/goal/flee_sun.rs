@@ -26,26 +26,22 @@ impl FleeSunGoal {
         }
     }
 
+    /// Vanilla `FleeSunGoal.getHidePos`: ten tries for a spot out of the sky the mob likes
+    /// to walk to.
     fn find_hide_pos(mob: &dyn Mob) -> Option<Vector3<f64>> {
         let mob_pos = mob.get_entity().block_pos.load();
         let world = mob.get_entity().world.load();
-        let mut rng = mob.get_random();
 
         for _ in 0..10 {
-            let offset_x = rng.random_range(-10..=10);
-            let offset_y = rng.random_range(-3..=3);
-            let offset_z = rng.random_range(-10..=10);
-            let check_pos = BlockPos::new(
-                mob_pos.0.x + offset_x,
-                mob_pos.0.y + offset_y,
-                mob_pos.0.z + offset_z,
-            );
-
-            let block_at = world.get_block_state(&check_pos);
-            let block_above = world.get_block_state(&check_pos.up());
-            let block_below = world.get_block_state(&check_pos.down());
-
-            if !block_at.is_solid() && !block_above.is_solid() && block_below.is_solid() {
+            let check_pos = {
+                let mut rng = mob.get_random();
+                BlockPos::new(
+                    mob_pos.0.x + rng.random_range(0..20) - 10,
+                    mob_pos.0.y + rng.random_range(0..6) - 3,
+                    mob_pos.0.z + rng.random_range(0..20) - 10,
+                )
+            };
+            if !world.can_see_sky(&check_pos) && mob.get_walk_target_value(&check_pos) < 0.0 {
                 return Some(Vector3::new(
                     f64::from(check_pos.0.x) + 0.5,
                     f64::from(check_pos.0.y),
@@ -60,15 +56,16 @@ impl FleeSunGoal {
 
 impl Goal for FleeSunGoal {
     fn can_start(&mut self, mob: &dyn Mob) -> bool {
+        // Vanilla `FleeSunGoal.canUse`.
+        let entity = &mob.get_mob_entity().living_entity.entity;
         if mob.get_mob_entity().get_target().is_some() {
             return false;
         }
-
-        if !mob.get_mob_entity().living_entity.entity.is_on_fire() {
+        let world = entity.world.load();
+        if !world.is_bright_outside() || !entity.is_on_fire() {
             return false;
         }
-
-        if sun_burn::is_protected(mob) {
+        if !world.can_see_sky(&entity.block_pos.load()) || sun_burn::is_protected(mob) {
             return false;
         }
 
