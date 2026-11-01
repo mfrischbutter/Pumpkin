@@ -1845,6 +1845,36 @@ impl VillagerEntity {
 }
 
 impl Mob for VillagerEntity {
+    /// Vanilla `Villager.thunderHit`: off peaceful, a persistent witch, and the villager's
+    /// job site is free again.
+    fn mob_on_lightning_strike(
+        &self,
+        caller: &dyn EntityBase,
+        lightning: &crate::entity::lightning::LightningBoltEntity,
+    ) {
+        let world = self.get_entity().world.load_full();
+        if world.level_info.load().difficulty != pumpkin_util::Difficulty::Peaceful {
+            let converted = crate::entity::mob::conversion::convert_to(
+                self,
+                &EntityType::WITCH,
+                crate::entity::mob::conversion::ConversionParams::single(false, false),
+                |witch| {
+                    let _ = witch.finalize_spawn(&world, None);
+                    witch.get_mob_entity().set_persistence_required();
+                },
+            );
+            if converted.is_some() {
+                if let Some(site) = self.get_job_site() {
+                    world.release_job_site(site, self.get_entity().entity_uuid);
+                }
+                return;
+            }
+        }
+        self.mob_entity
+            .living_entity
+            .on_lightning_strike(caller, lightning);
+    }
+
     /// Vanilla `Villager.removeWhenFarAway`.
     fn remove_when_far_away(&self, _distance_sq: f64) -> bool {
         false

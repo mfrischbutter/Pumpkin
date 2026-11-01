@@ -162,6 +162,48 @@ impl Animal for PigEntity {
 }
 
 impl Mob for PigEntity {
+    /// Vanilla `Pig.thunderHit`: off peaceful, a persistent zombified piglin with a golden
+    /// sword, one in twenty a golden spear (`ZombifiedPiglin.populateDefaultEquipmentSlots`).
+    fn mob_on_lightning_strike(
+        &self,
+        caller: &dyn EntityBase,
+        lightning: &crate::entity::lightning::LightningBoltEntity,
+    ) {
+        let peaceful = self.get_entity().world.load().level_info.load().difficulty
+            == pumpkin_util::Difficulty::Peaceful;
+        if !peaceful {
+            let weapon = if self.get_random().random_range(0..20) == 0 {
+                &Item::GOLDEN_SPEAR
+            } else {
+                &Item::GOLDEN_SWORD
+            };
+            let converted = crate::entity::mob::conversion::convert_to(
+                self,
+                &EntityType::ZOMBIFIED_PIGLIN,
+                crate::entity::mob::conversion::ConversionParams::single(false, true),
+                |zombified| {
+                    let mob_entity = zombified.get_mob_entity();
+                    mob_entity
+                        .living_entity
+                        .entity_equipment
+                        .lock()
+                        .unwrap_or_else(std::sync::PoisonError::into_inner)
+                        .put(
+                            &pumpkin_data::data_component_impl::EquipmentSlot::MAIN_HAND,
+                            ItemStack::new(1, weapon),
+                        );
+                    mob_entity.set_persistence_required();
+                },
+            );
+            if converted.is_some() {
+                return;
+            }
+        }
+        self.mob_entity
+            .living_entity
+            .on_lightning_strike(caller, lightning);
+    }
+
     fn finalize_spawn(
         &self,
         world: &Arc<World>,
