@@ -3,16 +3,88 @@ use std::sync::Arc;
 use pumpkin_data::{
     Block, BlockId, BlockState, BlockStateId, Enchantment, Rotation,
     block_properties::{Axis, PaleOakWoodLikeProperties},
-    entity::EntityType,
+    entity::{EntityStatus, EntityType},
 };
 use pumpkin_util::{GameMode, math::vector3::Vector3};
 
 use crate::{
     block::{BlockBehaviour, BlockMetadata, BrokenArgs, OnPlaceArgs},
-    entity::Entity,
+    entity::r#type::from_type,
+    world::World,
 };
+use pumpkin_protocol::bedrock::server::actor_event::ActorEventID;
+use pumpkin_util::math::position::BlockPos;
 
 pub struct InfestedBlock;
+
+/// Vanilla `InfestedBlock` hosts: each block a silverfish can hide in, with its infested twin.
+const HOSTS: [(&Block, &Block); 7] = [
+    (&Block::STONE, &Block::INFESTED_STONE),
+    (&Block::COBBLESTONE, &Block::INFESTED_COBBLESTONE),
+    (&Block::STONE_BRICKS, &Block::INFESTED_STONE_BRICKS),
+    (
+        &Block::MOSSY_STONE_BRICKS,
+        &Block::INFESTED_MOSSY_STONE_BRICKS,
+    ),
+    (
+        &Block::CRACKED_STONE_BRICKS,
+        &Block::INFESTED_CRACKED_STONE_BRICKS,
+    ),
+    (
+        &Block::CHISELED_STONE_BRICKS,
+        &Block::INFESTED_CHISELED_STONE_BRICKS,
+    ),
+    (&Block::DEEPSLATE, &Block::INFESTED_DEEPSLATE),
+];
+
+/// Vanilla `InfestedBlock.isCompatibleHostBlock`.
+#[must_use]
+pub fn is_compatible_host_block(state_id: BlockStateId) -> bool {
+    let block = Block::from_state_id(state_id);
+    HOSTS.iter().any(|(host, _)| *host == block)
+}
+
+/// Vanilla `InfestedBlock.infestedStateByHost`, keeping the deepslate's axis.
+#[must_use]
+pub fn infested_state_by_host(state_id: BlockStateId) -> Option<BlockStateId> {
+    let block = Block::from_state_id(state_id);
+    let (_, infested) = HOSTS.iter().find(|(host, _)| *host == block)?;
+    Some(swap_keeping_axis(state_id, infested))
+}
+
+/// Vanilla `InfestedBlock.hostStateByInfested`, keeping the deepslate's axis.
+#[must_use]
+pub fn host_state_by_infested(state_id: BlockStateId) -> Option<BlockStateId> {
+    let block = Block::from_state_id(state_id);
+    let (host, _) = HOSTS.iter().find(|(_, infested)| *infested == block)?;
+    Some(swap_keeping_axis(state_id, host))
+}
+
+fn swap_keeping_axis(state_id: BlockStateId, to: &Block) -> BlockStateId {
+    if to == &Block::DEEPSLATE || to == &Block::INFESTED_DEEPSLATE {
+        PaleOakWoodLikeProperties::from_state_id(state_id).to_state_id(to)
+    } else {
+        to.default_state.id
+    }
+}
+
+/// Vanilla `InfestedBlock.spawnInfestation`: a silverfish leaves the block, with the spawn
+/// animation.
+pub fn spawn_infestation(world: &Arc<World>, position: &BlockPos) {
+    let pos = Vector3::new(
+        f64::from(position.0.x) + 0.5,
+        f64::from(position.0.y),
+        f64::from(position.0.z) + 0.5,
+    );
+    let silverfish = from_type(&EntityType::SILVERFISH, pos, world, uuid::Uuid::new_v4());
+    silverfish.get_entity().set_rotation(0.0, 0.0);
+    world.spawn_entity(silverfish.clone());
+    world.send_entity_status(
+        silverfish.get_entity(),
+        EntityStatus::SilverfishMergeAnim,
+        ActorEventID::SilverfishMergeAnimation,
+    );
+}
 
 impl BlockMetadata for InfestedBlock {
     fn ids() -> Box<[BlockId]> {
@@ -77,13 +149,6 @@ impl BlockBehaviour for InfestedBlock {
         {
             return;
         }
-        let pos = Vector3::new(
-            f64::from(args.position.0.x) + 0.5,
-            f64::from(args.position.0.y),
-            f64::from(args.position.0.z) + 0.5,
-        );
-        let entity = Entity::new(args.world.clone(), pos, &EntityType::SILVERFISH);
-
-        args.world.spawn_entity(Arc::new(entity));
+        spawn_infestation(args.world, args.position);
     }
 }
