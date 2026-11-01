@@ -207,6 +207,14 @@ impl Animal for ChickenEntity {
 }
 
 impl Mob for ChickenEntity {
+    /// Vanilla `Chicken.getAmbientSound`: the ambient sound of its sound variant.
+    fn get_ambient_sound(&self) -> Option<Sound> {
+        let sound_variant =
+            ChickenSoundVariant::from_id(self.sound_variant.load(Ordering::Relaxed))
+                .unwrap_or_default();
+        Some(sound_variant.ambient_sound(self.is_baby()))
+    }
+
     fn mob_is_flapping(&self) -> bool {
         self.get_entity().fly_dist.load() > self.next_flap.load()
     }

@@ -201,6 +201,11 @@ impl Animal for MooshroomEntity {
 }
 
 impl Mob for MooshroomEntity {
+    /// Vanilla `AbstractCow.getAmbientSound`, with the classic cow sounds like its steps.
+    fn get_ambient_sound(&self) -> Option<Sound> {
+        Some(CowSoundVariant::Classic.ambient_sound(self.is_baby()))
+    }
+
     /// Vanilla `AbstractCow.getSoundSet` is the classic cow for mooshrooms.
     fn mob_play_step_sound(&self, _pos: &BlockPos, _state: &BlockState) {
         let sound = CowSoundVariant::Classic.step_sound(self.is_baby());

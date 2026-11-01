@@ -152,6 +152,13 @@ impl Animal for CowEntity {
 }
 
 impl Mob for CowEntity {
+    /// Vanilla `AbstractCow.getAmbientSound`: the ambient sound of its sound variant.
+    fn get_ambient_sound(&self) -> Option<Sound> {
+        let sound_variant = CowSoundVariant::from_id(self.sound_variant.load(Ordering::Relaxed))
+            .unwrap_or_default();
+        Some(sound_variant.ambient_sound(self.is_baby()))
+    }
+
     fn mob_play_step_sound(&self, _pos: &BlockPos, _state: &BlockState) {
         let sound_variant = CowSoundVariant::from_id(self.sound_variant.load(Ordering::Relaxed))
             .unwrap_or_default();

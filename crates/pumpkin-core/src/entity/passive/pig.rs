@@ -162,6 +162,13 @@ impl Animal for PigEntity {
 }
 
 impl Mob for PigEntity {
+    /// Vanilla `Pig.getAmbientSound`: the ambient sound of its sound variant.
+    fn get_ambient_sound(&self) -> Option<Sound> {
+        let sound_variant = PigSoundVariant::from_id(self.sound_variant.load(Ordering::Relaxed))
+            .unwrap_or_default();
+        Some(sound_variant.ambient_sound(self.is_baby()))
+    }
+
     /// Vanilla `Pig.thunderHit`: off peaceful, a persistent zombified piglin with a golden
     /// sword, one in twenty a golden spear (`ZombifiedPiglin.populateDefaultEquipmentSlots`).
     fn mob_on_lightning_strike(
