@@ -3831,6 +3831,57 @@ impl pumpkin::plugin::player::HostJavaPlayerWithStore<PluginHostState>
         plugin.store.pump_reentry(&mut host, operation).await?
     }
 
+    async fn show_dialog_json(
+        mut host: Access<'_, PluginHostState, Self>,
+        player: Resource<pumpkin::plugin::player::JavaPlayer>,
+        json: String,
+    ) -> wasmtime::Result<Result<(), String>> {
+        let compound =
+            match pumpkin_protocol::java::client::dialog::dialog_compound_from_json(&json) {
+                Ok(compound) => compound,
+                Err(error) => return Ok(Err(error)),
+            };
+        let (player, plugin) = {
+            let state = host.get();
+            let player = state.get(&player)?.clone();
+            let plugin = state
+                .plugin
+                .as_ref()
+                .and_then(std::sync::Weak::upgrade)
+                .ok_or_else(|| wasmtime::Error::msg("Plugin instance not available"))?;
+            (player, plugin)
+        };
+
+        let operation = async move {
+            if let pumpkin_core::net::ClientPlatform::Java(client) = player.client.as_ref() {
+                let dialog = pumpkin_protocol::IdOr::Value(DialogNBT::from_nbt(&compound));
+                match client.connection_state.load() {
+                    pumpkin_protocol::ConnectionState::Config => {
+                        client
+                            .send_packet(
+                                &pumpkin_protocol::java::client::config::CConfigShowDialog::new(
+                                    dialog,
+                                ),
+                            )
+                            .await;
+                    }
+                    pumpkin_protocol::ConnectionState::Play => {
+                        client
+                            .send_packet(
+                                &pumpkin_protocol::java::client::play::CPlayShowDialog::new(dialog),
+                            )
+                            .await;
+                    }
+                    _ => {}
+                }
+            }
+
+            Ok(Ok(()))
+        };
+
+        plugin.store.pump_reentry(&mut host, operation).await?
+    }
+
     async fn clear_dialog(
         mut host: Access<'_, PluginHostState, Self>,
         player: Resource<pumpkin::plugin::player::JavaPlayer>,

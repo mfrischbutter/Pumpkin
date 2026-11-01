@@ -3916,6 +3916,52 @@ impl pumpkin::plugin::player::HostJavaPlayerWithStore<PluginHostState>
         in_active_context(accessor, operation).await?
     }
 
+    async fn show_dialog_json(
+        accessor: &Accessor<PluginHostState, Self>,
+        player: Resource<pumpkin::plugin::player::JavaPlayer>,
+        json: String,
+    ) -> wasmtime::Result<Result<(), String>> {
+        let compound =
+            match pumpkin_protocol::java::client::dialog::dialog_compound_from_json(&json) {
+                Ok(compound) => compound,
+                Err(error) => return Ok(Err(error)),
+            };
+        let player = accessor.with(|mut host| -> wasmtime::Result<_> {
+            let state = host.get();
+            let player = state.get(&player)?.clone();
+            Ok(player)
+        })?;
+
+        let operation = async move {
+            if let pumpkin_core::net::ClientPlatform::Java(client) = player.client.as_ref() {
+                let dialog = pumpkin_protocol::IdOr::Value(DialogNBT::from_nbt(&compound));
+                match client.connection_state.load() {
+                    pumpkin_protocol::ConnectionState::Config => {
+                        client
+                            .send_packet(
+                                &pumpkin_protocol::java::client::config::CConfigShowDialog::new(
+                                    dialog,
+                                ),
+                            )
+                            .await;
+                    }
+                    pumpkin_protocol::ConnectionState::Play => {
+                        client
+                            .send_packet(
+                                &pumpkin_protocol::java::client::play::CPlayShowDialog::new(dialog),
+                            )
+                            .await;
+                    }
+                    _ => {}
+                }
+            }
+
+            Ok(Ok(()))
+        };
+
+        in_active_context(accessor, operation).await?
+    }
+
     async fn clear_dialog(
         accessor: &Accessor<PluginHostState, Self>,
         player: Resource<pumpkin::plugin::player::JavaPlayer>,

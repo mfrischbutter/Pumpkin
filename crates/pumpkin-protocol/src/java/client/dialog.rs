@@ -3,6 +3,24 @@ use pumpkin_util::text::TextComponent;
 use crate::ser::NetworkWriteExt;
 use pumpkin_util::version::JavaMinecraftVersion;
 
+/// Parses a dialog in vanilla's JSON format into the compound the client reads.
+///
+/// Only the shape is checked. The client validates the rest and disconnects on a dialog it
+/// cannot decode.
+pub fn dialog_compound_from_json(json: &str) -> Result<pumpkin_nbt::compound::NbtCompound, String> {
+    let value: serde_json::Value = serde_json::from_str(json).map_err(|e| e.to_string())?;
+    if !value.get("type").is_some_and(serde_json::Value::is_string) {
+        return Err("a dialog needs a string field `type`".to_string());
+    }
+    if value.get("title").is_none() {
+        return Err("a dialog needs a field `title`".to_string());
+    }
+    match pumpkin_util::text::hover::json_to_nbt(&value) {
+        pumpkin_nbt::tag::NbtTag::Compound(compound) => Ok(compound),
+        _ => Err("a dialog must be a JSON object".to_string()),
+    }
+}
+
 pub struct DialogNBT<'a>(pub DialogNBTSource<'a>);
 
 impl<'a> DialogNBT<'a> {
@@ -108,4 +126,27 @@ pub enum DialogAction {
 pub struct DialogLink {
     pub label: crate::Label,
     pub url: String,
+}
+
+#[cfg(test)]
+mod tests {
+    use super::dialog_compound_from_json;
+
+    #[test]
+    fn dialog_json_keeps_nested_fields() {
+        let json = r#"{"type":"minecraft:notice","title":{"text":"A"},"pause":false,
+            "body":{"type":"minecraft:plain_message","width":431,"contents":{"text":"","extra":[{"text":"B"}]}}}"#;
+        let compound = dialog_compound_from_json(json).unwrap();
+        let body = compound.get_compound("body").unwrap();
+        assert_eq!(body.get_short("width"), Some(431));
+        assert_eq!(compound.get_byte("pause"), Some(0));
+    }
+
+    #[test]
+    fn dialog_json_rejects_what_is_no_dialog() {
+        assert!(dialog_compound_from_json("not json").is_err());
+        assert!(dialog_compound_from_json("[1]").is_err());
+        assert!(dialog_compound_from_json(r#"{"title":"A"}"#).is_err());
+        assert!(dialog_compound_from_json(r#"{"type":"minecraft:notice"}"#).is_err());
+    }
 }

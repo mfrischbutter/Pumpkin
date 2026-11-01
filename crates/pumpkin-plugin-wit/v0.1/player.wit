@@ -1375,6 +1375,11 @@ interface player {
         /// Shows a dialog to the player.
         show-dialog: func(dialog: dialog);
 
+        /// Shows a dialog given in vanilla's JSON format, with every field the format has.
+        /// Fails on JSON that is no dialog. The client disconnects on a dialog it cannot decode.
+        /// Does not fire `dialog-show-event`, which carries the typed dialog.
+        show-dialog-json: func(json: string) -> result<_, string>;
+
         /// Clears any currently shown dialog for the player.
         clear-dialog: func();
 
