@@ -53,6 +53,7 @@ pub mod bat;
 pub mod blaze;
 pub mod breeze;
 pub mod cave_spider;
+pub mod conversion;
 pub mod creaking;
 pub mod creeper;
 pub mod crossbow_attack_mob;
@@ -1326,6 +1327,12 @@ pub trait Mob: EntityBase + Send + Sync {
 
     /// Vanilla `Entity.projectileReceivesSideEffectsOnHit` for this kind.
     fn mob_projectile_receives_side_effects_on_hit(&self, _was_hurt: bool) -> bool {
+        true
+    }
+
+    /// Vanilla `canFreeze` overrides: `false` for a mob that does not freeze in powder snow
+    /// even though its type is not freeze immune (a skeleton converts instead).
+    fn mob_can_freeze(&self) -> bool {
         true
     }
 

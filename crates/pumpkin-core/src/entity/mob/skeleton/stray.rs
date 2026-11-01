@@ -1,31 +1,14 @@
-use pumpkin_data::BlockState;
+use pumpkin_data::effect::StatusEffect;
 use pumpkin_data::sound::Sound;
-use pumpkin_util::math::position::BlockPos;
-use std::sync::Arc;
 
-use crate::entity::{
-    Entity, EntityBase,
-    mob::{Mob, MobEntity, skeleton::SkeletonEntityBase},
+use crate::entity::mob::skeleton::{ATTACK_INTERVAL, HARD_ATTACK_INTERVAL, SkeletonKind};
+
+/// Vanilla `Stray`: its arrows slow for 30 seconds.
+pub static STRAY: SkeletonKind = SkeletonKind {
+    step_sound: Sound::EntityStrayStep,
+    ambient_sound: Sound::EntityStrayAmbient,
+    attack_interval: ATTACK_INTERVAL,
+    hard_attack_interval: HARD_ATTACK_INTERVAL,
+    arrow_effect: Some((&StatusEffect::SLOWNESS, 600)),
+    extra_hunts: &[],
 };
-
-pub struct StraySkeletonEntity {
-    entity: Arc<SkeletonEntityBase>,
-}
-
-impl StraySkeletonEntity {
-    pub fn new(entity: Entity) -> Arc<Self> {
-        let entity = SkeletonEntityBase::new(entity);
-        let stray = Self { entity };
-        Arc::new(stray)
-    }
-}
-
-impl Mob for StraySkeletonEntity {
-    fn mob_play_step_sound(&self, _pos: &BlockPos, _state: &BlockState) {
-        self.play_entity_sound(Sound::EntityStrayStep, 0.15, 1.0);
-    }
-
-    fn get_mob_entity(&self) -> &MobEntity {
-        &self.entity.mob_entity
-    }
-}

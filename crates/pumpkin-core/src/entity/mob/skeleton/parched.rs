@@ -1,32 +1,17 @@
-use pumpkin_data::BlockState;
+use pumpkin_data::effect::StatusEffect;
 use pumpkin_data::sound::Sound;
-use pumpkin_util::math::position::BlockPos;
-use std::sync::Arc;
 
-use crate::entity::{
-    Entity, EntityBase,
-    mob::{Mob, MobEntity, skeleton::SkeletonEntityBase},
+use crate::entity::mob::skeleton::{
+    INCREASED_ATTACK_INTERVAL, INCREASED_HARD_ATTACK_INTERVAL, SkeletonKind,
 };
 
-pub struct ParchedSkeletonEntity {
-    entity: Arc<SkeletonEntityBase>,
-}
-
-impl ParchedSkeletonEntity {
-    pub fn new(entity: Entity) -> Arc<Self> {
-        let entity = SkeletonEntityBase::new(entity);
-        let parched = Self { entity };
-        Arc::new(parched)
-    }
-}
-
-// TODO: arrows inflict Weakness for 600 ticks, immune to Weakness.
-impl Mob for ParchedSkeletonEntity {
-    fn mob_play_step_sound(&self, _pos: &BlockPos, _state: &BlockState) {
-        self.play_entity_sound(Sound::EntityParchedStep, 0.15, 1.0);
-    }
-
-    fn get_mob_entity(&self) -> &MobEntity {
-        &self.entity.mob_entity
-    }
-}
+/// Vanilla `Parched`: slower shots whose arrows weaken for 30 seconds. Its immunity to
+/// weakness is in `LivingEntity::can_be_affected`.
+pub static PARCHED: SkeletonKind = SkeletonKind {
+    step_sound: Sound::EntityParchedStep,
+    ambient_sound: Sound::EntityParchedAmbient,
+    attack_interval: INCREASED_ATTACK_INTERVAL,
+    hard_attack_interval: INCREASED_HARD_ATTACK_INTERVAL,
+    arrow_effect: Some((&StatusEffect::WEAKNESS, 600)),
+    extra_hunts: &[],
+};

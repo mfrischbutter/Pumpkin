@@ -401,7 +401,20 @@ pub static EQUIPMENT_REGISTRY: LazyLock<HashMap<&'static str, MobEquipmentDef>> 
             },
         );
 
+        // ─── Parched ───
+        m.insert(
+            "parched",
+            MobEquipmentDef {
+                entity_type: "parched",
+                weapon: WeaponConfig::Always(&Item::BOW),
+                armor: ArmorConfig::Vanilla,
+                enchanted: true,
+                can_pick_up_loot: true,
+            },
+        );
+
         // ─── Wither Skeleton ───
+        // `AbstractSkeleton.finalizeSpawn` rolls the loot pickup for it too.
         m.insert(
             "wither_skeleton",
             MobEquipmentDef {
@@ -409,7 +422,7 @@ pub static EQUIPMENT_REGISTRY: LazyLock<HashMap<&'static str, MobEquipmentDef>> 
                 weapon: WeaponConfig::Always(&Item::STONE_SWORD),
                 armor: ArmorConfig::None,
                 enchanted: false,
-                can_pick_up_loot: false,
+                can_pick_up_loot: true,
             },
         );
 

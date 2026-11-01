@@ -47,10 +47,7 @@ use crate::entity::mob::pillager::PillagerEntity;
 use crate::entity::mob::ravager::RavagerEntity;
 use crate::entity::mob::shulker::ShulkerEntity;
 use crate::entity::mob::silverfish::SilverfishEntity;
-use crate::entity::mob::skeleton::{
-    bogged::BoggedSkeletonEntity, parched::ParchedSkeletonEntity, skeleton::SkeletonEntity,
-    stray::StraySkeletonEntity, wither::WitherSkeletonEntity,
-};
+use crate::entity::mob::skeleton::SkeletonEntityBase;
 use crate::entity::mob::slime::SlimeEntity;
 use crate::entity::mob::spawn::EntitySpawnReason;
 use crate::entity::mob::spider::SpiderEntity;
@@ -152,11 +149,14 @@ pub fn from_type(
         id if id == EntityType::ZOMBIFIED_PIGLIN.id => ZombifiedPiglinEntity::new(entity),
 
         // Skeleton
-        id if id == EntityType::SKELETON.id => SkeletonEntity::new(entity),
-        id if id == EntityType::BOGGED.id => BoggedSkeletonEntity::new(entity),
-        id if id == EntityType::PARCHED.id => ParchedSkeletonEntity::new(entity),
-        id if id == EntityType::WITHER_SKELETON.id => WitherSkeletonEntity::new(entity),
-        id if id == EntityType::STRAY.id => StraySkeletonEntity::new(entity),
+        id if id == EntityType::SKELETON.id
+            || id == EntityType::BOGGED.id
+            || id == EntityType::PARCHED.id
+            || id == EntityType::WITHER_SKELETON.id
+            || id == EntityType::STRAY.id =>
+        {
+            SkeletonEntityBase::new(entity)
+        }
 
         id if id == EntityType::BAT.id => BatEntity::new(entity),
         id if id == EntityType::CREEPER.id => CreeperEntity::new(entity),
