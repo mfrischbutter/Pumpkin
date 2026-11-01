@@ -134,7 +134,12 @@ fn cats_within(world: &World, center: BlockPos, range: f64) -> usize {
 /// Vanilla `CatSpawner.spawnCat`: a finalized cat at the block's corner, persistent in a hut.
 fn spawn_cat(world: &Arc<World>, spawn_pos: BlockPos, make_persistent: bool) {
     let cat = from_type(&EntityType::CAT, spawn_pos.to_f64(), world, Uuid::new_v4());
-    finalize_spawn(&cat, world, None);
+    finalize_spawn(
+        &cat,
+        world,
+        crate::entity::mob::spawn::EntitySpawnReason::Natural,
+        None,
+    );
     if make_persistent && let Some(mob) = cat.get_mob() {
         mob.get_mob_entity().set_persistence_required();
     }

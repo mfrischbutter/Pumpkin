@@ -624,7 +624,12 @@ fn chunk_generation_attempt(
     if !mob_may_spawn(region, entity.as_ref()) {
         return Attempt::Failed;
     }
-    *group_data = finalize_spawn(&entity, world, group_data.take());
+    *group_data = finalize_spawn(
+        &entity,
+        world,
+        EntitySpawnReason::ChunkGeneration,
+        group_data.take(),
+    );
     world.spawn_entity_non_save(entity);
     Attempt::Spawned
 }
@@ -813,7 +818,8 @@ pub fn spawn_category_for_position(
                     });
 
                     if is_valid_for_mob {
-                        group_data = finalize_spawn(&entity, world, group_data);
+                        group_data =
+                            finalize_spawn(&entity, world, EntitySpawnReason::Natural, group_data);
                         cluster_size += 1;
                         group_size += 1;
                         let max_group_size_reached = entity

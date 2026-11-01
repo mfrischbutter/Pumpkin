@@ -595,6 +595,7 @@ impl DispenserBlock {
                 &Self::target_position(ctx),
                 ctx.facing != Facing::Up,
                 false,
+                crate::entity::mob::spawn::EntitySpawnReason::Dispenser,
                 CreatureSpawnReason::DispenseEgg,
             )
             .is_some()

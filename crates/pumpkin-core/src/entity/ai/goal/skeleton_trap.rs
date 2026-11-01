@@ -110,7 +110,12 @@ fn create_skeleton(
     pos: Vector3<f64>,
 ) -> Arc<dyn EntityBase> {
     let skeleton = from_type(&EntityType::SKELETON, pos, world, Uuid::new_v4());
-    finalize_spawn(&skeleton, world, None);
+    finalize_spawn(
+        &skeleton,
+        world,
+        crate::entity::mob::spawn::EntitySpawnReason::Triggered,
+        None,
+    );
     if let Some(mob) = skeleton.get_mob() {
         let mob_entity = mob.get_mob_entity();
         mob_entity
@@ -136,7 +141,12 @@ fn create_horse(world: &Arc<World>, pos: Vector3<f64>) -> Arc<dyn EntityBase> {
         &EntityType::SKELETON_HORSE,
     ));
     let entity: Arc<dyn EntityBase> = horse.clone();
-    finalize_spawn(&entity, world, None);
+    finalize_spawn(
+        &entity,
+        world,
+        crate::entity::mob::spawn::EntitySpawnReason::Triggered,
+        None,
+    );
     horse
         .mob_entity
         .living_entity

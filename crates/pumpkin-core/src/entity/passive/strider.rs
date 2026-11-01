@@ -214,7 +214,12 @@ impl StriderEntity {
     fn spawn_jockey(&self, world: &Arc<World>, jockey: &Arc<dyn EntityBase>) {
         let entity = self.get_entity();
         jockey.get_entity().set_rotation(entity.yaw.load(), 0.0);
-        crate::entity::mob::spawn::finalize_spawn(jockey, world, None);
+        crate::entity::mob::spawn::finalize_spawn(
+            jockey,
+            world,
+            crate::entity::mob::spawn::EntitySpawnReason::Jockey,
+            None,
+        );
         self.mob_entity.add_pending_rider(jockey.clone());
     }
 }

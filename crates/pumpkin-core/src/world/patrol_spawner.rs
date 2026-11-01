@@ -130,7 +130,14 @@ fn spawn_patrol_member(world: &Arc<World>, pos: BlockPos, is_leader: bool) -> bo
     {
         return false;
     }
-    let pillager = from_type(&EntityType::PILLAGER, pos.to_f64(), world, Uuid::new_v4());
+    // Vanilla creates the pillager at the origin, so a leader's first patrol target lies
+    // within 500 blocks of (0, 0), then sets it onto the block's corner.
+    let pillager = from_type(
+        &EntityType::PILLAGER,
+        pumpkin_util::math::vector3::Vector3::new(0.0, 0.0, 0.0),
+        world,
+        Uuid::new_v4(),
+    );
     if is_leader
         && let Some(patroller) = pillager
             .get_mob()
@@ -139,7 +146,14 @@ fn spawn_patrol_member(world: &Arc<World>, pos: BlockPos, is_leader: bool) -> bo
         patroller.set_patrol_leader(true);
         patroller.find_patrol_target();
     }
-    finalize_spawn(&pillager, world, None);
+    pillager
+        .get_entity()
+        .set_pos(pumpkin_util::math::vector3::Vector3::new(
+            f64::from(pos.0.x),
+            f64::from(pos.0.y),
+            f64::from(pos.0.z),
+        ));
+    finalize_spawn(&pillager, world, EntitySpawnReason::Patrol, None);
     world.spawn_entity_non_save(pillager);
     true
 }

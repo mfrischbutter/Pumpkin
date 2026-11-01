@@ -13,10 +13,14 @@ use crate::entity::EntityBase;
 use crate::entity::ai::goal::{Controls, Goal};
 use crate::entity::mob::Mob;
 use crate::entity::mob::raider::{Raider, create_ominous_banner};
+use crate::entity::mob::spawn::EntitySpawnReason;
 use crate::world::World;
 
 /// A patrolling monster farther than this from every player despawns.
 const PATROL_DESPAWN_DISTANCE_SQ: f64 = 16_384.0;
+/// Vanilla `PatrollingMonster.finalizeSpawn`: the chance that a spawn outside patrols,
+/// events and structures is a leader.
+const LEADER_CHANCE: f32 = 0.06;
 /// Vanilla `LongDistancePatrolGoal.NAVIGATION_FAILED_COOLDOWN`.
 const NAVIGATION_FAILED_COOLDOWN: i64 = 200;
 const PATROL_COMPANION_RANGE: f64 = 16.0;
@@ -106,27 +110,35 @@ pub trait PatrollingMonster: Mob {
             block_pos.0.z + dz,
         ));
         self.set_patrol_target(target);
+        self.set_patrolling(true);
     }
 
-    fn finalize_patrol_spawn(&self, is_patrol_spawn: bool) {
-        if !is_patrol_spawn && self.can_be_leader() {
-            let r: f32 = rand::random();
-            if r < 0.06 {
-                self.set_patrol_leader(true);
-            }
+    /// Vanilla `PatrollingMonster.finalizeSpawn`: a spawn outside patrols, events and
+    /// structures may become a leader; a leader wears the ominous banner as a guaranteed drop;
+    /// a patrol spawn patrols.
+    fn finalize_patrol_spawn(&self, reason: EntitySpawnReason) {
+        if !matches!(
+            reason,
+            EntitySpawnReason::Patrol | EntitySpawnReason::Event | EntitySpawnReason::Structure
+        ) && rand::random::<f32>() < LEADER_CHANCE
+            && self.can_be_leader()
+        {
+            self.set_patrol_leader(true);
         }
 
         if self.is_patrol_leader() {
             let banner = create_ominous_banner();
-            let living = &self.get_mob_entity().living_entity;
-            if let Ok(mut equipment) = living.entity_equipment.try_lock() {
+            let mob = self.get_mob_entity();
+            if let Ok(mut equipment) = mob.living_entity.entity_equipment.try_lock() {
                 equipment.put(&EquipmentSlot::HEAD, banner.clone());
                 drop(equipment);
-                living.send_equipment_changes(&[(EquipmentSlot::HEAD, banner)]);
+                mob.living_entity
+                    .send_equipment_changes(&[(EquipmentSlot::HEAD, banner)]);
             }
+            mob.set_guaranteed_drop(&EquipmentSlot::HEAD);
         }
 
-        if is_patrol_spawn {
+        if reason == EntitySpawnReason::Patrol {
             self.set_patrolling(true);
         }
     }

@@ -242,7 +242,12 @@ impl CommandExecutor for SpawnLeaderExecutor {
             living.send_equipment_changes(&[(EquipmentSlot::HEAD, banner)]);
         }
 
-        finalize_spawn(&raider_entity, &world, None);
+        finalize_spawn(
+            &raider_entity,
+            &world,
+            crate::entity::mob::spawn::EntitySpawnReason::Command,
+            None,
+        );
         world.spawn_entity(raider_entity);
         context
             .source

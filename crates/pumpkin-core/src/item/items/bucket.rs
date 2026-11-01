@@ -641,7 +641,12 @@ impl ItemBehaviour for FilledBucketItem {
             // Vanilla `MobBucketItem.spawn`: created like `EntityType.create(..., BUCKET, true,
             // false)`, finalized, configured from the bucket, added with its ambient sound.
             let mob = create_at(entity_type, &world, &place_pos, true, false);
-            crate::entity::mob::spawn::finalize_spawn(&mob, &world, None);
+            crate::entity::mob::spawn::finalize_spawn(
+                &mob,
+                &world,
+                crate::entity::mob::spawn::EntitySpawnReason::Bucket,
+                None,
+            );
             apply_mob_bucket_components(&used_stack, mob.as_ref(), player);
             if world.spawn_creature(
                 mob.clone(),

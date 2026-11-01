@@ -949,7 +949,12 @@ fn execute_summon_modifier(
         Uuid::new_v4(),
     );
     // Vanilla creates it like `/summon` without NBT: finalized.
-    finalize_spawn(&entity, context.source.world(), None);
+    finalize_spawn(
+        &entity,
+        context.source.world(),
+        crate::entity::mob::spawn::EntitySpawnReason::Command,
+        None,
+    );
     context.source.world().spawn_entity(entity.clone());
     let mut source = context.source.as_ref().clone();
     source.entity = Some(entity);

@@ -439,7 +439,12 @@ impl Raid {
         entity_base: &Arc<dyn EntityBase>,
     ) {
         self.join_raid(wave, entity_base);
-        finalize_spawn(entity_base, world, None);
+        finalize_spawn(
+            entity_base,
+            world,
+            crate::entity::mob::spawn::EntitySpawnReason::Event,
+            None,
+        );
         if let Some(raider) = entity_base.get_mob().and_then(|mob| mob.as_raider()) {
             raider.apply_raid_buffs(self, wave, false);
         }

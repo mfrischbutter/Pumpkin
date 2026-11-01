@@ -159,15 +159,24 @@ impl MobEntity {
 }
 
 /// Finalizes `entity` if it is a mob, and returns the group data for the next mob of the group.
+///
+/// `reason` is vanilla `finalizeSpawn`'s spawn reason: the shared `PatrollingMonster` step
+/// reads it; the species' own finalization does not yet.
 pub fn finalize_spawn(
     entity: &Arc<dyn EntityBase>,
     world: &Arc<World>,
+    reason: EntitySpawnReason,
     group_data: Option<SpawnGroupData>,
 ) -> Option<SpawnGroupData> {
-    match entity.get_mob() {
-        Some(mob) => mob.finalize_spawn(world, group_data),
-        None => group_data,
+    let Some(mob) = entity.get_mob() else {
+        return group_data;
+    };
+    let group_data = mob.finalize_spawn(world, group_data);
+    // Vanilla `PatrollingMonster.finalizeSpawn`, part of every patrolling monster's chain.
+    if let Some(patroller) = mob.as_patrolling_monster() {
+        patroller.finalize_patrol_spawn(reason);
     }
+    group_data
 }
 
 impl MobEntity {

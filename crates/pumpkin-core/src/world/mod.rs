@@ -8300,7 +8300,12 @@ impl WorldPortalExt for WorldPortal {
             nbt.child_tags.remove("UUID");
             if let Some(entity) = load_static_entity_from_nbt(&nbt, Vector3::default(), &self.0) {
                 if finalize {
-                    crate::entity::mob::spawn::finalize_spawn(&entity, &self.0, None);
+                    crate::entity::mob::spawn::finalize_spawn(
+                        &entity,
+                        &self.0,
+                        crate::entity::mob::spawn::EntitySpawnReason::Structure,
+                        None,
+                    );
                 }
                 self.0.spawn_entity(entity);
             }

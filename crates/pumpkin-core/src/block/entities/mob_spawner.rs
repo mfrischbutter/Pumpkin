@@ -489,7 +489,7 @@ impl MobSpawnerBlockEntity {
                 return Attempt::Skipped;
             }
             if data.has_no_configuration() {
-                finalize_spawn(&entity, world, None);
+                finalize_spawn(&entity, world, EntitySpawnReason::Spawner, None);
             }
             if let Some(table) = &data.equipment {
                 equip(world, mob, &entity, table);

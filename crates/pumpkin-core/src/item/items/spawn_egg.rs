@@ -3,7 +3,7 @@ use std::sync::Arc;
 
 use crate::block::entities::mob_spawner::MobSpawnerBlockEntity;
 use crate::entity::EntityBase;
-use crate::entity::mob::spawn::{create_at, finalize_spawn};
+use crate::entity::mob::spawn::{EntitySpawnReason, create_at, finalize_spawn};
 use crate::entity::player::Player;
 use crate::entity::r#type::from_type;
 use crate::item::{ItemBehaviour, ItemMetadata};
@@ -221,8 +221,9 @@ pub(crate) fn prepare_egg_mob(
     mob: &Arc<dyn EntityBase>,
     world: &Arc<World>,
     user: Option<&Player>,
+    spawn_reason: EntitySpawnReason,
 ) {
-    finalize_spawn(mob, world, None);
+    finalize_spawn(mob, world, spawn_reason, None);
     apply_entity_variant(item, mob.as_ref(), user);
 }
 
@@ -238,10 +239,11 @@ pub(crate) fn spawn_from_item(
     spawn_pos: &BlockPos,
     try_move_down: bool,
     moved_up: bool,
+    spawn_reason: EntitySpawnReason,
     reason: CreatureSpawnReason,
 ) -> Option<Arc<dyn EntityBase>> {
     let mob = create_at(entity_type, world, spawn_pos, try_move_down, moved_up);
-    prepare_egg_mob(item, &mob, world, user);
+    prepare_egg_mob(item, &mob, world, user, spawn_reason);
     let player = user.and_then(|user| world.get_player_by_uuid(user.gameprofile.id));
     if !world.spawn_creature(mob.clone(), reason, player) {
         return None;
@@ -296,6 +298,7 @@ impl ItemBehaviour for SpawnEggItem {
                 &hit_pos,
                 false,
                 false,
+                EntitySpawnReason::SpawnItemUse,
                 CreatureSpawnReason::SpawnerEgg,
             )
             .is_none()
@@ -385,6 +388,7 @@ impl ItemBehaviour for SpawnEggItem {
                 &spawn_block_pos,
                 true,
                 moved_up,
+                EntitySpawnReason::SpawnItemUse,
                 CreatureSpawnReason::SpawnerEgg,
             )
             .is_none()

@@ -90,7 +90,12 @@ impl PhantomSpawner {
                     world,
                     Uuid::new_v4(),
                 );
-                group_data = finalize_spawn(&phantom, world, group_data);
+                group_data = finalize_spawn(
+                    &phantom,
+                    world,
+                    crate::entity::mob::spawn::EntitySpawnReason::Natural,
+                    group_data,
+                );
                 world.spawn_entity_non_save(phantom);
             }
         }

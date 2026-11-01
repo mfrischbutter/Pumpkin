@@ -58,7 +58,8 @@ impl World {
             let horse = SkeletonHorseEntity::new(Entity::from_uuid(
                 Uuid::new_v4(),
                 self.clone(),
-                pos.to_f64(),
+                // Vanilla `setPos(pos.getX(), pos.getY(), pos.getZ())`: the block's corner.
+                Vector3::new(f64::from(pos.0.x), f64::from(pos.0.y), f64::from(pos.0.z)),
                 &EntityType::SKELETON_HORSE,
             ));
             horse.set_trap(true);
@@ -68,7 +69,8 @@ impl World {
         let bolt = LightningBoltEntity::new(Entity::from_uuid(
             Uuid::new_v4(),
             self.clone(),
-            pos.to_f64().add_raw(0.5, 0.0, 0.5),
+            // Vanilla `Vec3.atBottomCenterOf(pos)`, which `to_f64` already is.
+            pos.to_f64(),
             &EntityType::LIGHTNING_BOLT,
         ));
         bolt.set_visual_only(is_trap);

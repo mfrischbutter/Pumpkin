@@ -144,7 +144,7 @@ impl VillageSiege {
             world,
             Uuid::new_v4(),
         );
-        finalize_spawn(&zombie, world, None);
+        finalize_spawn(&zombie, world, EntitySpawnReason::Event, None);
         zombie.get_entity().set_pos(spawn_pos);
         zombie
             .get_entity()

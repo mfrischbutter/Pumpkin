@@ -163,7 +163,12 @@ impl WanderingTraderSpawner {
         trader
             .get_entity()
             .set_rotation(wrap_degrees(rng.random::<f32>() * 360.0) % 360.0, 0.0);
-        finalize_spawn(&(trader.clone() as Arc<dyn EntityBase>), world, None);
+        finalize_spawn(
+            &(trader.clone() as Arc<dyn EntityBase>),
+            world,
+            crate::entity::mob::spawn::EntitySpawnReason::Event,
+            None,
+        );
         if !world.spawn_entity(trader.clone() as Arc<dyn EntityBase>) {
             return false;
         }
@@ -203,7 +208,12 @@ impl WanderingTraderSpawner {
         llama
             .get_entity()
             .set_rotation(wrap_degrees(rng.random::<f32>() * 360.0) % 360.0, 0.0);
-        finalize_spawn(&(llama.clone() as Arc<dyn EntityBase>), world, None);
+        finalize_spawn(
+            &(llama.clone() as Arc<dyn EntityBase>),
+            world,
+            crate::entity::mob::spawn::EntitySpawnReason::Event,
+            None,
+        );
         if world.spawn_entity(llama.clone() as Arc<dyn EntityBase>) {
             llama
                 .get_entity()
