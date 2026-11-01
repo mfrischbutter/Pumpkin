@@ -1280,23 +1280,33 @@ impl DispenserBlock {
 
     fn eject_item(ctx: &DispenseContext<'_>, stack: ItemStack) {
         let facing = to_normal(ctx.facing);
-        let mut position = ctx.position.to_centered_f64().add(&(facing * 0.7));
-
-        position.y -= match ctx.facing {
-            Facing::Up | Facing::Down => 0.125,
-            _ => 0.15625,
-        };
-
-        let entity = Entity::new(ctx.world.clone(), position, &EntityType::ITEM);
-        let rd = rng().random::<f64>().mul_add(0.1, 0.2);
-
-        let velocity = Vector3::new(
-            triangle(&mut rng(), facing.x * rd, 0.017_227_5 * 6.),
-            triangle(&mut rng(), 0.2, 0.017_227_5 * 6.),
-            triangle(&mut rng(), facing.z * rd, 0.017_227_5 * 6.),
-        );
-
-        let item_entity = Arc::new(ItemEntity::new_with_velocity(entity, stack, velocity, 40));
-        ctx.world.spawn_entity(item_entity);
+        // Vanilla `DispenserBlock.getDispensePosition`.
+        let position = ctx.position.to_centered_f64().add(&(facing * 0.7));
+        spawn_item(ctx.world, stack, DISPENSE_SPEED, facing, position);
     }
+}
+
+/// Vanilla `DefaultDispenseItemBehavior.spawnItem`'s accuracy for a dispenser.
+const DISPENSE_SPEED: i32 = 6;
+
+/// Vanilla `DefaultDispenseItemBehavior.spawnItem`: an item thrown out at `position` along
+/// `facing` (a unit normal) with the given accuracy, the way a dispenser ejects it.
+pub(crate) fn spawn_item(
+    world: &Arc<World>,
+    stack: ItemStack,
+    accuracy: i32,
+    facing: Vector3<f64>,
+    mut position: Vector3<f64>,
+) {
+    position.y -= if facing.y == 0.0 { 0.15625 } else { 0.125 };
+    let entity = Entity::new(world.clone(), position, &EntityType::ITEM);
+    let rd = rng().random::<f64>().mul_add(0.1, 0.2);
+    let deviation = 0.017_227_5 * f64::from(accuracy);
+    let velocity = Vector3::new(
+        triangle(&mut rng(), facing.x * rd, deviation),
+        triangle(&mut rng(), 0.2, deviation),
+        triangle(&mut rng(), facing.z * rd, deviation),
+    );
+    let item_entity = Arc::new(ItemEntity::new_with_velocity(entity, stack, velocity, 40));
+    world.spawn_entity(item_entity);
 }

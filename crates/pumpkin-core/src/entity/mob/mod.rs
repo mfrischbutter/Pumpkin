@@ -511,6 +511,38 @@ impl MobEntity {
             .unwrap_or(crate::entity::mob::equipment::DEFAULT_EQUIPMENT_DROP_CHANCE)
     }
 
+    /// Vanilla `Mob.dropPreservedEquipment`: the pieces with a guaranteed drop leave their
+    /// slots and fall to the ground.
+    pub fn drop_preserved_equipment(&self, world: &Arc<World>) {
+        let preserved: Vec<EquipmentSlot> = self
+            .living_entity
+            .equipment_drop_chances
+            .lock()
+            .unwrap_or_else(std::sync::PoisonError::into_inner)
+            .iter()
+            .filter(|(_, chance)| **chance > 1.0)
+            .map(|(slot, _)| slot.clone())
+            .collect();
+        for slot in preserved {
+            let stack = {
+                let mut equipment = self
+                    .living_entity
+                    .entity_equipment
+                    .lock()
+                    .unwrap_or_else(std::sync::PoisonError::into_inner);
+                let stack = equipment.get(&slot);
+                if stack.is_empty() {
+                    continue;
+                }
+                equipment.put(&slot, ItemStack::EMPTY.clone());
+                stack
+            };
+            self.living_entity
+                .send_equipment_changes(&[(slot, ItemStack::EMPTY.clone())]);
+            world.drop_stack(&self.living_entity.entity.block_pos.load(), stack);
+        }
+    }
+
     pub fn set_guaranteed_drop(&self, slot: &EquipmentSlot) {
         self.living_entity
             .equipment_drop_chances

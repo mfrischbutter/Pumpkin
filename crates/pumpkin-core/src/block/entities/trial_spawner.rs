@@ -2,11 +2,8 @@ use rustc_hash::FxHashSet;
 use std::sync::{Arc, Mutex};
 
 use pumpkin_data::block_properties::{TrialSpawnerLikeProperties, TrialSpawnerState};
-use pumpkin_data::data_component_impl::EquipmentSlot;
 use pumpkin_data::effect::StatusEffect;
 use pumpkin_data::entity::EntityType;
-use pumpkin_data::item::Item;
-use pumpkin_data::item_stack::ItemStack;
 use pumpkin_data::potion::Effect;
 use pumpkin_data::sound::{Sound, SoundCategory};
 use pumpkin_data::trial_spawner::TrialSpawnerKey;
@@ -20,8 +17,64 @@ use rand::RngExt;
 use uuid::Uuid;
 
 use super::BlockEntity;
+use super::mob_spawner::{CustomSpawnRules, EquipmentTable, entity_position, equip};
+use crate::block::blocks::redstone::dispenser::spawn_item;
+use crate::data::datapack::dynamic_registry_loader::json_to_nbt_tag;
 use crate::entity::EntityBase;
+use crate::entity::mob::spawn::{EntitySpawnReason, finalize_spawn};
+use crate::entity::player::Player;
+use crate::entity::r#type::{check_spawn_rules, load_entity};
 use crate::world::World;
+use crate::world::level_accessor::LevelAccessor;
+use pumpkin_data::game_event::GameEvent;
+use pumpkin_util::math::boundingbox::BoundingBox;
+use std::sync::atomic::Ordering;
+
+/// Vanilla `TrialSpawnerStateData.DELAY_BETWEEN_PLAYER_SCANS`.
+const DELAY_BETWEEN_PLAYER_SCANS: i64 = 20;
+/// Vanilla `TrialSpawnerStateData.TRIAL_OMEN_PER_BAD_OMEN_LEVEL`.
+const TRIAL_OMEN_PER_BAD_OMEN_LEVEL: i32 = 18000;
+/// Vanilla `TrialSpawnerConfig.ticksBetweenItemSpawners`.
+const TICKS_BETWEEN_ITEM_SPAWNERS: i64 = 160;
+/// Vanilla `TrialSpawnerState.DELAY_BEFORE_EJECT_AFTER_KILLING_LAST_MOB`.
+const DELAY_BEFORE_EJECT_AFTER_KILLING_LAST_MOB: i64 = 40;
+/// Vanilla `TrialSpawnerState.TIME_BETWEEN_EACH_EJECTION`.
+const TIME_BETWEEN_EACH_EJECTION: i64 = 30;
+/// Vanilla `TrialSpawner.ejectReward`: the items leave 1.2 blocks above the block's bottom
+/// centre with a dispenser's accuracy of 2.
+const REWARD_EJECT_HEIGHT: f64 = 1.2;
+const REWARD_EJECT_ACCURACY: i32 = 2;
+/// Vanilla `BuiltInLootTables`: the tables a config without `loot_tables_to_eject` ejects,
+/// and the ominous items it drops.
+const SPAWNER_TRIAL_CHAMBER_CONSUMABLES: &str = "minecraft:spawners/trial_chamber/consumables";
+const SPAWNER_TRIAL_CHAMBER_KEY: &str = "minecraft:spawners/trial_chamber/key";
+const SPAWNER_TRIAL_ITEMS_TO_DROP_WHEN_OMINOUS: &str =
+    "minecraft:spawners/trial_chamber/items_to_drop_when_ominous";
+
+/// Vanilla `PlayerDetector.inLineOfSight` and `TrialSpawner.inLineOfSight`: a visual clip from
+/// `dest` back to `origin` reaches the origin's block or hits nothing.
+fn in_line_of_sight(world: &World, origin: Vector3<f64>, dest: Vector3<f64>) -> bool {
+    let hit = world.clip(&pumpkin_world::clip::ClipContext::new(
+        dest,
+        origin,
+        pumpkin_world::clip::ClipBlock::Visual,
+        pumpkin_world::clip::ClipFluid::None,
+    ));
+    hit.is_miss || hit.block_pos == BlockPos::floored_v(origin)
+}
+
+/// Vanilla `Vec3i.distSqr` between two block positions.
+fn block_distance_sq(a: BlockPos, b: BlockPos) -> i64 {
+    let dx = i64::from(a.0.x - b.0.x);
+    let dy = i64::from(a.0.y - b.0.y);
+    let dz = i64::from(a.0.z - b.0.z);
+    dx * dx + dy * dy + dz * dz
+}
+
+/// Vanilla `Vec3i.closerThan` on block positions: strictly within `range` blocks.
+fn blocks_closer_than(a: BlockPos, b: BlockPos, range: i32) -> bool {
+    block_distance_sq(a, b) < i64::from(range) * i64::from(range)
+}
 
 /// Flame particle type used by trial spawners for world events.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -55,44 +108,50 @@ pub enum PlayerDetector {
 }
 
 impl PlayerDetector {
+    /// Vanilla `PlayerDetector.detect`: the players (or sheep) within `range` blocks of the
+    /// spawner's block position, in its line of sight when required.
     #[must_use]
-    pub fn detect(&self, world: &World, spawner_pos: BlockPos, range: i32) -> Vec<Uuid> {
+    pub fn detect(
+        &self,
+        world: &World,
+        spawner_pos: BlockPos,
+        range: i32,
+        require_line_of_sight: bool,
+    ) -> Vec<Uuid> {
         let center = spawner_pos.to_centered_f64();
-        let max_dist_sq = f64::from(range * range);
-
+        let sees =
+            |eyes: Vector3<f64>| !require_line_of_sight || in_line_of_sight(world, center, eyes);
         match self {
-            Self::NoCreativePlayers => {
-                let players = world.players.load();
-                players
-                    .iter()
-                    .filter_map(|player| {
-                        let mode = player.gamemode.load();
-                        if mode == pumpkin_util::GameMode::Creative
-                            || mode == pumpkin_util::GameMode::Spectator
-                        {
-                            return None;
-                        }
-                        let ent = player.get_entity();
-                        if !ent.is_alive() {
-                            return None;
-                        }
-                        let pos = ent.pos.load();
-                        (pos.squared_distance_to_vec(&center) <= max_dist_sq)
-                            .then_some(player.gameprofile.id)
-                    })
-                    .collect()
-            }
+            Self::NoCreativePlayers => world
+                .players
+                .load()
+                .iter()
+                .filter(|player| {
+                    let mode = player.gamemode.load();
+                    mode != pumpkin_util::GameMode::Creative
+                        && mode != pumpkin_util::GameMode::Spectator
+                        && blocks_closer_than(
+                            player.get_entity().block_pos.load(),
+                            spawner_pos,
+                            range,
+                        )
+                        && sees(player.eye_position())
+                })
+                .map(|player| player.gameprofile.id)
+                .collect(),
             Self::Sheep => {
-                let entities = world.entities.load();
-                entities
+                let area = BoundingBox::from_block(&spawner_pos).expand_all(f64::from(range));
+                world
+                    .get_entities_at_box(&area)
                     .iter()
-                    .filter_map(|e| {
-                        let ent = e.get_entity();
-                        (ent.entity_type.id == EntityType::SHEEP.id
-                            && ent.is_alive()
-                            && ent.pos.load().squared_distance_to_vec(&center) <= max_dist_sq)
-                            .then_some(ent.entity_uuid)
+                    .filter(|entity| {
+                        let entity = entity.get_entity();
+                        let pos = entity.pos.load();
+                        entity.entity_type == &EntityType::SHEEP
+                            && entity.is_alive()
+                            && sees(Vector3::new(pos.x, entity.get_eye_y(), pos.z))
                     })
+                    .map(|entity| entity.get_entity().entity_uuid)
                     .collect()
             }
         }
@@ -109,9 +168,10 @@ pub struct SpawnData {
 }
 
 impl Default for SpawnData {
+    /// Vanilla `new SpawnData()`: an empty entity compound, nothing to spawn.
     fn default() -> Self {
         Self {
-            entity_type: Some(&EntityType::ZOMBIE),
+            entity_type: None,
             custom_spawn_rules: None,
             equipment: None,
             raw_entity_nbt: None,
@@ -197,14 +257,26 @@ impl Default for TrialSpawnerConfig {
             total_mobs_added_per_player: 2.0,
             simultaneous_mobs_added_per_player: 1.0,
             ticks_between_spawn: 40,
-            spawn_potentials: vec![WeightedSpawnData {
-                data: SpawnData::default(),
-                weight: 1,
-            }],
-            loot_tables_to_eject: Vec::new(),
-            items_to_drop_when_ominous: None,
+            spawn_potentials: Vec::new(),
+            loot_tables_to_eject: default_loot_tables_to_eject(),
+            items_to_drop_when_ominous: Some(SPAWNER_TRIAL_ITEMS_TO_DROP_WHEN_OMINOUS.to_string()),
         }
     }
+}
+
+/// Vanilla `TrialSpawnerConfig.Builder`'s loot tables: the trial chamber's consumables and
+/// key, evenly.
+fn default_loot_tables_to_eject() -> Vec<WeightedLootTable> {
+    vec![
+        WeightedLootTable {
+            data: SPAWNER_TRIAL_CHAMBER_CONSUMABLES.to_string(),
+            weight: 1,
+        },
+        WeightedLootTable {
+            data: SPAWNER_TRIAL_CHAMBER_KEY.to_string(),
+            weight: 1,
+        },
+    ]
 }
 
 impl From<&pumpkin_data::trial_spawner::TrialSpawnerConfigData> for TrialSpawnerConfig {
@@ -218,6 +290,11 @@ impl From<&pumpkin_data::trial_spawner::TrialSpawnerConfigData> for TrialSpawner
                         .strip_prefix("minecraft:")
                         .unwrap_or(sp.entity_id),
                 );
+                // The entity compound as the config wrote it, id and all.
+                let entity = serde_json::from_str::<serde_json::Value>(sp.entity)
+                    .ok()
+                    .and_then(|value| json_to_nbt_tag(&value).extract_compound().cloned())
+                    .unwrap_or_default();
                 let equipment = sp.equipment_loot_table.map(|loot_table| {
                     let mut cmp = NbtCompound::new();
                     cmp.put_string("loot_table", loot_table.to_string());
@@ -231,21 +308,24 @@ impl From<&pumpkin_data::trial_spawner::TrialSpawnerConfigData> for TrialSpawner
                         entity_type,
                         custom_spawn_rules: None,
                         equipment,
-                        raw_entity_nbt: None,
+                        raw_entity_nbt: Some(entity),
                     },
                     weight: sp.weight,
                 }
             })
             .collect();
 
-        let loot_tables_to_eject = data
-            .loot_tables_to_eject
-            .iter()
-            .map(|lt| WeightedLootTable {
-                data: lt.loot_table.to_string(),
-                weight: lt.weight,
-            })
-            .collect();
+        let loot_tables_to_eject =
+            data.loot_tables_to_eject
+                .map_or_else(default_loot_tables_to_eject, |tables| {
+                    tables
+                        .iter()
+                        .map(|lt| WeightedLootTable {
+                            data: lt.loot_table.to_string(),
+                            weight: lt.weight,
+                        })
+                        .collect()
+                });
 
         Self {
             spawn_range: data.spawn_range,
@@ -256,7 +336,11 @@ impl From<&pumpkin_data::trial_spawner::TrialSpawnerConfigData> for TrialSpawner
             ticks_between_spawn: data.ticks_between_spawn,
             spawn_potentials,
             loot_tables_to_eject,
-            items_to_drop_when_ominous: data.items_to_drop_when_ominous.map(ToString::to_string),
+            items_to_drop_when_ominous: Some(
+                data.items_to_drop_when_ominous
+                    .unwrap_or(SPAWNER_TRIAL_ITEMS_TO_DROP_WHEN_OMINOUS)
+                    .to_string(),
+            ),
         }
     }
 }
@@ -293,15 +377,16 @@ impl TrialSpawnerConfig {
     }
 
     #[must_use]
-    pub fn calculate_target_total_mobs(&self, player_count: usize) -> i32 {
-        let additional = player_count.saturating_sub(1) as f32 * self.total_mobs_added_per_player;
+    /// Vanilla `calculateTargetTotalMobs`: for the players beyond the first.
+    pub fn calculate_target_total_mobs(&self, additional_players: usize) -> i32 {
+        let additional = additional_players as f32 * self.total_mobs_added_per_player;
         (self.total_mobs + additional).floor() as i32
     }
 
+    /// Vanilla `calculateTargetSimultaneousMobs`: for the players beyond the first.
     #[must_use]
-    pub fn calculate_target_simultaneous_mobs(&self, player_count: usize) -> i32 {
-        let additional =
-            player_count.saturating_sub(1) as f32 * self.simultaneous_mobs_added_per_player;
+    pub fn calculate_target_simultaneous_mobs(&self, additional_players: usize) -> i32 {
+        let additional = additional_players as f32 * self.simultaneous_mobs_added_per_player;
         (self.simultaneous_mobs + additional).floor() as i32
     }
 
@@ -316,9 +401,11 @@ impl TrialSpawnerConfig {
     }
 
     #[must_use]
+    /// Vanilla `spawnPotentialsDefinition().getRandom(random)`: a weighted draw, nothing from
+    /// an empty list.
     pub fn pick_spawn_data(&self) -> Option<SpawnData> {
         if self.spawn_potentials.is_empty() {
-            return Some(SpawnData::default());
+            return None;
         }
         let total_weight: i32 = self.spawn_potentials.iter().map(|p| p.weight.max(1)).sum();
         if total_weight <= 0 {
@@ -420,9 +507,7 @@ impl TrialSpawnerConfig {
                     })
                 })
                 .collect();
-            if !potentials.is_empty() {
-                cfg.spawn_potentials = potentials;
-            }
+            cfg.spawn_potentials = potentials;
         }
 
         if let Some(list) = nbt.get_list("loot_tables_to_eject") {
@@ -594,21 +679,19 @@ pub struct TrialSpawnerStateData {
 }
 
 impl TrialSpawnerStateData {
+    /// Vanilla `reset`.
     pub fn reset(&mut self) {
-        self.registered_players.clear();
         self.current_mobs.clear();
+        self.next_spawn_data = None;
+        self.reset_statistics();
+    }
+
+    /// Vanilla `resetStatistics`.
+    pub fn reset_statistics(&mut self) {
+        self.registered_players.clear();
         self.total_mobs_spawned = 0;
         self.next_mob_spawns_at = 0;
         self.cooldown_ends_at = 0;
-        self.next_spawn_data = None;
-        self.ejecting_loot_table = None;
-    }
-
-    pub fn reset_after_becoming_ominous(&mut self, game_time: i64) {
-        self.current_mobs.clear();
-        self.next_mob_spawns_at = game_time + TrialSpawner::DETECT_PLAYER_SPAWN_BUFFER;
-        self.total_mobs_spawned = 0;
-        self.next_spawn_data = None;
     }
 
     #[must_use]
@@ -624,31 +707,11 @@ impl TrialSpawnerStateData {
         !config.spawn_potentials.is_empty()
     }
 
-    pub fn get_or_create_next_spawn_data(
-        &mut self,
-        config: &TrialSpawnerConfig,
-    ) -> Option<&SpawnData> {
-        if self.next_spawn_data.is_none() {
-            self.next_spawn_data = config.pick_spawn_data();
-        }
-        self.next_spawn_data.as_ref()
-    }
-
-    pub fn try_detect_players(
-        &mut self,
-        world: &World,
-        spawner_pos: BlockPos,
-        range: i32,
-        detector: &PlayerDetector,
-    ) -> bool {
-        let detected = detector.detect(world, spawner_pos, range);
-        let mut newly_detected = false;
-        for uuid in detected {
-            if self.registered_players.insert(uuid) {
-                newly_detected = true;
-            }
-        }
-        newly_detected
+    /// Vanilla `getOrCreateNextSpawnData`: the next spawn data, drawn from the potentials
+    /// once, an empty one when there are none.
+    pub fn get_or_create_next_spawn_data(&mut self, config: &TrialSpawnerConfig) -> &SpawnData {
+        self.next_spawn_data
+            .get_or_insert_with(|| config.pick_spawn_data().unwrap_or_default())
     }
 
     #[must_use]
@@ -764,8 +827,8 @@ impl TrialSpawner {
     pub const DETECT_PLAYER_SPAWN_BUFFER: i64 = 40;
     pub const DEFAULT_TARGET_COOLDOWN_LENGTH: i64 = 36000;
     pub const DEFAULT_PLAYER_SCAN_RANGE: i32 = 14;
-    pub const MAX_MOB_TRACKING_DISTANCE: f64 = 47.0;
-    pub const MAX_MOB_TRACKING_DISTANCE_SQR: f64 = 47.0 * 47.0;
+    pub const MAX_MOB_TRACKING_DISTANCE: i32 = 47;
+    pub const MAX_MOB_TRACKING_DISTANCE_SQR: i64 = 47 * 47;
     pub const SPAWNING_AMBIENT_SOUND_CHANCE: f32 = 0.02;
 
     #[must_use]
@@ -812,6 +875,9 @@ impl TrialSpawner {
         self.data.write_nbt(nbt);
     }
 
+    /// Vanilla `applyOminous` with `resetAfterBecomingOminous`: the block turns ominous, the
+    /// current mobs drop their guaranteed equipment and vanish, and the ominous wave starts
+    /// afresh after one spawn interval.
     pub fn apply_ominous(&mut self, world: &Arc<World>, spawner_pos: BlockPos) {
         self.set_ominous(world, spawner_pos, true);
         world.sync_world_event(
@@ -820,83 +886,131 @@ impl TrialSpawner {
             1,
         );
         self.is_ominous = true;
-        let game_time = world
-            .level_time
-            .lock()
-            .unwrap_or_else(std::sync::PoisonError::into_inner)
-            .query_gametime();
-
+        let game_time = world.get_world_age();
         for &id in &self.data.current_mobs {
             if let Some(entity) = world.get_entity_by_uuid(id) {
-                let ent = entity.get_entity();
-                let block_pos =
-                    BlockPos::floored(ent.pos.load().x, ent.pos.load().y, ent.pos.load().z);
                 world.sync_world_event(
                     WorldEvent::ParticlesTrialSpawnerSpawnMobAt,
-                    block_pos,
+                    entity.get_entity().block_pos.load(),
                     TrialSpawnerFlameParticle::Normal.encode(),
                 );
+                if let Some(mob) = entity.get_mob() {
+                    mob.get_mob_entity().drop_preserved_equipment(world);
+                }
                 world.remove_entity(entity.as_ref());
             }
         }
-
-        self.data.reset_after_becoming_ominous(game_time);
+        if !self.config.ominous.spawn_potentials.is_empty() {
+            self.data.next_spawn_data = None;
+        }
+        self.data.total_mobs_spawned = 0;
+        self.data.current_mobs.clear();
         self.data.next_mob_spawns_at =
-            game_time + i64::from(self.active_config().ticks_between_spawn);
+            game_time + i64::from(self.config.ominous.ticks_between_spawn);
+        self.data.cooldown_ends_at = game_time + TICKS_BETWEEN_ITEM_SPAWNERS;
     }
 
-    pub fn try_detect_players(&mut self, world: &Arc<World>, spawner_pos: BlockPos) -> bool {
-        let detected =
-            self.player_detector
-                .detect(world, spawner_pos, self.config.required_player_range);
-
-        if !self.is_ominous {
-            let mut ominous_player = None;
-            for &uuid in &detected {
-                if let Some(player) = world.get_player_by_uuid(uuid) {
-                    if player.has_effect(&StatusEffect::TRIAL_OMEN) {
-                        ominous_player = Some((player, false));
-                        break;
-                    }
-                    if player.has_effect(&StatusEffect::BAD_OMEN) {
-                        ominous_player = Some((player, true));
-                    }
+    /// Vanilla `TrialSpawnerStateData.tryDetectPlayers`: every 20 ticks the players in range
+    /// join the trial (the first needs a line of sight); a player with an omen makes the
+    /// spawner ominous, and a cooldown only registers players once that happened.
+    fn try_detect_players(
+        &mut self,
+        world: &Arc<World>,
+        spawner_pos: BlockPos,
+        state: TrialSpawnerState,
+    ) {
+        let game_time = world.get_world_age();
+        if (spawner_pos.as_long() + game_time) % DELAY_BETWEEN_PLAYER_SCANS != 0 {
+            return;
+        }
+        if state == TrialSpawnerState::Cooldown && self.is_ominous {
+            return;
+        }
+        let range = self.config.required_player_range;
+        let in_sight = self.player_detector.detect(world, spawner_pos, range, true);
+        let became_ominous = if !self.is_ominous
+            && !in_sight.is_empty()
+            && let Some((player, has_bad_omen)) =
+                Self::find_player_with_ominous_effect(world, &in_sight)
+        {
+            if has_bad_omen {
+                Self::transform_bad_omen_into_trial_omen(&player);
+            }
+            world.sync_world_event(
+                WorldEvent::ParticlesTrialSpawnerBecomeOminous,
+                BlockPos::floored_v(player.eye_position()),
+                0,
+            );
+            self.apply_ominous(world, spawner_pos);
+            true
+        } else {
+            false
+        };
+        if state != TrialSpawnerState::Cooldown || became_ominous {
+            let found = if self.data.registered_players.is_empty() {
+                in_sight
+            } else {
+                self.player_detector
+                    .detect(world, spawner_pos, range, false)
+            };
+            let before = self.data.registered_players.len();
+            self.data.registered_players.extend(found);
+            if self.data.registered_players.len() > before {
+                self.data.next_mob_spawns_at = (game_time + Self::DETECT_PLAYER_SPAWN_BUFFER)
+                    .max(self.data.next_mob_spawns_at);
+                if !became_ominous {
+                    let event = if self.is_ominous {
+                        WorldEvent::ParticlesTrialSpawnerDetectPlayerOminous
+                    } else {
+                        WorldEvent::ParticlesTrialSpawnerDetectPlayer
+                    };
+                    world.sync_world_event(
+                        event,
+                        spawner_pos,
+                        self.data.registered_players.len() as i32,
+                    );
                 }
             }
+        }
+    }
 
-            if let Some((player, has_bad_omen)) = ominous_player {
-                if has_bad_omen && let Some(bad_omen) = player.get_effect(&StatusEffect::BAD_OMEN) {
-                    let amplifier = i32::from(bad_omen.amplifier) + 1;
-                    let duration = 18000 * amplifier;
-                    player.remove_effect(&StatusEffect::BAD_OMEN);
-                    player.add_effect(Effect {
-                        effect_type: &StatusEffect::TRIAL_OMEN,
-                        duration,
-                        amplifier: 0,
-                        ambient: false,
-                        show_particles: true,
-                        show_icon: true,
-                        blend: true,
-                    });
-                }
-                let eye_pos = player.eye_position();
-                let eye_block_pos = BlockPos::floored(eye_pos.x, eye_pos.y, eye_pos.z);
-                world.sync_world_event(
-                    WorldEvent::ParticlesTrialSpawnerBecomeOminous,
-                    eye_block_pos,
-                    0,
-                );
-                self.apply_ominous(world, spawner_pos);
+    /// Vanilla `findPlayerWithOminousEffect`: the first player with Trial Omen, else the last
+    /// with Bad Omen (and that it is Bad Omen).
+    fn find_player_with_ominous_effect(
+        world: &World,
+        players: &[Uuid],
+    ) -> Option<(Arc<Player>, bool)> {
+        let mut with_bad_omen = None;
+        for uuid in players {
+            let Some(player) = world.get_player_by_uuid(*uuid) else {
+                continue;
+            };
+            if player.has_effect(&StatusEffect::TRIAL_OMEN) {
+                return Some((player, false));
+            }
+            if player.has_effect(&StatusEffect::BAD_OMEN) {
+                with_bad_omen = Some(player);
             }
         }
+        with_bad_omen.map(|player| (player, true))
+    }
 
-        let mut newly_detected = false;
-        for uuid in detected {
-            if self.data.registered_players.insert(uuid) {
-                newly_detected = true;
-            }
-        }
-        newly_detected
+    /// Vanilla `transformBadOmenIntoTrialOmen`.
+    fn transform_bad_omen_into_trial_omen(player: &Player) {
+        let Some(bad_omen) = player.get_effect(&StatusEffect::BAD_OMEN) else {
+            return;
+        };
+        let amplifier = i32::from(bad_omen.amplifier) + 1;
+        player.remove_effect(&StatusEffect::BAD_OMEN);
+        player.add_effect(Effect {
+            effect_type: &StatusEffect::TRIAL_OMEN,
+            duration: TRIAL_OMEN_PER_BAD_OMEN_LEVEL * amplifier,
+            amplifier: 0,
+            ambient: false,
+            show_particles: true,
+            show_icon: true,
+            blend: true,
+        });
     }
 
     pub fn remove_ominous(&mut self, world: &Arc<World>, spawner_pos: BlockPos) {
@@ -978,42 +1092,18 @@ impl TrialSpawner {
 
     #[allow(clippy::too_many_lines)]
     pub fn spawn_mob(&mut self, world: &Arc<World>, spawner_pos: BlockPos) -> Option<Uuid> {
-        let (entity_type, spawn_range, equipment_loot_table, is_baby, slime_size, only_id) = {
-            let active_cfg = if self.is_ominous {
-                &self.config.ominous
-            } else {
-                &self.config.normal
-            };
-            let spawn_data = self.data.get_or_create_next_spawn_data(active_cfg);
-            let ent_type = spawn_data.and_then(|sd| sd.entity_type)?;
-            let equip = spawn_data
-                .and_then(|sd| {
-                    sd.equipment
-                        .as_ref()
-                        .and_then(|eq| eq.get_string("loot_table"))
-                })
-                .map(ToString::to_string);
-            let raw = spawn_data.and_then(|sd| sd.raw_entity_nbt.as_ref());
-            let baby = raw
-                .and_then(|r| {
-                    r.get_bool("IsBaby")
-                        .or_else(|| r.get_byte("IsBaby").map(|b| b != 0))
-                })
-                .unwrap_or(false);
-            let size = raw.and_then(|r| {
-                r.get_byte("Size")
-                    .or_else(|| r.get_int("Size").map(|i| i as i8))
-            });
-            // finalizes only when the entity compound is just the id.
-            let only_id = raw.is_none_or(|r| r.child_tags.len() <= 1);
-            (ent_type, active_cfg.spawn_range, equip, baby, size, only_id)
+        let (spawn_data, spawn_range) = {
+            let config = Self::config_for(&self.config, self.is_ominous);
+            (
+                self.data.get_or_create_next_spawn_data(config).clone(),
+                config.spawn_range,
+            )
         };
-
+        let entity_type = spawn_data.entity_type?;
+        let entity_nbt = spawn_data.raw_entity_nbt.unwrap_or_default();
         let mut rng = rand::rng();
-
-        let mut chosen_pos = None;
-        for _ in 0..20 {
-            let spawn_pos = Vector3::new(
+        let spawn_pos = entity_position(&entity_nbt).unwrap_or_else(|| {
+            Vector3::new(
                 f64::from(spawner_pos.0.x)
                     + (rng.random::<f64>() - rng.random::<f64>()) * f64::from(spawn_range)
                     + 0.5,
@@ -1021,67 +1111,56 @@ impl TrialSpawner {
                 f64::from(spawner_pos.0.z)
                     + (rng.random::<f64>() - rng.random::<f64>()) * f64::from(spawn_range)
                     + 0.5,
-            );
-
-            let bb = entity_type.get_spawn_bounding_box(spawn_pos.x, spawn_pos.y, spawn_pos.z);
-            if !world.is_space_empty(bb) {
-                continue;
-            }
-
-            let center = spawner_pos.to_centered_f64();
-            if !Self::in_line_of_sight(world, center, spawn_pos) {
-                continue;
-            }
-
-            chosen_pos = Some(spawn_pos);
-            break;
+            )
+        });
+        if !world.no_collision(&entity_type.get_spawn_bounding_box(
+            spawn_pos.x,
+            spawn_pos.y,
+            spawn_pos.z,
+        )) {
+            return None;
         }
-
-        let spawn_pos = chosen_pos?;
-        let entity_uuid = Uuid::new_v4();
-        let entity = crate::entity::r#type::from_type(entity_type, spawn_pos, world, entity_uuid);
-
-        let yaw = rng.random::<f32>() * 360.0;
-        entity.get_entity().set_rotation(yaw, 0.0);
-
-        if is_baby && let Some(mob) = entity.get_mob() {
-            // Each mob type syncs its own baby flag (zombie, piglin, ageable...); poking a
-            // single tracked-data key here would send the wrong field type to some mobs.
-            mob.spawn_as_baby();
+        if !in_line_of_sight(world, spawner_pos.to_centered_f64(), spawn_pos) {
+            return None;
         }
-
-        if let Some(size) = slime_size {
-            entity
-                .get_entity()
-                .set_synced_data(pumpkin_data::tracked_data::slime::ID_SIZE, i32::from(size));
+        let spawn_block_pos = BlockPos::floored_v(spawn_pos);
+        if !check_spawn_rules(
+            entity_type,
+            world.as_ref(),
+            EntitySpawnReason::TrialSpawner,
+            &spawn_block_pos,
+            world.is_thundering(),
+        ) {
+            return None;
         }
-
-        if let Some(equip) = equipment_loot_table
-            && let Some(loot_table) = world.get_loot_table(&equip)
-            && let Some(living) = entity.get_living_entity()
+        if let Some(rules) = &spawn_data.custom_spawn_rules
+            && !CustomSpawnRules::from_nbt(rules).is_valid_position(world, &spawn_block_pos)
         {
-            let seed = rand::random::<i64>();
-            let items = loot_table.generate_loot_with_context(
-                seed,
-                &crate::world::loot::LootContextParameters {
-                    world: Some(world),
-                    ..Default::default()
-                },
-            );
-            let mut equipment = living
-                .entity_equipment
-                .lock()
-                .unwrap_or_else(std::sync::PoisonError::into_inner);
-            let mut equipment_changes = Vec::new();
-            for item in items {
-                let slot = item
-                    .get_data_component::<pumpkin_data::data_component_impl::EquippableImpl>()
-                    .map_or(EquipmentSlot::MAIN_HAND, |eq| eq.slot.clone());
-                equipment.put(&slot, item.clone());
-                equipment_changes.push((slot, item));
+            return None;
+        }
+        let entity = load_entity(entity_type, spawn_pos, &entity_nbt, world);
+        entity
+            .get_entity()
+            .set_rotation(rng.random::<f32>() * 360.0, 0.0);
+        if let Some(mob) = entity.get_mob() {
+            if !mob.check_spawn_obstruction(world.as_ref()) {
+                return None;
             }
-            drop(equipment);
-            living.send_equipment_changes(&equipment_changes);
+            // Vanilla `hasNoConfiguration`: nothing but the id, so the mob gets its spawn
+            // finalization.
+            if entity_nbt.child_tags.len() <= 1 {
+                finalize_spawn(&entity, world, EntitySpawnReason::TrialSpawner, None);
+            }
+            mob.get_mob_entity()
+                .persistence_required
+                .store(true, Ordering::Relaxed);
+            if let Some(table) = spawn_data
+                .equipment
+                .as_ref()
+                .and_then(EquipmentTable::from_nbt)
+            {
+                equip(world, mob, &entity, &table);
+            }
         }
 
         let mut event =
@@ -1092,113 +1171,84 @@ impl TrialSpawner {
         if let Some(server) = world.server.upgrade() {
             server.plugin_manager.fire_blocking(&server, &mut event);
         }
-        if event.cancelled {
+        if event.cancelled || !world.spawn_entity(entity.clone()) {
             return None;
         }
 
-        // TODO: load the spawn data entity NBT into the mob instead of the baby/slime-size special cases.
-        if only_id {
-            crate::entity::mob::spawn::finalize_spawn(
-                &entity,
-                world,
-                crate::entity::mob::spawn::EntitySpawnReason::TrialSpawner,
-                None,
-            );
+        let flame = if self.is_ominous {
+            TrialSpawnerFlameParticle::Ominous
+        } else {
+            TrialSpawnerFlameParticle::Normal
         }
-        world.spawn_entity(entity);
-
-        let flame_data = i32::from(self.is_ominous);
-        world.sync_world_event(
-            WorldEvent::ParticlesTrialSpawnerSpawn,
-            spawner_pos,
-            flame_data,
-        );
-        let spawn_block_pos = BlockPos::floored(spawn_pos.x, spawn_pos.y, spawn_pos.z);
+        .encode();
+        world.sync_world_event(WorldEvent::ParticlesTrialSpawnerSpawn, spawner_pos, flame);
         world.sync_world_event(
             WorldEvent::ParticlesTrialSpawnerSpawnMobAt,
             spawn_block_pos,
-            flame_data,
+            flame,
         );
-
-        Some(entity_uuid)
+        world.emit_game_event(
+            GameEvent::EntityPlace.name(),
+            spawn_block_pos.to_centered_f64(),
+        );
+        Some(entity.get_entity().entity_uuid)
     }
 
-    fn in_line_of_sight(world: &Arc<World>, origin: Vector3<f64>, dest: Vector3<f64>) -> bool {
-        let hit = world.clip(&pumpkin_world::clip::ClipContext::new(
-            dest,
-            origin,
-            pumpkin_world::clip::ClipBlock::Visual,
-            pumpkin_world::clip::ClipFluid::None,
-        ));
-        let origin_block = BlockPos::floored(origin.x, origin.y, origin.z);
-        hit.is_miss || hit.block_pos == origin_block
+    /// The active config without borrowing the whole spawner.
+    const fn config_for(config: &TrialSpawnerFullConfig, ominous: bool) -> &TrialSpawnerConfig {
+        if ominous {
+            &config.ominous
+        } else {
+            &config.normal
+        }
     }
 
-    pub fn eject_reward(
-        &self,
-        world: &Arc<World>,
-        spawner_pos: BlockPos,
-        ejecting_loot_table: Option<&str>,
-    ) {
-        let mut dropped_any = false;
-        if let Some(key) = ejecting_loot_table
-            && let Some(loot_table) = world.get_loot_table(key)
-        {
-            let seed = rand::random::<i64>();
-            let items = loot_table.generate_loot_with_context(
-                seed,
-                &crate::world::loot::LootContextParameters {
-                    world: Some(world),
-                    ..Default::default()
-                },
+    /// Vanilla `ejectReward`: the loot table's items thrown out above the block like a
+    /// dispenser ejects them, with the eject animation when there was anything.
+    pub fn eject_reward(&self, world: &Arc<World>, spawner_pos: BlockPos, loot_table: &str) {
+        let Some(table) = world.get_loot_table(loot_table) else {
+            return;
+        };
+        let items = table.generate_loot_with_context(
+            rand::random::<i64>(),
+            &crate::world::loot::LootContextParameters {
+                world: Some(world),
+                ..Default::default()
+            },
+        );
+        if items.is_empty() {
+            return;
+        }
+        let position = spawner_pos.to_f64().add_raw(0.0, REWARD_EJECT_HEIGHT, 0.0);
+        for stack in items {
+            spawn_item(
+                world,
+                stack,
+                REWARD_EJECT_ACCURACY,
+                Vector3::new(0.0, 1.0, 0.0),
+                position,
             );
-            for stack in items {
-                world.drop_stack(&spawner_pos, stack);
-                dropped_any = true;
-            }
         }
-
-        if !dropped_any {
-            let key_item = if self.is_ominous {
-                &Item::OMINOUS_TRIAL_KEY
-            } else {
-                &Item::TRIAL_KEY
-            };
-            world.drop_stack(&spawner_pos, ItemStack::new(1, key_item));
-        }
-
         world.sync_world_event(WorldEvent::AnimationTrialSpawnerEjectItem, spawner_pos, 0);
     }
 
+    /// Vanilla `tickServer`: forgets the mobs that died or left, then steps the state.
     pub fn tick_server(&mut self, world: &Arc<World>, spawner_pos: BlockPos, is_ominous: bool) {
         self.is_ominous = is_ominous;
         let current_state = self.get_state(world, spawner_pos);
-
-        let max_dist_sq = Self::MAX_MOB_TRACKING_DISTANCE_SQR;
-        let center = spawner_pos.to_centered_f64();
-        let mut removed = false;
+        let tracked = self.data.current_mobs.len();
         self.data.current_mobs.retain(|id| {
-            if let Some(entity) = world.get_entity_by_uuid(*id) {
-                let ent = entity.get_entity();
-                if ent.is_alive() && ent.pos.load().squared_distance_to_vec(&center) <= max_dist_sq
-                {
-                    return true;
-                }
-            }
-            removed = true;
-            false
+            world.get_entity_by_uuid(*id).is_some_and(|entity| {
+                let entity = entity.get_entity();
+                entity.is_alive()
+                    && block_distance_sq(spawner_pos, entity.block_pos.load())
+                        <= Self::MAX_MOB_TRACKING_DISTANCE_SQR
+            })
         });
-
-        if removed {
-            let game_time = world
-                .level_time
-                .lock()
-                .unwrap_or_else(std::sync::PoisonError::into_inner)
-                .query_gametime();
+        if self.data.current_mobs.len() < tracked {
             self.data.next_mob_spawns_at =
-                game_time + i64::from(self.active_config().ticks_between_spawn);
+                world.get_world_age() + i64::from(self.active_config().ticks_between_spawn);
         }
-
         let next_state = self.tick_and_get_next(world, spawner_pos, current_state);
         if next_state != current_state {
             self.set_state(world, spawner_pos, next_state);
@@ -1206,158 +1256,138 @@ impl TrialSpawner {
     }
 
     #[allow(clippy::too_many_lines)]
+    /// Vanilla `TrialSpawnerState.tickAndGetNext`.
     fn tick_and_get_next(
         &mut self,
         world: &Arc<World>,
         spawner_pos: BlockPos,
-        current_state: TrialSpawnerState,
+        state: TrialSpawnerState,
     ) -> TrialSpawnerState {
-        let game_time = world
-            .level_time
-            .lock()
-            .unwrap_or_else(std::sync::PoisonError::into_inner)
-            .query_gametime();
-        let can_spawn = self.can_spawn_in_level(world);
-        let has_mob = self.data.has_mob_to_spawn(self.active_config());
-
-        match current_state {
+        let game_time = world.get_world_age();
+        match state {
+            // The display entity exists once the next spawn data names a type.
             TrialSpawnerState::Inactive => {
-                if can_spawn && has_mob {
+                let config = Self::config_for(&self.config, self.is_ominous);
+                if self
+                    .data
+                    .get_or_create_next_spawn_data(config)
+                    .entity_type
+                    .is_some()
+                {
                     TrialSpawnerState::WaitingForPlayers
                 } else {
-                    TrialSpawnerState::Inactive
+                    state
                 }
             }
             TrialSpawnerState::WaitingForPlayers => {
-                if !can_spawn || !has_mob {
+                if !self.can_spawn_in_level(world) {
+                    self.data.reset_statistics();
+                    return state;
+                }
+                if !self.data.has_mob_to_spawn(self.active_config()) {
                     return TrialSpawnerState::Inactive;
                 }
-
-                let newly_detected = self.try_detect_players(world, spawner_pos);
-
+                self.try_detect_players(world, spawner_pos, state);
                 if self.data.registered_players.is_empty() {
-                    TrialSpawnerState::WaitingForPlayers
+                    state
                 } else {
-                    if newly_detected {
-                        let player_count = self.data.registered_players.len() as i32;
-                        let event = if self.is_ominous {
-                            WorldEvent::ParticlesTrialSpawnerDetectPlayerOminous
-                        } else {
-                            WorldEvent::ParticlesTrialSpawnerDetectPlayer
-                        };
-                        world.sync_world_event(event, spawner_pos, player_count);
-                        world.play_sound(
-                            Sound::BlockTrialSpawnerDetectPlayer,
-                            SoundCategory::Blocks,
-                            &spawner_pos.to_f64(),
-                        );
-                        world.play_sound(
-                            Sound::BlockTrialSpawnerOpenShutter,
-                            SoundCategory::Blocks,
-                            &spawner_pos.to_f64(),
-                        );
-                        self.data.next_mob_spawns_at = game_time + Self::DETECT_PLAYER_SPAWN_BUFFER;
-                    }
                     TrialSpawnerState::Active
                 }
             }
             TrialSpawnerState::Active => {
-                if !can_spawn || !has_mob {
+                if !self.can_spawn_in_level(world) {
+                    self.data.reset_statistics();
+                    return TrialSpawnerState::WaitingForPlayers;
+                }
+                if !self.data.has_mob_to_spawn(self.active_config()) {
                     return TrialSpawnerState::Inactive;
                 }
-
-                self.try_detect_players(world, spawner_pos);
-
-                let (total_mobs_needed, max_simultaneous, ticks_between_spawn) = {
-                    let active_config = self.active_config();
+                // Vanilla `countAdditionalPlayers` before this tick's detection.
+                let additional_players = self.data.registered_players.len().saturating_sub(1);
+                self.try_detect_players(world, spawner_pos, state);
+                // The ominous item spawners want the OminousItemSpawner entity, which does not
+                // exist here yet.
+                let (total_mobs, simultaneous_mobs, ticks_between_spawn) = {
+                    let config = self.active_config();
                     (
-                        active_config
-                            .calculate_target_total_mobs(self.data.registered_players.len()),
-                        active_config
-                            .calculate_target_simultaneous_mobs(self.data.registered_players.len()),
-                        active_config.ticks_between_spawn,
+                        config.calculate_target_total_mobs(additional_players),
+                        config.calculate_target_simultaneous_mobs(additional_players),
+                        config.ticks_between_spawn,
                     )
                 };
-
-                if self.data.total_mobs_spawned >= total_mobs_needed
-                    && self.data.current_mobs.is_empty()
-                {
-                    self.data.cooldown_ends_at = game_time + self.config.target_cooldown_length;
-                    self.data.total_mobs_spawned = 0;
-                    self.data.ejecting_loot_table = self.active_config().pick_loot_table();
-                    self.data.next_mob_spawns_at = game_time + 40;
-                    TrialSpawnerState::WaitingForRewardEjection
-                } else {
-                    if self.data.total_mobs_spawned < total_mobs_needed
-                        && (self.data.current_mobs.len() as i32) < max_simultaneous
-                        && game_time >= self.data.next_mob_spawns_at
-                        && let Some(uuid) = self.spawn_mob(world, spawner_pos)
-                    {
-                        self.data.current_mobs.insert(uuid);
-                        self.data.total_mobs_spawned += 1;
-                        self.data.next_mob_spawns_at = game_time + i64::from(ticks_between_spawn);
+                if self.data.total_mobs_spawned >= total_mobs {
+                    if self.data.current_mobs.is_empty() {
+                        self.data.cooldown_ends_at = game_time + self.config.target_cooldown_length;
+                        self.data.total_mobs_spawned = 0;
+                        self.data.next_mob_spawns_at = 0;
+                        return TrialSpawnerState::WaitingForRewardEjection;
                     }
-                    TrialSpawnerState::Active
+                } else if game_time >= self.data.next_mob_spawns_at
+                    && (self.data.current_mobs.len() as i32) < simultaneous_mobs
+                    && let Some(uuid) = self.spawn_mob(world, spawner_pos)
+                {
+                    self.data.current_mobs.insert(uuid);
+                    self.data.total_mobs_spawned += 1;
+                    self.data.next_mob_spawns_at = game_time + i64::from(ticks_between_spawn);
+                    if let Some(next) = self.active_config().pick_spawn_data() {
+                        self.data.next_spawn_data = Some(next);
+                    }
                 }
+                state
             }
             TrialSpawnerState::WaitingForRewardEjection => {
-                if game_time >= self.data.next_mob_spawns_at {
+                let cooldown_started_at =
+                    self.data.cooldown_ends_at - self.config.target_cooldown_length;
+                if game_time >= cooldown_started_at + DELAY_BEFORE_EJECT_AFTER_KILLING_LAST_MOB {
                     world.play_sound(
                         Sound::BlockTrialSpawnerOpenShutter,
                         SoundCategory::Blocks,
                         &spawner_pos.to_f64(),
                     );
-                    self.data.next_mob_spawns_at = game_time + 20;
                     TrialSpawnerState::EjectingReward
                 } else {
-                    TrialSpawnerState::WaitingForRewardEjection
+                    state
                 }
             }
             TrialSpawnerState::EjectingReward => {
-                if game_time >= self.data.next_mob_spawns_at {
-                    if let Some(player_id) = self.data.registered_players.iter().copied().next() {
-                        self.data.registered_players.remove(&player_id);
-                        let loot_table = self.active_config().pick_loot_table();
-                        self.eject_reward(world, spawner_pos, loot_table.as_deref());
-                        world.play_sound(
-                            Sound::BlockTrialSpawnerEjectItem,
-                            SoundCategory::Blocks,
-                            &spawner_pos.to_f64(),
-                        );
-                        self.data.next_mob_spawns_at = game_time + 20;
-                        TrialSpawnerState::EjectingReward
-                    } else {
-                        world.play_sound(
-                            Sound::BlockTrialSpawnerCloseShutter,
-                            SoundCategory::Blocks,
-                            &spawner_pos.to_f64(),
-                        );
-                        self.data.next_mob_spawns_at = game_time + 20;
-                        TrialSpawnerState::Cooldown
-                    }
-                } else {
-                    TrialSpawnerState::EjectingReward
+                let cooldown_started_at =
+                    self.data.cooldown_ends_at - self.config.target_cooldown_length;
+                if (game_time - cooldown_started_at) % TIME_BETWEEN_EACH_EJECTION != 0 {
+                    return state;
                 }
+                if self.data.registered_players.is_empty() {
+                    world.play_sound(
+                        Sound::BlockTrialSpawnerCloseShutter,
+                        SoundCategory::Blocks,
+                        &spawner_pos.to_f64(),
+                    );
+                    self.data.ejecting_loot_table = None;
+                    return TrialSpawnerState::Cooldown;
+                }
+                if self.data.ejecting_loot_table.is_none() {
+                    self.data.ejecting_loot_table = self.active_config().pick_loot_table();
+                }
+                if let Some(loot_table) = self.data.ejecting_loot_table.clone() {
+                    self.eject_reward(world, spawner_pos, &loot_table);
+                }
+                if let Some(player) = self.data.registered_players.iter().next().copied() {
+                    self.data.registered_players.remove(&player);
+                }
+                state
             }
             TrialSpawnerState::Cooldown => {
-                if !self.is_ominous {
-                    self.try_detect_players(world, spawner_pos);
-                    if self.is_ominous {
-                        self.data.total_mobs_spawned = 0;
-                        self.data.next_mob_spawns_at = 0;
-                        return TrialSpawnerState::Active;
-                    }
+                self.try_detect_players(world, spawner_pos, state);
+                if !self.data.registered_players.is_empty() {
+                    self.data.total_mobs_spawned = 0;
+                    self.data.next_mob_spawns_at = 0;
+                    return TrialSpawnerState::Active;
                 }
-
                 if game_time >= self.data.cooldown_ends_at {
+                    self.remove_ominous(world, spawner_pos);
                     self.data.reset();
-                    if self.is_ominous {
-                        self.remove_ominous(world, spawner_pos);
-                    }
-                    TrialSpawnerState::WaitingForPlayers
-                } else {
-                    TrialSpawnerState::Cooldown
+                    return TrialSpawnerState::WaitingForPlayers;
                 }
+                state
             }
         }
     }
@@ -1495,16 +1525,16 @@ mod tests {
         };
 
         // 1 player
-        assert_eq!(config.calculate_target_total_mobs(1), 6);
-        assert_eq!(config.calculate_target_simultaneous_mobs(1), 2);
+        assert_eq!(config.calculate_target_total_mobs(0), 6);
+        assert_eq!(config.calculate_target_simultaneous_mobs(0), 2);
 
         // 2 players
-        assert_eq!(config.calculate_target_total_mobs(2), 8);
-        assert_eq!(config.calculate_target_simultaneous_mobs(2), 3);
+        assert_eq!(config.calculate_target_total_mobs(1), 8);
+        assert_eq!(config.calculate_target_simultaneous_mobs(1), 3);
 
         // 3 players
-        assert_eq!(config.calculate_target_total_mobs(3), 10);
-        assert_eq!(config.calculate_target_simultaneous_mobs(3), 4);
+        assert_eq!(config.calculate_target_total_mobs(2), 10);
+        assert_eq!(config.calculate_target_simultaneous_mobs(2), 4);
     }
 
     #[test]

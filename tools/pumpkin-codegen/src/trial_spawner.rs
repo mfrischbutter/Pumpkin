@@ -43,8 +43,8 @@ struct TrialSpawnerJson {
     ticks_between_spawn: i32,
     #[serde(default)]
     spawn_potentials: Vec<WeightedSpawnPotentialJson>,
-    #[serde(default)]
-    loot_tables_to_eject: Vec<WeightedLootTableJson>,
+    /// Absent in the JSON means vanilla's default tables, not none.
+    loot_tables_to_eject: Option<Vec<WeightedLootTableJson>>,
     #[serde(default)]
     items_to_drop_when_ominous: Option<String>,
 }
@@ -58,14 +58,10 @@ struct WeightedSpawnPotentialJson {
 
 #[derive(Deserialize, Debug)]
 struct SpawnDataJson {
-    entity: EntityRefJson,
+    /// The entity compound as vanilla's `SpawnData` holds it: the id and any other tag.
+    entity: serde_json::Value,
     #[serde(default)]
     equipment: Option<EquipmentJson>,
-}
-
-#[derive(Deserialize, Debug)]
-struct EntityRefJson {
-    id: String,
 }
 
 #[derive(Deserialize, Debug)]
@@ -182,7 +178,14 @@ pub fn build() -> TokenStream {
             .spawn_potentials
             .iter()
             .map(|sp| {
-                let entity_id = &sp.data.entity.id;
+                let entity_id = sp
+                    .data
+                    .entity
+                    .get("id")
+                    .and_then(serde_json::Value::as_str)
+                    .unwrap_or_default()
+                    .to_string();
+                let entity = sp.data.entity.to_string();
                 let weight = sp.weight;
                 let (has_eq, eq_table, has_chance, eq_chance) = match &sp.data.equipment {
                     Some(eq) => (
@@ -209,6 +212,7 @@ pub fn build() -> TokenStream {
                 quote! {
                     WeightedSpawnData {
                         entity_id: #entity_id,
+                        entity: #entity,
                         equipment_loot_table: #eq_loot_stream,
                         equipment_slot_drop_chances: #eq_chance_stream,
                         weight: #weight,
@@ -217,20 +221,22 @@ pub fn build() -> TokenStream {
             })
             .collect();
 
-        let loot_tables: Vec<_> = cfg
-            .loot_tables_to_eject
-            .iter()
-            .map(|lt| {
-                let table = &lt.data;
-                let weight = lt.weight;
-                quote! {
-                    WeightedLootTable {
-                        loot_table: #table,
-                        weight: #weight,
+        let loot_tables = match &cfg.loot_tables_to_eject {
+            Some(tables) => {
+                let entries = tables.iter().map(|lt| {
+                    let table = &lt.data;
+                    let weight = lt.weight;
+                    quote! {
+                        WeightedLootTable {
+                            loot_table: #table,
+                            weight: #weight,
+                        }
                     }
-                }
-            })
-            .collect();
+                });
+                quote! { Some(&[#(#entries),*]) }
+            }
+            None => quote! { None },
+        };
 
         let ominous_items = match &cfg.items_to_drop_when_ominous {
             Some(s) => quote! { Some(#s) },
@@ -248,9 +254,7 @@ pub fn build() -> TokenStream {
                 spawn_potentials: &[
                     #(#spawn_potentials),*
                 ],
-                loot_tables_to_eject: &[
-                    #(#loot_tables),*
-                ],
+                loot_tables_to_eject: #loot_tables,
                 items_to_drop_when_ominous: #ominous_items,
             };
         });
@@ -310,13 +314,17 @@ pub fn build() -> TokenStream {
             pub simultaneous_mobs_added_per_player: f32,
             pub ticks_between_spawn: i32,
             pub spawn_potentials: &'static [WeightedSpawnData],
-            pub loot_tables_to_eject: &'static [WeightedLootTable],
+            /// `None` is vanilla's default: the trial chamber's consumables and key.
+            pub loot_tables_to_eject: Option<&'static [WeightedLootTable]>,
+            /// `None` is vanilla's default ominous item table.
             pub items_to_drop_when_ominous: Option<&'static str>,
         }
 
         #[derive(Clone, Copy, Debug, PartialEq)]
         pub struct WeightedSpawnData {
             pub entity_id: &'static str,
+            /// The entity compound as JSON text: the id and the tags the mob loads.
+            pub entity: &'static str,
             pub equipment_loot_table: Option<&'static str>,
             pub equipment_slot_drop_chances: Option<f32>,
             pub weight: i32,

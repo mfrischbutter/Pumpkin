@@ -69,7 +69,7 @@ pub struct CustomSpawnRules {
 }
 
 impl CustomSpawnRules {
-    fn from_nbt(nbt: &NbtCompound) -> Self {
+    pub(crate) fn from_nbt(nbt: &NbtCompound) -> Self {
         Self {
             block_light_limit: light_limit(nbt, "block_light_limit"),
             sky_light_limit: light_limit(nbt, "sky_light_limit"),
@@ -84,7 +84,7 @@ impl CustomSpawnRules {
     }
 
     /// Vanilla `CustomSpawnRules.isValidPosition`.
-    fn is_valid_position(&self, world: &World, pos: &BlockPos) -> bool {
+    pub(crate) fn is_valid_position(&self, world: &World, pos: &BlockPos) -> bool {
         let block_light = i32::from(world.get_block_light_level(pos).unwrap_or(0));
         within(self.block_light_limit, block_light)
             && within(
@@ -133,7 +133,7 @@ pub struct EquipmentTable {
 }
 
 impl EquipmentTable {
-    fn from_nbt(nbt: &NbtCompound) -> Option<Self> {
+    pub(crate) fn from_nbt(nbt: &NbtCompound) -> Option<Self> {
         let loot_table = nbt.get_string("loot_table")?.to_string();
         let slot_drop_chances = match nbt.get("slot_drop_chances") {
             Some(NbtTag::Float(chance)) => EQUIPMENT_SLOTS
@@ -249,18 +249,23 @@ impl SpawnData {
         self.entity.child_tags.len() == 1 && self.entity.get_string("id").is_some()
     }
 
-    /// The `Pos` the entity data may carry (vanilla reads it with `Vec3.CODEC`).
+    /// The `Pos` the entity data may carry.
     fn position(&self) -> Option<Vector3<f64>> {
-        let pos = self.entity.get_list("Pos")?;
-        if pos.len() != 3 {
-            return None;
-        }
-        Some(Vector3::new(
-            pos[0].extract_double()?,
-            pos[1].extract_double()?,
-            pos[2].extract_double()?,
-        ))
+        entity_position(&self.entity)
     }
+}
+
+/// The `Pos` of an entity compound (vanilla reads it with `Vec3.CODEC`).
+pub(crate) fn entity_position(entity: &NbtCompound) -> Option<Vector3<f64>> {
+    let pos = entity.get_list("Pos")?;
+    if pos.len() != 3 {
+        return None;
+    }
+    Some(Vector3::new(
+        pos[0].extract_double()?,
+        pos[1].extract_double()?,
+        pos[2].extract_double()?,
+    ))
 }
 
 /// How one spawn attempt of vanilla `serverTick` ends.
@@ -548,7 +553,12 @@ impl MobSpawnerBlockEntity {
 
 /// Vanilla `EquipmentUser.equip(EquipmentTable, LootParams)`: the table's items go into the
 /// slots they fit, one item per slot, with the table's drop chances.
-fn equip(world: &Arc<World>, mob: &dyn Mob, entity: &Arc<dyn EntityBase>, table: &EquipmentTable) {
+pub(crate) fn equip(
+    world: &Arc<World>,
+    mob: &dyn Mob,
+    entity: &Arc<dyn EntityBase>,
+    table: &EquipmentTable,
+) {
     let Some(handle) = world.get_loot_table(&table.loot_table) else {
         return;
     };

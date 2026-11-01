@@ -8,12 +8,16 @@ pub struct TrialSpawnerConfigData {
     pub simultaneous_mobs_added_per_player: f32,
     pub ticks_between_spawn: i32,
     pub spawn_potentials: &'static [WeightedSpawnData],
-    pub loot_tables_to_eject: &'static [WeightedLootTable],
+    #[doc = r" `None` is vanilla's default: the trial chamber's consumables and key."]
+    pub loot_tables_to_eject: Option<&'static [WeightedLootTable]>,
+    #[doc = r" `None` is vanilla's default ominous item table."]
     pub items_to_drop_when_ominous: Option<&'static str>,
 }
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct WeightedSpawnData {
     pub entity_id: &'static str,
+    #[doc = r" The entity compound as JSON text: the id and the tags the mob loads."]
+    pub entity: &'static str,
     pub equipment_loot_table: Option<&'static str>,
     pub equipment_slot_drop_chances: Option<f32>,
     pub weight: i32,
@@ -32,11 +36,12 @@ pub const TRIAL_CHAMBER_BREEZE_NORMAL: TrialSpawnerConfigData = TrialSpawnerConf
     ticks_between_spawn: 20i32,
     spawn_potentials: &[WeightedSpawnData {
         entity_id: "minecraft:breeze",
+        entity: "{\"id\":\"minecraft:breeze\"}",
         equipment_loot_table: None,
         equipment_slot_drop_chances: None,
         weight: 1i32,
     }],
-    loot_tables_to_eject: &[],
+    loot_tables_to_eject: None,
     items_to_drop_when_ominous: None,
 };
 pub const TRIAL_CHAMBER_BREEZE_OMINOUS: TrialSpawnerConfigData = TrialSpawnerConfigData {
@@ -48,11 +53,12 @@ pub const TRIAL_CHAMBER_BREEZE_OMINOUS: TrialSpawnerConfigData = TrialSpawnerCon
     ticks_between_spawn: 20i32,
     spawn_potentials: &[WeightedSpawnData {
         entity_id: "minecraft:breeze",
+        entity: "{\"id\":\"minecraft:breeze\"}",
         equipment_loot_table: None,
         equipment_slot_drop_chances: None,
         weight: 1i32,
     }],
-    loot_tables_to_eject: &[
+    loot_tables_to_eject: Some(&[
         WeightedLootTable {
             loot_table: "minecraft:spawners/ominous/trial_chamber/key",
             weight: 3i32,
@@ -61,7 +67,7 @@ pub const TRIAL_CHAMBER_BREEZE_OMINOUS: TrialSpawnerConfigData = TrialSpawnerCon
             loot_table: "minecraft:spawners/ominous/trial_chamber/consumables",
             weight: 7i32,
         },
-    ],
+    ]),
     items_to_drop_when_ominous: None,
 };
 pub const TRIAL_CHAMBER_MELEE_HUSK_NORMAL: TrialSpawnerConfigData = TrialSpawnerConfigData {
@@ -73,11 +79,12 @@ pub const TRIAL_CHAMBER_MELEE_HUSK_NORMAL: TrialSpawnerConfigData = TrialSpawner
     ticks_between_spawn: 20i32,
     spawn_potentials: &[WeightedSpawnData {
         entity_id: "minecraft:husk",
+        entity: "{\"id\":\"minecraft:husk\"}",
         equipment_loot_table: None,
         equipment_slot_drop_chances: None,
         weight: 1i32,
     }],
-    loot_tables_to_eject: &[],
+    loot_tables_to_eject: None,
     items_to_drop_when_ominous: None,
 };
 pub const TRIAL_CHAMBER_MELEE_HUSK_OMINOUS: TrialSpawnerConfigData = TrialSpawnerConfigData {
@@ -89,11 +96,12 @@ pub const TRIAL_CHAMBER_MELEE_HUSK_OMINOUS: TrialSpawnerConfigData = TrialSpawne
     ticks_between_spawn: 20i32,
     spawn_potentials: &[WeightedSpawnData {
         entity_id: "minecraft:husk",
+        entity: "{\"id\":\"minecraft:husk\"}",
         equipment_loot_table: Some("minecraft:equipment/trial_chamber_melee"),
         equipment_slot_drop_chances: Some(0f32),
         weight: 1i32,
     }],
-    loot_tables_to_eject: &[
+    loot_tables_to_eject: Some(&[
         WeightedLootTable {
             loot_table: "minecraft:spawners/ominous/trial_chamber/key",
             weight: 3i32,
@@ -102,7 +110,7 @@ pub const TRIAL_CHAMBER_MELEE_HUSK_OMINOUS: TrialSpawnerConfigData = TrialSpawne
             loot_table: "minecraft:spawners/ominous/trial_chamber/consumables",
             weight: 7i32,
         },
-    ],
+    ]),
     items_to_drop_when_ominous: None,
 };
 pub const TRIAL_CHAMBER_MELEE_SPIDER_NORMAL: TrialSpawnerConfigData = TrialSpawnerConfigData {
@@ -114,11 +122,12 @@ pub const TRIAL_CHAMBER_MELEE_SPIDER_NORMAL: TrialSpawnerConfigData = TrialSpawn
     ticks_between_spawn: 20i32,
     spawn_potentials: &[WeightedSpawnData {
         entity_id: "minecraft:spider",
+        entity: "{\"id\":\"minecraft:spider\"}",
         equipment_loot_table: None,
         equipment_slot_drop_chances: None,
         weight: 1i32,
     }],
-    loot_tables_to_eject: &[],
+    loot_tables_to_eject: None,
     items_to_drop_when_ominous: None,
 };
 pub const TRIAL_CHAMBER_MELEE_SPIDER_OMINOUS: TrialSpawnerConfigData = TrialSpawnerConfigData {
@@ -130,11 +139,12 @@ pub const TRIAL_CHAMBER_MELEE_SPIDER_OMINOUS: TrialSpawnerConfigData = TrialSpaw
     ticks_between_spawn: 20i32,
     spawn_potentials: &[WeightedSpawnData {
         entity_id: "minecraft:spider",
+        entity: "{\"id\":\"minecraft:spider\"}",
         equipment_loot_table: None,
         equipment_slot_drop_chances: None,
         weight: 1i32,
     }],
-    loot_tables_to_eject: &[
+    loot_tables_to_eject: Some(&[
         WeightedLootTable {
             loot_table: "minecraft:spawners/ominous/trial_chamber/key",
             weight: 3i32,
@@ -143,7 +153,7 @@ pub const TRIAL_CHAMBER_MELEE_SPIDER_OMINOUS: TrialSpawnerConfigData = TrialSpaw
             loot_table: "minecraft:spawners/ominous/trial_chamber/consumables",
             weight: 7i32,
         },
-    ],
+    ]),
     items_to_drop_when_ominous: None,
 };
 pub const TRIAL_CHAMBER_MELEE_ZOMBIE_NORMAL: TrialSpawnerConfigData = TrialSpawnerConfigData {
@@ -155,11 +165,12 @@ pub const TRIAL_CHAMBER_MELEE_ZOMBIE_NORMAL: TrialSpawnerConfigData = TrialSpawn
     ticks_between_spawn: 20i32,
     spawn_potentials: &[WeightedSpawnData {
         entity_id: "minecraft:zombie",
+        entity: "{\"id\":\"minecraft:zombie\"}",
         equipment_loot_table: None,
         equipment_slot_drop_chances: None,
         weight: 1i32,
     }],
-    loot_tables_to_eject: &[],
+    loot_tables_to_eject: None,
     items_to_drop_when_ominous: None,
 };
 pub const TRIAL_CHAMBER_MELEE_ZOMBIE_OMINOUS: TrialSpawnerConfigData = TrialSpawnerConfigData {
@@ -171,11 +182,12 @@ pub const TRIAL_CHAMBER_MELEE_ZOMBIE_OMINOUS: TrialSpawnerConfigData = TrialSpaw
     ticks_between_spawn: 20i32,
     spawn_potentials: &[WeightedSpawnData {
         entity_id: "minecraft:zombie",
+        entity: "{\"id\":\"minecraft:zombie\"}",
         equipment_loot_table: Some("minecraft:equipment/trial_chamber_melee"),
         equipment_slot_drop_chances: Some(0f32),
         weight: 1i32,
     }],
-    loot_tables_to_eject: &[
+    loot_tables_to_eject: Some(&[
         WeightedLootTable {
             loot_table: "minecraft:spawners/ominous/trial_chamber/key",
             weight: 3i32,
@@ -184,7 +196,7 @@ pub const TRIAL_CHAMBER_MELEE_ZOMBIE_OMINOUS: TrialSpawnerConfigData = TrialSpaw
             loot_table: "minecraft:spawners/ominous/trial_chamber/consumables",
             weight: 7i32,
         },
-    ],
+    ]),
     items_to_drop_when_ominous: None,
 };
 pub const TRIAL_CHAMBER_RANGED_POISON_SKELETON_NORMAL: TrialSpawnerConfigData =
@@ -197,11 +209,12 @@ pub const TRIAL_CHAMBER_RANGED_POISON_SKELETON_NORMAL: TrialSpawnerConfigData =
         ticks_between_spawn: 20i32,
         spawn_potentials: &[WeightedSpawnData {
             entity_id: "minecraft:bogged",
+            entity: "{\"id\":\"minecraft:bogged\"}",
             equipment_loot_table: None,
             equipment_slot_drop_chances: None,
             weight: 1i32,
         }],
-        loot_tables_to_eject: &[],
+        loot_tables_to_eject: None,
         items_to_drop_when_ominous: None,
     };
 pub const TRIAL_CHAMBER_RANGED_POISON_SKELETON_OMINOUS: TrialSpawnerConfigData =
@@ -214,11 +227,12 @@ pub const TRIAL_CHAMBER_RANGED_POISON_SKELETON_OMINOUS: TrialSpawnerConfigData =
         ticks_between_spawn: 20i32,
         spawn_potentials: &[WeightedSpawnData {
             entity_id: "minecraft:bogged",
+            entity: "{\"id\":\"minecraft:bogged\"}",
             equipment_loot_table: Some("minecraft:equipment/trial_chamber_ranged"),
             equipment_slot_drop_chances: Some(0f32),
             weight: 1i32,
         }],
-        loot_tables_to_eject: &[
+        loot_tables_to_eject: Some(&[
             WeightedLootTable {
                 loot_table: "minecraft:spawners/ominous/trial_chamber/key",
                 weight: 3i32,
@@ -227,7 +241,7 @@ pub const TRIAL_CHAMBER_RANGED_POISON_SKELETON_OMINOUS: TrialSpawnerConfigData =
                 loot_table: "minecraft:spawners/ominous/trial_chamber/consumables",
                 weight: 7i32,
             },
-        ],
+        ]),
         items_to_drop_when_ominous: None,
     };
 pub const TRIAL_CHAMBER_RANGED_SKELETON_NORMAL: TrialSpawnerConfigData = TrialSpawnerConfigData {
@@ -239,11 +253,12 @@ pub const TRIAL_CHAMBER_RANGED_SKELETON_NORMAL: TrialSpawnerConfigData = TrialSp
     ticks_between_spawn: 20i32,
     spawn_potentials: &[WeightedSpawnData {
         entity_id: "minecraft:skeleton",
+        entity: "{\"id\":\"minecraft:skeleton\"}",
         equipment_loot_table: None,
         equipment_slot_drop_chances: None,
         weight: 1i32,
     }],
-    loot_tables_to_eject: &[],
+    loot_tables_to_eject: None,
     items_to_drop_when_ominous: None,
 };
 pub const TRIAL_CHAMBER_RANGED_SKELETON_OMINOUS: TrialSpawnerConfigData = TrialSpawnerConfigData {
@@ -255,11 +270,12 @@ pub const TRIAL_CHAMBER_RANGED_SKELETON_OMINOUS: TrialSpawnerConfigData = TrialS
     ticks_between_spawn: 20i32,
     spawn_potentials: &[WeightedSpawnData {
         entity_id: "minecraft:skeleton",
+        entity: "{\"id\":\"minecraft:skeleton\"}",
         equipment_loot_table: Some("minecraft:equipment/trial_chamber_ranged"),
         equipment_slot_drop_chances: Some(0f32),
         weight: 1i32,
     }],
-    loot_tables_to_eject: &[
+    loot_tables_to_eject: Some(&[
         WeightedLootTable {
             loot_table: "minecraft:spawners/ominous/trial_chamber/key",
             weight: 3i32,
@@ -268,7 +284,7 @@ pub const TRIAL_CHAMBER_RANGED_SKELETON_OMINOUS: TrialSpawnerConfigData = TrialS
             loot_table: "minecraft:spawners/ominous/trial_chamber/consumables",
             weight: 7i32,
         },
-    ],
+    ]),
     items_to_drop_when_ominous: None,
 };
 pub const TRIAL_CHAMBER_RANGED_STRAY_NORMAL: TrialSpawnerConfigData = TrialSpawnerConfigData {
@@ -280,11 +296,12 @@ pub const TRIAL_CHAMBER_RANGED_STRAY_NORMAL: TrialSpawnerConfigData = TrialSpawn
     ticks_between_spawn: 20i32,
     spawn_potentials: &[WeightedSpawnData {
         entity_id: "minecraft:stray",
+        entity: "{\"id\":\"minecraft:stray\"}",
         equipment_loot_table: None,
         equipment_slot_drop_chances: None,
         weight: 1i32,
     }],
-    loot_tables_to_eject: &[],
+    loot_tables_to_eject: None,
     items_to_drop_when_ominous: None,
 };
 pub const TRIAL_CHAMBER_RANGED_STRAY_OMINOUS: TrialSpawnerConfigData = TrialSpawnerConfigData {
@@ -296,11 +313,12 @@ pub const TRIAL_CHAMBER_RANGED_STRAY_OMINOUS: TrialSpawnerConfigData = TrialSpaw
     ticks_between_spawn: 20i32,
     spawn_potentials: &[WeightedSpawnData {
         entity_id: "minecraft:stray",
+        entity: "{\"id\":\"minecraft:stray\"}",
         equipment_loot_table: Some("minecraft:equipment/trial_chamber_ranged"),
         equipment_slot_drop_chances: Some(0f32),
         weight: 1i32,
     }],
-    loot_tables_to_eject: &[
+    loot_tables_to_eject: Some(&[
         WeightedLootTable {
             loot_table: "minecraft:spawners/ominous/trial_chamber/key",
             weight: 3i32,
@@ -309,7 +327,7 @@ pub const TRIAL_CHAMBER_RANGED_STRAY_OMINOUS: TrialSpawnerConfigData = TrialSpaw
             loot_table: "minecraft:spawners/ominous/trial_chamber/consumables",
             weight: 7i32,
         },
-    ],
+    ]),
     items_to_drop_when_ominous: None,
 };
 pub const TRIAL_CHAMBER_SLOW_RANGED_POISON_SKELETON_NORMAL: TrialSpawnerConfigData =
@@ -322,11 +340,12 @@ pub const TRIAL_CHAMBER_SLOW_RANGED_POISON_SKELETON_NORMAL: TrialSpawnerConfigDa
         ticks_between_spawn: 160i32,
         spawn_potentials: &[WeightedSpawnData {
             entity_id: "minecraft:bogged",
+            entity: "{\"id\":\"minecraft:bogged\"}",
             equipment_loot_table: None,
             equipment_slot_drop_chances: None,
             weight: 1i32,
         }],
-        loot_tables_to_eject: &[],
+        loot_tables_to_eject: None,
         items_to_drop_when_ominous: None,
     };
 pub const TRIAL_CHAMBER_SLOW_RANGED_POISON_SKELETON_OMINOUS: TrialSpawnerConfigData =
@@ -339,11 +358,12 @@ pub const TRIAL_CHAMBER_SLOW_RANGED_POISON_SKELETON_OMINOUS: TrialSpawnerConfigD
         ticks_between_spawn: 160i32,
         spawn_potentials: &[WeightedSpawnData {
             entity_id: "minecraft:bogged",
+            entity: "{\"id\":\"minecraft:bogged\"}",
             equipment_loot_table: Some("minecraft:equipment/trial_chamber_ranged"),
             equipment_slot_drop_chances: Some(0f32),
             weight: 1i32,
         }],
-        loot_tables_to_eject: &[
+        loot_tables_to_eject: Some(&[
             WeightedLootTable {
                 loot_table: "minecraft:spawners/ominous/trial_chamber/key",
                 weight: 3i32,
@@ -352,7 +372,7 @@ pub const TRIAL_CHAMBER_SLOW_RANGED_POISON_SKELETON_OMINOUS: TrialSpawnerConfigD
                 loot_table: "minecraft:spawners/ominous/trial_chamber/consumables",
                 weight: 7i32,
             },
-        ],
+        ]),
         items_to_drop_when_ominous: None,
     };
 pub const TRIAL_CHAMBER_SLOW_RANGED_SKELETON_NORMAL: TrialSpawnerConfigData =
@@ -365,11 +385,12 @@ pub const TRIAL_CHAMBER_SLOW_RANGED_SKELETON_NORMAL: TrialSpawnerConfigData =
         ticks_between_spawn: 160i32,
         spawn_potentials: &[WeightedSpawnData {
             entity_id: "minecraft:skeleton",
+            entity: "{\"id\":\"minecraft:skeleton\"}",
             equipment_loot_table: None,
             equipment_slot_drop_chances: None,
             weight: 1i32,
         }],
-        loot_tables_to_eject: &[],
+        loot_tables_to_eject: None,
         items_to_drop_when_ominous: None,
     };
 pub const TRIAL_CHAMBER_SLOW_RANGED_SKELETON_OMINOUS: TrialSpawnerConfigData =
@@ -382,11 +403,12 @@ pub const TRIAL_CHAMBER_SLOW_RANGED_SKELETON_OMINOUS: TrialSpawnerConfigData =
         ticks_between_spawn: 160i32,
         spawn_potentials: &[WeightedSpawnData {
             entity_id: "minecraft:skeleton",
+            entity: "{\"id\":\"minecraft:skeleton\"}",
             equipment_loot_table: Some("minecraft:equipment/trial_chamber_ranged"),
             equipment_slot_drop_chances: Some(0f32),
             weight: 1i32,
         }],
-        loot_tables_to_eject: &[
+        loot_tables_to_eject: Some(&[
             WeightedLootTable {
                 loot_table: "minecraft:spawners/ominous/trial_chamber/key",
                 weight: 3i32,
@@ -395,7 +417,7 @@ pub const TRIAL_CHAMBER_SLOW_RANGED_SKELETON_OMINOUS: TrialSpawnerConfigData =
                 loot_table: "minecraft:spawners/ominous/trial_chamber/consumables",
                 weight: 7i32,
             },
-        ],
+        ]),
         items_to_drop_when_ominous: None,
     };
 pub const TRIAL_CHAMBER_SLOW_RANGED_STRAY_NORMAL: TrialSpawnerConfigData = TrialSpawnerConfigData {
@@ -407,11 +429,12 @@ pub const TRIAL_CHAMBER_SLOW_RANGED_STRAY_NORMAL: TrialSpawnerConfigData = Trial
     ticks_between_spawn: 160i32,
     spawn_potentials: &[WeightedSpawnData {
         entity_id: "minecraft:stray",
+        entity: "{\"id\":\"minecraft:stray\"}",
         equipment_loot_table: None,
         equipment_slot_drop_chances: None,
         weight: 1i32,
     }],
-    loot_tables_to_eject: &[],
+    loot_tables_to_eject: None,
     items_to_drop_when_ominous: None,
 };
 pub const TRIAL_CHAMBER_SLOW_RANGED_STRAY_OMINOUS: TrialSpawnerConfigData =
@@ -424,11 +447,12 @@ pub const TRIAL_CHAMBER_SLOW_RANGED_STRAY_OMINOUS: TrialSpawnerConfigData =
         ticks_between_spawn: 160i32,
         spawn_potentials: &[WeightedSpawnData {
             entity_id: "minecraft:stray",
+            entity: "{\"id\":\"minecraft:stray\"}",
             equipment_loot_table: Some("minecraft:equipment/trial_chamber_ranged"),
             equipment_slot_drop_chances: Some(0f32),
             weight: 1i32,
         }],
-        loot_tables_to_eject: &[
+        loot_tables_to_eject: Some(&[
             WeightedLootTable {
                 loot_table: "minecraft:spawners/ominous/trial_chamber/key",
                 weight: 3i32,
@@ -437,7 +461,7 @@ pub const TRIAL_CHAMBER_SLOW_RANGED_STRAY_OMINOUS: TrialSpawnerConfigData =
                 loot_table: "minecraft:spawners/ominous/trial_chamber/consumables",
                 weight: 7i32,
             },
-        ],
+        ]),
         items_to_drop_when_ominous: None,
     };
 pub const TRIAL_CHAMBER_SMALL_MELEE_BABY_ZOMBIE_NORMAL: TrialSpawnerConfigData =
@@ -450,11 +474,12 @@ pub const TRIAL_CHAMBER_SMALL_MELEE_BABY_ZOMBIE_NORMAL: TrialSpawnerConfigData =
         ticks_between_spawn: 20i32,
         spawn_potentials: &[WeightedSpawnData {
             entity_id: "minecraft:zombie",
+            entity: "{\"IsBaby\":1,\"id\":\"minecraft:zombie\"}",
             equipment_loot_table: None,
             equipment_slot_drop_chances: None,
             weight: 1i32,
         }],
-        loot_tables_to_eject: &[],
+        loot_tables_to_eject: None,
         items_to_drop_when_ominous: None,
     };
 pub const TRIAL_CHAMBER_SMALL_MELEE_BABY_ZOMBIE_OMINOUS: TrialSpawnerConfigData =
@@ -467,11 +492,12 @@ pub const TRIAL_CHAMBER_SMALL_MELEE_BABY_ZOMBIE_OMINOUS: TrialSpawnerConfigData 
         ticks_between_spawn: 20i32,
         spawn_potentials: &[WeightedSpawnData {
             entity_id: "minecraft:zombie",
+            entity: "{\"IsBaby\":1,\"id\":\"minecraft:zombie\"}",
             equipment_loot_table: Some("minecraft:equipment/trial_chamber_melee"),
             equipment_slot_drop_chances: Some(0f32),
             weight: 1i32,
         }],
-        loot_tables_to_eject: &[
+        loot_tables_to_eject: Some(&[
             WeightedLootTable {
                 loot_table: "minecraft:spawners/ominous/trial_chamber/key",
                 weight: 3i32,
@@ -480,7 +506,7 @@ pub const TRIAL_CHAMBER_SMALL_MELEE_BABY_ZOMBIE_OMINOUS: TrialSpawnerConfigData 
                 loot_table: "minecraft:spawners/ominous/trial_chamber/consumables",
                 weight: 7i32,
             },
-        ],
+        ]),
         items_to_drop_when_ominous: None,
     };
 pub const TRIAL_CHAMBER_SMALL_MELEE_CAVE_SPIDER_NORMAL: TrialSpawnerConfigData =
@@ -493,11 +519,12 @@ pub const TRIAL_CHAMBER_SMALL_MELEE_CAVE_SPIDER_NORMAL: TrialSpawnerConfigData =
         ticks_between_spawn: 20i32,
         spawn_potentials: &[WeightedSpawnData {
             entity_id: "minecraft:cave_spider",
+            entity: "{\"id\":\"minecraft:cave_spider\"}",
             equipment_loot_table: None,
             equipment_slot_drop_chances: None,
             weight: 1i32,
         }],
-        loot_tables_to_eject: &[],
+        loot_tables_to_eject: None,
         items_to_drop_when_ominous: None,
     };
 pub const TRIAL_CHAMBER_SMALL_MELEE_CAVE_SPIDER_OMINOUS: TrialSpawnerConfigData =
@@ -510,11 +537,12 @@ pub const TRIAL_CHAMBER_SMALL_MELEE_CAVE_SPIDER_OMINOUS: TrialSpawnerConfigData 
         ticks_between_spawn: 20i32,
         spawn_potentials: &[WeightedSpawnData {
             entity_id: "minecraft:cave_spider",
+            entity: "{\"id\":\"minecraft:cave_spider\"}",
             equipment_loot_table: None,
             equipment_slot_drop_chances: None,
             weight: 1i32,
         }],
-        loot_tables_to_eject: &[
+        loot_tables_to_eject: Some(&[
             WeightedLootTable {
                 loot_table: "minecraft:spawners/ominous/trial_chamber/key",
                 weight: 3i32,
@@ -523,7 +551,7 @@ pub const TRIAL_CHAMBER_SMALL_MELEE_CAVE_SPIDER_OMINOUS: TrialSpawnerConfigData 
                 loot_table: "minecraft:spawners/ominous/trial_chamber/consumables",
                 weight: 7i32,
             },
-        ],
+        ]),
         items_to_drop_when_ominous: None,
     };
 pub const TRIAL_CHAMBER_SMALL_MELEE_SILVERFISH_NORMAL: TrialSpawnerConfigData =
@@ -536,11 +564,12 @@ pub const TRIAL_CHAMBER_SMALL_MELEE_SILVERFISH_NORMAL: TrialSpawnerConfigData =
         ticks_between_spawn: 20i32,
         spawn_potentials: &[WeightedSpawnData {
             entity_id: "minecraft:silverfish",
+            entity: "{\"id\":\"minecraft:silverfish\"}",
             equipment_loot_table: None,
             equipment_slot_drop_chances: None,
             weight: 1i32,
         }],
-        loot_tables_to_eject: &[],
+        loot_tables_to_eject: None,
         items_to_drop_when_ominous: None,
     };
 pub const TRIAL_CHAMBER_SMALL_MELEE_SILVERFISH_OMINOUS: TrialSpawnerConfigData =
@@ -553,11 +582,12 @@ pub const TRIAL_CHAMBER_SMALL_MELEE_SILVERFISH_OMINOUS: TrialSpawnerConfigData =
         ticks_between_spawn: 20i32,
         spawn_potentials: &[WeightedSpawnData {
             entity_id: "minecraft:silverfish",
+            entity: "{\"id\":\"minecraft:silverfish\"}",
             equipment_loot_table: None,
             equipment_slot_drop_chances: None,
             weight: 1i32,
         }],
-        loot_tables_to_eject: &[
+        loot_tables_to_eject: Some(&[
             WeightedLootTable {
                 loot_table: "minecraft:spawners/ominous/trial_chamber/key",
                 weight: 3i32,
@@ -566,7 +596,7 @@ pub const TRIAL_CHAMBER_SMALL_MELEE_SILVERFISH_OMINOUS: TrialSpawnerConfigData =
                 loot_table: "minecraft:spawners/ominous/trial_chamber/consumables",
                 weight: 7i32,
             },
-        ],
+        ]),
         items_to_drop_when_ominous: None,
     };
 pub const TRIAL_CHAMBER_SMALL_MELEE_SLIME_NORMAL: TrialSpawnerConfigData = TrialSpawnerConfigData {
@@ -579,18 +609,20 @@ pub const TRIAL_CHAMBER_SMALL_MELEE_SLIME_NORMAL: TrialSpawnerConfigData = Trial
     spawn_potentials: &[
         WeightedSpawnData {
             entity_id: "minecraft:slime",
+            entity: "{\"Size\":1,\"id\":\"minecraft:slime\"}",
             equipment_loot_table: None,
             equipment_slot_drop_chances: None,
             weight: 3i32,
         },
         WeightedSpawnData {
             entity_id: "minecraft:slime",
+            entity: "{\"Size\":2,\"id\":\"minecraft:slime\"}",
             equipment_loot_table: None,
             equipment_slot_drop_chances: None,
             weight: 1i32,
         },
     ],
-    loot_tables_to_eject: &[],
+    loot_tables_to_eject: None,
     items_to_drop_when_ominous: None,
 };
 pub const TRIAL_CHAMBER_SMALL_MELEE_SLIME_OMINOUS: TrialSpawnerConfigData =
@@ -604,18 +636,20 @@ pub const TRIAL_CHAMBER_SMALL_MELEE_SLIME_OMINOUS: TrialSpawnerConfigData =
         spawn_potentials: &[
             WeightedSpawnData {
                 entity_id: "minecraft:slime",
+                entity: "{\"Size\":1,\"id\":\"minecraft:slime\"}",
                 equipment_loot_table: None,
                 equipment_slot_drop_chances: None,
                 weight: 3i32,
             },
             WeightedSpawnData {
                 entity_id: "minecraft:slime",
+                entity: "{\"Size\":2,\"id\":\"minecraft:slime\"}",
                 equipment_loot_table: None,
                 equipment_slot_drop_chances: None,
                 weight: 1i32,
             },
         ],
-        loot_tables_to_eject: &[
+        loot_tables_to_eject: Some(&[
             WeightedLootTable {
                 loot_table: "minecraft:spawners/ominous/trial_chamber/key",
                 weight: 3i32,
@@ -624,7 +658,7 @@ pub const TRIAL_CHAMBER_SMALL_MELEE_SLIME_OMINOUS: TrialSpawnerConfigData =
                 loot_table: "minecraft:spawners/ominous/trial_chamber/consumables",
                 weight: 7i32,
             },
-        ],
+        ]),
         items_to_drop_when_ominous: None,
     };
 #[must_use]
