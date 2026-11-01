@@ -1,5 +1,6 @@
 #[allow(clippy::wildcard_imports)]
 use super::*;
+use crate::world::entity_tracker::encode_delta;
 
 impl JavaClient {
     const fn clamp_horizontal(pos: f64) -> f64 {
@@ -10,22 +11,15 @@ impl JavaClient {
         pos.clamp(-2.0E7, 2.0E7)
     }
 
-    /// Returns whether syncing the position was needed
+    /// Sends the full position to tracking players, for a move too far for a delta.
     fn sync_position(
         player: &Arc<Player>,
         world: &World,
         entity: &Entity,
         pos: Vector3<f64>,
-        last_pos: Vector3<f64>,
         on_ground: bool,
-    ) -> bool {
-        let delta = Vector3::new(pos.x - last_pos.x, pos.y - last_pos.y, pos.z - last_pos.z);
+    ) {
         let entity_id = player.entity_id();
-
-        // Teleport when more than 8 blocks (-8..=7.999755859375)
-        if delta.length_squared() < 64.0 {
-            return false;
-        }
         // Sync position with tracking players only.
         world.send_to_tracking_players_editioned(
             entity,
@@ -44,7 +38,6 @@ impl JavaClient {
             entity,
             &bedrock_move_player_packet(entity, pos, CMovePlayer::MODE_NORMAL, on_ground),
         );
-        true
     }
 
     #[expect(clippy::too_many_lines)]
@@ -127,17 +120,13 @@ impl JavaClient {
                 let world = &player.world();
 
                 // TODO: Warn when player moves to quickly
-                if !Self::sync_position(player, world, entity, pos, last_pos, packet.collision & FLAG_ON_GROUND != 0) {
+                if let Some(delta) = encode_delta(pos, last_pos) {
                     // Send the new position to tracking players only.
                     world.send_to_tracking_players_editioned(
                         entity,
                         &CUpdateEntityPos::new(
                             player.entity_id().into(),
-                            Vector3::new(
-                                pos.x.mul_add(4096.0, -(last_pos.x * 4096.0)) as i16,
-                                pos.y.mul_add(4096.0, -(last_pos.y * 4096.0)) as i16,
-                                pos.z.mul_add(4096.0, -(last_pos.z * 4096.0)) as i16,
-                            ),
+                            delta,
                             packet.collision & FLAG_ON_GROUND != 0,
                         ),
                         &bedrock_move_player_packet(
@@ -147,6 +136,8 @@ impl JavaClient {
                             packet.collision & FLAG_ON_GROUND != 0,
                         ),
                     );
+                } else {
+                    Self::sync_position(player, world, entity, pos, packet.collision & FLAG_ON_GROUND != 0);
                 }
 
                 // Only process fall damage if player is alive
@@ -277,24 +268,13 @@ impl JavaClient {
                 let world = entity.world.load_full();
 
                 // TODO: Warn when player moves to quickly
-                if !Self::sync_position(
-                    player,
-                    &world,
-                    entity,
-                    pos,
-                    last_pos,
-                    (packet.collision & FLAG_ON_GROUND) != 0,
-                ) {
+                if let Some(delta) = encode_delta(pos, last_pos) {
                     // Send the new position to tracking players only.
                     world.send_to_tracking_players_editioned(
                         entity,
                         &CUpdateEntityPosRot::new(
                             entity_id.into(),
-                            Vector3::new(
-                                pos.x.mul_add(4096.0, -(last_pos.x * 4096.0)) as i16,
-                                pos.y.mul_add(4096.0, -(last_pos.y * 4096.0)) as i16,
-                                pos.z.mul_add(4096.0, -(last_pos.z * 4096.0)) as i16,
-                            ),
+                            delta,
                             yaw as u8,
                             pitch as u8,
                             (packet.collision & FLAG_ON_GROUND) != 0,
@@ -305,6 +285,14 @@ impl JavaClient {
                             CMovePlayer::MODE_NORMAL,
                             (packet.collision & FLAG_ON_GROUND) != 0,
                         ),
+                    );
+                } else {
+                    Self::sync_position(
+                        player,
+                        &world,
+                        entity,
+                        pos,
+                        (packet.collision & FLAG_ON_GROUND) != 0,
                     );
                 }
 

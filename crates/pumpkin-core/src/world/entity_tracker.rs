@@ -45,6 +45,16 @@ fn encode_pos(value: f64) -> i64 {
     (value * 4096.0 + 0.5).floor() as i64
 }
 
+/// Vanilla `VecDeltaCodec.encodeX/Y/Z`: the move from `base` to `pos` in 1/4096 blocks,
+/// `None` when an axis does not fit a short and a full position sync is needed.
+pub(crate) fn encode_delta(pos: Vector3<f64>, base: Vector3<f64>) -> Option<Vector3<i16>> {
+    Some(Vector3::new(
+        i16::try_from(encode_pos(pos.x) - encode_pos(base.x)).ok()?,
+        i16::try_from(encode_pos(pos.y) - encode_pos(base.y)).ok()?,
+        i16::try_from(encode_pos(pos.z) - encode_pos(base.z)).ok()?,
+    ))
+}
+
 /// Vanilla `ServerEntity.sendChanges` packet choice.
 #[derive(Clone, Copy)]
 enum MoveSync {
@@ -220,14 +230,7 @@ impl TrackedEntity {
         let base = entity.last_sent_pos.load();
         let send_pos = (pos - base).length_squared() >= f64::from(7.629_394_5e-6f32)
             || tick.is_multiple_of(60);
-        let delta = match (
-            i16::try_from(encode_pos(pos.x) - encode_pos(base.x)),
-            i16::try_from(encode_pos(pos.y) - encode_pos(base.y)),
-            i16::try_from(encode_pos(pos.z) - encode_pos(base.z)),
-        ) {
-            (Ok(x), Ok(y), Ok(z)) => Some(Vector3::new(x, y, z)),
-            _ => None,
-        };
+        let delta = encode_delta(pos, base);
         let on_ground = entity.on_ground.load(Relaxed);
         let is_arrow = [
             &EntityType::ARROW,
@@ -1021,5 +1024,37 @@ impl EntityTracker {
                 tracked.entity.get_entity().send_dirty_entity_data();
             }
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{encode_delta, encode_pos};
+    use pumpkin_util::math::vector3::Vector3;
+
+    /// Small steps add up on the client to where the entity is; truncating each float
+    /// difference lost up to 1/4096 block per move and drifted.
+    #[test]
+    fn deltas_add_up_without_drift() {
+        let start = Vector3::new(10.0, 64.0, -3.0);
+        let mut last = start;
+        let mut sum = Vector3::new(0i64, 0, 0);
+        for step in 1..=200 {
+            let pos = start + Vector3::new(0.000_17, -0.000_23, 0.031) * f64::from(step);
+            let delta = encode_delta(pos, last).expect("a small move fits a delta");
+            sum += Vector3::new(i64::from(delta.x), i64::from(delta.y), i64::from(delta.z));
+            last = pos;
+        }
+        assert_eq!(sum.x, encode_pos(last.x) - encode_pos(start.x));
+        assert_eq!(sum.y, encode_pos(last.y) - encode_pos(start.y));
+        assert_eq!(sum.z, encode_pos(last.z) - encode_pos(start.z));
+    }
+
+    #[test]
+    fn far_moves_need_a_full_sync() {
+        let base = Vector3::new(0.0, 0.0, 0.0);
+        assert!(encode_delta(Vector3::new(7.99, 0.0, 0.0), base).is_some());
+        assert!(encode_delta(Vector3::new(8.0, 0.0, 0.0), base).is_none());
+        assert!(encode_delta(Vector3::new(0.0, -8.5, 0.0), base).is_none());
     }
 }
