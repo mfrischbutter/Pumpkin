@@ -30,6 +30,11 @@ impl ZombieEntity {
 }
 
 impl Mob for ZombieEntity {
+    /// Vanilla `Zombie.getAmbientSound`.
+    fn get_ambient_sound(&self) -> Option<pumpkin_data::sound::Sound> {
+        Some(pumpkin_data::sound::Sound::EntityZombieAmbient)
+    }
+
     fn mob_play_step_sound(&self, _pos: &BlockPos, _state: &BlockState) {
         self.play_entity_sound(Sound::EntityZombieStep, 0.15, 1.0);
     }

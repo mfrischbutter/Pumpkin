@@ -3,7 +3,7 @@ use std::sync::{Arc, Weak};
 use pumpkin_data::entity::EntityType;
 
 use crate::entity::{
-    Entity,
+    Entity, EntityBase,
     ai::goal::{
         active_target::ActiveTargetGoal, look_around::RandomLookAroundGoal,
         look_at_entity::LookAtEntityGoal, swim::SwimGoal, wander_around::WanderAroundGoal,
@@ -48,6 +48,21 @@ impl BreezeEntity {
 }
 
 impl Mob for BreezeEntity {
+    /// Vanilla `Breeze.getAmbientSound`.
+    fn get_ambient_sound(&self) -> Option<pumpkin_data::sound::Sound> {
+        Some(
+            if self
+                .get_entity()
+                .on_ground
+                .load(std::sync::atomic::Ordering::Relaxed)
+            {
+                pumpkin_data::sound::Sound::EntityBreezeIdleGround
+            } else {
+                pumpkin_data::sound::Sound::EntityBreezeIdleAir
+            },
+        )
+    }
+
     fn get_mob_entity(&self) -> &MobEntity {
         &self.mob_entity
     }

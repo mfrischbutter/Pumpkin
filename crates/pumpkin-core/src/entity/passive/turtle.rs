@@ -110,6 +110,17 @@ impl Animal for TurtleEntity {
 }
 
 impl Mob for TurtleEntity {
+    /// Vanilla `Turtle.getAmbientSound`.
+    fn get_ambient_sound(&self) -> Option<pumpkin_data::sound::Sound> {
+        (self
+            .get_entity()
+            .on_ground
+            .load(std::sync::atomic::Ordering::Relaxed)
+            && !self.get_entity().is_in_water()
+            && !self.get_mob_entity().living_entity.is_baby())
+        .then_some(pumpkin_data::sound::Sound::EntityTurtleAmbientLand)
+    }
+
     fn mob_play_step_sound(&self, _pos: &BlockPos, _state: &BlockState) {
         let sound = if self.get_entity().age.load(Ordering::Relaxed) < 0 {
             Sound::EntityTurtleShambleBaby

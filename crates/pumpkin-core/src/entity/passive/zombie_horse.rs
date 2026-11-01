@@ -123,6 +123,11 @@ impl Animal for ZombieHorseEntity {
 }
 
 impl Mob for ZombieHorseEntity {
+    /// Vanilla `ZombieHorse.getAmbientSound`.
+    fn get_ambient_sound(&self) -> Option<pumpkin_data::sound::Sound> {
+        Some(pumpkin_data::sound::Sound::EntityZombieHorseAmbient)
+    }
+
     /// Vanilla `ZombieHorse.removeWhenFarAway`.
     fn remove_when_far_away(&self, _distance_sq: f64) -> bool {
         true

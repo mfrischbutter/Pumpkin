@@ -154,6 +154,11 @@ impl Animal for MuleEntity {
 }
 
 impl Mob for MuleEntity {
+    /// Vanilla `Mule.getAmbientSound`.
+    fn get_ambient_sound(&self) -> Option<pumpkin_data::sound::Sound> {
+        Some(pumpkin_data::sound::Sound::EntityMuleAmbient)
+    }
+
     fn is_tamed(&self) -> bool {
         self.is_tame()
     }

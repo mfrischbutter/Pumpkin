@@ -181,6 +181,15 @@ impl CustomSound for GuardianEntity {
 }
 
 impl Mob for GuardianEntity {
+    /// Vanilla `Guardian.getAmbientSound`.
+    fn get_ambient_sound(&self) -> Option<pumpkin_data::sound::Sound> {
+        Some(if self.get_entity().is_in_water() {
+            pumpkin_data::sound::Sound::EntityGuardianAmbient
+        } else {
+            pumpkin_data::sound::Sound::EntityGuardianAmbientLand
+        })
+    }
+
     fn get_mob_entity(&self) -> &MobEntity {
         &self.mob_entity
     }

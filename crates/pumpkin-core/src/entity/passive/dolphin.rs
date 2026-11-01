@@ -112,6 +112,15 @@ impl DolphinEntity {
 }
 
 impl Mob for DolphinEntity {
+    /// Vanilla `Dolphin.getAmbientSound`.
+    fn get_ambient_sound(&self) -> Option<pumpkin_data::sound::Sound> {
+        Some(if self.get_entity().is_in_water() {
+            pumpkin_data::sound::Sound::EntityDolphinAmbientWater
+        } else {
+            pumpkin_data::sound::Sound::EntityDolphinAmbient
+        })
+    }
+
     fn travel_in_water(&self, caller: &dyn EntityBase, _gravity: f64, _falling: bool) {
         let living = &self.mob_entity.living_entity;
         let entity = &living.entity;

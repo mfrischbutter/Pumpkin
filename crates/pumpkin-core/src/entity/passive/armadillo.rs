@@ -295,6 +295,11 @@ impl Animal for ArmadilloEntity {
 }
 
 impl Mob for ArmadilloEntity {
+    /// Vanilla `Armadillo.getAmbientSound`.
+    fn get_ambient_sound(&self) -> Option<pumpkin_data::sound::Sound> {
+        (!self.is_scared()).then_some(pumpkin_data::sound::Sound::EntityArmadilloAmbient)
+    }
+
     fn mob_play_step_sound(&self, _pos: &BlockPos, _state: &BlockState) {
         self.play_entity_sound(Sound::EntityArmadilloStep, 0.15, 1.0);
     }

@@ -146,6 +146,15 @@ impl Animal for SkeletonHorseEntity {
 }
 
 impl Mob for SkeletonHorseEntity {
+    /// Vanilla `SkeletonHorse.getAmbientSound`.
+    fn get_ambient_sound(&self) -> Option<pumpkin_data::sound::Sound> {
+        Some(if self.get_entity().is_submerged_in_water() {
+            pumpkin_data::sound::Sound::EntitySkeletonHorseAmbientWater
+        } else {
+            pumpkin_data::sound::Sound::EntitySkeletonHorseAmbient
+        })
+    }
+
     fn is_tamed(&self) -> bool {
         self.is_tame()
     }

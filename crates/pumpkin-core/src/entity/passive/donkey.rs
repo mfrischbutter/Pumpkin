@@ -155,6 +155,11 @@ impl Animal for DonkeyEntity {
 }
 
 impl Mob for DonkeyEntity {
+    /// Vanilla `Donkey.getAmbientSound`.
+    fn get_ambient_sound(&self) -> Option<pumpkin_data::sound::Sound> {
+        Some(pumpkin_data::sound::Sound::EntityDonkeyAmbient)
+    }
+
     fn is_tamed(&self) -> bool {
         self.is_tame()
     }

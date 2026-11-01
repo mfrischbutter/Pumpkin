@@ -207,6 +207,15 @@ fn is_wood_sound_type(sound_type: &SoundType) -> bool {
 
 // TODO: random health, speed and jump at spawn and averaged for foals (`AbstractHorse`); needs attribute NBT.
 impl Mob for HorseEntity {
+    /// Vanilla `Horse.getAmbientSound`.
+    fn get_ambient_sound(&self) -> Option<pumpkin_data::sound::Sound> {
+        Some(if self.get_mob_entity().living_entity.is_baby() {
+            pumpkin_data::sound::Sound::EntityBabyHorseAmbient
+        } else {
+            pumpkin_data::sound::Sound::EntityHorseAmbient
+        })
+    }
+
     fn is_tamed(&self) -> bool {
         self.is_tame()
     }

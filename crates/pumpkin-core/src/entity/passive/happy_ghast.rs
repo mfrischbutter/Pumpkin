@@ -127,6 +127,15 @@ impl Animal for HappyGhastEntity {
 }
 
 impl Mob for HappyGhastEntity {
+    /// Vanilla `HappyGhast.getAmbientSound`.
+    fn get_ambient_sound(&self) -> Option<pumpkin_data::sound::Sound> {
+        Some(if self.get_mob_entity().living_entity.is_baby() {
+            pumpkin_data::sound::Sound::EntityGhastlingAmbient
+        } else {
+            pumpkin_data::sound::Sound::EntityHappyGhastAmbient
+        })
+    }
+
     /// Vanilla `HappyGhast` steps silently.
     fn mob_play_step_sound(&self, _pos: &BlockPos, _state: &BlockState) {}
 

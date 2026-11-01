@@ -105,6 +105,16 @@ impl Animal for OcelotEntity {
 }
 
 impl Mob for OcelotEntity {
+    /// Vanilla `Ocelot.getAmbientSound`.
+    fn get_ambient_sound(&self) -> Option<pumpkin_data::sound::Sound> {
+        Some(pumpkin_data::sound::Sound::EntityOcelotAmbient)
+    }
+
+    /// Vanilla `Ocelot.getAmbientSoundInterval`.
+    fn get_ambient_sound_interval(&self) -> i32 {
+        900
+    }
+
     /// Vanilla `Ocelot.removeWhenFarAway`: wild ocelots despawn after two minutes.
     fn remove_when_far_away(&self, _distance_sq: f64) -> bool {
         !self.is_trusting() && self.get_entity().tick_count.load(Ordering::Relaxed) > 2400

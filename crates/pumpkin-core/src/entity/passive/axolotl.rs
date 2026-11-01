@@ -226,6 +226,15 @@ impl Animal for AxolotlEntity {
 }
 
 impl Mob for AxolotlEntity {
+    /// Vanilla `Axolotl.getAmbientSound`.
+    fn get_ambient_sound(&self) -> Option<pumpkin_data::sound::Sound> {
+        Some(if self.get_entity().is_in_water() {
+            pumpkin_data::sound::Sound::EntityAxolotlIdleWater
+        } else {
+            pumpkin_data::sound::Sound::EntityAxolotlIdleAir
+        })
+    }
+
     /// Vanilla `Axolotl.checkSpawnObstruction`: only entities obstruct, the water does not.
     fn check_spawn_obstruction(&self, world: &crate::world::World) -> bool {
         world.is_unobstructed(&self.get_mob_entity().living_entity.entity)

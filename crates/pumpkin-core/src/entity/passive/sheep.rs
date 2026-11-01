@@ -251,6 +251,11 @@ impl Animal for SheepEntity {
 }
 
 impl Mob for SheepEntity {
+    /// Vanilla `Sheep.getAmbientSound`.
+    fn get_ambient_sound(&self) -> Option<pumpkin_data::sound::Sound> {
+        Some(pumpkin_data::sound::Sound::EntitySheepAmbient)
+    }
+
     fn mob_play_step_sound(&self, _pos: &BlockPos, _state: &BlockState) {
         self.play_entity_sound(Sound::EntitySheepStep, 0.15, 1.0);
     }

@@ -63,6 +63,15 @@ impl ElderGuardianEntity {
 }
 
 impl Mob for ElderGuardianEntity {
+    /// Vanilla `ElderGuardian.getAmbientSound`.
+    fn get_ambient_sound(&self) -> Option<pumpkin_data::sound::Sound> {
+        Some(if self.get_entity().is_in_water() {
+            pumpkin_data::sound::Sound::EntityElderGuardianAmbient
+        } else {
+            pumpkin_data::sound::Sound::EntityElderGuardianAmbientLand
+        })
+    }
+
     fn get_mob_entity(&self) -> &MobEntity {
         &self.mob_entity
     }

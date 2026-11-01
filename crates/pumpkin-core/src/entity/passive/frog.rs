@@ -104,6 +104,11 @@ impl Animal for FrogEntity {
 }
 
 impl Mob for FrogEntity {
+    /// Vanilla `Frog.getAmbientSound`.
+    fn get_ambient_sound(&self) -> Option<pumpkin_data::sound::Sound> {
+        Some(pumpkin_data::sound::Sound::EntityFrogAmbient)
+    }
+
     fn mob_play_step_sound(&self, _pos: &BlockPos, _state: &BlockState) {
         self.play_entity_sound(Sound::EntityFrogStep, 0.15, 1.0);
     }

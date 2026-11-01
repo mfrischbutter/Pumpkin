@@ -70,6 +70,15 @@ impl DrownedEntity {
 }
 
 impl Mob for DrownedEntity {
+    /// Vanilla `Drowned.getAmbientSound`.
+    fn get_ambient_sound(&self) -> Option<pumpkin_data::sound::Sound> {
+        Some(if self.get_entity().is_in_water() {
+            pumpkin_data::sound::Sound::EntityDrownedAmbientWater
+        } else {
+            pumpkin_data::sound::Sound::EntityDrownedAmbient
+        })
+    }
+
     fn mob_play_step_sound(&self, _pos: &BlockPos, _state: &BlockState) {
         self.play_entity_sound(Sound::EntityDrownedStep, 0.15, 1.0);
     }
