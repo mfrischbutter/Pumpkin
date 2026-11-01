@@ -41,7 +41,9 @@ impl FleeSunGoal {
                     mob_pos.0.z + rng.random_range(0..20) - 10,
                 )
             };
-            if !world.can_see_sky(&check_pos) && mob.get_walk_target_value(&check_pos) < 0.0 {
+            if !world.can_see_sky(&check_pos)
+                && mob.get_walk_target_value(&check_pos, &**world) < 0.0
+            {
                 return Some(Vector3::new(
                     f64::from(check_pos.0.x) + 0.5,
                     f64::from(check_pos.0.y),

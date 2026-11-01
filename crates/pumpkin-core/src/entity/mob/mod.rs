@@ -1495,6 +1495,14 @@ pub trait Mob: EntityBase + Send + Sync {
         None
     }
 
+    /// Vanilla `Mob.checkSpawnRules` and `PathfinderMob.checkSpawnRules`: a pathfinder mob
+    /// spawns only where its walk target value is not negative, any other mob anywhere.
+    fn can_spawn(&self, level: &dyn LevelAccessor) -> bool {
+        let entity = &self.get_mob_entity().living_entity.entity;
+        !entity.entity_type.pathfinder_mob
+            || self.get_walk_target_value(&entity.block_pos.load(), level) >= 0.0
+    }
+
     fn get_path_aware_entity(&self) -> Option<&dyn PathAwareEntity> {
         None
     }
@@ -1906,10 +1914,26 @@ pub trait Mob: EntityBase + Send + Sync {
         None
     }
 
-    /// How much this mob likes standing on `pos`, used to rank stroll candidates.
-    fn get_walk_target_value(&self, pos: &BlockPos) -> f32 {
-        self.as_animal()
-            .map_or(0.0, |animal| animal.animal_walk_target_value(pos))
+    /// Vanilla `PathfinderMob.getWalkTargetValue`: how much the mob likes standing on `pos`,
+    /// ranking stroll targets and deciding `checkSpawnRules`.
+    ///
+    /// 0 for a mob; an animal prefers grass and otherwise pays the light cost
+    /// (`Animal.getWalkTargetValue`); a monster is drawn to the dark
+    /// (`Monster.getWalkTargetValue`). A species with its own rule overrides it.
+    fn get_walk_target_value(&self, pos: &BlockPos, level: &dyn LevelAccessor) -> f32 {
+        if let Some(animal) = self.as_animal() {
+            return animal.animal_walk_target_value(pos, level);
+        }
+        if self
+            .get_mob_entity()
+            .living_entity
+            .entity
+            .entity_type
+            .monster
+        {
+            return -level.get_pathfinding_cost_from_light_levels(pos);
+        }
+        0.0
     }
 
     fn as_tamable(&self) -> Option<&dyn crate::entity::passive::tamable::TamableAnimal> {
@@ -2668,44 +2692,7 @@ impl<T: Mob + Send + 'static> EntityBase for T {
     }
 }
 
-/// Vanilla `PathfinderMob.getWalkTargetValue`.
-const DEFAULT_PATHFINDING_FAVOR: f32 = 0.0;
-/// Vanilla `Animal.getWalkTargetValue` over a grass block.
-const ANIMAL_GRASS_PATHFINDING_FAVOR: f32 = 10.0;
-
 pub trait PathAwareEntity: Mob + Send + Sync {
-    /// Vanilla `PathfinderMob.getWalkTargetValue`: 0 for a mob; an animal prefers grass and
-    /// otherwise pays the light cost (`Animal.getWalkTargetValue`); a monster is drawn to
-    /// the dark (`Monster.getWalkTargetValue`).
-    fn get_pathfinding_favor(&self, block_pos: BlockPos, level: &dyn LevelAccessor) -> f32 {
-        if self.as_animal().is_some() {
-            return if level.get_block(&block_pos.down()) == &Block::GRASS_BLOCK {
-                ANIMAL_GRASS_PATHFINDING_FAVOR
-            } else {
-                level.get_pathfinding_cost_from_light_levels(&block_pos)
-            };
-        }
-        if self
-            .get_mob_entity()
-            .living_entity
-            .entity
-            .entity_type
-            .monster
-        {
-            return -level.get_pathfinding_cost_from_light_levels(&block_pos);
-        }
-        DEFAULT_PATHFINDING_FAVOR
-    }
-
-    /// Vanilla `PathfinderMob.checkSpawnRules`: the walk target value at the mob's position
-    /// is not negative.
-    fn can_spawn(&self, level: &dyn LevelAccessor) -> bool {
-        self.get_pathfinding_favor(
-            self.get_mob_entity().living_entity.entity.block_pos.load(),
-            level,
-        ) >= 0.0
-    }
-
     fn is_navigation(&self) -> bool {
         !self.get_mob_entity().steered().navigator().is_idle()
     }

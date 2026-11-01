@@ -1,3 +1,4 @@
+use crate::world::level_accessor::LevelAccessor;
 use std::sync::{
     Arc, Weak,
     atomic::{AtomicBool, AtomicI32, Ordering},
@@ -8,7 +9,6 @@ use pumpkin_data::BlockState;
 use pumpkin_data::block_properties::TurtleEggLikeProperties;
 use pumpkin_data::damage::DamageType;
 use pumpkin_data::entity::EntityType;
-use pumpkin_data::fluid::Fluid;
 use pumpkin_data::item_stack::ItemStack;
 use pumpkin_data::sound::{Sound, SoundCategory};
 use pumpkin_data::tag::{self, Taggable};
@@ -51,11 +51,6 @@ pub fn is_baby_on_land(mob: &dyn Mob) -> bool {
 /// Vanilla `TurtleEggBlock.isSand`.
 fn is_sand(world: &World, pos: &BlockPos) -> bool {
     world.get_block(pos).has_tag(&tag::Block::MINECRAFT_SAND)
-}
-
-fn in_water(world: &World, pos: &BlockPos) -> bool {
-    let fluid = world.get_fluid(pos).id;
-    fluid == Fluid::WATER.id || fluid == Fluid::FLOWING_WATER.id
 }
 
 pub struct TurtleEntity {
@@ -322,12 +317,15 @@ impl Mob for TurtleEntity {
     }
 
     /// Vanilla `Turtle.getWalkTargetValue`: water unless it is going home, then sand.
-    fn get_walk_target_value(&self, pos: &BlockPos) -> f32 {
-        let world = self.get_entity().world.load();
-        if (!self.going_home() && in_water(&world, pos)) || is_sand(&world, &pos.down()) {
+    fn get_walk_target_value(&self, pos: &BlockPos, level: &dyn LevelAccessor) -> f32 {
+        if (!self.going_home() && level.get_fluid(pos).has_tag(&tag::Fluid::MINECRAFT_WATER))
+            || level
+                .get_block(&pos.down())
+                .has_tag(&tag::Block::MINECRAFT_SAND)
+        {
             10.0
         } else {
-            world.get_light_level_dependent_magic_value(pos) - 0.5
+            level.get_pathfinding_cost_from_light_levels(pos)
         }
     }
 

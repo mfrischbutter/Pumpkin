@@ -1,3 +1,5 @@
+use crate::world::level_accessor::LevelAccessor;
+use pumpkin_data::Block;
 use std::sync::{
     Arc, Weak,
     atomic::{AtomicI32, Ordering},
@@ -201,6 +203,16 @@ impl Animal for MooshroomEntity {
 }
 
 impl Mob for MooshroomEntity {
+    /// Vanilla `MushroomCow.getWalkTargetValue`: mycelium below is worth 10, anything else
+    /// the light cost.
+    fn get_walk_target_value(&self, pos: &BlockPos, level: &dyn LevelAccessor) -> f32 {
+        if level.get_block(&pos.down()) == &Block::MYCELIUM {
+            10.0
+        } else {
+            level.get_pathfinding_cost_from_light_levels(pos)
+        }
+    }
+
     /// Vanilla `AbstractCow.getAmbientSound`, with the classic cow sounds like its steps.
     fn get_ambient_sound(&self) -> Option<Sound> {
         Some(CowSoundVariant::Classic.ambient_sound(self.is_baby()))

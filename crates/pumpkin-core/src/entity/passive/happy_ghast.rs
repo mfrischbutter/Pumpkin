@@ -1,3 +1,4 @@
+use crate::world::level_accessor::LevelAccessor;
 use std::sync::{
     Arc, Weak,
     atomic::{AtomicBool, AtomicI32, Ordering},
@@ -127,6 +128,21 @@ impl Animal for HappyGhastEntity {
 }
 
 impl Mob for HappyGhastEntity {
+    /// Vanilla `HappyGhast.getWalkTargetValue`: nothing inside a block; in the air 10 with air
+    /// below and a block under that, else 5.
+    fn get_walk_target_value(&self, pos: &BlockPos, level: &dyn LevelAccessor) -> f32 {
+        if !level.get_block_state(pos).is_air() {
+            return 0.0;
+        }
+        if level.get_block_state(&pos.down()).is_air()
+            && !level.get_block_state(&pos.down_height(2)).is_air()
+        {
+            10.0
+        } else {
+            5.0
+        }
+    }
+
     /// Vanilla `HappyGhast.getAmbientSound`.
     fn get_ambient_sound(&self) -> Option<pumpkin_data::sound::Sound> {
         Some(if self.get_mob_entity().living_entity.is_baby() {

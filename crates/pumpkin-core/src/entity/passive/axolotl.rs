@@ -503,7 +503,7 @@ impl Mob for AxolotlEntity {
     }
 
     /// Vanilla `Axolotl.getWalkTargetValue`: no place is better than another.
-    fn get_walk_target_value(&self, _pos: &BlockPos) -> f32 {
+    fn get_walk_target_value(&self, _pos: &BlockPos, _level: &dyn LevelAccessor) -> f32 {
         0.0
     }
 

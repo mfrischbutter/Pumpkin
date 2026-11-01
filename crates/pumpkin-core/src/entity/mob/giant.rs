@@ -1,3 +1,5 @@
+use crate::world::level_accessor::LevelAccessor;
+use pumpkin_util::math::position::BlockPos;
 use std::sync::Arc;
 
 use pumpkin_data::entity::EntityType;
@@ -74,6 +76,11 @@ impl GiantEntity {
 }
 
 impl Mob for GiantEntity {
+    /// Vanilla `Giant.getWalkTargetValue`: the light cost itself, the brighter the better.
+    fn get_walk_target_value(&self, pos: &BlockPos, level: &dyn LevelAccessor) -> f32 {
+        level.get_pathfinding_cost_from_light_levels(pos)
+    }
+
     fn get_mob_entity(&self) -> &MobEntity {
         &self.mob_entity
     }

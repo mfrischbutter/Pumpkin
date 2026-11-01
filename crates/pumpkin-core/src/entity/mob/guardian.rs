@@ -3,7 +3,6 @@ use std::sync::{Arc, Weak};
 
 use pumpkin_data::effect::StatusEffect;
 use pumpkin_data::entity::{EntityStatus, EntityType};
-use pumpkin_data::fluid::Fluid;
 use pumpkin_data::potion::Effect;
 use pumpkin_data::tag::{self, Taggable};
 use pumpkin_data::{damage::DamageType, sound::Sound};
@@ -118,15 +117,11 @@ pub fn guardian_ai_step(mob: &dyn Mob) {
     }
 }
 
-/// Vanilla `Guardian.getWalkTargetValue`: water first, else dark spots like any monster.
-pub fn guardian_walk_target_value(mob: &dyn Mob, pos: &BlockPos) -> f32 {
-    let world = mob.get_entity().world.load();
-    let light_cost = world.get_light_level_dependent_magic_value(pos) - 0.5;
-    if world
-        .get_fluid_and_fluid_state(pos)
-        .0
-        .matches_type(&Fluid::WATER)
-    {
+/// Vanilla `Guardian.getWalkTargetValue`: water is worth 10 plus the light cost, on land the
+/// monster's rule.
+pub fn guardian_walk_target_value(pos: &BlockPos, level: &dyn LevelAccessor) -> f32 {
+    let light_cost = level.get_pathfinding_cost_from_light_levels(pos);
+    if level.get_fluid(pos).has_tag(&tag::Fluid::MINECRAFT_WATER) {
         10.0 + light_cost
     } else {
         -light_cost
@@ -358,8 +353,8 @@ impl Mob for GuardianEntity {
         guardian_travel_in_water(self, caller, self.moving.load(Ordering::Relaxed));
     }
 
-    fn get_walk_target_value(&self, pos: &BlockPos) -> f32 {
-        guardian_walk_target_value(self, pos)
+    fn get_walk_target_value(&self, pos: &BlockPos, level: &dyn LevelAccessor) -> f32 {
+        guardian_walk_target_value(pos, level)
     }
 
     /// Vanilla `Guardian.hurtServer`: its spikes hurt a living attacker for 2 while it does

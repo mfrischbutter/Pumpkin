@@ -1,3 +1,5 @@
+use crate::world::level_accessor::LevelAccessor;
+use pumpkin_data::Block;
 use std::sync::atomic::{AtomicBool, AtomicI32, Ordering};
 use std::sync::{Arc, Weak};
 
@@ -156,6 +158,16 @@ impl HoglinEntity {
 }
 
 impl Mob for HoglinEntity {
+    /// Vanilla `Hoglin.getWalkTargetValue` without its repellent part (the brain's nearest
+    /// repellent memory): crimson nylium below is worth 10, anything else nothing.
+    fn get_walk_target_value(&self, pos: &BlockPos, level: &dyn LevelAccessor) -> f32 {
+        if level.get_block(&pos.down()) == &Block::CRIMSON_NYLIUM {
+            10.0
+        } else {
+            0.0
+        }
+    }
+
     /// Vanilla `Hoglin.removeWhenFarAway`.
     fn remove_when_far_away(&self, _distance_sq: f64) -> bool {
         true

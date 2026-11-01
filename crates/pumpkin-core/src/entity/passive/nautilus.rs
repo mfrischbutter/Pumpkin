@@ -192,6 +192,11 @@ impl CustomSound for NautilusEntity {
 }
 
 impl Mob for NautilusEntity {
+    /// Vanilla `AbstractNautilus.getWalkTargetValue`: every spot is alike, light does not matter.
+    fn get_walk_target_value(&self, _pos: &BlockPos, _level: &dyn LevelAccessor) -> f32 {
+        0.0
+    }
+
     /// Vanilla `AbstractNautilus.checkSpawnObstruction`: only entities obstruct, the water does not.
     fn check_spawn_obstruction(&self, level: &dyn LevelAccessor) -> bool {
         level.is_unobstructed(&self.get_mob_entity().living_entity.entity)

@@ -872,9 +872,7 @@ pub fn mob_may_spawn(level: &dyn LevelAccessor, entity: &dyn EntityBase) -> bool
 }
 
 fn mob_rules_and_obstruction(level: &dyn LevelAccessor, mob: &dyn Mob) -> bool {
-    mob.get_path_aware_entity()
-        .is_none_or(|mob| mob.can_spawn(level))
-        && mob.check_spawn_obstruction(level)
+    mob.can_spawn(level) && mob.check_spawn_obstruction(level)
 }
 
 #[must_use]

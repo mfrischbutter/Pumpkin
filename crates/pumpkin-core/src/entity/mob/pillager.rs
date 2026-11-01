@@ -1,3 +1,5 @@
+use crate::world::level_accessor::LevelAccessor;
+use pumpkin_util::math::position::BlockPos;
 use std::sync::{
     Arc, Mutex, Weak,
     atomic::{AtomicBool, Ordering},
@@ -152,6 +154,11 @@ impl PillagerEntity {
 }
 
 impl Mob for PillagerEntity {
+    /// Vanilla `Pillager.getWalkTargetValue`: every spot is alike, light does not matter.
+    fn get_walk_target_value(&self, _pos: &BlockPos, _level: &dyn LevelAccessor) -> f32 {
+        0.0
+    }
+
     fn get_mob_entity(&self) -> &MobEntity {
         &self.mob_entity
     }

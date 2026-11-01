@@ -33,7 +33,7 @@ pub fn get_pos(mob: &dyn Mob, horizontal_dist: i32, vertical_dist: i32) -> Optio
             )?;
             move_pos_up_out_of_solid(mob, &world, &mut context, pos)
         },
-        |pos| f64::from(mob.get_walk_target_value(pos)),
+        |pos| f64::from(mob.get_walk_target_value(pos, world.as_ref())),
     )
 }
 

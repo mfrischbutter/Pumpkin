@@ -154,11 +154,7 @@ pub fn try_spawn_mob<T: Mob + 'static>(
             entity_type,
         ));
         let level: &World = world;
-        if !mob
-            .get_path_aware_entity()
-            .is_none_or(|mob| mob.can_spawn(level))
-            || !mob.check_spawn_obstruction(level)
-        {
+        if !mob.can_spawn(level) || !mob.check_spawn_obstruction(level) {
             continue;
         }
         world.spawn_entity(mob.clone() as Arc<dyn EntityBase>);

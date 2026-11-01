@@ -44,13 +44,17 @@ pub trait Animal: Mob {
 
     fn on_bred_egg(&self) {}
 
-    /// Animals prefer grass, then bright spots.
-    fn animal_walk_target_value(&self, pos: &pumpkin_util::math::position::BlockPos) -> f32 {
-        let world = self.get_mob_entity().living_entity.entity.world.load();
-        if world.get_block(&pos.down()).id == pumpkin_data::Block::GRASS_BLOCK.id {
+    /// Vanilla `Animal.getWalkTargetValue`: grass below is worth 10, anything else the light
+    /// cost.
+    fn animal_walk_target_value(
+        &self,
+        pos: &pumpkin_util::math::position::BlockPos,
+        level: &dyn crate::world::level_accessor::LevelAccessor,
+    ) -> f32 {
+        if level.get_block(&pos.down()).id == pumpkin_data::Block::GRASS_BLOCK.id {
             return 10.0;
         }
-        world.get_light_level_dependent_magic_value(pos) - 0.5
+        level.get_pathfinding_cost_from_light_levels(pos)
     }
 
     fn play_eating_sound(&self, sound: Sound) {

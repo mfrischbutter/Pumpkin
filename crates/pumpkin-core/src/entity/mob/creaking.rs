@@ -1,3 +1,4 @@
+use crate::world::level_accessor::LevelAccessor;
 use std::sync::{
     Arc, Weak,
     atomic::{AtomicBool, AtomicI32, Ordering},
@@ -379,6 +380,11 @@ impl CreakingEntity {
 }
 
 impl Mob for CreakingEntity {
+    /// Vanilla `Creaking.getWalkTargetValue`: every spot is alike, light does not matter.
+    fn get_walk_target_value(&self, _pos: &BlockPos, _level: &dyn LevelAccessor) -> f32 {
+        0.0
+    }
+
     fn mob_play_step_sound(&self, _pos: &BlockPos, _state: &BlockState) {
         self.play_entity_sound(Sound::EntityCreakingStep, 0.15, 1.0);
     }

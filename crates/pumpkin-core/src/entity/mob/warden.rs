@@ -151,6 +151,11 @@ impl WardenEntity {
 }
 
 impl Mob for WardenEntity {
+    /// Vanilla `Warden.getWalkTargetValue`: every spot is alike, light does not matter.
+    fn get_walk_target_value(&self, _pos: &BlockPos, _level: &dyn LevelAccessor) -> f32 {
+        0.0
+    }
+
     /// Vanilla `Warden.removeWhenFarAway`.
     fn remove_when_far_away(&self, _distance_sq: f64) -> bool {
         false

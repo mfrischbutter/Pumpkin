@@ -53,6 +53,6 @@ pub fn get_pos(
             });
             (!goal_utils::has_malus(mob, &mut context, &pos)).then_some(pos)
         },
-        |pos| f64::from(mob.get_walk_target_value(pos)),
+        |pos| f64::from(mob.get_walk_target_value(pos, world.as_ref())),
     )
 }

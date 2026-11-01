@@ -239,18 +239,6 @@ impl Animal for StriderEntity {
     fn is_food(&self, item_stack: &ItemStack) -> bool {
         item_stack.item.has_tag(&tag::Item::MINECRAFT_STRIDER_FOOD)
     }
-
-    /// Vanilla `Strider.getWalkTargetValue`: lava, and nothing else once in it.
-    fn animal_walk_target_value(&self, pos: &BlockPos) -> f32 {
-        let entity = self.get_entity();
-        if is_lava(entity.world.load().get_fluid(pos)) {
-            10.0
-        } else if entity.touching_lava.load(Ordering::Relaxed) {
-            f32::NEG_INFINITY
-        } else {
-            0.0
-        }
-    }
 }
 
 impl CustomSound for StriderEntity {
@@ -264,6 +252,22 @@ impl CustomSound for StriderEntity {
 }
 
 impl Mob for StriderEntity {
+    /// Vanilla `Strider.getWalkTargetValue`: lava is worth 10; otherwise nothing, or never
+    /// while the strider is in lava.
+    fn get_walk_target_value(&self, pos: &BlockPos, level: &dyn LevelAccessor) -> f32 {
+        if level.get_fluid(pos).has_tag(&tag::Fluid::MINECRAFT_LAVA) {
+            10.0
+        } else if self
+            .get_entity()
+            .touching_lava
+            .load(std::sync::atomic::Ordering::Relaxed)
+        {
+            f32::NEG_INFINITY
+        } else {
+            0.0
+        }
+    }
+
     /// Vanilla `Strider.checkSpawnObstruction`: only entities obstruct, the lava does not.
     fn check_spawn_obstruction(&self, level: &dyn LevelAccessor) -> bool {
         level.is_unobstructed(&self.get_mob_entity().living_entity.entity)

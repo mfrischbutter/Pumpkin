@@ -165,15 +165,6 @@ impl Mob for SkeletonEntityBase {
         Some(self.kind.ambient_sound)
     }
 
-    /// Vanilla `Monster.getWalkTargetValue`: the darker, the better.
-    fn get_walk_target_value(&self, pos: &BlockPos) -> f32 {
-        0.5 - self
-            .get_entity()
-            .world
-            .load()
-            .get_light_level_dependent_magic_value(pos)
-    }
-
     /// Vanilla `Skeleton.canFreeze`: a skeleton turns into a stray instead.
     fn mob_can_freeze(&self) -> bool {
         self.freezing.is_none()

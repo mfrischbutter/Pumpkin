@@ -1,3 +1,4 @@
+use crate::world::level_accessor::LevelAccessor;
 use std::sync::{
     Arc, Weak,
     atomic::{AtomicI32, AtomicU8, Ordering},
@@ -316,6 +317,15 @@ impl LookControlTrait for BeeLookControl {
 }
 
 impl Mob for BeeEntity {
+    /// Vanilla `Bee.getWalkTargetValue`: air is worth 10, anything else nothing.
+    fn get_walk_target_value(&self, pos: &BlockPos, level: &dyn LevelAccessor) -> f32 {
+        if level.get_block_state(pos).is_air() {
+            10.0
+        } else {
+            0.0
+        }
+    }
+
     fn mob_is_flapping(&self) -> bool {
         let entity = self.get_entity();
         !entity.on_ground.load(Ordering::Relaxed)

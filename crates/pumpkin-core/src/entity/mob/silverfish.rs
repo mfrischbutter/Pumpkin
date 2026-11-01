@@ -1,3 +1,4 @@
+use crate::world::level_accessor::LevelAccessor;
 use std::sync::Arc;
 use std::sync::atomic::AtomicI32;
 
@@ -98,12 +99,11 @@ impl Mob for SilverfishEntity {
     }
 
     /// Vanilla `Silverfish.getWalkTargetValue`: best on blocks it can hide in.
-    fn get_walk_target_value(&self, pos: &BlockPos) -> f32 {
-        let world = self.get_entity().world.load();
-        if infested::is_compatible_host_block(world.get_block_state_id(&pos.down())) {
+    fn get_walk_target_value(&self, pos: &BlockPos, level: &dyn LevelAccessor) -> f32 {
+        if infested::is_compatible_host_block(level.get_block_state_id(&pos.down())) {
             10.0
         } else {
-            0.5 - world.get_light_level_dependent_magic_value(pos)
+            -level.get_pathfinding_cost_from_light_levels(pos)
         }
     }
 }

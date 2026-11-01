@@ -42,6 +42,11 @@ pub struct EntityType {
     /// walk target. Written from the vanilla source until the Extractor dumps it.
     #[serde(default)]
     pub monster: bool,
+    /// Whether the vanilla class extends `PathfinderMob`: the mobs whose spawn needs a
+    /// non-negative walk target value. Written from the vanilla source until the Extractor
+    /// dumps it.
+    #[serde(default)]
+    pub pathfinder_mob: bool,
     /// Maximum number of this entity type allowed per chunk, if capped.
     pub limit_per_chunk: Option<i32>,
     /// Whether this entity can be summoned by the `/summon` command.
@@ -242,6 +247,7 @@ impl ToTokens for NamedEntityType<'_> {
         let mob = entity.mob.unwrap_or(false);
         let is_enemy = entity.is_enemy;
         let monster = entity.monster;
+        let pathfinder_mob = entity.pathfinder_mob;
         let limit_per_chunk = entity.limit_per_chunk.unwrap_or(0);
         let can_spawn_far_from_player = entity.can_spawn_far_from_player;
         let is_allowed_in_peaceful = entity.is_allowed_in_peaceful;
@@ -276,6 +282,7 @@ impl ToTokens for NamedEntityType<'_> {
                 mob: #mob,
                 is_enemy: #is_enemy,
                 monster: #monster,
+                pathfinder_mob: #pathfinder_mob,
                 saveable: #saveable,
                 limit_per_chunk: #limit_per_chunk,
                 summonable: #summonable,
@@ -371,6 +378,7 @@ pub fn build() -> TokenStream {
             pub mob: bool,
             pub is_enemy: bool,
             pub monster: bool,
+            pub pathfinder_mob: bool,
             pub saveable: bool,
             pub limit_per_chunk: i32,
             pub summonable: bool,

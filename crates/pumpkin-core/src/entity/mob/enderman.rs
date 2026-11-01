@@ -1,3 +1,4 @@
+use crate::world::level_accessor::LevelAccessor;
 use std::sync::{
     Arc, PoisonError, Weak,
     atomic::{AtomicBool, AtomicI32, Ordering},
@@ -574,7 +575,7 @@ impl Mob for EndermanEntity {
     }
 
     /// Vanilla `getWalkTargetValue`: every stroll target is worth the same.
-    fn get_walk_target_value(&self, _pos: &BlockPos) -> f32 {
+    fn get_walk_target_value(&self, _pos: &BlockPos, _level: &dyn LevelAccessor) -> f32 {
         0.0
     }
 
