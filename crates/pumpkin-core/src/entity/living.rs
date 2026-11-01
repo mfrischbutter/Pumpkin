@@ -3072,6 +3072,60 @@ impl LivingEntity {
         last.map(|damage_type| (damage_type, self.last_damage_attacker.load(Relaxed)))
     }
 
+    /// The air part of vanilla `LivingEntity.baseTick` for mobs (players keep theirs in the
+    /// `BreathManager`): with its eyes in water, a mob that cannot breathe there loses air and
+    /// drowns at -20; anywhere else it gets its air back.
+    fn tick_air_supply(&self, caller: &dyn EntityBase, mob: &dyn crate::entity::mob::Mob) {
+        let entity = &self.entity;
+        if !self.is_alive() {
+            return;
+        }
+        let air = entity.air_supply.load(Relaxed);
+        let max_air = mob.mob_max_air_supply();
+        let eye_pos =
+            BlockPos::floored(entity.pos.load().x, entity.get_eye_y(), entity.pos.load().z);
+        let in_bubble_column = entity.world.load().get_block(&eye_pos) == &Block::BUBBLE_COLUMN;
+        if entity.is_submerged_in_water() && !in_bubble_column {
+            let water_breathing = self.has_effect(&StatusEffect::WATER_BREATHING)
+                || self.has_effect(&StatusEffect::CONDUIT_POWER)
+                || self.has_effect(&StatusEffect::BREATH_OF_THE_NAUTILUS);
+            let can_drown = !entity
+                .entity_type
+                .has_tag(&tag::EntityType::MINECRAFT_CAN_BREATHE_UNDER_WATER)
+                && !water_breathing;
+            if can_drown {
+                entity.set_air_supply(self.decrease_air_supply(air));
+                if self.should_take_drowning_damage() {
+                    entity.set_air_supply(0);
+                    entity.world.load().send_entity_status(
+                        entity,
+                        EntityStatus::DrownParticles,
+                        pumpkin_protocol::bedrock::server::actor_event::ActorEventID::None,
+                    );
+                    caller.damage(caller, 2.0, DamageType::DROWN);
+                }
+            } else if air < max_air
+                && (!self.has_effect(&StatusEffect::BREATH_OF_THE_NAUTILUS)
+                    || self.has_effect(&StatusEffect::WATER_BREATHING)
+                    || self.has_effect(&StatusEffect::CONDUIT_POWER))
+            {
+                entity.set_air_supply(mob.mob_increase_air_supply(air));
+            }
+        } else if air < max_air {
+            entity.set_air_supply(mob.mob_increase_air_supply(air));
+        }
+    }
+
+    /// Vanilla `decreaseAirSupply`: respiration's oxygen bonus can save the breath.
+    fn decrease_air_supply(&self, current: i32) -> i32 {
+        let oxygen_bonus = self.get_attribute_value(&Attributes::OXYGEN_BONUS);
+        if oxygen_bonus > 0.0 && rand::random::<f64>() >= 1.0 / (oxygen_bonus + 1.0) {
+            current
+        } else {
+            current - 1
+        }
+    }
+
     #[must_use]
     pub fn should_take_drowning_damage(&self) -> bool {
         self.entity.air_supply.load(Relaxed) <= -DROWNING_INTERVAL
@@ -3965,6 +4019,9 @@ impl EntityBase for LivingEntity {
         self.tick_last_hurt_by_mob();
         if let Some(mob) = caller.get_mob() {
             mob.tick_ambient_sound();
+            if !mob.mob_handles_own_air_supply() {
+                self.tick_air_supply(caller, mob);
+            }
             mob.base_tick();
         }
 

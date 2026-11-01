@@ -326,6 +326,7 @@ macro_rules! squid_mob_hooks {
         fn get_ambient_sound(&self) -> Option<pumpkin_data::sound::Sound> { Some($crate::entity::passive::squid::Squid::ambient_sound(self)) }
         fn get_ambient_sound_interval(&self) -> i32 { $crate::entity::passive::water_animal::AMBIENT_SOUND_INTERVAL }
         fn base_tick(&self) { $crate::entity::passive::squid::Squid::squid_base_tick(self, self); }
+        fn mob_handles_own_air_supply(&self) -> bool { true }
         fn travel(&self, caller: &dyn $crate::entity::EntityBase) -> bool {
             let entity = &self.mob_entity.living_entity.entity;
             entity.move_entity(caller, entity.velocity.load());

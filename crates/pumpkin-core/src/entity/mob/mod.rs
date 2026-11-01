@@ -1525,6 +1525,22 @@ pub trait Mob: EntityBase + Send + Sync {
 
     fn base_tick(&self) {}
 
+    /// Vanilla `getMaxAirSupply`.
+    fn mob_max_air_supply(&self) -> i32 {
+        crate::entity::breath::MAX_AIR
+    }
+
+    /// Vanilla `increaseAirSupply`: 4 more a tick out of water, up to the maximum.
+    fn mob_increase_air_supply(&self, current: i32) -> i32 {
+        (current + 4).min(self.mob_max_air_supply())
+    }
+
+    /// Whether the mob keeps its air by its own rules in `base_tick` (vanilla `handleAirSupply`
+    /// of water animals, which overwrites what `LivingEntity.baseTick` did).
+    fn mob_handles_own_air_supply(&self) -> bool {
+        false
+    }
+
     fn travel(&self, _caller: &dyn EntityBase) -> bool {
         false
     }

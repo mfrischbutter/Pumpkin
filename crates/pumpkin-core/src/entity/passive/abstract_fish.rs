@@ -315,6 +315,10 @@ macro_rules! fish_mob_hooks {
             $crate::entity::passive::abstract_fish::AbstractFish::fish_base_tick(self, self);
         }
 
+        fn mob_handles_own_air_supply(&self) -> bool {
+            true
+        }
+
         fn remove_when_far_away(&self, _distance_sq: f64) -> bool {
             $crate::entity::passive::abstract_fish::AbstractFish::fish_remove_when_far_away(self)
         }
