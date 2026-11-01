@@ -206,6 +206,9 @@ fn update_spawn_from_nbt(level_data: &mut LevelData, data: &NbtCompound) {
         if let Some(spawn_pitch) = spawn_comp.get_float("pitch") {
             level_data.spawn_pitch = spawn_pitch;
         }
+        if let Some(dimension) = spawn_comp.get_string("dimension") {
+            level_data.spawn_dimension = dimension.to_string();
+        }
     }
     if let Some(spawn_x) = data.get_int("SpawnX") {
         level_data.spawn_x = spawn_x;
@@ -322,7 +325,7 @@ fn level_data_to_nbt(info: &LevelData, data: &mut NbtCompound) {
 
     // 26.2 spawn
     let mut spawn_comp = NbtCompound::new();
-    spawn_comp.put_string("dimension", "minecraft:overworld".to_string());
+    spawn_comp.put_string("dimension", info.spawn_dimension.clone());
     spawn_comp.put(
         "pos",
         NbtTag::IntArray(vec![info.spawn_x, info.spawn_y, info.spawn_z]),
@@ -938,6 +941,7 @@ mod test {
             spawn_z: 160,
             spawn_yaw: 0.0,
             spawn_pitch: 0.0,
+            spawn_dimension: "minecraft:overworld".to_string(),
             level_version: 19133,
             world_version: WorldVersion {
                 name: "1.21.4".to_string(),

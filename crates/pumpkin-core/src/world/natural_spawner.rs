@@ -12,7 +12,6 @@ use dashmap::DashMap;
 use pumpkin_data::biome::Spawner;
 use pumpkin_data::block_properties::CampfireLikeProperties;
 use pumpkin_data::chunk::Biome;
-use pumpkin_data::dimension::Dimension;
 use pumpkin_data::entity::{EntityType, MobCategory, SpawnLocation};
 use pumpkin_data::fluid::Fluid;
 use pumpkin_data::structures::{SpawnEntry, Structure, StructureKeys};
@@ -902,8 +901,8 @@ pub fn is_right_distance_to_player_and_spawn_point(
         return false;
     }
 
-    if world.dimension == Dimension::OVERWORLD {
-        let level_info = world.level_info.load();
+    let level_info = world.level_info.load();
+    if level_info.spawn_dimension == world.dimension.minecraft_name {
         let dx = f64::from(level_info.spawn_x - pos.0.x);
         let dy = (f64::from(level_info.spawn_y) + 0.5) - f64::from(pos.0.y);
         let dz = f64::from(level_info.spawn_z - pos.0.z);

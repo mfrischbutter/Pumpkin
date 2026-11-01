@@ -71,6 +71,9 @@ pub struct LevelData {
     pub spawn_yaw: f32,
     #[serde(default)]
     pub spawn_pitch: f32,
+    /// Vanilla `LevelData.RespawnData.dimension`: the dimension the spawn point lies in.
+    #[serde(default = "default_spawn_dimension")]
+    pub spawn_dimension: String,
     #[serde(rename = "Version", default)]
     pub world_version: WorldVersion,
     #[serde(rename = "version", default = "default_level_version")]
@@ -106,6 +109,7 @@ const DEFAULT_BORDER_WARNING_BLOCKS: f64 = 5.0;
 const DEFAULT_BORDER_WARNING_TIME: f64 = 15.0;
 const DEFAULT_DIFFICULTY: Difficulty = Difficulty::Normal;
 const DEFAULT_LEVEL_NAME: &str = "world";
+const DEFAULT_SPAWN_DIMENSION: &str = "minecraft:overworld";
 const DEFAULT_SPAWN_Y: i32 = 200;
 const DEFAULT_ENABLED_DATA_PACK: &str = "vanilla";
 const DEFAULT_WORLD_VERSION_SERIES: &str = "main";
@@ -139,6 +143,9 @@ const fn default_difficulty() -> Difficulty {
 }
 fn default_level_name() -> String {
     DEFAULT_LEVEL_NAME.to_string()
+}
+fn default_spawn_dimension() -> String {
+    DEFAULT_SPAWN_DIMENSION.to_string()
 }
 const fn default_spawn_y() -> i32 {
     DEFAULT_SPAWN_Y
@@ -554,6 +561,7 @@ impl LevelData {
             spawn_z: 0,
             spawn_yaw: 0.0,
             spawn_pitch: 0.0,
+            spawn_dimension: default_spawn_dimension(),
             world_version: WorldVersion::default(),
             level_version: MAXIMUM_SUPPORTED_LEVEL_VERSION,
             map_id: 0,
