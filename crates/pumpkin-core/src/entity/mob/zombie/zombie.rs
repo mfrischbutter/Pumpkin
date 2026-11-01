@@ -56,6 +56,14 @@ impl Mob for ZombieEntity {
             .populate_default_equipment_enchantments(difficulty);
     }
 
+    fn mob_tick(&self, caller: &dyn EntityBase) {
+        self.entity.mob_tick(caller);
+    }
+
+    fn mob_init_data_tracker(&self) {
+        self.entity.mob_init_data_tracker();
+    }
+
     fn mob_write_nbt(&self, nbt: &mut NbtCompound) {
         self.entity.mob_write_nbt(nbt);
     }

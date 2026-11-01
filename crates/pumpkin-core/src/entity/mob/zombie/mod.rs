@@ -5,9 +5,10 @@ use crate::entity::ai::goal::look_around::RandomLookAroundGoal;
 use crate::entity::ai::goal::revenge::RevengeGoal;
 use crate::entity::ai::goal::wander_around::WanderAroundGoal;
 use crate::entity::ai::goal::zombie_attack::ZombieAttackGoal;
+use crate::entity::mob::conversion::ConversionTracker;
 use crate::entity::mob::equipment::RegionalDifficulty;
 use crate::entity::{
-    Entity,
+    Entity, EntityBase,
     ai::behavior::hunting::{self, Hunt},
     ai::goal::look_at_entity::LookAtEntityGoal,
     ai::target_match::TargetMatch,
@@ -17,6 +18,7 @@ use pumpkin_data::data_component_impl::EquipmentSlot;
 use pumpkin_data::entity::EntityType;
 use pumpkin_data::item::Item;
 use pumpkin_data::item_stack::ItemStack;
+use pumpkin_data::world::WorldEvent;
 use pumpkin_nbt::compound::NbtCompound;
 use pumpkin_util::Difficulty;
 use std::sync::atomic::{AtomicBool, Ordering};
@@ -39,6 +41,28 @@ pub struct ZombieEntityBase {
     pub mob_entity: MobEntity,
     pub can_break_doors: AtomicBool,
     pub is_baby: AtomicBool,
+    /// Vanilla `Zombie.drowningTracker`, for the kinds that `convertsInWater`.
+    drowning: Option<ConversionTracker>,
+}
+
+/// Vanilla `Zombie.drowningTracker`: 600 ticks with the eyes in water start a 300 tick
+/// conversion, a zombie into a drowned and a husk into a zombie (`convertsToWhenDrowning`).
+fn drowning_tracker(entity_type: &EntityType) -> Option<ConversionTracker> {
+    let (converts_to, event) = match entity_type.id {
+        id if id == EntityType::ZOMBIE.id => {
+            (&EntityType::DROWNED, WorldEvent::SoundZombieToDrowned)
+        }
+        id if id == EntityType::HUSK.id => (&EntityType::ZOMBIE, WorldEvent::SoundHuskToZombie),
+        _ => return None,
+    };
+    Some(ConversionTracker::new(
+        converts_to,
+        event,
+        pumpkin_data::tracked_data::zombie::DATA_DROWNED_CONVERSION_ID,
+        |mob| mob.get_entity().is_submerged_in_water(),
+        ("InWaterTime", 600),
+        ("DrownedConversionTime", 300),
+    ))
 }
 
 impl ZombieEntityBase {
@@ -63,11 +87,13 @@ impl ZombieEntityBase {
     /// Vanilla `Zombie.registerGoals` without `addBehaviourGoals`, for subclasses that replace
     /// the behaviour goals, like the drowned.
     pub fn without_behaviour_goals(entity: Entity) -> Arc<Self> {
+        let drowning = drowning_tracker(entity.entity_type);
         let mob_entity = MobEntity::new(entity);
         let zombie = Self {
             mob_entity,
             can_break_doors: AtomicBool::new(false),
             is_baby: AtomicBool::new(false),
+            drowning,
         };
         let mob_arc = Arc::new(zombie);
         let mob_weak: Weak<dyn Mob> = {
@@ -234,11 +260,26 @@ impl Mob for ZombieEntityBase {
         }
     }
 
+    fn mob_tick(&self, _caller: &dyn EntityBase) {
+        if let Some(drowning) = &self.drowning {
+            drowning.tick(self);
+        }
+    }
+
+    fn mob_init_data_tracker(&self) {
+        if let Some(drowning) = &self.drowning {
+            drowning.sync(self.get_entity());
+        }
+    }
+
     fn mob_write_nbt(&self, nbt: &mut NbtCompound) {
         // Vanilla Zombie.addAdditionalSaveData; shared by every zombie-family mob.
         nbt.put_bool("IsBaby", self.is_baby());
         if self.can_break_doors() {
             nbt.put_bool("CanBreakDoors", true);
+        }
+        if let Some(drowning) = &self.drowning {
+            drowning.write_nbt(self, nbt);
         }
     }
 
@@ -246,6 +287,9 @@ impl Mob for ZombieEntityBase {
         self.set_baby(nbt.get_bool("IsBaby").unwrap_or(false));
         if let Some(can_break_doors) = nbt.get_bool("CanBreakDoors") {
             self.set_can_break_doors(can_break_doors, self);
+        }
+        if let Some(drowning) = &self.drowning {
+            drowning.read_nbt(self.get_entity(), nbt);
         }
     }
 }
