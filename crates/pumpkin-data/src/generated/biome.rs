@@ -159,7 +159,7 @@ impl Biome {
             &crate::carver::CAVE_EXTRA_UNDERGROUND,
             &crate::carver::CANYON,
         ],
-        creature_spawn_probability: 0.1f32,
+        creature_spawn_probability: 0.03f32,
         spawners: SpawnGroups {
             monster: &[
                 Spawner {
@@ -2895,7 +2895,7 @@ impl Biome {
             &crate::carver::CAVE_EXTRA_UNDERGROUND,
             &crate::carver::CANYON,
         ],
-        creature_spawn_probability: 0.1f32,
+        creature_spawn_probability: 0.03f32,
         spawners: SpawnGroups {
             monster: &[
                 Spawner {
@@ -4064,7 +4064,7 @@ impl Biome {
             &crate::carver::CAVE_EXTRA_UNDERGROUND,
             &crate::carver::CANYON,
         ],
-        creature_spawn_probability: 0.1f32,
+        creature_spawn_probability: 0.07f32,
         spawners: SpawnGroups {
             monster: &[
                 Spawner {
@@ -7220,7 +7220,7 @@ impl Biome {
             &crate::carver::CAVE_EXTRA_UNDERGROUND,
             &crate::carver::CANYON,
         ],
-        creature_spawn_probability: 0.1f32,
+        creature_spawn_probability: 0.07f32,
         spawners: SpawnGroups {
             monster: &[
                 Spawner {
@@ -10020,7 +10020,7 @@ impl Biome {
             &crate::carver::CAVE_EXTRA_UNDERGROUND,
             &crate::carver::CANYON,
         ],
-        creature_spawn_probability: 0.1f32,
+        creature_spawn_probability: 0.04f32,
         spawners: SpawnGroups {
             monster: &[
                 Spawner {

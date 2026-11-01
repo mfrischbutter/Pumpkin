@@ -134471,7 +134471,7 @@ impl Block {
         item_id: 946,
         default_state: &BlockState {
             id: BlockStateId::new(2339u16).unwrap(),
-            state_flags: 4104,
+            state_flags: 12296,
             side_flags: 0,
             instrument: NoteblockInstrument::Harp,
             luminance: 0,
@@ -134486,7 +134486,7 @@ impl Block {
         states: &[
             BlockState {
                 id: BlockStateId::new(2326u16).unwrap(),
-                state_flags: 4128,
+                state_flags: 12320,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -134500,7 +134500,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(2327u16).unwrap(),
-                state_flags: 4104,
+                state_flags: 12296,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -134514,7 +134514,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(2328u16).unwrap(),
-                state_flags: 4128,
+                state_flags: 12320,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -134528,7 +134528,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(2329u16).unwrap(),
-                state_flags: 4104,
+                state_flags: 12296,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -134542,7 +134542,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(2330u16).unwrap(),
-                state_flags: 4128,
+                state_flags: 12320,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -134556,7 +134556,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(2331u16).unwrap(),
-                state_flags: 4104,
+                state_flags: 12296,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -134570,7 +134570,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(2332u16).unwrap(),
-                state_flags: 4128,
+                state_flags: 12320,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -134584,7 +134584,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(2333u16).unwrap(),
-                state_flags: 4104,
+                state_flags: 12296,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -134598,7 +134598,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(2334u16).unwrap(),
-                state_flags: 4128,
+                state_flags: 12320,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -134612,7 +134612,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(2335u16).unwrap(),
-                state_flags: 4104,
+                state_flags: 12296,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -134626,7 +134626,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(2336u16).unwrap(),
-                state_flags: 4128,
+                state_flags: 12320,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -134640,7 +134640,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(2337u16).unwrap(),
-                state_flags: 4104,
+                state_flags: 12296,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -134654,7 +134654,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(2338u16).unwrap(),
-                state_flags: 4128,
+                state_flags: 12320,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -134668,7 +134668,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(2339u16).unwrap(),
-                state_flags: 4104,
+                state_flags: 12296,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -134682,7 +134682,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(2340u16).unwrap(),
-                state_flags: 4128,
+                state_flags: 12320,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -134696,7 +134696,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(2341u16).unwrap(),
-                state_flags: 4104,
+                state_flags: 12296,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -134710,7 +134710,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(2342u16).unwrap(),
-                state_flags: 4128,
+                state_flags: 12320,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -134724,7 +134724,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(2343u16).unwrap(),
-                state_flags: 4104,
+                state_flags: 12296,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -134738,7 +134738,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(2344u16).unwrap(),
-                state_flags: 4128,
+                state_flags: 12320,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -134752,7 +134752,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(2345u16).unwrap(),
-                state_flags: 4104,
+                state_flags: 12296,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -134766,7 +134766,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(2346u16).unwrap(),
-                state_flags: 4128,
+                state_flags: 12320,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -134780,7 +134780,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(2347u16).unwrap(),
-                state_flags: 4104,
+                state_flags: 12296,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -134794,7 +134794,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(2348u16).unwrap(),
-                state_flags: 4128,
+                state_flags: 12320,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -134808,7 +134808,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(2349u16).unwrap(),
-                state_flags: 4104,
+                state_flags: 12296,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -183265,7 +183265,7 @@ impl Block {
         item_id: 824,
         default_state: &BlockState {
             id: BlockStateId::new(6727u16).unwrap(),
-            state_flags: 8,
+            state_flags: 8200,
             side_flags: 0,
             instrument: NoteblockInstrument::Harp,
             luminance: 0,
@@ -183280,7 +183280,7 @@ impl Block {
         states: &[
             BlockState {
                 id: BlockStateId::new(5567u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -183294,7 +183294,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5568u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -183308,7 +183308,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5569u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -183322,7 +183322,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5570u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -183336,7 +183336,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5571u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -183350,7 +183350,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5572u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -183364,7 +183364,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5573u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -183378,7 +183378,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5574u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -183392,7 +183392,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5575u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -183406,7 +183406,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5576u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -183420,7 +183420,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5577u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -183434,7 +183434,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5578u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -183448,7 +183448,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5579u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -183462,7 +183462,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5580u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -183476,7 +183476,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5581u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -183490,7 +183490,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5582u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -183504,7 +183504,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5583u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -183518,7 +183518,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5584u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -183532,7 +183532,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5585u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -183546,7 +183546,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5586u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -183560,7 +183560,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5587u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -183574,7 +183574,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5588u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -183588,7 +183588,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5589u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -183602,7 +183602,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5590u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -183616,7 +183616,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5591u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -183630,7 +183630,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5592u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -183644,7 +183644,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5593u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -183658,7 +183658,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5594u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -183672,7 +183672,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5595u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -183686,7 +183686,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5596u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -183700,7 +183700,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5597u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -183714,7 +183714,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5598u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -183728,7 +183728,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5599u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -183742,7 +183742,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5600u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -183756,7 +183756,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5601u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -183770,7 +183770,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5602u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -183784,7 +183784,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5603u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -183798,7 +183798,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5604u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -183812,7 +183812,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5605u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -183826,7 +183826,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5606u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -183840,7 +183840,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5607u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -183854,7 +183854,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5608u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -183868,7 +183868,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5609u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -183882,7 +183882,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5610u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -183896,7 +183896,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5611u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -183910,7 +183910,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5612u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -183924,7 +183924,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5613u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -183938,7 +183938,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5614u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -183952,7 +183952,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5615u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -183966,7 +183966,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5616u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -183980,7 +183980,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5617u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -183994,7 +183994,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5618u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -184008,7 +184008,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5619u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -184022,7 +184022,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5620u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -184036,7 +184036,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5621u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -184050,7 +184050,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5622u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -184064,7 +184064,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5623u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -184078,7 +184078,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5624u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -184092,7 +184092,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5625u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -184106,7 +184106,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5626u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -184120,7 +184120,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5627u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -184134,7 +184134,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5628u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -184148,7 +184148,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5629u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -184162,7 +184162,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5630u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -184176,7 +184176,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5631u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -184190,7 +184190,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5632u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -184204,7 +184204,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5633u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -184218,7 +184218,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5634u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -184232,7 +184232,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5635u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -184246,7 +184246,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5636u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -184260,7 +184260,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5637u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -184274,7 +184274,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5638u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -184288,7 +184288,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5639u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -184302,7 +184302,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5640u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -184316,7 +184316,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5641u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -184330,7 +184330,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5642u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -184344,7 +184344,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5643u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -184358,7 +184358,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5644u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -184372,7 +184372,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5645u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -184386,7 +184386,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5646u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -184400,7 +184400,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5647u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -184414,7 +184414,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5648u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -184428,7 +184428,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5649u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -184442,7 +184442,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5650u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -184456,7 +184456,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5651u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -184470,7 +184470,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5652u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -184484,7 +184484,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5653u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -184498,7 +184498,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5654u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -184512,7 +184512,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5655u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -184526,7 +184526,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5656u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -184540,7 +184540,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5657u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -184554,7 +184554,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5658u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -184568,7 +184568,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5659u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -184582,7 +184582,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5660u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -184596,7 +184596,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5661u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -184610,7 +184610,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5662u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -184624,7 +184624,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5663u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -184638,7 +184638,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5664u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -184652,7 +184652,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5665u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -184666,7 +184666,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5666u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -184680,7 +184680,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5667u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -184694,7 +184694,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5668u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -184708,7 +184708,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5669u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -184722,7 +184722,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5670u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -184736,7 +184736,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5671u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -184750,7 +184750,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5672u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -184764,7 +184764,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5673u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -184778,7 +184778,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5674u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -184792,7 +184792,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5675u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -184806,7 +184806,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5676u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -184820,7 +184820,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5677u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -184834,7 +184834,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5678u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -184848,7 +184848,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5679u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -184862,7 +184862,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5680u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -184876,7 +184876,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5681u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -184890,7 +184890,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5682u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -184904,7 +184904,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5683u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -184918,7 +184918,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5684u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -184932,7 +184932,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5685u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -184946,7 +184946,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5686u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -184960,7 +184960,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5687u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -184974,7 +184974,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5688u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -184988,7 +184988,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5689u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -185002,7 +185002,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5690u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -185016,7 +185016,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5691u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -185030,7 +185030,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5692u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -185044,7 +185044,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5693u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -185058,7 +185058,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5694u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -185072,7 +185072,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5695u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -185086,7 +185086,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5696u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -185100,7 +185100,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5697u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -185114,7 +185114,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5698u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -185128,7 +185128,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5699u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -185142,7 +185142,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5700u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -185156,7 +185156,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5701u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -185170,7 +185170,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5702u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -185184,7 +185184,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5703u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -185198,7 +185198,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5704u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -185212,7 +185212,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5705u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -185226,7 +185226,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5706u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -185240,7 +185240,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5707u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -185254,7 +185254,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5708u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -185268,7 +185268,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5709u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -185282,7 +185282,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5710u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -185296,7 +185296,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5711u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -185310,7 +185310,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5712u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -185324,7 +185324,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5713u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -185338,7 +185338,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5714u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -185352,7 +185352,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5715u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -185366,7 +185366,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5716u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -185380,7 +185380,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5717u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -185394,7 +185394,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5718u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -185408,7 +185408,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5719u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -185422,7 +185422,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5720u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -185436,7 +185436,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5721u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -185450,7 +185450,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5722u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -185464,7 +185464,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5723u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -185478,7 +185478,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5724u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -185492,7 +185492,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5725u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -185506,7 +185506,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5726u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -185520,7 +185520,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5727u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -185534,7 +185534,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5728u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -185548,7 +185548,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5729u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -185562,7 +185562,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5730u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -185576,7 +185576,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5731u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -185590,7 +185590,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5732u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -185604,7 +185604,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5733u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -185618,7 +185618,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5734u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -185632,7 +185632,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5735u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -185646,7 +185646,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5736u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -185660,7 +185660,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5737u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -185674,7 +185674,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5738u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -185688,7 +185688,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5739u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -185702,7 +185702,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5740u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -185716,7 +185716,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5741u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -185730,7 +185730,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5742u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -185744,7 +185744,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5743u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -185758,7 +185758,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5744u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -185772,7 +185772,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5745u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -185786,7 +185786,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5746u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -185800,7 +185800,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5747u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -185814,7 +185814,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5748u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -185828,7 +185828,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5749u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -185842,7 +185842,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5750u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -185856,7 +185856,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5751u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -185870,7 +185870,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5752u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -185884,7 +185884,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5753u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -185898,7 +185898,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5754u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -185912,7 +185912,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5755u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -185926,7 +185926,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5756u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -185940,7 +185940,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5757u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -185954,7 +185954,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5758u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -185968,7 +185968,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5759u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -185982,7 +185982,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5760u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -185996,7 +185996,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5761u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -186010,7 +186010,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5762u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -186024,7 +186024,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5763u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -186038,7 +186038,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5764u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -186052,7 +186052,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5765u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -186066,7 +186066,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5766u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -186080,7 +186080,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5767u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -186094,7 +186094,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5768u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -186108,7 +186108,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5769u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -186122,7 +186122,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5770u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -186136,7 +186136,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5771u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -186150,7 +186150,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5772u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -186164,7 +186164,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5773u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -186178,7 +186178,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5774u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -186192,7 +186192,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5775u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -186206,7 +186206,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5776u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -186220,7 +186220,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5777u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -186234,7 +186234,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5778u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -186248,7 +186248,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5779u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -186262,7 +186262,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5780u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -186276,7 +186276,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5781u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -186290,7 +186290,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5782u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -186304,7 +186304,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5783u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -186318,7 +186318,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5784u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -186332,7 +186332,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5785u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -186346,7 +186346,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5786u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -186360,7 +186360,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5787u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -186374,7 +186374,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5788u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -186388,7 +186388,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5789u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -186402,7 +186402,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5790u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -186416,7 +186416,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5791u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -186430,7 +186430,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5792u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -186444,7 +186444,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5793u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -186458,7 +186458,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5794u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -186472,7 +186472,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5795u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -186486,7 +186486,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5796u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -186500,7 +186500,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5797u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -186514,7 +186514,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5798u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -186528,7 +186528,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5799u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -186542,7 +186542,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5800u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -186556,7 +186556,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5801u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -186570,7 +186570,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5802u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -186584,7 +186584,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5803u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -186598,7 +186598,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5804u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -186612,7 +186612,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5805u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -186626,7 +186626,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5806u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -186640,7 +186640,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5807u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -186654,7 +186654,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5808u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -186668,7 +186668,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5809u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -186682,7 +186682,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5810u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -186696,7 +186696,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5811u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -186710,7 +186710,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5812u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -186724,7 +186724,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5813u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -186738,7 +186738,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5814u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -186752,7 +186752,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5815u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -186766,7 +186766,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5816u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -186780,7 +186780,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5817u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -186794,7 +186794,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5818u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -186808,7 +186808,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5819u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -186822,7 +186822,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5820u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -186836,7 +186836,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5821u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -186850,7 +186850,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5822u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -186864,7 +186864,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5823u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -186878,7 +186878,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5824u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -186892,7 +186892,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5825u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -186906,7 +186906,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5826u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -186920,7 +186920,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5827u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -186934,7 +186934,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5828u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -186948,7 +186948,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5829u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -186962,7 +186962,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5830u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -186976,7 +186976,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5831u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -186990,7 +186990,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5832u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -187004,7 +187004,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5833u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -187018,7 +187018,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5834u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -187032,7 +187032,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5835u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -187046,7 +187046,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5836u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -187060,7 +187060,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5837u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -187074,7 +187074,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5838u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -187088,7 +187088,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5839u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -187102,7 +187102,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5840u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -187116,7 +187116,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5841u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -187130,7 +187130,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5842u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -187144,7 +187144,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5843u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -187158,7 +187158,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5844u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -187172,7 +187172,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5845u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -187186,7 +187186,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5846u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -187200,7 +187200,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5847u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -187214,7 +187214,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5848u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -187228,7 +187228,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5849u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -187242,7 +187242,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5850u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -187256,7 +187256,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5851u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -187270,7 +187270,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5852u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -187284,7 +187284,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5853u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -187298,7 +187298,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5854u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -187312,7 +187312,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5855u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -187326,7 +187326,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5856u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -187340,7 +187340,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5857u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -187354,7 +187354,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5858u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -187368,7 +187368,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5859u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -187382,7 +187382,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5860u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -187396,7 +187396,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5861u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -187410,7 +187410,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5862u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -187424,7 +187424,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5863u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -187438,7 +187438,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5864u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -187452,7 +187452,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5865u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -187466,7 +187466,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5866u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -187480,7 +187480,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5867u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -187494,7 +187494,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5868u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -187508,7 +187508,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5869u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -187522,7 +187522,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5870u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -187536,7 +187536,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5871u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -187550,7 +187550,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5872u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -187564,7 +187564,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5873u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -187578,7 +187578,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5874u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -187592,7 +187592,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5875u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -187606,7 +187606,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5876u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -187620,7 +187620,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5877u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -187634,7 +187634,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5878u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -187648,7 +187648,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5879u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -187662,7 +187662,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5880u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -187676,7 +187676,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5881u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -187690,7 +187690,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5882u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -187704,7 +187704,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5883u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -187718,7 +187718,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5884u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -187732,7 +187732,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5885u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -187746,7 +187746,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5886u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -187760,7 +187760,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5887u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -187774,7 +187774,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5888u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -187788,7 +187788,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5889u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -187802,7 +187802,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5890u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -187816,7 +187816,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5891u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -187830,7 +187830,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5892u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -187844,7 +187844,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5893u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -187858,7 +187858,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5894u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -187872,7 +187872,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5895u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -187886,7 +187886,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5896u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -187900,7 +187900,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5897u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -187914,7 +187914,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5898u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -187928,7 +187928,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5899u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -187942,7 +187942,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5900u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -187956,7 +187956,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5901u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -187970,7 +187970,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5902u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -187984,7 +187984,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5903u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -187998,7 +187998,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5904u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -188012,7 +188012,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5905u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -188026,7 +188026,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5906u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -188040,7 +188040,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5907u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -188054,7 +188054,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5908u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -188068,7 +188068,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5909u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -188082,7 +188082,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5910u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -188096,7 +188096,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5911u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -188110,7 +188110,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5912u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -188124,7 +188124,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5913u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -188138,7 +188138,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5914u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -188152,7 +188152,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5915u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -188166,7 +188166,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5916u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -188180,7 +188180,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5917u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -188194,7 +188194,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5918u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -188208,7 +188208,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5919u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -188222,7 +188222,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5920u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -188236,7 +188236,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5921u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -188250,7 +188250,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5922u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -188264,7 +188264,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5923u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -188278,7 +188278,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5924u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -188292,7 +188292,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5925u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -188306,7 +188306,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5926u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -188320,7 +188320,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5927u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -188334,7 +188334,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5928u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -188348,7 +188348,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5929u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -188362,7 +188362,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5930u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -188376,7 +188376,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5931u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -188390,7 +188390,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5932u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -188404,7 +188404,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5933u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -188418,7 +188418,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5934u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -188432,7 +188432,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5935u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -188446,7 +188446,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5936u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -188460,7 +188460,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5937u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -188474,7 +188474,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5938u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -188488,7 +188488,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5939u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -188502,7 +188502,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5940u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -188516,7 +188516,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5941u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -188530,7 +188530,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5942u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -188544,7 +188544,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5943u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -188558,7 +188558,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5944u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -188572,7 +188572,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5945u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -188586,7 +188586,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5946u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -188600,7 +188600,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5947u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -188614,7 +188614,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5948u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -188628,7 +188628,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5949u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -188642,7 +188642,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5950u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -188656,7 +188656,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5951u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -188670,7 +188670,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5952u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -188684,7 +188684,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5953u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -188698,7 +188698,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5954u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -188712,7 +188712,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5955u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -188726,7 +188726,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5956u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -188740,7 +188740,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5957u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -188754,7 +188754,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5958u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -188768,7 +188768,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5959u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -188782,7 +188782,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5960u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -188796,7 +188796,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5961u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -188810,7 +188810,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5962u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -188824,7 +188824,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5963u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -188838,7 +188838,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5964u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -188852,7 +188852,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5965u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -188866,7 +188866,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5966u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -188880,7 +188880,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5967u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -188894,7 +188894,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5968u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -188908,7 +188908,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5969u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -188922,7 +188922,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5970u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -188936,7 +188936,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5971u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -188950,7 +188950,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5972u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -188964,7 +188964,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5973u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -188978,7 +188978,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5974u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -188992,7 +188992,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5975u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -189006,7 +189006,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5976u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -189020,7 +189020,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5977u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -189034,7 +189034,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5978u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -189048,7 +189048,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5979u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -189062,7 +189062,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5980u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -189076,7 +189076,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5981u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -189090,7 +189090,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5982u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -189104,7 +189104,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5983u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -189118,7 +189118,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5984u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -189132,7 +189132,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5985u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -189146,7 +189146,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5986u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -189160,7 +189160,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5987u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -189174,7 +189174,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5988u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -189188,7 +189188,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5989u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -189202,7 +189202,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5990u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -189216,7 +189216,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5991u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -189230,7 +189230,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5992u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -189244,7 +189244,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5993u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -189258,7 +189258,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5994u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -189272,7 +189272,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5995u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -189286,7 +189286,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5996u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -189300,7 +189300,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5997u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -189314,7 +189314,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5998u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -189328,7 +189328,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(5999u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -189342,7 +189342,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6000u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -189356,7 +189356,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6001u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -189370,7 +189370,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6002u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -189384,7 +189384,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6003u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -189398,7 +189398,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6004u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -189412,7 +189412,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6005u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -189426,7 +189426,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6006u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -189440,7 +189440,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6007u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -189454,7 +189454,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6008u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -189468,7 +189468,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6009u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -189482,7 +189482,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6010u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -189496,7 +189496,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6011u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -189510,7 +189510,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6012u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -189524,7 +189524,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6013u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -189538,7 +189538,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6014u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -189552,7 +189552,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6015u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -189566,7 +189566,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6016u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -189580,7 +189580,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6017u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -189594,7 +189594,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6018u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -189608,7 +189608,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6019u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -189622,7 +189622,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6020u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -189636,7 +189636,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6021u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -189650,7 +189650,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6022u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -189664,7 +189664,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6023u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -189678,7 +189678,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6024u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -189692,7 +189692,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6025u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -189706,7 +189706,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6026u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -189720,7 +189720,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6027u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -189734,7 +189734,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6028u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -189748,7 +189748,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6029u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -189762,7 +189762,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6030u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -189776,7 +189776,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6031u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -189790,7 +189790,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6032u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -189804,7 +189804,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6033u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -189818,7 +189818,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6034u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -189832,7 +189832,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6035u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -189846,7 +189846,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6036u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -189860,7 +189860,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6037u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -189874,7 +189874,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6038u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -189888,7 +189888,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6039u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -189902,7 +189902,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6040u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -189916,7 +189916,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6041u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -189930,7 +189930,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6042u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -189944,7 +189944,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6043u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -189958,7 +189958,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6044u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -189972,7 +189972,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6045u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -189986,7 +189986,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6046u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -190000,7 +190000,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6047u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -190014,7 +190014,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6048u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -190028,7 +190028,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6049u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -190042,7 +190042,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6050u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -190056,7 +190056,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6051u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -190070,7 +190070,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6052u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -190084,7 +190084,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6053u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -190098,7 +190098,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6054u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -190112,7 +190112,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6055u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -190126,7 +190126,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6056u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -190140,7 +190140,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6057u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -190154,7 +190154,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6058u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -190168,7 +190168,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6059u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -190182,7 +190182,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6060u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -190196,7 +190196,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6061u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -190210,7 +190210,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6062u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -190224,7 +190224,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6063u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -190238,7 +190238,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6064u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -190252,7 +190252,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6065u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -190266,7 +190266,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6066u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -190280,7 +190280,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6067u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -190294,7 +190294,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6068u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -190308,7 +190308,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6069u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -190322,7 +190322,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6070u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -190336,7 +190336,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6071u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -190350,7 +190350,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6072u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -190364,7 +190364,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6073u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -190378,7 +190378,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6074u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -190392,7 +190392,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6075u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -190406,7 +190406,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6076u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -190420,7 +190420,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6077u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -190434,7 +190434,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6078u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -190448,7 +190448,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6079u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -190462,7 +190462,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6080u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -190476,7 +190476,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6081u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -190490,7 +190490,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6082u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -190504,7 +190504,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6083u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -190518,7 +190518,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6084u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -190532,7 +190532,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6085u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -190546,7 +190546,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6086u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -190560,7 +190560,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6087u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -190574,7 +190574,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6088u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -190588,7 +190588,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6089u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -190602,7 +190602,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6090u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -190616,7 +190616,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6091u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -190630,7 +190630,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6092u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -190644,7 +190644,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6093u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -190658,7 +190658,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6094u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -190672,7 +190672,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6095u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -190686,7 +190686,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6096u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -190700,7 +190700,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6097u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -190714,7 +190714,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6098u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -190728,7 +190728,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6099u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -190742,7 +190742,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6100u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -190756,7 +190756,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6101u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -190770,7 +190770,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6102u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -190784,7 +190784,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6103u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -190798,7 +190798,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6104u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -190812,7 +190812,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6105u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -190826,7 +190826,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6106u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -190840,7 +190840,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6107u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -190854,7 +190854,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6108u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -190868,7 +190868,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6109u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -190882,7 +190882,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6110u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -190896,7 +190896,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6111u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -190910,7 +190910,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6112u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -190924,7 +190924,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6113u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -190938,7 +190938,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6114u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -190952,7 +190952,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6115u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -190966,7 +190966,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6116u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -190980,7 +190980,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6117u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -190994,7 +190994,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6118u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -191008,7 +191008,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6119u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -191022,7 +191022,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6120u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -191036,7 +191036,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6121u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -191050,7 +191050,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6122u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -191064,7 +191064,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6123u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -191078,7 +191078,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6124u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -191092,7 +191092,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6125u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -191106,7 +191106,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6126u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -191120,7 +191120,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6127u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -191134,7 +191134,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6128u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -191148,7 +191148,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6129u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -191162,7 +191162,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6130u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -191176,7 +191176,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6131u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -191190,7 +191190,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6132u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -191204,7 +191204,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6133u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -191218,7 +191218,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6134u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -191232,7 +191232,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6135u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -191246,7 +191246,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6136u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -191260,7 +191260,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6137u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -191274,7 +191274,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6138u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -191288,7 +191288,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6139u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -191302,7 +191302,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6140u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -191316,7 +191316,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6141u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -191330,7 +191330,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6142u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -191344,7 +191344,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6143u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -191358,7 +191358,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6144u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -191372,7 +191372,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6145u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -191386,7 +191386,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6146u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -191400,7 +191400,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6147u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -191414,7 +191414,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6148u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -191428,7 +191428,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6149u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -191442,7 +191442,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6150u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -191456,7 +191456,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6151u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -191470,7 +191470,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6152u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -191484,7 +191484,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6153u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -191498,7 +191498,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6154u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -191512,7 +191512,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6155u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -191526,7 +191526,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6156u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -191540,7 +191540,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6157u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -191554,7 +191554,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6158u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -191568,7 +191568,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6159u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -191582,7 +191582,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6160u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -191596,7 +191596,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6161u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -191610,7 +191610,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6162u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -191624,7 +191624,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6163u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -191638,7 +191638,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6164u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -191652,7 +191652,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6165u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -191666,7 +191666,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6166u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -191680,7 +191680,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6167u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -191694,7 +191694,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6168u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -191708,7 +191708,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6169u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -191722,7 +191722,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6170u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -191736,7 +191736,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6171u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -191750,7 +191750,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6172u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -191764,7 +191764,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6173u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -191778,7 +191778,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6174u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -191792,7 +191792,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6175u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -191806,7 +191806,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6176u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -191820,7 +191820,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6177u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -191834,7 +191834,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6178u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -191848,7 +191848,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6179u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -191862,7 +191862,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6180u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -191876,7 +191876,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6181u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -191890,7 +191890,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6182u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -191904,7 +191904,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6183u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -191918,7 +191918,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6184u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -191932,7 +191932,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6185u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -191946,7 +191946,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6186u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -191960,7 +191960,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6187u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -191974,7 +191974,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6188u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -191988,7 +191988,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6189u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -192002,7 +192002,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6190u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -192016,7 +192016,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6191u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -192030,7 +192030,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6192u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -192044,7 +192044,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6193u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -192058,7 +192058,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6194u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -192072,7 +192072,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6195u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -192086,7 +192086,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6196u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -192100,7 +192100,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6197u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -192114,7 +192114,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6198u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -192128,7 +192128,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6199u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -192142,7 +192142,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6200u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -192156,7 +192156,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6201u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -192170,7 +192170,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6202u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -192184,7 +192184,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6203u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -192198,7 +192198,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6204u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -192212,7 +192212,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6205u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -192226,7 +192226,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6206u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -192240,7 +192240,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6207u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -192254,7 +192254,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6208u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -192268,7 +192268,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6209u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -192282,7 +192282,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6210u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -192296,7 +192296,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6211u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -192310,7 +192310,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6212u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -192324,7 +192324,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6213u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -192338,7 +192338,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6214u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -192352,7 +192352,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6215u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -192366,7 +192366,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6216u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -192380,7 +192380,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6217u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -192394,7 +192394,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6218u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -192408,7 +192408,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6219u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -192422,7 +192422,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6220u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -192436,7 +192436,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6221u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -192450,7 +192450,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6222u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -192464,7 +192464,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6223u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -192478,7 +192478,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6224u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -192492,7 +192492,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6225u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -192506,7 +192506,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6226u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -192520,7 +192520,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6227u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -192534,7 +192534,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6228u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -192548,7 +192548,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6229u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -192562,7 +192562,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6230u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -192576,7 +192576,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6231u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -192590,7 +192590,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6232u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -192604,7 +192604,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6233u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -192618,7 +192618,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6234u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -192632,7 +192632,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6235u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -192646,7 +192646,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6236u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -192660,7 +192660,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6237u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -192674,7 +192674,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6238u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -192688,7 +192688,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6239u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -192702,7 +192702,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6240u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -192716,7 +192716,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6241u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -192730,7 +192730,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6242u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -192744,7 +192744,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6243u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -192758,7 +192758,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6244u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -192772,7 +192772,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6245u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -192786,7 +192786,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6246u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -192800,7 +192800,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6247u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -192814,7 +192814,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6248u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -192828,7 +192828,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6249u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -192842,7 +192842,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6250u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -192856,7 +192856,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6251u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -192870,7 +192870,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6252u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -192884,7 +192884,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6253u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -192898,7 +192898,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6254u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -192912,7 +192912,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6255u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -192926,7 +192926,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6256u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -192940,7 +192940,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6257u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -192954,7 +192954,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6258u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -192968,7 +192968,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6259u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -192982,7 +192982,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6260u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -192996,7 +192996,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6261u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -193010,7 +193010,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6262u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -193024,7 +193024,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6263u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -193038,7 +193038,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6264u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -193052,7 +193052,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6265u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -193066,7 +193066,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6266u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -193080,7 +193080,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6267u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -193094,7 +193094,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6268u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -193108,7 +193108,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6269u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -193122,7 +193122,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6270u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -193136,7 +193136,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6271u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -193150,7 +193150,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6272u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -193164,7 +193164,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6273u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -193178,7 +193178,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6274u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -193192,7 +193192,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6275u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -193206,7 +193206,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6276u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -193220,7 +193220,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6277u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -193234,7 +193234,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6278u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -193248,7 +193248,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6279u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -193262,7 +193262,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6280u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -193276,7 +193276,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6281u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -193290,7 +193290,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6282u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -193304,7 +193304,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6283u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -193318,7 +193318,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6284u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -193332,7 +193332,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6285u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -193346,7 +193346,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6286u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -193360,7 +193360,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6287u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -193374,7 +193374,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6288u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -193388,7 +193388,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6289u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -193402,7 +193402,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6290u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -193416,7 +193416,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6291u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -193430,7 +193430,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6292u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -193444,7 +193444,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6293u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -193458,7 +193458,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6294u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -193472,7 +193472,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6295u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -193486,7 +193486,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6296u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -193500,7 +193500,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6297u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -193514,7 +193514,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6298u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -193528,7 +193528,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6299u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -193542,7 +193542,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6300u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -193556,7 +193556,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6301u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -193570,7 +193570,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6302u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -193584,7 +193584,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6303u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -193598,7 +193598,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6304u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -193612,7 +193612,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6305u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -193626,7 +193626,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6306u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -193640,7 +193640,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6307u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -193654,7 +193654,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6308u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -193668,7 +193668,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6309u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -193682,7 +193682,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6310u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -193696,7 +193696,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6311u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -193710,7 +193710,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6312u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -193724,7 +193724,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6313u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -193738,7 +193738,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6314u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -193752,7 +193752,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6315u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -193766,7 +193766,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6316u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -193780,7 +193780,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6317u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -193794,7 +193794,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6318u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -193808,7 +193808,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6319u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -193822,7 +193822,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6320u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -193836,7 +193836,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6321u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -193850,7 +193850,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6322u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -193864,7 +193864,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6323u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -193878,7 +193878,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6324u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -193892,7 +193892,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6325u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -193906,7 +193906,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6326u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -193920,7 +193920,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6327u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -193934,7 +193934,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6328u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -193948,7 +193948,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6329u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -193962,7 +193962,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6330u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -193976,7 +193976,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6331u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -193990,7 +193990,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6332u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -194004,7 +194004,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6333u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -194018,7 +194018,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6334u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -194032,7 +194032,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6335u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -194046,7 +194046,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6336u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -194060,7 +194060,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6337u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -194074,7 +194074,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6338u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -194088,7 +194088,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6339u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -194102,7 +194102,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6340u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -194116,7 +194116,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6341u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -194130,7 +194130,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6342u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -194144,7 +194144,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6343u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -194158,7 +194158,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6344u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -194172,7 +194172,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6345u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -194186,7 +194186,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6346u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -194200,7 +194200,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6347u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -194214,7 +194214,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6348u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -194228,7 +194228,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6349u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -194242,7 +194242,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6350u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -194256,7 +194256,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6351u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -194270,7 +194270,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6352u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -194284,7 +194284,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6353u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -194298,7 +194298,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6354u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -194312,7 +194312,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6355u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -194326,7 +194326,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6356u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -194340,7 +194340,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6357u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -194354,7 +194354,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6358u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -194368,7 +194368,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6359u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -194382,7 +194382,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6360u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -194396,7 +194396,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6361u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -194410,7 +194410,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6362u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -194424,7 +194424,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6363u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -194438,7 +194438,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6364u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -194452,7 +194452,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6365u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -194466,7 +194466,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6366u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -194480,7 +194480,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6367u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -194494,7 +194494,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6368u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -194508,7 +194508,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6369u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -194522,7 +194522,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6370u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -194536,7 +194536,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6371u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -194550,7 +194550,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6372u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -194564,7 +194564,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6373u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -194578,7 +194578,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6374u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -194592,7 +194592,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6375u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -194606,7 +194606,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6376u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -194620,7 +194620,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6377u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -194634,7 +194634,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6378u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -194648,7 +194648,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6379u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -194662,7 +194662,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6380u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -194676,7 +194676,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6381u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -194690,7 +194690,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6382u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -194704,7 +194704,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6383u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -194718,7 +194718,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6384u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -194732,7 +194732,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6385u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -194746,7 +194746,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6386u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -194760,7 +194760,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6387u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -194774,7 +194774,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6388u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -194788,7 +194788,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6389u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -194802,7 +194802,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6390u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -194816,7 +194816,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6391u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -194830,7 +194830,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6392u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -194844,7 +194844,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6393u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -194858,7 +194858,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6394u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -194872,7 +194872,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6395u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -194886,7 +194886,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6396u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -194900,7 +194900,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6397u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -194914,7 +194914,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6398u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -194928,7 +194928,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6399u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -194942,7 +194942,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6400u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -194956,7 +194956,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6401u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -194970,7 +194970,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6402u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -194984,7 +194984,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6403u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -194998,7 +194998,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6404u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -195012,7 +195012,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6405u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -195026,7 +195026,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6406u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -195040,7 +195040,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6407u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -195054,7 +195054,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6408u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -195068,7 +195068,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6409u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -195082,7 +195082,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6410u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -195096,7 +195096,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6411u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -195110,7 +195110,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6412u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -195124,7 +195124,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6413u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -195138,7 +195138,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6414u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -195152,7 +195152,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6415u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -195166,7 +195166,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6416u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -195180,7 +195180,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6417u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -195194,7 +195194,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6418u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -195208,7 +195208,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6419u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -195222,7 +195222,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6420u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -195236,7 +195236,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6421u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -195250,7 +195250,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6422u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -195264,7 +195264,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6423u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -195278,7 +195278,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6424u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -195292,7 +195292,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6425u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -195306,7 +195306,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6426u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -195320,7 +195320,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6427u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -195334,7 +195334,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6428u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -195348,7 +195348,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6429u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -195362,7 +195362,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6430u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -195376,7 +195376,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6431u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -195390,7 +195390,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6432u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -195404,7 +195404,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6433u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -195418,7 +195418,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6434u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -195432,7 +195432,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6435u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -195446,7 +195446,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6436u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -195460,7 +195460,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6437u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -195474,7 +195474,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6438u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -195488,7 +195488,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6439u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -195502,7 +195502,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6440u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -195516,7 +195516,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6441u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -195530,7 +195530,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6442u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -195544,7 +195544,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6443u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -195558,7 +195558,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6444u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -195572,7 +195572,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6445u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -195586,7 +195586,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6446u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -195600,7 +195600,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6447u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -195614,7 +195614,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6448u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -195628,7 +195628,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6449u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -195642,7 +195642,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6450u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -195656,7 +195656,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6451u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -195670,7 +195670,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6452u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -195684,7 +195684,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6453u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -195698,7 +195698,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6454u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -195712,7 +195712,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6455u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -195726,7 +195726,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6456u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -195740,7 +195740,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6457u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -195754,7 +195754,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6458u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -195768,7 +195768,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6459u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -195782,7 +195782,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6460u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -195796,7 +195796,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6461u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -195810,7 +195810,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6462u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -195824,7 +195824,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6463u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -195838,7 +195838,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6464u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -195852,7 +195852,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6465u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -195866,7 +195866,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6466u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -195880,7 +195880,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6467u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -195894,7 +195894,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6468u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -195908,7 +195908,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6469u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -195922,7 +195922,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6470u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -195936,7 +195936,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6471u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -195950,7 +195950,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6472u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -195964,7 +195964,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6473u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -195978,7 +195978,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6474u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -195992,7 +195992,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6475u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -196006,7 +196006,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6476u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -196020,7 +196020,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6477u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -196034,7 +196034,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6478u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -196048,7 +196048,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6479u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -196062,7 +196062,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6480u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -196076,7 +196076,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6481u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -196090,7 +196090,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6482u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -196104,7 +196104,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6483u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -196118,7 +196118,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6484u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -196132,7 +196132,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6485u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -196146,7 +196146,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6486u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -196160,7 +196160,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6487u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -196174,7 +196174,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6488u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -196188,7 +196188,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6489u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -196202,7 +196202,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6490u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -196216,7 +196216,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6491u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -196230,7 +196230,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6492u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -196244,7 +196244,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6493u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -196258,7 +196258,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6494u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -196272,7 +196272,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6495u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -196286,7 +196286,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6496u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -196300,7 +196300,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6497u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -196314,7 +196314,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6498u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -196328,7 +196328,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6499u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -196342,7 +196342,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6500u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -196356,7 +196356,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6501u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -196370,7 +196370,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6502u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -196384,7 +196384,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6503u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -196398,7 +196398,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6504u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -196412,7 +196412,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6505u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -196426,7 +196426,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6506u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -196440,7 +196440,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6507u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -196454,7 +196454,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6508u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -196468,7 +196468,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6509u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -196482,7 +196482,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6510u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -196496,7 +196496,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6511u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -196510,7 +196510,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6512u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -196524,7 +196524,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6513u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -196538,7 +196538,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6514u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -196552,7 +196552,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6515u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -196566,7 +196566,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6516u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -196580,7 +196580,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6517u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -196594,7 +196594,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6518u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -196608,7 +196608,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6519u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -196622,7 +196622,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6520u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -196636,7 +196636,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6521u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -196650,7 +196650,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6522u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -196664,7 +196664,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6523u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -196678,7 +196678,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6524u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -196692,7 +196692,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6525u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -196706,7 +196706,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6526u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -196720,7 +196720,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6527u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -196734,7 +196734,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6528u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -196748,7 +196748,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6529u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -196762,7 +196762,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6530u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -196776,7 +196776,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6531u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -196790,7 +196790,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6532u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -196804,7 +196804,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6533u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -196818,7 +196818,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6534u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -196832,7 +196832,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6535u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -196846,7 +196846,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6536u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -196860,7 +196860,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6537u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -196874,7 +196874,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6538u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -196888,7 +196888,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6539u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -196902,7 +196902,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6540u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -196916,7 +196916,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6541u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -196930,7 +196930,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6542u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -196944,7 +196944,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6543u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -196958,7 +196958,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6544u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -196972,7 +196972,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6545u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -196986,7 +196986,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6546u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -197000,7 +197000,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6547u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -197014,7 +197014,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6548u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -197028,7 +197028,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6549u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -197042,7 +197042,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6550u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -197056,7 +197056,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6551u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -197070,7 +197070,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6552u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -197084,7 +197084,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6553u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -197098,7 +197098,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6554u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -197112,7 +197112,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6555u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -197126,7 +197126,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6556u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -197140,7 +197140,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6557u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -197154,7 +197154,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6558u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -197168,7 +197168,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6559u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -197182,7 +197182,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6560u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -197196,7 +197196,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6561u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -197210,7 +197210,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6562u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -197224,7 +197224,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6563u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -197238,7 +197238,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6564u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -197252,7 +197252,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6565u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -197266,7 +197266,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6566u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -197280,7 +197280,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6567u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -197294,7 +197294,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6568u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -197308,7 +197308,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6569u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -197322,7 +197322,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6570u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -197336,7 +197336,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6571u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -197350,7 +197350,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6572u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -197364,7 +197364,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6573u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -197378,7 +197378,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6574u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -197392,7 +197392,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6575u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -197406,7 +197406,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6576u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -197420,7 +197420,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6577u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -197434,7 +197434,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6578u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -197448,7 +197448,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6579u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -197462,7 +197462,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6580u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -197476,7 +197476,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6581u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -197490,7 +197490,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6582u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -197504,7 +197504,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6583u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -197518,7 +197518,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6584u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -197532,7 +197532,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6585u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -197546,7 +197546,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6586u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -197560,7 +197560,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6587u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -197574,7 +197574,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6588u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -197588,7 +197588,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6589u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -197602,7 +197602,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6590u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -197616,7 +197616,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6591u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -197630,7 +197630,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6592u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -197644,7 +197644,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6593u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -197658,7 +197658,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6594u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -197672,7 +197672,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6595u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -197686,7 +197686,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6596u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -197700,7 +197700,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6597u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -197714,7 +197714,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6598u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -197728,7 +197728,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6599u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -197742,7 +197742,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6600u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -197756,7 +197756,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6601u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -197770,7 +197770,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6602u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -197784,7 +197784,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6603u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -197798,7 +197798,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6604u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -197812,7 +197812,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6605u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -197826,7 +197826,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6606u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -197840,7 +197840,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6607u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -197854,7 +197854,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6608u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -197868,7 +197868,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6609u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -197882,7 +197882,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6610u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -197896,7 +197896,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6611u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -197910,7 +197910,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6612u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -197924,7 +197924,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6613u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -197938,7 +197938,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6614u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -197952,7 +197952,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6615u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -197966,7 +197966,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6616u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -197980,7 +197980,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6617u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -197994,7 +197994,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6618u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -198008,7 +198008,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6619u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -198022,7 +198022,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6620u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -198036,7 +198036,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6621u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -198050,7 +198050,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6622u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -198064,7 +198064,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6623u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -198078,7 +198078,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6624u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -198092,7 +198092,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6625u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -198106,7 +198106,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6626u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -198120,7 +198120,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6627u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -198134,7 +198134,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6628u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -198148,7 +198148,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6629u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -198162,7 +198162,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6630u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -198176,7 +198176,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6631u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -198190,7 +198190,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6632u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -198204,7 +198204,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6633u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -198218,7 +198218,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6634u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -198232,7 +198232,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6635u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -198246,7 +198246,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6636u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -198260,7 +198260,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6637u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -198274,7 +198274,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6638u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -198288,7 +198288,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6639u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -198302,7 +198302,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6640u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -198316,7 +198316,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6641u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -198330,7 +198330,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6642u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -198344,7 +198344,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6643u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -198358,7 +198358,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6644u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -198372,7 +198372,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6645u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -198386,7 +198386,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6646u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -198400,7 +198400,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6647u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -198414,7 +198414,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6648u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -198428,7 +198428,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6649u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -198442,7 +198442,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6650u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -198456,7 +198456,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6651u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -198470,7 +198470,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6652u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -198484,7 +198484,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6653u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -198498,7 +198498,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6654u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -198512,7 +198512,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6655u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -198526,7 +198526,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6656u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -198540,7 +198540,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6657u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -198554,7 +198554,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6658u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -198568,7 +198568,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6659u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -198582,7 +198582,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6660u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -198596,7 +198596,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6661u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -198610,7 +198610,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6662u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -198624,7 +198624,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6663u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -198638,7 +198638,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6664u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -198652,7 +198652,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6665u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -198666,7 +198666,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6666u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -198680,7 +198680,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6667u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -198694,7 +198694,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6668u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -198708,7 +198708,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6669u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -198722,7 +198722,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6670u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -198736,7 +198736,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6671u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -198750,7 +198750,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6672u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -198764,7 +198764,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6673u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -198778,7 +198778,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6674u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -198792,7 +198792,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6675u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -198806,7 +198806,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6676u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -198820,7 +198820,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6677u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -198834,7 +198834,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6678u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -198848,7 +198848,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6679u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -198862,7 +198862,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6680u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -198876,7 +198876,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6681u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -198890,7 +198890,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6682u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -198904,7 +198904,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6683u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -198918,7 +198918,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6684u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -198932,7 +198932,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6685u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -198946,7 +198946,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6686u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -198960,7 +198960,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6687u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -198974,7 +198974,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6688u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -198988,7 +198988,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6689u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -199002,7 +199002,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6690u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -199016,7 +199016,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6691u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -199030,7 +199030,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6692u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -199044,7 +199044,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6693u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -199058,7 +199058,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6694u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -199072,7 +199072,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6695u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -199086,7 +199086,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6696u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -199100,7 +199100,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6697u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -199114,7 +199114,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6698u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -199128,7 +199128,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6699u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -199142,7 +199142,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6700u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -199156,7 +199156,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6701u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -199170,7 +199170,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6702u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -199184,7 +199184,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6703u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -199198,7 +199198,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6704u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -199212,7 +199212,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6705u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -199226,7 +199226,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6706u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -199240,7 +199240,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6707u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -199254,7 +199254,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6708u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -199268,7 +199268,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6709u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -199282,7 +199282,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6710u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -199296,7 +199296,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6711u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -199310,7 +199310,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6712u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -199324,7 +199324,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6713u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -199338,7 +199338,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6714u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -199352,7 +199352,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6715u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -199366,7 +199366,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6716u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -199380,7 +199380,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6717u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -199394,7 +199394,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6718u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -199408,7 +199408,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6719u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -199422,7 +199422,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6720u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -199436,7 +199436,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6721u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -199450,7 +199450,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6722u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -199464,7 +199464,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6723u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -199478,7 +199478,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6724u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -199492,7 +199492,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6725u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -199506,7 +199506,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6726u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -199520,7 +199520,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6727u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -199534,7 +199534,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6728u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -199548,7 +199548,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6729u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -199562,7 +199562,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6730u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -199576,7 +199576,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6731u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -199590,7 +199590,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6732u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -199604,7 +199604,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6733u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -199618,7 +199618,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6734u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -199632,7 +199632,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6735u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -199646,7 +199646,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6736u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -199660,7 +199660,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6737u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -199674,7 +199674,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6738u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -199688,7 +199688,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6739u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -199702,7 +199702,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6740u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -199716,7 +199716,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6741u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -199730,7 +199730,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6742u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -199744,7 +199744,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6743u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -199758,7 +199758,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6744u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -199772,7 +199772,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6745u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -199786,7 +199786,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6746u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -199800,7 +199800,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6747u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -199814,7 +199814,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6748u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -199828,7 +199828,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6749u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -199842,7 +199842,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6750u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -199856,7 +199856,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6751u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -199870,7 +199870,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6752u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -199884,7 +199884,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6753u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -199898,7 +199898,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6754u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -199912,7 +199912,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6755u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -199926,7 +199926,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6756u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -199940,7 +199940,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6757u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -199954,7 +199954,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6758u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -199968,7 +199968,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6759u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -199982,7 +199982,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6760u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -199996,7 +199996,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6761u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -200010,7 +200010,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6762u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -200024,7 +200024,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6763u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -200038,7 +200038,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6764u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -200052,7 +200052,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6765u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -200066,7 +200066,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6766u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -200080,7 +200080,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6767u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -200094,7 +200094,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6768u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -200108,7 +200108,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6769u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -200122,7 +200122,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6770u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -200136,7 +200136,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6771u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -200150,7 +200150,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6772u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -200164,7 +200164,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6773u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -200178,7 +200178,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6774u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -200192,7 +200192,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6775u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -200206,7 +200206,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6776u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -200220,7 +200220,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6777u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -200234,7 +200234,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6778u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -200248,7 +200248,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6779u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -200262,7 +200262,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6780u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -200276,7 +200276,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6781u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -200290,7 +200290,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6782u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -200304,7 +200304,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6783u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -200318,7 +200318,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6784u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -200332,7 +200332,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6785u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -200346,7 +200346,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6786u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -200360,7 +200360,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6787u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -200374,7 +200374,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6788u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -200388,7 +200388,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6789u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -200402,7 +200402,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6790u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -200416,7 +200416,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6791u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -200430,7 +200430,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6792u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -200444,7 +200444,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6793u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -200458,7 +200458,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6794u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -200472,7 +200472,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6795u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -200486,7 +200486,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6796u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -200500,7 +200500,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6797u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -200514,7 +200514,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6798u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -200528,7 +200528,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6799u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -200542,7 +200542,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6800u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -200556,7 +200556,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6801u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -200570,7 +200570,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6802u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -200584,7 +200584,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6803u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -200598,7 +200598,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6804u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -200612,7 +200612,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6805u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -200626,7 +200626,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6806u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -200640,7 +200640,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6807u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -200654,7 +200654,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6808u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -200668,7 +200668,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6809u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -200682,7 +200682,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6810u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -200696,7 +200696,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6811u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -200710,7 +200710,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6812u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -200724,7 +200724,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6813u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -200738,7 +200738,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6814u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -200752,7 +200752,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6815u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -200766,7 +200766,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6816u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -200780,7 +200780,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6817u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -200794,7 +200794,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6818u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -200808,7 +200808,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6819u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -200822,7 +200822,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6820u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -200836,7 +200836,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6821u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -200850,7 +200850,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6822u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -200864,7 +200864,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6823u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -200878,7 +200878,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6824u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -200892,7 +200892,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6825u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -200906,7 +200906,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6826u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -200920,7 +200920,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6827u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -200934,7 +200934,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6828u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -200948,7 +200948,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6829u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -200962,7 +200962,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6830u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -200976,7 +200976,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6831u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -200990,7 +200990,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6832u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -201004,7 +201004,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6833u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -201018,7 +201018,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6834u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -201032,7 +201032,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6835u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -201046,7 +201046,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6836u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -201060,7 +201060,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6837u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -201074,7 +201074,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6838u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -201088,7 +201088,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6839u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -201102,7 +201102,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6840u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -201116,7 +201116,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6841u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -201130,7 +201130,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6842u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -201144,7 +201144,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6843u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -201158,7 +201158,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6844u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -201172,7 +201172,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6845u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -201186,7 +201186,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6846u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -201200,7 +201200,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6847u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -201214,7 +201214,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6848u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -201228,7 +201228,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6849u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -201242,7 +201242,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6850u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -201256,7 +201256,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6851u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -201270,7 +201270,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6852u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -201284,7 +201284,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6853u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -201298,7 +201298,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6854u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -201312,7 +201312,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6855u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -201326,7 +201326,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6856u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -201340,7 +201340,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6857u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -201354,7 +201354,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6858u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -201368,7 +201368,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6859u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -201382,7 +201382,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6860u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -201396,7 +201396,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6861u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -201410,7 +201410,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(6862u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -225275,7 +225275,7 @@ impl Block {
         item_id: 839,
         default_state: &BlockState {
             id: BlockStateId::new(8448u16).unwrap(),
-            state_flags: 8,
+            state_flags: 8200,
             side_flags: 0,
             instrument: NoteblockInstrument::Harp,
             luminance: 0,
@@ -225290,7 +225290,7 @@ impl Block {
         states: &[
             BlockState {
                 id: BlockStateId::new(8439u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -225304,7 +225304,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(8440u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -225318,7 +225318,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(8441u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -225332,7 +225332,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(8442u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -225346,7 +225346,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(8443u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -225360,7 +225360,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(8444u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -225374,7 +225374,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(8445u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -225388,7 +225388,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(8446u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -225402,7 +225402,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(8447u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -225416,7 +225416,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(8448u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -225430,7 +225430,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(8449u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -225444,7 +225444,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(8450u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -225458,7 +225458,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(8451u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -225472,7 +225472,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(8452u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -225486,7 +225486,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(8453u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -225500,7 +225500,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(8454u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -225514,7 +225514,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(8455u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -225528,7 +225528,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(8456u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -225542,7 +225542,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(8457u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -225556,7 +225556,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(8458u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -225570,7 +225570,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(8459u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -225584,7 +225584,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(8460u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -225598,7 +225598,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(8461u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -225612,7 +225612,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(8462u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -225641,7 +225641,7 @@ impl Block {
         item_id: 871,
         default_state: &BlockState {
             id: BlockStateId::new(8464u16).unwrap(),
-            state_flags: 72,
+            state_flags: 8264,
             side_flags: 0,
             instrument: NoteblockInstrument::Basedrum,
             luminance: 0,
@@ -225656,7 +225656,7 @@ impl Block {
         states: &[
             BlockState {
                 id: BlockStateId::new(8463u16).unwrap(),
-                state_flags: 72,
+                state_flags: 8264,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Basedrum,
                 luminance: 0,
@@ -225670,7 +225670,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(8464u16).unwrap(),
-                state_flags: 72,
+                state_flags: 8264,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Basedrum,
                 luminance: 0,
@@ -226625,7 +226625,7 @@ impl Block {
         item_id: 875,
         default_state: &BlockState {
             id: BlockStateId::new(8530u16).unwrap(),
-            state_flags: 74,
+            state_flags: 8266,
             side_flags: 0,
             instrument: NoteblockInstrument::Bass,
             luminance: 0,
@@ -226640,7 +226640,7 @@ impl Block {
         states: &[
             BlockState {
                 id: BlockStateId::new(8529u16).unwrap(),
-                state_flags: 74,
+                state_flags: 8266,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Bass,
                 luminance: 0,
@@ -226654,7 +226654,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(8530u16).unwrap(),
-                state_flags: 74,
+                state_flags: 8266,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Bass,
                 luminance: 0,
@@ -226683,7 +226683,7 @@ impl Block {
         item_id: 876,
         default_state: &BlockState {
             id: BlockStateId::new(8532u16).unwrap(),
-            state_flags: 74,
+            state_flags: 8266,
             side_flags: 0,
             instrument: NoteblockInstrument::Bass,
             luminance: 0,
@@ -226698,7 +226698,7 @@ impl Block {
         states: &[
             BlockState {
                 id: BlockStateId::new(8531u16).unwrap(),
-                state_flags: 74,
+                state_flags: 8266,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Bass,
                 luminance: 0,
@@ -226712,7 +226712,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(8532u16).unwrap(),
-                state_flags: 74,
+                state_flags: 8266,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Bass,
                 luminance: 0,
@@ -226741,7 +226741,7 @@ impl Block {
         item_id: 877,
         default_state: &BlockState {
             id: BlockStateId::new(8534u16).unwrap(),
-            state_flags: 74,
+            state_flags: 8266,
             side_flags: 0,
             instrument: NoteblockInstrument::Bass,
             luminance: 0,
@@ -226756,7 +226756,7 @@ impl Block {
         states: &[
             BlockState {
                 id: BlockStateId::new(8533u16).unwrap(),
-                state_flags: 74,
+                state_flags: 8266,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Bass,
                 luminance: 0,
@@ -226770,7 +226770,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(8534u16).unwrap(),
-                state_flags: 74,
+                state_flags: 8266,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Bass,
                 luminance: 0,
@@ -226799,7 +226799,7 @@ impl Block {
         item_id: 878,
         default_state: &BlockState {
             id: BlockStateId::new(8536u16).unwrap(),
-            state_flags: 74,
+            state_flags: 8266,
             side_flags: 0,
             instrument: NoteblockInstrument::Bass,
             luminance: 0,
@@ -226814,7 +226814,7 @@ impl Block {
         states: &[
             BlockState {
                 id: BlockStateId::new(8535u16).unwrap(),
-                state_flags: 74,
+                state_flags: 8266,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Bass,
                 luminance: 0,
@@ -226828,7 +226828,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(8536u16).unwrap(),
-                state_flags: 74,
+                state_flags: 8266,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Bass,
                 luminance: 0,
@@ -226857,7 +226857,7 @@ impl Block {
         item_id: 879,
         default_state: &BlockState {
             id: BlockStateId::new(8538u16).unwrap(),
-            state_flags: 74,
+            state_flags: 8266,
             side_flags: 0,
             instrument: NoteblockInstrument::Bass,
             luminance: 0,
@@ -226872,7 +226872,7 @@ impl Block {
         states: &[
             BlockState {
                 id: BlockStateId::new(8537u16).unwrap(),
-                state_flags: 74,
+                state_flags: 8266,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Bass,
                 luminance: 0,
@@ -226886,7 +226886,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(8538u16).unwrap(),
-                state_flags: 74,
+                state_flags: 8266,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Bass,
                 luminance: 0,
@@ -226915,7 +226915,7 @@ impl Block {
         item_id: 880,
         default_state: &BlockState {
             id: BlockStateId::new(8540u16).unwrap(),
-            state_flags: 74,
+            state_flags: 8266,
             side_flags: 0,
             instrument: NoteblockInstrument::Bass,
             luminance: 0,
@@ -226930,7 +226930,7 @@ impl Block {
         states: &[
             BlockState {
                 id: BlockStateId::new(8539u16).unwrap(),
-                state_flags: 74,
+                state_flags: 8266,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Bass,
                 luminance: 0,
@@ -226944,7 +226944,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(8540u16).unwrap(),
-                state_flags: 74,
+                state_flags: 8266,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Bass,
                 luminance: 0,
@@ -226973,7 +226973,7 @@ impl Block {
         item_id: 881,
         default_state: &BlockState {
             id: BlockStateId::new(8542u16).unwrap(),
-            state_flags: 74,
+            state_flags: 8266,
             side_flags: 0,
             instrument: NoteblockInstrument::Bass,
             luminance: 0,
@@ -226988,7 +226988,7 @@ impl Block {
         states: &[
             BlockState {
                 id: BlockStateId::new(8541u16).unwrap(),
-                state_flags: 74,
+                state_flags: 8266,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Bass,
                 luminance: 0,
@@ -227002,7 +227002,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(8542u16).unwrap(),
-                state_flags: 74,
+                state_flags: 8266,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Bass,
                 luminance: 0,
@@ -227031,7 +227031,7 @@ impl Block {
         item_id: 882,
         default_state: &BlockState {
             id: BlockStateId::new(8544u16).unwrap(),
-            state_flags: 74,
+            state_flags: 8266,
             side_flags: 0,
             instrument: NoteblockInstrument::Bass,
             luminance: 0,
@@ -227046,7 +227046,7 @@ impl Block {
         states: &[
             BlockState {
                 id: BlockStateId::new(8543u16).unwrap(),
-                state_flags: 74,
+                state_flags: 8266,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Bass,
                 luminance: 0,
@@ -227060,7 +227060,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(8544u16).unwrap(),
-                state_flags: 74,
+                state_flags: 8266,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Bass,
                 luminance: 0,
@@ -227089,7 +227089,7 @@ impl Block {
         item_id: 883,
         default_state: &BlockState {
             id: BlockStateId::new(8546u16).unwrap(),
-            state_flags: 74,
+            state_flags: 8266,
             side_flags: 0,
             instrument: NoteblockInstrument::Bass,
             luminance: 0,
@@ -227104,7 +227104,7 @@ impl Block {
         states: &[
             BlockState {
                 id: BlockStateId::new(8545u16).unwrap(),
-                state_flags: 74,
+                state_flags: 8266,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Bass,
                 luminance: 0,
@@ -227118,7 +227118,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(8546u16).unwrap(),
-                state_flags: 74,
+                state_flags: 8266,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Bass,
                 luminance: 0,
@@ -227147,7 +227147,7 @@ impl Block {
         item_id: 884,
         default_state: &BlockState {
             id: BlockStateId::new(8548u16).unwrap(),
-            state_flags: 74,
+            state_flags: 8266,
             side_flags: 0,
             instrument: NoteblockInstrument::Bass,
             luminance: 0,
@@ -227162,7 +227162,7 @@ impl Block {
         states: &[
             BlockState {
                 id: BlockStateId::new(8547u16).unwrap(),
-                state_flags: 74,
+                state_flags: 8266,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Bass,
                 luminance: 0,
@@ -227176,7 +227176,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(8548u16).unwrap(),
-                state_flags: 74,
+                state_flags: 8266,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Bass,
                 luminance: 0,
@@ -227205,7 +227205,7 @@ impl Block {
         item_id: 885,
         default_state: &BlockState {
             id: BlockStateId::new(8550u16).unwrap(),
-            state_flags: 74,
+            state_flags: 8266,
             side_flags: 0,
             instrument: NoteblockInstrument::Bass,
             luminance: 0,
@@ -227220,7 +227220,7 @@ impl Block {
         states: &[
             BlockState {
                 id: BlockStateId::new(8549u16).unwrap(),
-                state_flags: 74,
+                state_flags: 8266,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Bass,
                 luminance: 0,
@@ -227234,7 +227234,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(8550u16).unwrap(),
-                state_flags: 74,
+                state_flags: 8266,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Bass,
                 luminance: 0,
@@ -227379,7 +227379,7 @@ impl Block {
         item_id: 825,
         default_state: &BlockState {
             id: BlockStateId::new(8555u16).unwrap(),
-            state_flags: 8,
+            state_flags: 8200,
             side_flags: 0,
             instrument: NoteblockInstrument::Harp,
             luminance: 7,
@@ -227394,7 +227394,7 @@ impl Block {
         states: &[
             BlockState {
                 id: BlockStateId::new(8555u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 7,
@@ -227408,7 +227408,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(8556u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -227437,7 +227437,7 @@ impl Block {
         item_id: 825,
         default_state: &BlockState {
             id: BlockStateId::new(8557u16).unwrap(),
-            state_flags: 8,
+            state_flags: 8200,
             side_flags: 0,
             instrument: NoteblockInstrument::Harp,
             luminance: 7,
@@ -227452,7 +227452,7 @@ impl Block {
         states: &[
             BlockState {
                 id: BlockStateId::new(8557u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 7,
@@ -227466,7 +227466,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(8558u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -227480,7 +227480,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(8559u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 7,
@@ -227494,7 +227494,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(8560u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -227508,7 +227508,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(8561u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 7,
@@ -227522,7 +227522,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(8562u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -227536,7 +227536,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(8563u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 7,
@@ -227550,7 +227550,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(8564u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -227579,7 +227579,7 @@ impl Block {
         item_id: 856,
         default_state: &BlockState {
             id: BlockStateId::new(8574u16).unwrap(),
-            state_flags: 8,
+            state_flags: 8200,
             side_flags: 0,
             instrument: NoteblockInstrument::Harp,
             luminance: 0,
@@ -227594,7 +227594,7 @@ impl Block {
         states: &[
             BlockState {
                 id: BlockStateId::new(8565u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -227608,7 +227608,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(8566u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -227622,7 +227622,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(8567u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -227636,7 +227636,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(8568u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -227650,7 +227650,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(8569u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -227664,7 +227664,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(8570u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -227678,7 +227678,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(8571u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -227692,7 +227692,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(8572u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -227706,7 +227706,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(8573u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -227720,7 +227720,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(8574u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -227734,7 +227734,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(8575u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -227748,7 +227748,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(8576u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -227762,7 +227762,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(8577u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -227776,7 +227776,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(8578u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -227790,7 +227790,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(8579u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -227804,7 +227804,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(8580u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -227818,7 +227818,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(8581u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -227832,7 +227832,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(8582u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -227846,7 +227846,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(8583u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -227860,7 +227860,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(8584u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -227874,7 +227874,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(8585u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -227888,7 +227888,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(8586u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -227902,7 +227902,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(8587u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -227916,7 +227916,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(8588u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -228766,7 +228766,7 @@ impl Block {
         item_id: 416,
         default_state: &BlockState {
             id: BlockStateId::new(8634u16).unwrap(),
-            state_flags: 7618,
+            state_flags: 15810,
             side_flags: 255,
             instrument: NoteblockInstrument::Bass,
             luminance: 0,
@@ -228781,7 +228781,7 @@ impl Block {
         states: &[
             BlockState {
                 id: BlockStateId::new(8633u16).unwrap(),
-                state_flags: 7618,
+                state_flags: 15810,
                 side_flags: 255,
                 instrument: NoteblockInstrument::Bass,
                 luminance: 0,
@@ -228795,7 +228795,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(8634u16).unwrap(),
-                state_flags: 7618,
+                state_flags: 15810,
                 side_flags: 255,
                 instrument: NoteblockInstrument::Bass,
                 luminance: 0,
@@ -230231,7 +230231,7 @@ impl Block {
         item_id: 827,
         default_state: &BlockState {
             id: BlockStateId::new(8707u16).unwrap(),
-            state_flags: 2056,
+            state_flags: 10248,
             side_flags: 65,
             instrument: NoteblockInstrument::Harp,
             luminance: 0,
@@ -230246,7 +230246,7 @@ impl Block {
         states: &[
             BlockState {
                 id: BlockStateId::new(8704u16).unwrap(),
-                state_flags: 2056,
+                state_flags: 10248,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -230260,7 +230260,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(8705u16).unwrap(),
-                state_flags: 2056,
+                state_flags: 10248,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -230274,7 +230274,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(8706u16).unwrap(),
-                state_flags: 2056,
+                state_flags: 10248,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -230288,7 +230288,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(8707u16).unwrap(),
-                state_flags: 2056,
+                state_flags: 10248,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -230302,7 +230302,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(8708u16).unwrap(),
-                state_flags: 2056,
+                state_flags: 10248,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -230316,7 +230316,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(8709u16).unwrap(),
-                state_flags: 2056,
+                state_flags: 10248,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -230330,7 +230330,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(8710u16).unwrap(),
-                state_flags: 2056,
+                state_flags: 10248,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -230344,7 +230344,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(8711u16).unwrap(),
-                state_flags: 2056,
+                state_flags: 10248,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -230358,7 +230358,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(8712u16).unwrap(),
-                state_flags: 2056,
+                state_flags: 10248,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -230372,7 +230372,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(8713u16).unwrap(),
-                state_flags: 2056,
+                state_flags: 10248,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -230386,7 +230386,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(8714u16).unwrap(),
-                state_flags: 2056,
+                state_flags: 10248,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -230400,7 +230400,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(8715u16).unwrap(),
-                state_flags: 2056,
+                state_flags: 10248,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -230414,7 +230414,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(8716u16).unwrap(),
-                state_flags: 2056,
+                state_flags: 10248,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -230428,7 +230428,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(8717u16).unwrap(),
-                state_flags: 2056,
+                state_flags: 10248,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -230442,7 +230442,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(8718u16).unwrap(),
-                state_flags: 2056,
+                state_flags: 10248,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -230456,7 +230456,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(8719u16).unwrap(),
-                state_flags: 2056,
+                state_flags: 10248,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -230470,7 +230470,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(8720u16).unwrap(),
-                state_flags: 2056,
+                state_flags: 10248,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -230484,7 +230484,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(8721u16).unwrap(),
-                state_flags: 2056,
+                state_flags: 10248,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -230498,7 +230498,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(8722u16).unwrap(),
-                state_flags: 2056,
+                state_flags: 10248,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -230512,7 +230512,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(8723u16).unwrap(),
-                state_flags: 2056,
+                state_flags: 10248,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -230526,7 +230526,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(8724u16).unwrap(),
-                state_flags: 2056,
+                state_flags: 10248,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -230540,7 +230540,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(8725u16).unwrap(),
-                state_flags: 2056,
+                state_flags: 10248,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -230554,7 +230554,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(8726u16).unwrap(),
-                state_flags: 2056,
+                state_flags: 10248,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -230568,7 +230568,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(8727u16).unwrap(),
-                state_flags: 2056,
+                state_flags: 10248,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -230582,7 +230582,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(8728u16).unwrap(),
-                state_flags: 2056,
+                state_flags: 10248,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -230596,7 +230596,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(8729u16).unwrap(),
-                state_flags: 2056,
+                state_flags: 10248,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -230610,7 +230610,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(8730u16).unwrap(),
-                state_flags: 2056,
+                state_flags: 10248,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -230624,7 +230624,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(8731u16).unwrap(),
-                state_flags: 2056,
+                state_flags: 10248,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -230638,7 +230638,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(8732u16).unwrap(),
-                state_flags: 2056,
+                state_flags: 10248,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -230652,7 +230652,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(8733u16).unwrap(),
-                state_flags: 2056,
+                state_flags: 10248,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -230666,7 +230666,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(8734u16).unwrap(),
-                state_flags: 2056,
+                state_flags: 10248,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -230680,7 +230680,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(8735u16).unwrap(),
-                state_flags: 2056,
+                state_flags: 10248,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -230694,7 +230694,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(8736u16).unwrap(),
-                state_flags: 2056,
+                state_flags: 10248,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -230708,7 +230708,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(8737u16).unwrap(),
-                state_flags: 2056,
+                state_flags: 10248,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -230722,7 +230722,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(8738u16).unwrap(),
-                state_flags: 2056,
+                state_flags: 10248,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -230736,7 +230736,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(8739u16).unwrap(),
-                state_flags: 2056,
+                state_flags: 10248,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -230750,7 +230750,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(8740u16).unwrap(),
-                state_flags: 2056,
+                state_flags: 10248,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -230764,7 +230764,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(8741u16).unwrap(),
-                state_flags: 2056,
+                state_flags: 10248,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -230778,7 +230778,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(8742u16).unwrap(),
-                state_flags: 2056,
+                state_flags: 10248,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -230792,7 +230792,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(8743u16).unwrap(),
-                state_flags: 2056,
+                state_flags: 10248,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -230806,7 +230806,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(8744u16).unwrap(),
-                state_flags: 2056,
+                state_flags: 10248,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -230820,7 +230820,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(8745u16).unwrap(),
-                state_flags: 2056,
+                state_flags: 10248,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -230834,7 +230834,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(8746u16).unwrap(),
-                state_flags: 2056,
+                state_flags: 10248,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -230848,7 +230848,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(8747u16).unwrap(),
-                state_flags: 2056,
+                state_flags: 10248,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -230862,7 +230862,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(8748u16).unwrap(),
-                state_flags: 2056,
+                state_flags: 10248,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -230876,7 +230876,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(8749u16).unwrap(),
-                state_flags: 2056,
+                state_flags: 10248,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -230890,7 +230890,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(8750u16).unwrap(),
-                state_flags: 2056,
+                state_flags: 10248,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -230904,7 +230904,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(8751u16).unwrap(),
-                state_flags: 2056,
+                state_flags: 10248,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -230918,7 +230918,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(8752u16).unwrap(),
-                state_flags: 2056,
+                state_flags: 10248,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -230932,7 +230932,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(8753u16).unwrap(),
-                state_flags: 2056,
+                state_flags: 10248,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -230946,7 +230946,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(8754u16).unwrap(),
-                state_flags: 2056,
+                state_flags: 10248,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -230960,7 +230960,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(8755u16).unwrap(),
-                state_flags: 2056,
+                state_flags: 10248,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -230974,7 +230974,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(8756u16).unwrap(),
-                state_flags: 2056,
+                state_flags: 10248,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -230988,7 +230988,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(8757u16).unwrap(),
-                state_flags: 2056,
+                state_flags: 10248,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -231002,7 +231002,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(8758u16).unwrap(),
-                state_flags: 2056,
+                state_flags: 10248,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -231016,7 +231016,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(8759u16).unwrap(),
-                state_flags: 2056,
+                state_flags: 10248,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -231030,7 +231030,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(8760u16).unwrap(),
-                state_flags: 2056,
+                state_flags: 10248,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -231044,7 +231044,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(8761u16).unwrap(),
-                state_flags: 2056,
+                state_flags: 10248,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -231058,7 +231058,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(8762u16).unwrap(),
-                state_flags: 2056,
+                state_flags: 10248,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -231072,7 +231072,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(8763u16).unwrap(),
-                state_flags: 2056,
+                state_flags: 10248,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -231086,7 +231086,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(8764u16).unwrap(),
-                state_flags: 2056,
+                state_flags: 10248,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -231100,7 +231100,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(8765u16).unwrap(),
-                state_flags: 2056,
+                state_flags: 10248,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -231114,7 +231114,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(8766u16).unwrap(),
-                state_flags: 2056,
+                state_flags: 10248,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -231128,7 +231128,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(8767u16).unwrap(),
-                state_flags: 2056,
+                state_flags: 10248,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -270026,7 +270026,7 @@ impl Block {
         item_id: 851,
         default_state: &BlockState {
             id: BlockStateId::new(11334u16).unwrap(),
-            state_flags: 8,
+            state_flags: 8200,
             side_flags: 0,
             instrument: NoteblockInstrument::Harp,
             luminance: 0,
@@ -270041,7 +270041,7 @@ impl Block {
         states: &[
             BlockState {
                 id: BlockStateId::new(11325u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -270055,7 +270055,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(11326u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -270069,7 +270069,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(11327u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -270083,7 +270083,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(11328u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -270097,7 +270097,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(11329u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -270111,7 +270111,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(11330u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -270125,7 +270125,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(11331u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -270139,7 +270139,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(11332u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -270153,7 +270153,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(11333u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -270167,7 +270167,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(11334u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -270181,7 +270181,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(11335u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -270195,7 +270195,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(11336u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -270209,7 +270209,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(11337u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -270223,7 +270223,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(11338u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -270237,7 +270237,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(11339u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -270251,7 +270251,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(11340u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -286561,7 +286561,7 @@ impl Block {
         item_id: 858,
         default_state: &BlockState {
             id: BlockStateId::new(12427u16).unwrap(),
-            state_flags: 8,
+            state_flags: 8200,
             side_flags: 0,
             instrument: NoteblockInstrument::Harp,
             luminance: 0,
@@ -286576,7 +286576,7 @@ impl Block {
         states: &[
             BlockState {
                 id: BlockStateId::new(12418u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -286590,7 +286590,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12419u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -286604,7 +286604,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12420u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -286618,7 +286618,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12421u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -286632,7 +286632,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12422u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -286646,7 +286646,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12423u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -286660,7 +286660,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12424u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -286674,7 +286674,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12425u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -286688,7 +286688,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12426u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -286702,7 +286702,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12427u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -286716,7 +286716,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12428u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -286730,7 +286730,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12429u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -286744,7 +286744,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12430u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -286758,7 +286758,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12431u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -286772,7 +286772,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12432u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -286786,7 +286786,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12433u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -286800,7 +286800,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12434u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -286814,7 +286814,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12435u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -286828,7 +286828,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12436u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -286842,7 +286842,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12437u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -286856,7 +286856,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12438u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -286870,7 +286870,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12439u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -286884,7 +286884,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12440u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -286898,7 +286898,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12441u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -286927,7 +286927,7 @@ impl Block {
         item_id: 859,
         default_state: &BlockState {
             id: BlockStateId::new(12451u16).unwrap(),
-            state_flags: 8,
+            state_flags: 8200,
             side_flags: 0,
             instrument: NoteblockInstrument::Harp,
             luminance: 0,
@@ -286942,7 +286942,7 @@ impl Block {
         states: &[
             BlockState {
                 id: BlockStateId::new(12442u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -286956,7 +286956,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12443u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -286970,7 +286970,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12444u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -286984,7 +286984,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12445u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -286998,7 +286998,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12446u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -287012,7 +287012,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12447u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -287026,7 +287026,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12448u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -287040,7 +287040,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12449u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -287054,7 +287054,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12450u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -287068,7 +287068,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12451u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -287082,7 +287082,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12452u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -287096,7 +287096,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12453u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -287110,7 +287110,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12454u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -287124,7 +287124,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12455u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -287138,7 +287138,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12456u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -287152,7 +287152,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12457u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -287166,7 +287166,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12458u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -287180,7 +287180,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12459u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -287194,7 +287194,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12460u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -287208,7 +287208,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12461u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -287222,7 +287222,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12462u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -287236,7 +287236,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12463u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -287250,7 +287250,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12464u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -287264,7 +287264,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12465u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -287293,7 +287293,7 @@ impl Block {
         item_id: 860,
         default_state: &BlockState {
             id: BlockStateId::new(12475u16).unwrap(),
-            state_flags: 8,
+            state_flags: 8200,
             side_flags: 0,
             instrument: NoteblockInstrument::Harp,
             luminance: 0,
@@ -287308,7 +287308,7 @@ impl Block {
         states: &[
             BlockState {
                 id: BlockStateId::new(12466u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -287322,7 +287322,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12467u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -287336,7 +287336,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12468u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -287350,7 +287350,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12469u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -287364,7 +287364,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12470u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -287378,7 +287378,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12471u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -287392,7 +287392,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12472u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -287406,7 +287406,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12473u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -287420,7 +287420,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12474u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -287434,7 +287434,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12475u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -287448,7 +287448,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12476u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -287462,7 +287462,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12477u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -287476,7 +287476,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12478u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -287490,7 +287490,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12479u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -287504,7 +287504,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12480u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -287518,7 +287518,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12481u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -287532,7 +287532,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12482u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -287546,7 +287546,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12483u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -287560,7 +287560,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12484u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -287574,7 +287574,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12485u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -287588,7 +287588,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12486u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -287602,7 +287602,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12487u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -287616,7 +287616,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12488u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -287630,7 +287630,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12489u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -287659,7 +287659,7 @@ impl Block {
         item_id: 861,
         default_state: &BlockState {
             id: BlockStateId::new(12499u16).unwrap(),
-            state_flags: 8,
+            state_flags: 8200,
             side_flags: 0,
             instrument: NoteblockInstrument::Harp,
             luminance: 0,
@@ -287674,7 +287674,7 @@ impl Block {
         states: &[
             BlockState {
                 id: BlockStateId::new(12490u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -287688,7 +287688,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12491u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -287702,7 +287702,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12492u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -287716,7 +287716,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12493u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -287730,7 +287730,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12494u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -287744,7 +287744,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12495u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -287758,7 +287758,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12496u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -287772,7 +287772,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12497u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -287786,7 +287786,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12498u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -287800,7 +287800,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12499u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -287814,7 +287814,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12500u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -287828,7 +287828,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12501u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -287842,7 +287842,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12502u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -287856,7 +287856,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12503u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -287870,7 +287870,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12504u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -287884,7 +287884,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12505u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -287898,7 +287898,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12506u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -287912,7 +287912,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12507u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -287926,7 +287926,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12508u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -287940,7 +287940,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12509u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -287954,7 +287954,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12510u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -287968,7 +287968,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12511u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -287982,7 +287982,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12512u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -287996,7 +287996,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12513u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -288025,7 +288025,7 @@ impl Block {
         item_id: 862,
         default_state: &BlockState {
             id: BlockStateId::new(12523u16).unwrap(),
-            state_flags: 8,
+            state_flags: 8200,
             side_flags: 0,
             instrument: NoteblockInstrument::Harp,
             luminance: 0,
@@ -288040,7 +288040,7 @@ impl Block {
         states: &[
             BlockState {
                 id: BlockStateId::new(12514u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -288054,7 +288054,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12515u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -288068,7 +288068,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12516u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -288082,7 +288082,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12517u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -288096,7 +288096,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12518u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -288110,7 +288110,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12519u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -288124,7 +288124,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12520u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -288138,7 +288138,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12521u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -288152,7 +288152,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12522u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -288166,7 +288166,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12523u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -288180,7 +288180,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12524u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -288194,7 +288194,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12525u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -288208,7 +288208,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12526u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -288222,7 +288222,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12527u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -288236,7 +288236,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12528u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -288250,7 +288250,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12529u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -288264,7 +288264,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12530u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -288278,7 +288278,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12531u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -288292,7 +288292,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12532u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -288306,7 +288306,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12533u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -288320,7 +288320,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12534u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -288334,7 +288334,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12535u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -288348,7 +288348,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12536u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -288362,7 +288362,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12537u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -288391,7 +288391,7 @@ impl Block {
         item_id: 863,
         default_state: &BlockState {
             id: BlockStateId::new(12547u16).unwrap(),
-            state_flags: 8,
+            state_flags: 8200,
             side_flags: 0,
             instrument: NoteblockInstrument::Harp,
             luminance: 0,
@@ -288406,7 +288406,7 @@ impl Block {
         states: &[
             BlockState {
                 id: BlockStateId::new(12538u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -288420,7 +288420,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12539u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -288434,7 +288434,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12540u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -288448,7 +288448,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12541u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -288462,7 +288462,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12542u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -288476,7 +288476,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12543u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -288490,7 +288490,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12544u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -288504,7 +288504,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12545u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -288518,7 +288518,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12546u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -288532,7 +288532,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12547u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -288546,7 +288546,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12548u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -288560,7 +288560,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12549u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -288574,7 +288574,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12550u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -288588,7 +288588,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12551u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -288602,7 +288602,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12552u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -288616,7 +288616,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12553u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -288630,7 +288630,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12554u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -288644,7 +288644,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12555u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -288658,7 +288658,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12556u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -288672,7 +288672,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12557u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -288686,7 +288686,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12558u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -288700,7 +288700,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12559u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -288714,7 +288714,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12560u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -288728,7 +288728,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12561u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -288757,7 +288757,7 @@ impl Block {
         item_id: 864,
         default_state: &BlockState {
             id: BlockStateId::new(12571u16).unwrap(),
-            state_flags: 8,
+            state_flags: 8200,
             side_flags: 0,
             instrument: NoteblockInstrument::Harp,
             luminance: 0,
@@ -288772,7 +288772,7 @@ impl Block {
         states: &[
             BlockState {
                 id: BlockStateId::new(12562u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -288786,7 +288786,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12563u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -288800,7 +288800,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12564u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -288814,7 +288814,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12565u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -288828,7 +288828,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12566u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -288842,7 +288842,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12567u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -288856,7 +288856,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12568u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -288870,7 +288870,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12569u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -288884,7 +288884,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12570u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -288898,7 +288898,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12571u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -288912,7 +288912,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12572u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -288926,7 +288926,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12573u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -288940,7 +288940,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12574u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -288954,7 +288954,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12575u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -288968,7 +288968,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12576u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -288982,7 +288982,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12577u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -288996,7 +288996,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12578u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -289010,7 +289010,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12579u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -289024,7 +289024,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12580u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -289038,7 +289038,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12581u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -289052,7 +289052,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12582u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -289066,7 +289066,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12583u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -289080,7 +289080,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12584u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -289094,7 +289094,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12585u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -289123,7 +289123,7 @@ impl Block {
         item_id: 865,
         default_state: &BlockState {
             id: BlockStateId::new(12595u16).unwrap(),
-            state_flags: 8,
+            state_flags: 8200,
             side_flags: 0,
             instrument: NoteblockInstrument::Harp,
             luminance: 0,
@@ -289138,7 +289138,7 @@ impl Block {
         states: &[
             BlockState {
                 id: BlockStateId::new(12586u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -289152,7 +289152,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12587u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -289166,7 +289166,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12588u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -289180,7 +289180,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12589u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -289194,7 +289194,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12590u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -289208,7 +289208,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12591u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -289222,7 +289222,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12592u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -289236,7 +289236,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12593u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -289250,7 +289250,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12594u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -289264,7 +289264,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12595u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -289278,7 +289278,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12596u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -289292,7 +289292,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12597u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -289306,7 +289306,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12598u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -289320,7 +289320,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12599u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -289334,7 +289334,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12600u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -289348,7 +289348,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12601u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -289362,7 +289362,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12602u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -289376,7 +289376,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12603u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -289390,7 +289390,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12604u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -289404,7 +289404,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12605u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -289418,7 +289418,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12606u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -289432,7 +289432,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12607u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -289446,7 +289446,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12608u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -289460,7 +289460,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12609u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -289489,7 +289489,7 @@ impl Block {
         item_id: 866,
         default_state: &BlockState {
             id: BlockStateId::new(12619u16).unwrap(),
-            state_flags: 8,
+            state_flags: 8200,
             side_flags: 0,
             instrument: NoteblockInstrument::Harp,
             luminance: 0,
@@ -289504,7 +289504,7 @@ impl Block {
         states: &[
             BlockState {
                 id: BlockStateId::new(12610u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -289518,7 +289518,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12611u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -289532,7 +289532,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12612u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -289546,7 +289546,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12613u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -289560,7 +289560,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12614u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -289574,7 +289574,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12615u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -289588,7 +289588,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12616u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -289602,7 +289602,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12617u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -289616,7 +289616,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12618u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -289630,7 +289630,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12619u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -289644,7 +289644,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12620u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -289658,7 +289658,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12621u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -289672,7 +289672,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12622u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -289686,7 +289686,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12623u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -289700,7 +289700,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12624u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -289714,7 +289714,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12625u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -289728,7 +289728,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12626u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -289742,7 +289742,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12627u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -289756,7 +289756,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12628u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -289770,7 +289770,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12629u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -289784,7 +289784,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12630u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -289798,7 +289798,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12631u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -289812,7 +289812,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12632u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -289826,7 +289826,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12633u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -289855,7 +289855,7 @@ impl Block {
         item_id: 867,
         default_state: &BlockState {
             id: BlockStateId::new(12643u16).unwrap(),
-            state_flags: 8,
+            state_flags: 8200,
             side_flags: 0,
             instrument: NoteblockInstrument::Harp,
             luminance: 0,
@@ -289870,7 +289870,7 @@ impl Block {
         states: &[
             BlockState {
                 id: BlockStateId::new(12634u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -289884,7 +289884,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12635u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -289898,7 +289898,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12636u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -289912,7 +289912,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12637u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -289926,7 +289926,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12638u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -289940,7 +289940,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12639u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -289954,7 +289954,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12640u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -289968,7 +289968,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12641u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -289982,7 +289982,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12642u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -289996,7 +289996,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12643u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -290010,7 +290010,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12644u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -290024,7 +290024,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12645u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -290038,7 +290038,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12646u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -290052,7 +290052,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12647u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -290066,7 +290066,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12648u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -290080,7 +290080,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12649u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -290094,7 +290094,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12650u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -290108,7 +290108,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12651u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -290122,7 +290122,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12652u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -290136,7 +290136,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12653u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -290150,7 +290150,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12654u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -290164,7 +290164,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12655u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -290178,7 +290178,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12656u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -290192,7 +290192,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12657u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -290221,7 +290221,7 @@ impl Block {
         item_id: 868,
         default_state: &BlockState {
             id: BlockStateId::new(12667u16).unwrap(),
-            state_flags: 8,
+            state_flags: 8200,
             side_flags: 0,
             instrument: NoteblockInstrument::Harp,
             luminance: 0,
@@ -290236,7 +290236,7 @@ impl Block {
         states: &[
             BlockState {
                 id: BlockStateId::new(12658u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -290250,7 +290250,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12659u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -290264,7 +290264,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12660u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -290278,7 +290278,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12661u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -290292,7 +290292,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12662u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -290306,7 +290306,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12663u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -290320,7 +290320,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12664u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -290334,7 +290334,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12665u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -290348,7 +290348,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12666u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -290362,7 +290362,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12667u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -290376,7 +290376,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12668u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -290390,7 +290390,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12669u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -290404,7 +290404,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12670u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -290418,7 +290418,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12671u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -290432,7 +290432,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12672u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -290446,7 +290446,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12673u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -290460,7 +290460,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12674u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -290474,7 +290474,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12675u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -290488,7 +290488,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12676u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -290502,7 +290502,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12677u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -290516,7 +290516,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12678u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -290530,7 +290530,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12679u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -290544,7 +290544,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12680u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -290558,7 +290558,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12681u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -295185,7 +295185,7 @@ impl Block {
         item_id: 852,
         default_state: &BlockState {
             id: BlockStateId::new(12975u16).unwrap(),
-            state_flags: 6218,
+            state_flags: 14410,
             side_flags: 64,
             instrument: NoteblockInstrument::Bass,
             luminance: 0,
@@ -295200,7 +295200,7 @@ impl Block {
         states: &[
             BlockState {
                 id: BlockStateId::new(12974u16).unwrap(),
-                state_flags: 6242,
+                state_flags: 14434,
                 side_flags: 64,
                 instrument: NoteblockInstrument::Bass,
                 luminance: 0,
@@ -295214,7 +295214,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12975u16).unwrap(),
-                state_flags: 6218,
+                state_flags: 14410,
                 side_flags: 64,
                 instrument: NoteblockInstrument::Bass,
                 luminance: 0,
@@ -295228,7 +295228,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12976u16).unwrap(),
-                state_flags: 6242,
+                state_flags: 14434,
                 side_flags: 64,
                 instrument: NoteblockInstrument::Bass,
                 luminance: 0,
@@ -295242,7 +295242,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12977u16).unwrap(),
-                state_flags: 6218,
+                state_flags: 14410,
                 side_flags: 64,
                 instrument: NoteblockInstrument::Bass,
                 luminance: 0,
@@ -295256,7 +295256,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12978u16).unwrap(),
-                state_flags: 6242,
+                state_flags: 14434,
                 side_flags: 64,
                 instrument: NoteblockInstrument::Bass,
                 luminance: 0,
@@ -295270,7 +295270,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12979u16).unwrap(),
-                state_flags: 6218,
+                state_flags: 14410,
                 side_flags: 64,
                 instrument: NoteblockInstrument::Bass,
                 luminance: 0,
@@ -295284,7 +295284,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12980u16).unwrap(),
-                state_flags: 6242,
+                state_flags: 14434,
                 side_flags: 64,
                 instrument: NoteblockInstrument::Bass,
                 luminance: 0,
@@ -295298,7 +295298,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12981u16).unwrap(),
-                state_flags: 6218,
+                state_flags: 14410,
                 side_flags: 64,
                 instrument: NoteblockInstrument::Bass,
                 luminance: 0,
@@ -295312,7 +295312,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12982u16).unwrap(),
-                state_flags: 6242,
+                state_flags: 14434,
                 side_flags: 64,
                 instrument: NoteblockInstrument::Bass,
                 luminance: 0,
@@ -295326,7 +295326,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12983u16).unwrap(),
-                state_flags: 6218,
+                state_flags: 14410,
                 side_flags: 64,
                 instrument: NoteblockInstrument::Bass,
                 luminance: 0,
@@ -295340,7 +295340,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12984u16).unwrap(),
-                state_flags: 6242,
+                state_flags: 14434,
                 side_flags: 64,
                 instrument: NoteblockInstrument::Bass,
                 luminance: 0,
@@ -295354,7 +295354,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12985u16).unwrap(),
-                state_flags: 6218,
+                state_flags: 14410,
                 side_flags: 64,
                 instrument: NoteblockInstrument::Bass,
                 luminance: 0,
@@ -295368,7 +295368,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12986u16).unwrap(),
-                state_flags: 6242,
+                state_flags: 14434,
                 side_flags: 64,
                 instrument: NoteblockInstrument::Bass,
                 luminance: 0,
@@ -295382,7 +295382,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12987u16).unwrap(),
-                state_flags: 6218,
+                state_flags: 14410,
                 side_flags: 64,
                 instrument: NoteblockInstrument::Bass,
                 luminance: 0,
@@ -295396,7 +295396,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12988u16).unwrap(),
-                state_flags: 6242,
+                state_flags: 14434,
                 side_flags: 64,
                 instrument: NoteblockInstrument::Bass,
                 luminance: 0,
@@ -295410,7 +295410,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12989u16).unwrap(),
-                state_flags: 6218,
+                state_flags: 14410,
                 side_flags: 64,
                 instrument: NoteblockInstrument::Bass,
                 luminance: 0,
@@ -295424,7 +295424,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12990u16).unwrap(),
-                state_flags: 6242,
+                state_flags: 14434,
                 side_flags: 64,
                 instrument: NoteblockInstrument::Bass,
                 luminance: 0,
@@ -295438,7 +295438,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12991u16).unwrap(),
-                state_flags: 6218,
+                state_flags: 14410,
                 side_flags: 64,
                 instrument: NoteblockInstrument::Bass,
                 luminance: 0,
@@ -295452,7 +295452,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12992u16).unwrap(),
-                state_flags: 6242,
+                state_flags: 14434,
                 side_flags: 64,
                 instrument: NoteblockInstrument::Bass,
                 luminance: 0,
@@ -295466,7 +295466,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12993u16).unwrap(),
-                state_flags: 6218,
+                state_flags: 14410,
                 side_flags: 64,
                 instrument: NoteblockInstrument::Bass,
                 luminance: 0,
@@ -295480,7 +295480,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12994u16).unwrap(),
-                state_flags: 6242,
+                state_flags: 14434,
                 side_flags: 64,
                 instrument: NoteblockInstrument::Bass,
                 luminance: 0,
@@ -295494,7 +295494,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12995u16).unwrap(),
-                state_flags: 6218,
+                state_flags: 14410,
                 side_flags: 64,
                 instrument: NoteblockInstrument::Bass,
                 luminance: 0,
@@ -295508,7 +295508,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12996u16).unwrap(),
-                state_flags: 6242,
+                state_flags: 14434,
                 side_flags: 64,
                 instrument: NoteblockInstrument::Bass,
                 luminance: 0,
@@ -295522,7 +295522,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12997u16).unwrap(),
-                state_flags: 6218,
+                state_flags: 14410,
                 side_flags: 64,
                 instrument: NoteblockInstrument::Bass,
                 luminance: 0,
@@ -295551,7 +295551,7 @@ impl Block {
         item_id: 873,
         default_state: &BlockState {
             id: BlockStateId::new(12998u16).unwrap(),
-            state_flags: 72,
+            state_flags: 8264,
             side_flags: 0,
             instrument: NoteblockInstrument::Harp,
             luminance: 0,
@@ -295566,7 +295566,7 @@ impl Block {
         states: &[
             BlockState {
                 id: BlockStateId::new(12998u16).unwrap(),
-                state_flags: 72,
+                state_flags: 8264,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -295580,7 +295580,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(12999u16).unwrap(),
-                state_flags: 72,
+                state_flags: 8264,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -295594,7 +295594,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(13000u16).unwrap(),
-                state_flags: 72,
+                state_flags: 8264,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -295608,7 +295608,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(13001u16).unwrap(),
-                state_flags: 72,
+                state_flags: 8264,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -295622,7 +295622,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(13002u16).unwrap(),
-                state_flags: 72,
+                state_flags: 8264,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -295636,7 +295636,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(13003u16).unwrap(),
-                state_flags: 72,
+                state_flags: 8264,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -295650,7 +295650,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(13004u16).unwrap(),
-                state_flags: 72,
+                state_flags: 8264,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -295664,7 +295664,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(13005u16).unwrap(),
-                state_flags: 72,
+                state_flags: 8264,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -295678,7 +295678,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(13006u16).unwrap(),
-                state_flags: 72,
+                state_flags: 8264,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -295692,7 +295692,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(13007u16).unwrap(),
-                state_flags: 72,
+                state_flags: 8264,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -295706,7 +295706,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(13008u16).unwrap(),
-                state_flags: 72,
+                state_flags: 8264,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -295720,7 +295720,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(13009u16).unwrap(),
-                state_flags: 72,
+                state_flags: 8264,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -295734,7 +295734,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(13010u16).unwrap(),
-                state_flags: 72,
+                state_flags: 8264,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -295748,7 +295748,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(13011u16).unwrap(),
-                state_flags: 72,
+                state_flags: 8264,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -295762,7 +295762,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(13012u16).unwrap(),
-                state_flags: 72,
+                state_flags: 8264,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -295776,7 +295776,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(13013u16).unwrap(),
-                state_flags: 72,
+                state_flags: 8264,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -295805,7 +295805,7 @@ impl Block {
         item_id: 874,
         default_state: &BlockState {
             id: BlockStateId::new(13014u16).unwrap(),
-            state_flags: 72,
+            state_flags: 8264,
             side_flags: 0,
             instrument: NoteblockInstrument::Harp,
             luminance: 0,
@@ -295820,7 +295820,7 @@ impl Block {
         states: &[
             BlockState {
                 id: BlockStateId::new(13014u16).unwrap(),
-                state_flags: 72,
+                state_flags: 8264,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -295834,7 +295834,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(13015u16).unwrap(),
-                state_flags: 72,
+                state_flags: 8264,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -295848,7 +295848,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(13016u16).unwrap(),
-                state_flags: 72,
+                state_flags: 8264,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -295862,7 +295862,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(13017u16).unwrap(),
-                state_flags: 72,
+                state_flags: 8264,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -295876,7 +295876,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(13018u16).unwrap(),
-                state_flags: 72,
+                state_flags: 8264,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -295890,7 +295890,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(13019u16).unwrap(),
-                state_flags: 72,
+                state_flags: 8264,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -295904,7 +295904,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(13020u16).unwrap(),
-                state_flags: 72,
+                state_flags: 8264,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -295918,7 +295918,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(13021u16).unwrap(),
-                state_flags: 72,
+                state_flags: 8264,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -295932,7 +295932,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(13022u16).unwrap(),
-                state_flags: 72,
+                state_flags: 8264,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -295946,7 +295946,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(13023u16).unwrap(),
-                state_flags: 72,
+                state_flags: 8264,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -295960,7 +295960,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(13024u16).unwrap(),
-                state_flags: 72,
+                state_flags: 8264,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -295974,7 +295974,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(13025u16).unwrap(),
-                state_flags: 72,
+                state_flags: 8264,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -295988,7 +295988,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(13026u16).unwrap(),
-                state_flags: 72,
+                state_flags: 8264,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -296002,7 +296002,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(13027u16).unwrap(),
-                state_flags: 72,
+                state_flags: 8264,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -296016,7 +296016,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(13028u16).unwrap(),
-                state_flags: 72,
+                state_flags: 8264,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -296030,7 +296030,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(13029u16).unwrap(),
-                state_flags: 72,
+                state_flags: 8264,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -296059,7 +296059,7 @@ impl Block {
         item_id: 828,
         default_state: &BlockState {
             id: BlockStateId::new(13031u16).unwrap(),
-            state_flags: 2056,
+            state_flags: 10248,
             side_flags: 65,
             instrument: NoteblockInstrument::Harp,
             luminance: 0,
@@ -296074,7 +296074,7 @@ impl Block {
         states: &[
             BlockState {
                 id: BlockStateId::new(13030u16).unwrap(),
-                state_flags: 2056,
+                state_flags: 10248,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -296088,7 +296088,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(13031u16).unwrap(),
-                state_flags: 2056,
+                state_flags: 10248,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -296102,7 +296102,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(13032u16).unwrap(),
-                state_flags: 2056,
+                state_flags: 10248,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -296116,7 +296116,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(13033u16).unwrap(),
-                state_flags: 2056,
+                state_flags: 10248,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -296130,7 +296130,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(13034u16).unwrap(),
-                state_flags: 2056,
+                state_flags: 10248,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -296144,7 +296144,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(13035u16).unwrap(),
-                state_flags: 2056,
+                state_flags: 10248,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -296158,7 +296158,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(13036u16).unwrap(),
-                state_flags: 2056,
+                state_flags: 10248,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -296172,7 +296172,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(13037u16).unwrap(),
-                state_flags: 2056,
+                state_flags: 10248,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -296186,7 +296186,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(13038u16).unwrap(),
-                state_flags: 2056,
+                state_flags: 10248,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -296200,7 +296200,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(13039u16).unwrap(),
-                state_flags: 2056,
+                state_flags: 10248,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -296214,7 +296214,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(13040u16).unwrap(),
-                state_flags: 2056,
+                state_flags: 10248,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -296228,7 +296228,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(13041u16).unwrap(),
-                state_flags: 2056,
+                state_flags: 10248,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -296242,7 +296242,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(13042u16).unwrap(),
-                state_flags: 2056,
+                state_flags: 10248,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -296256,7 +296256,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(13043u16).unwrap(),
-                state_flags: 2056,
+                state_flags: 10248,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -296270,7 +296270,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(13044u16).unwrap(),
-                state_flags: 2056,
+                state_flags: 10248,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -296284,7 +296284,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(13045u16).unwrap(),
-                state_flags: 2056,
+                state_flags: 10248,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -296313,7 +296313,7 @@ impl Block {
         item_id: 848,
         default_state: &BlockState {
             id: BlockStateId::new(13062u16).unwrap(),
-            state_flags: 2122,
+            state_flags: 10314,
             side_flags: 65,
             instrument: NoteblockInstrument::Bass,
             luminance: 0,
@@ -296328,7 +296328,7 @@ impl Block {
         states: &[
             BlockState {
                 id: BlockStateId::new(13046u16).unwrap(),
-                state_flags: 2122,
+                state_flags: 10314,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Bass,
                 luminance: 0,
@@ -296342,7 +296342,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(13047u16).unwrap(),
-                state_flags: 2122,
+                state_flags: 10314,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Bass,
                 luminance: 0,
@@ -296356,7 +296356,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(13048u16).unwrap(),
-                state_flags: 2122,
+                state_flags: 10314,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Bass,
                 luminance: 0,
@@ -296370,7 +296370,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(13049u16).unwrap(),
-                state_flags: 2122,
+                state_flags: 10314,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Bass,
                 luminance: 0,
@@ -296384,7 +296384,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(13050u16).unwrap(),
-                state_flags: 2122,
+                state_flags: 10314,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Bass,
                 luminance: 0,
@@ -296398,7 +296398,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(13051u16).unwrap(),
-                state_flags: 2122,
+                state_flags: 10314,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Bass,
                 luminance: 0,
@@ -296412,7 +296412,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(13052u16).unwrap(),
-                state_flags: 2122,
+                state_flags: 10314,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Bass,
                 luminance: 0,
@@ -296426,7 +296426,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(13053u16).unwrap(),
-                state_flags: 2122,
+                state_flags: 10314,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Bass,
                 luminance: 0,
@@ -296440,7 +296440,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(13054u16).unwrap(),
-                state_flags: 2122,
+                state_flags: 10314,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Bass,
                 luminance: 0,
@@ -296454,7 +296454,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(13055u16).unwrap(),
-                state_flags: 2122,
+                state_flags: 10314,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Bass,
                 luminance: 0,
@@ -296468,7 +296468,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(13056u16).unwrap(),
-                state_flags: 2122,
+                state_flags: 10314,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Bass,
                 luminance: 0,
@@ -296482,7 +296482,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(13057u16).unwrap(),
-                state_flags: 2122,
+                state_flags: 10314,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Bass,
                 luminance: 0,
@@ -296496,7 +296496,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(13058u16).unwrap(),
-                state_flags: 2122,
+                state_flags: 10314,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Bass,
                 luminance: 0,
@@ -296510,7 +296510,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(13059u16).unwrap(),
-                state_flags: 2122,
+                state_flags: 10314,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Bass,
                 luminance: 0,
@@ -296524,7 +296524,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(13060u16).unwrap(),
-                state_flags: 2122,
+                state_flags: 10314,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Bass,
                 luminance: 0,
@@ -296538,7 +296538,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(13061u16).unwrap(),
-                state_flags: 2122,
+                state_flags: 10314,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Bass,
                 luminance: 0,
@@ -296552,7 +296552,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(13062u16).unwrap(),
-                state_flags: 2122,
+                state_flags: 10314,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Bass,
                 luminance: 0,
@@ -296566,7 +296566,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(13063u16).unwrap(),
-                state_flags: 2122,
+                state_flags: 10314,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Bass,
                 luminance: 0,
@@ -296580,7 +296580,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(13064u16).unwrap(),
-                state_flags: 2122,
+                state_flags: 10314,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Bass,
                 luminance: 0,
@@ -296594,7 +296594,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(13065u16).unwrap(),
-                state_flags: 2122,
+                state_flags: 10314,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Bass,
                 luminance: 0,
@@ -296608,7 +296608,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(13066u16).unwrap(),
-                state_flags: 2122,
+                state_flags: 10314,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Bass,
                 luminance: 0,
@@ -296622,7 +296622,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(13067u16).unwrap(),
-                state_flags: 2122,
+                state_flags: 10314,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Bass,
                 luminance: 0,
@@ -296636,7 +296636,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(13068u16).unwrap(),
-                state_flags: 2122,
+                state_flags: 10314,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Bass,
                 luminance: 0,
@@ -296650,7 +296650,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(13069u16).unwrap(),
-                state_flags: 2122,
+                state_flags: 10314,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Bass,
                 luminance: 0,
@@ -296664,7 +296664,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(13070u16).unwrap(),
-                state_flags: 2122,
+                state_flags: 10314,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Bass,
                 luminance: 0,
@@ -296678,7 +296678,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(13071u16).unwrap(),
-                state_flags: 2122,
+                state_flags: 10314,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Bass,
                 luminance: 0,
@@ -296692,7 +296692,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(13072u16).unwrap(),
-                state_flags: 2122,
+                state_flags: 10314,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Bass,
                 luminance: 0,
@@ -296706,7 +296706,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(13073u16).unwrap(),
-                state_flags: 2122,
+                state_flags: 10314,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Bass,
                 luminance: 0,
@@ -296720,7 +296720,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(13074u16).unwrap(),
-                state_flags: 2122,
+                state_flags: 10314,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Bass,
                 luminance: 0,
@@ -296734,7 +296734,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(13075u16).unwrap(),
-                state_flags: 2122,
+                state_flags: 10314,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Bass,
                 luminance: 0,
@@ -296748,7 +296748,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(13076u16).unwrap(),
-                state_flags: 2122,
+                state_flags: 10314,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Bass,
                 luminance: 0,
@@ -296762,7 +296762,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(13077u16).unwrap(),
-                state_flags: 2122,
+                state_flags: 10314,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Bass,
                 luminance: 0,
@@ -296791,7 +296791,7 @@ impl Block {
         item_id: 826,
         default_state: &BlockState {
             id: BlockStateId::new(13078u16).unwrap(),
-            state_flags: 3268,
+            state_flags: 11460,
             side_flags: 255,
             instrument: NoteblockInstrument::Harp,
             luminance: 0,
@@ -296805,7 +296805,7 @@ impl Block {
         },
         states: &[BlockState {
             id: BlockStateId::new(13078u16).unwrap(),
-            state_flags: 3268,
+            state_flags: 11460,
             side_flags: 255,
             instrument: NoteblockInstrument::Harp,
             luminance: 0,
@@ -355635,7 +355635,7 @@ impl Block {
         item_id: 833,
         default_state: &BlockState {
             id: BlockStateId::new(16838u16).unwrap(),
-            state_flags: 3268,
+            state_flags: 11460,
             side_flags: 255,
             instrument: NoteblockInstrument::Basedrum,
             luminance: 0,
@@ -355650,7 +355650,7 @@ impl Block {
         states: &[
             BlockState {
                 id: BlockStateId::new(16833u16).unwrap(),
-                state_flags: 3268,
+                state_flags: 11460,
                 side_flags: 255,
                 instrument: NoteblockInstrument::Basedrum,
                 luminance: 0,
@@ -355664,7 +355664,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(16834u16).unwrap(),
-                state_flags: 3268,
+                state_flags: 11460,
                 side_flags: 255,
                 instrument: NoteblockInstrument::Basedrum,
                 luminance: 0,
@@ -355678,7 +355678,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(16835u16).unwrap(),
-                state_flags: 3268,
+                state_flags: 11460,
                 side_flags: 255,
                 instrument: NoteblockInstrument::Basedrum,
                 luminance: 0,
@@ -355692,7 +355692,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(16836u16).unwrap(),
-                state_flags: 3268,
+                state_flags: 11460,
                 side_flags: 255,
                 instrument: NoteblockInstrument::Basedrum,
                 luminance: 0,
@@ -355706,7 +355706,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(16837u16).unwrap(),
-                state_flags: 3268,
+                state_flags: 11460,
                 side_flags: 255,
                 instrument: NoteblockInstrument::Basedrum,
                 luminance: 0,
@@ -355720,7 +355720,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(16838u16).unwrap(),
-                state_flags: 3268,
+                state_flags: 11460,
                 side_flags: 255,
                 instrument: NoteblockInstrument::Basedrum,
                 luminance: 0,
@@ -355734,7 +355734,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(16839u16).unwrap(),
-                state_flags: 3268,
+                state_flags: 11460,
                 side_flags: 255,
                 instrument: NoteblockInstrument::Basedrum,
                 luminance: 0,
@@ -355748,7 +355748,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(16840u16).unwrap(),
-                state_flags: 3268,
+                state_flags: 11460,
                 side_flags: 255,
                 instrument: NoteblockInstrument::Basedrum,
                 luminance: 0,
@@ -355762,7 +355762,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(16841u16).unwrap(),
-                state_flags: 3268,
+                state_flags: 11460,
                 side_flags: 255,
                 instrument: NoteblockInstrument::Basedrum,
                 luminance: 0,
@@ -355776,7 +355776,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(16842u16).unwrap(),
-                state_flags: 3268,
+                state_flags: 11460,
                 side_flags: 255,
                 instrument: NoteblockInstrument::Basedrum,
                 luminance: 0,
@@ -355790,7 +355790,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(16843u16).unwrap(),
-                state_flags: 3268,
+                state_flags: 11460,
                 side_flags: 255,
                 instrument: NoteblockInstrument::Basedrum,
                 luminance: 0,
@@ -355804,7 +355804,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(16844u16).unwrap(),
-                state_flags: 3268,
+                state_flags: 11460,
                 side_flags: 255,
                 instrument: NoteblockInstrument::Basedrum,
                 luminance: 0,
@@ -463884,7 +463884,7 @@ impl Block {
         item_id: 837,
         default_state: &BlockState {
             id: BlockStateId::new(24144u16).unwrap(),
-            state_flags: 6218,
+            state_flags: 14410,
             side_flags: 65,
             instrument: NoteblockInstrument::Bass,
             luminance: 0,
@@ -463899,7 +463899,7 @@ impl Block {
         states: &[
             BlockState {
                 id: BlockStateId::new(24141u16).unwrap(),
-                state_flags: 6218,
+                state_flags: 14410,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Bass,
                 luminance: 0,
@@ -463913,7 +463913,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(24142u16).unwrap(),
-                state_flags: 6218,
+                state_flags: 14410,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Bass,
                 luminance: 0,
@@ -463927,7 +463927,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(24143u16).unwrap(),
-                state_flags: 6218,
+                state_flags: 14410,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Bass,
                 luminance: 0,
@@ -463941,7 +463941,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(24144u16).unwrap(),
-                state_flags: 6218,
+                state_flags: 14410,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Bass,
                 luminance: 0,
@@ -463955,7 +463955,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(24145u16).unwrap(),
-                state_flags: 6218,
+                state_flags: 14410,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Bass,
                 luminance: 0,
@@ -463969,7 +463969,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(24146u16).unwrap(),
-                state_flags: 6218,
+                state_flags: 14410,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Bass,
                 luminance: 0,
@@ -463983,7 +463983,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(24147u16).unwrap(),
-                state_flags: 6218,
+                state_flags: 14410,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Bass,
                 luminance: 0,
@@ -463997,7 +463997,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(24148u16).unwrap(),
-                state_flags: 6218,
+                state_flags: 14410,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Bass,
                 luminance: 0,
@@ -464011,7 +464011,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(24149u16).unwrap(),
-                state_flags: 6218,
+                state_flags: 14410,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Bass,
                 luminance: 0,
@@ -464025,7 +464025,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(24150u16).unwrap(),
-                state_flags: 6218,
+                state_flags: 14410,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Bass,
                 luminance: 0,
@@ -464039,7 +464039,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(24151u16).unwrap(),
-                state_flags: 6218,
+                state_flags: 14410,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Bass,
                 luminance: 0,
@@ -464053,7 +464053,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(24152u16).unwrap(),
-                state_flags: 6218,
+                state_flags: 14410,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Bass,
                 luminance: 0,
@@ -464067,7 +464067,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(24153u16).unwrap(),
-                state_flags: 6218,
+                state_flags: 14410,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Bass,
                 luminance: 0,
@@ -464081,7 +464081,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(24154u16).unwrap(),
-                state_flags: 6218,
+                state_flags: 14410,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Bass,
                 luminance: 0,
@@ -464095,7 +464095,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(24155u16).unwrap(),
-                state_flags: 6218,
+                state_flags: 14410,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Bass,
                 luminance: 0,
@@ -464109,7 +464109,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(24156u16).unwrap(),
-                state_flags: 6218,
+                state_flags: 14410,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Bass,
                 luminance: 0,
@@ -468790,7 +468790,7 @@ impl Block {
         item_id: 886,
         default_state: &BlockState {
             id: BlockStateId::new(24404u16).unwrap(),
-            state_flags: 72,
+            state_flags: 8264,
             side_flags: 0,
             instrument: NoteblockInstrument::Bass,
             luminance: 0,
@@ -468805,7 +468805,7 @@ impl Block {
         states: &[
             BlockState {
                 id: BlockStateId::new(24403u16).unwrap(),
-                state_flags: 72,
+                state_flags: 8264,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Bass,
                 luminance: 0,
@@ -468819,7 +468819,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(24404u16).unwrap(),
-                state_flags: 72,
+                state_flags: 8264,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Bass,
                 luminance: 0,
@@ -468848,7 +468848,7 @@ impl Block {
         item_id: 887,
         default_state: &BlockState {
             id: BlockStateId::new(24406u16).unwrap(),
-            state_flags: 72,
+            state_flags: 8264,
             side_flags: 0,
             instrument: NoteblockInstrument::Bass,
             luminance: 0,
@@ -468863,7 +468863,7 @@ impl Block {
         states: &[
             BlockState {
                 id: BlockStateId::new(24405u16).unwrap(),
-                state_flags: 72,
+                state_flags: 8264,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Bass,
                 luminance: 0,
@@ -468877,7 +468877,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(24406u16).unwrap(),
-                state_flags: 72,
+                state_flags: 8264,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Bass,
                 luminance: 0,
@@ -474970,7 +474970,7 @@ impl Block {
         item_id: 869,
         default_state: &BlockState {
             id: BlockStateId::new(24832u16).unwrap(),
-            state_flags: 8,
+            state_flags: 8200,
             side_flags: 0,
             instrument: NoteblockInstrument::Harp,
             luminance: 0,
@@ -474985,7 +474985,7 @@ impl Block {
         states: &[
             BlockState {
                 id: BlockStateId::new(24823u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -474999,7 +474999,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(24824u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -475013,7 +475013,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(24825u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -475027,7 +475027,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(24826u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -475041,7 +475041,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(24827u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -475055,7 +475055,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(24828u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -475069,7 +475069,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(24829u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -475083,7 +475083,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(24830u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -475097,7 +475097,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(24831u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -475111,7 +475111,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(24832u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -475125,7 +475125,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(24833u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -475139,7 +475139,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(24834u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -475153,7 +475153,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(24835u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -475167,7 +475167,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(24836u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -475181,7 +475181,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(24837u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -475195,7 +475195,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(24838u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -475209,7 +475209,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(24839u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -475223,7 +475223,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(24840u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -475237,7 +475237,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(24841u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -475251,7 +475251,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(24842u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -475265,7 +475265,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(24843u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -475279,7 +475279,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(24844u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -475293,7 +475293,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(24845u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -475307,7 +475307,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(24846u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -475336,7 +475336,7 @@ impl Block {
         item_id: 870,
         default_state: &BlockState {
             id: BlockStateId::new(24856u16).unwrap(),
-            state_flags: 8,
+            state_flags: 8200,
             side_flags: 0,
             instrument: NoteblockInstrument::Harp,
             luminance: 0,
@@ -475351,7 +475351,7 @@ impl Block {
         states: &[
             BlockState {
                 id: BlockStateId::new(24847u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -475365,7 +475365,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(24848u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -475379,7 +475379,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(24849u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -475393,7 +475393,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(24850u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -475407,7 +475407,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(24851u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -475421,7 +475421,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(24852u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -475435,7 +475435,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(24853u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -475449,7 +475449,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(24854u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -475463,7 +475463,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(24855u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -475477,7 +475477,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(24856u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -475491,7 +475491,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(24857u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -475505,7 +475505,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(24858u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -475519,7 +475519,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(24859u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -475533,7 +475533,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(24860u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -475547,7 +475547,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(24861u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -475561,7 +475561,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(24862u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -475575,7 +475575,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(24863u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -475589,7 +475589,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(24864u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -475603,7 +475603,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(24865u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -475617,7 +475617,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(24866u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -475631,7 +475631,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(24867u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -475645,7 +475645,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(24868u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -475659,7 +475659,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(24869u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -475673,7 +475673,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(24870u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -479365,7 +479365,7 @@ impl Block {
         item_id: 838,
         default_state: &BlockState {
             id: BlockStateId::new(25109u16).unwrap(),
-            state_flags: 3520,
+            state_flags: 11712,
             side_flags: 255,
             instrument: NoteblockInstrument::Harp,
             luminance: 0,
@@ -479380,7 +479380,7 @@ impl Block {
         states: &[
             BlockState {
                 id: BlockStateId::new(25109u16).unwrap(),
-                state_flags: 3520,
+                state_flags: 11712,
                 side_flags: 255,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -479394,7 +479394,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(25110u16).unwrap(),
-                state_flags: 3520,
+                state_flags: 11712,
                 side_flags: 255,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -479408,7 +479408,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(25111u16).unwrap(),
-                state_flags: 3520,
+                state_flags: 11712,
                 side_flags: 255,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -479422,7 +479422,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(25112u16).unwrap(),
-                state_flags: 3520,
+                state_flags: 11712,
                 side_flags: 255,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -479436,7 +479436,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(25113u16).unwrap(),
-                state_flags: 3520,
+                state_flags: 11712,
                 side_flags: 255,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -479450,7 +479450,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(25114u16).unwrap(),
-                state_flags: 3520,
+                state_flags: 11712,
                 side_flags: 255,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -479464,7 +479464,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(25115u16).unwrap(),
-                state_flags: 3520,
+                state_flags: 11712,
                 side_flags: 255,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -479478,7 +479478,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(25116u16).unwrap(),
-                state_flags: 3520,
+                state_flags: 11712,
                 side_flags: 255,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -479492,7 +479492,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(25117u16).unwrap(),
-                state_flags: 3520,
+                state_flags: 11712,
                 side_flags: 255,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -479506,7 +479506,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(25118u16).unwrap(),
-                state_flags: 3520,
+                state_flags: 11712,
                 side_flags: 255,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -479520,7 +479520,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(25119u16).unwrap(),
-                state_flags: 3520,
+                state_flags: 11712,
                 side_flags: 255,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -479534,7 +479534,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(25120u16).unwrap(),
-                state_flags: 3520,
+                state_flags: 11712,
                 side_flags: 255,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -479548,7 +479548,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(25121u16).unwrap(),
-                state_flags: 3520,
+                state_flags: 11712,
                 side_flags: 255,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -479562,7 +479562,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(25122u16).unwrap(),
-                state_flags: 3520,
+                state_flags: 11712,
                 side_flags: 255,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -479576,7 +479576,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(25123u16).unwrap(),
-                state_flags: 3520,
+                state_flags: 11712,
                 side_flags: 255,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -479590,7 +479590,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(25124u16).unwrap(),
-                state_flags: 3520,
+                state_flags: 11712,
                 side_flags: 255,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -494056,7 +494056,7 @@ impl Block {
         item_id: 872,
         default_state: &BlockState {
             id: BlockStateId::new(26101u16).unwrap(),
-            state_flags: 72,
+            state_flags: 8264,
             side_flags: 0,
             instrument: NoteblockInstrument::Basedrum,
             luminance: 0,
@@ -494071,7 +494071,7 @@ impl Block {
         states: &[
             BlockState {
                 id: BlockStateId::new(26100u16).unwrap(),
-                state_flags: 72,
+                state_flags: 8264,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Basedrum,
                 luminance: 0,
@@ -494085,7 +494085,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(26101u16).unwrap(),
-                state_flags: 72,
+                state_flags: 8264,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Basedrum,
                 luminance: 0,
@@ -494114,7 +494114,7 @@ impl Block {
         item_id: 857,
         default_state: &BlockState {
             id: BlockStateId::new(26111u16).unwrap(),
-            state_flags: 8,
+            state_flags: 8200,
             side_flags: 0,
             instrument: NoteblockInstrument::Harp,
             luminance: 0,
@@ -494129,7 +494129,7 @@ impl Block {
         states: &[
             BlockState {
                 id: BlockStateId::new(26102u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -494143,7 +494143,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(26103u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -494157,7 +494157,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(26104u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -494171,7 +494171,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(26105u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -494185,7 +494185,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(26106u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -494199,7 +494199,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(26107u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -494213,7 +494213,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(26108u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -494227,7 +494227,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(26109u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -494241,7 +494241,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(26110u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -494255,7 +494255,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(26111u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -494269,7 +494269,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(26112u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -494283,7 +494283,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(26113u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -494297,7 +494297,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(26114u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -494311,7 +494311,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(26115u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -494325,7 +494325,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(26116u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -494339,7 +494339,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(26117u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -494353,7 +494353,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(26118u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -494367,7 +494367,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(26119u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -494381,7 +494381,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(26120u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -494395,7 +494395,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(26121u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -494409,7 +494409,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(26122u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -494423,7 +494423,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(26123u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -494437,7 +494437,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(26124u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -494451,7 +494451,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(26125u16).unwrap(),
-                state_flags: 8,
+                state_flags: 8200,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -558594,7 +558594,7 @@ impl Block {
         item_id: 849,
         default_state: &BlockState {
             id: BlockStateId::new(30521u16).unwrap(),
-            state_flags: 6216,
+            state_flags: 14408,
             side_flags: 65,
             instrument: NoteblockInstrument::Harp,
             luminance: 1,
@@ -558609,7 +558609,7 @@ impl Block {
         states: &[
             BlockState {
                 id: BlockStateId::new(30520u16).unwrap(),
-                state_flags: 6240,
+                state_flags: 14432,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -558623,7 +558623,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30521u16).unwrap(),
-                state_flags: 6216,
+                state_flags: 14408,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -558637,7 +558637,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30522u16).unwrap(),
-                state_flags: 6240,
+                state_flags: 14432,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -558651,7 +558651,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30523u16).unwrap(),
-                state_flags: 6216,
+                state_flags: 14408,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -558665,7 +558665,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30524u16).unwrap(),
-                state_flags: 6240,
+                state_flags: 14432,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -558679,7 +558679,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30525u16).unwrap(),
-                state_flags: 6216,
+                state_flags: 14408,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -558693,7 +558693,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30526u16).unwrap(),
-                state_flags: 6240,
+                state_flags: 14432,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -558707,7 +558707,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30527u16).unwrap(),
-                state_flags: 6216,
+                state_flags: 14408,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -558721,7 +558721,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30528u16).unwrap(),
-                state_flags: 6240,
+                state_flags: 14432,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -558735,7 +558735,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30529u16).unwrap(),
-                state_flags: 6216,
+                state_flags: 14408,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -558749,7 +558749,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30530u16).unwrap(),
-                state_flags: 6240,
+                state_flags: 14432,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -558763,7 +558763,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30531u16).unwrap(),
-                state_flags: 6216,
+                state_flags: 14408,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -558777,7 +558777,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30532u16).unwrap(),
-                state_flags: 6240,
+                state_flags: 14432,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -558791,7 +558791,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30533u16).unwrap(),
-                state_flags: 6216,
+                state_flags: 14408,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -558805,7 +558805,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30534u16).unwrap(),
-                state_flags: 6240,
+                state_flags: 14432,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -558819,7 +558819,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30535u16).unwrap(),
-                state_flags: 6216,
+                state_flags: 14408,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -558833,7 +558833,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30536u16).unwrap(),
-                state_flags: 6240,
+                state_flags: 14432,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -558847,7 +558847,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30537u16).unwrap(),
-                state_flags: 6216,
+                state_flags: 14408,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -558861,7 +558861,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30538u16).unwrap(),
-                state_flags: 6240,
+                state_flags: 14432,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -558875,7 +558875,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30539u16).unwrap(),
-                state_flags: 6216,
+                state_flags: 14408,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -558889,7 +558889,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30540u16).unwrap(),
-                state_flags: 6240,
+                state_flags: 14432,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -558903,7 +558903,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30541u16).unwrap(),
-                state_flags: 6216,
+                state_flags: 14408,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -558917,7 +558917,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30542u16).unwrap(),
-                state_flags: 6240,
+                state_flags: 14432,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -558931,7 +558931,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30543u16).unwrap(),
-                state_flags: 6216,
+                state_flags: 14408,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -558945,7 +558945,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30544u16).unwrap(),
-                state_flags: 6240,
+                state_flags: 14432,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -558959,7 +558959,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30545u16).unwrap(),
-                state_flags: 6216,
+                state_flags: 14408,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -558973,7 +558973,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30546u16).unwrap(),
-                state_flags: 6240,
+                state_flags: 14432,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -558987,7 +558987,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30547u16).unwrap(),
-                state_flags: 6216,
+                state_flags: 14408,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -559001,7 +559001,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30548u16).unwrap(),
-                state_flags: 6240,
+                state_flags: 14432,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -559015,7 +559015,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30549u16).unwrap(),
-                state_flags: 6216,
+                state_flags: 14408,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -559029,7 +559029,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30550u16).unwrap(),
-                state_flags: 6240,
+                state_flags: 14432,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -559043,7 +559043,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30551u16).unwrap(),
-                state_flags: 6216,
+                state_flags: 14408,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -559057,7 +559057,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30552u16).unwrap(),
-                state_flags: 6240,
+                state_flags: 14432,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -559071,7 +559071,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30553u16).unwrap(),
-                state_flags: 6216,
+                state_flags: 14408,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -559085,7 +559085,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30554u16).unwrap(),
-                state_flags: 6240,
+                state_flags: 14432,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -559099,7 +559099,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30555u16).unwrap(),
-                state_flags: 6216,
+                state_flags: 14408,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -559113,7 +559113,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30556u16).unwrap(),
-                state_flags: 6240,
+                state_flags: 14432,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -559127,7 +559127,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30557u16).unwrap(),
-                state_flags: 6216,
+                state_flags: 14408,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -559141,7 +559141,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30558u16).unwrap(),
-                state_flags: 6240,
+                state_flags: 14432,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -559155,7 +559155,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30559u16).unwrap(),
-                state_flags: 6216,
+                state_flags: 14408,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -559169,7 +559169,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30560u16).unwrap(),
-                state_flags: 6240,
+                state_flags: 14432,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -559183,7 +559183,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30561u16).unwrap(),
-                state_flags: 6216,
+                state_flags: 14408,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -559197,7 +559197,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30562u16).unwrap(),
-                state_flags: 6240,
+                state_flags: 14432,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -559211,7 +559211,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30563u16).unwrap(),
-                state_flags: 6216,
+                state_flags: 14408,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -559225,7 +559225,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30564u16).unwrap(),
-                state_flags: 6240,
+                state_flags: 14432,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -559239,7 +559239,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30565u16).unwrap(),
-                state_flags: 6216,
+                state_flags: 14408,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -559253,7 +559253,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30566u16).unwrap(),
-                state_flags: 6240,
+                state_flags: 14432,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -559267,7 +559267,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30567u16).unwrap(),
-                state_flags: 6216,
+                state_flags: 14408,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -559281,7 +559281,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30568u16).unwrap(),
-                state_flags: 6240,
+                state_flags: 14432,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -559295,7 +559295,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30569u16).unwrap(),
-                state_flags: 6216,
+                state_flags: 14408,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -559309,7 +559309,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30570u16).unwrap(),
-                state_flags: 6240,
+                state_flags: 14432,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -559323,7 +559323,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30571u16).unwrap(),
-                state_flags: 6216,
+                state_flags: 14408,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -559337,7 +559337,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30572u16).unwrap(),
-                state_flags: 6240,
+                state_flags: 14432,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -559351,7 +559351,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30573u16).unwrap(),
-                state_flags: 6216,
+                state_flags: 14408,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -559365,7 +559365,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30574u16).unwrap(),
-                state_flags: 6240,
+                state_flags: 14432,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -559379,7 +559379,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30575u16).unwrap(),
-                state_flags: 6216,
+                state_flags: 14408,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -559393,7 +559393,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30576u16).unwrap(),
-                state_flags: 6240,
+                state_flags: 14432,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -559407,7 +559407,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30577u16).unwrap(),
-                state_flags: 6216,
+                state_flags: 14408,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -559421,7 +559421,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30578u16).unwrap(),
-                state_flags: 6240,
+                state_flags: 14432,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -559435,7 +559435,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30579u16).unwrap(),
-                state_flags: 6216,
+                state_flags: 14408,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -559449,7 +559449,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30580u16).unwrap(),
-                state_flags: 6240,
+                state_flags: 14432,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -559463,7 +559463,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30581u16).unwrap(),
-                state_flags: 6216,
+                state_flags: 14408,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -559477,7 +559477,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30582u16).unwrap(),
-                state_flags: 6240,
+                state_flags: 14432,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -559491,7 +559491,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30583u16).unwrap(),
-                state_flags: 6216,
+                state_flags: 14408,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -559505,7 +559505,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30584u16).unwrap(),
-                state_flags: 6240,
+                state_flags: 14432,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -559519,7 +559519,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30585u16).unwrap(),
-                state_flags: 6216,
+                state_flags: 14408,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -559533,7 +559533,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30586u16).unwrap(),
-                state_flags: 6240,
+                state_flags: 14432,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -559547,7 +559547,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30587u16).unwrap(),
-                state_flags: 6216,
+                state_flags: 14408,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -559561,7 +559561,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30588u16).unwrap(),
-                state_flags: 6240,
+                state_flags: 14432,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -559575,7 +559575,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30589u16).unwrap(),
-                state_flags: 6216,
+                state_flags: 14408,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -559589,7 +559589,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30590u16).unwrap(),
-                state_flags: 6240,
+                state_flags: 14432,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -559603,7 +559603,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30591u16).unwrap(),
-                state_flags: 6216,
+                state_flags: 14408,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -559617,7 +559617,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30592u16).unwrap(),
-                state_flags: 6240,
+                state_flags: 14432,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -559631,7 +559631,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30593u16).unwrap(),
-                state_flags: 6216,
+                state_flags: 14408,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -559645,7 +559645,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30594u16).unwrap(),
-                state_flags: 6240,
+                state_flags: 14432,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -559659,7 +559659,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30595u16).unwrap(),
-                state_flags: 6216,
+                state_flags: 14408,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -559673,7 +559673,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30596u16).unwrap(),
-                state_flags: 6240,
+                state_flags: 14432,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -559687,7 +559687,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30597u16).unwrap(),
-                state_flags: 6216,
+                state_flags: 14408,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -559701,7 +559701,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30598u16).unwrap(),
-                state_flags: 6240,
+                state_flags: 14432,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -559715,7 +559715,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30599u16).unwrap(),
-                state_flags: 6216,
+                state_flags: 14408,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -559729,7 +559729,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30600u16).unwrap(),
-                state_flags: 6240,
+                state_flags: 14432,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -559743,7 +559743,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30601u16).unwrap(),
-                state_flags: 6216,
+                state_flags: 14408,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -559757,7 +559757,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30602u16).unwrap(),
-                state_flags: 6240,
+                state_flags: 14432,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -559771,7 +559771,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30603u16).unwrap(),
-                state_flags: 6216,
+                state_flags: 14408,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -559785,7 +559785,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30604u16).unwrap(),
-                state_flags: 6240,
+                state_flags: 14432,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -559799,7 +559799,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30605u16).unwrap(),
-                state_flags: 6216,
+                state_flags: 14408,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -559813,7 +559813,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30606u16).unwrap(),
-                state_flags: 6240,
+                state_flags: 14432,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -559827,7 +559827,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30607u16).unwrap(),
-                state_flags: 6216,
+                state_flags: 14408,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -559841,7 +559841,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30608u16).unwrap(),
-                state_flags: 6240,
+                state_flags: 14432,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -559855,7 +559855,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30609u16).unwrap(),
-                state_flags: 6216,
+                state_flags: 14408,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -559869,7 +559869,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30610u16).unwrap(),
-                state_flags: 6240,
+                state_flags: 14432,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -559883,7 +559883,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30611u16).unwrap(),
-                state_flags: 6216,
+                state_flags: 14408,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -559897,7 +559897,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30612u16).unwrap(),
-                state_flags: 6240,
+                state_flags: 14432,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -559911,7 +559911,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30613u16).unwrap(),
-                state_flags: 6216,
+                state_flags: 14408,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -559925,7 +559925,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30614u16).unwrap(),
-                state_flags: 6240,
+                state_flags: 14432,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -559939,7 +559939,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30615u16).unwrap(),
-                state_flags: 6216,
+                state_flags: 14408,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -559968,7 +559968,7 @@ impl Block {
         item_id: 850,
         default_state: &BlockState {
             id: BlockStateId::new(30617u16).unwrap(),
-            state_flags: 6216,
+            state_flags: 14408,
             side_flags: 65,
             instrument: NoteblockInstrument::Harp,
             luminance: 1,
@@ -559983,7 +559983,7 @@ impl Block {
         states: &[
             BlockState {
                 id: BlockStateId::new(30616u16).unwrap(),
-                state_flags: 6240,
+                state_flags: 14432,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -559997,7 +559997,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30617u16).unwrap(),
-                state_flags: 6216,
+                state_flags: 14408,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -560011,7 +560011,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30618u16).unwrap(),
-                state_flags: 6240,
+                state_flags: 14432,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -560025,7 +560025,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30619u16).unwrap(),
-                state_flags: 6216,
+                state_flags: 14408,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -560039,7 +560039,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30620u16).unwrap(),
-                state_flags: 6240,
+                state_flags: 14432,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -560053,7 +560053,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30621u16).unwrap(),
-                state_flags: 6216,
+                state_flags: 14408,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -560067,7 +560067,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30622u16).unwrap(),
-                state_flags: 6240,
+                state_flags: 14432,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -560081,7 +560081,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30623u16).unwrap(),
-                state_flags: 6216,
+                state_flags: 14408,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -560095,7 +560095,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30624u16).unwrap(),
-                state_flags: 6240,
+                state_flags: 14432,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -560109,7 +560109,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30625u16).unwrap(),
-                state_flags: 6216,
+                state_flags: 14408,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -560123,7 +560123,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30626u16).unwrap(),
-                state_flags: 6240,
+                state_flags: 14432,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -560137,7 +560137,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30627u16).unwrap(),
-                state_flags: 6216,
+                state_flags: 14408,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -560151,7 +560151,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30628u16).unwrap(),
-                state_flags: 6240,
+                state_flags: 14432,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -560165,7 +560165,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30629u16).unwrap(),
-                state_flags: 6216,
+                state_flags: 14408,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -560179,7 +560179,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30630u16).unwrap(),
-                state_flags: 6240,
+                state_flags: 14432,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -560193,7 +560193,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30631u16).unwrap(),
-                state_flags: 6216,
+                state_flags: 14408,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -560207,7 +560207,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30632u16).unwrap(),
-                state_flags: 6240,
+                state_flags: 14432,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -560221,7 +560221,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30633u16).unwrap(),
-                state_flags: 6216,
+                state_flags: 14408,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -560235,7 +560235,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30634u16).unwrap(),
-                state_flags: 6240,
+                state_flags: 14432,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -560249,7 +560249,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30635u16).unwrap(),
-                state_flags: 6216,
+                state_flags: 14408,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -560263,7 +560263,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30636u16).unwrap(),
-                state_flags: 6240,
+                state_flags: 14432,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -560277,7 +560277,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30637u16).unwrap(),
-                state_flags: 6216,
+                state_flags: 14408,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -560291,7 +560291,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30638u16).unwrap(),
-                state_flags: 6240,
+                state_flags: 14432,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -560305,7 +560305,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30639u16).unwrap(),
-                state_flags: 6216,
+                state_flags: 14408,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -560319,7 +560319,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30640u16).unwrap(),
-                state_flags: 6240,
+                state_flags: 14432,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -560333,7 +560333,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30641u16).unwrap(),
-                state_flags: 6216,
+                state_flags: 14408,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -560347,7 +560347,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30642u16).unwrap(),
-                state_flags: 6240,
+                state_flags: 14432,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -560361,7 +560361,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30643u16).unwrap(),
-                state_flags: 6216,
+                state_flags: 14408,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -560375,7 +560375,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30644u16).unwrap(),
-                state_flags: 6240,
+                state_flags: 14432,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -560389,7 +560389,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30645u16).unwrap(),
-                state_flags: 6216,
+                state_flags: 14408,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -560403,7 +560403,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30646u16).unwrap(),
-                state_flags: 6240,
+                state_flags: 14432,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -560417,7 +560417,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30647u16).unwrap(),
-                state_flags: 6216,
+                state_flags: 14408,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -560431,7 +560431,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30648u16).unwrap(),
-                state_flags: 6240,
+                state_flags: 14432,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -560445,7 +560445,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30649u16).unwrap(),
-                state_flags: 6216,
+                state_flags: 14408,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -560459,7 +560459,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30650u16).unwrap(),
-                state_flags: 6240,
+                state_flags: 14432,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -560473,7 +560473,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30651u16).unwrap(),
-                state_flags: 6216,
+                state_flags: 14408,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -560487,7 +560487,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30652u16).unwrap(),
-                state_flags: 6240,
+                state_flags: 14432,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -560501,7 +560501,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30653u16).unwrap(),
-                state_flags: 6216,
+                state_flags: 14408,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -560515,7 +560515,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30654u16).unwrap(),
-                state_flags: 6240,
+                state_flags: 14432,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -560529,7 +560529,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30655u16).unwrap(),
-                state_flags: 6216,
+                state_flags: 14408,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -560543,7 +560543,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30656u16).unwrap(),
-                state_flags: 6240,
+                state_flags: 14432,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -560557,7 +560557,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30657u16).unwrap(),
-                state_flags: 6216,
+                state_flags: 14408,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -560571,7 +560571,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30658u16).unwrap(),
-                state_flags: 6240,
+                state_flags: 14432,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -560585,7 +560585,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30659u16).unwrap(),
-                state_flags: 6216,
+                state_flags: 14408,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -560599,7 +560599,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30660u16).unwrap(),
-                state_flags: 6240,
+                state_flags: 14432,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -560613,7 +560613,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30661u16).unwrap(),
-                state_flags: 6216,
+                state_flags: 14408,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -560627,7 +560627,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30662u16).unwrap(),
-                state_flags: 6240,
+                state_flags: 14432,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -560641,7 +560641,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30663u16).unwrap(),
-                state_flags: 6216,
+                state_flags: 14408,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -560655,7 +560655,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30664u16).unwrap(),
-                state_flags: 6240,
+                state_flags: 14432,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -560669,7 +560669,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30665u16).unwrap(),
-                state_flags: 6216,
+                state_flags: 14408,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -560683,7 +560683,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30666u16).unwrap(),
-                state_flags: 6240,
+                state_flags: 14432,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -560697,7 +560697,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30667u16).unwrap(),
-                state_flags: 6216,
+                state_flags: 14408,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -560711,7 +560711,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30668u16).unwrap(),
-                state_flags: 6240,
+                state_flags: 14432,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -560725,7 +560725,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30669u16).unwrap(),
-                state_flags: 6216,
+                state_flags: 14408,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -560739,7 +560739,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30670u16).unwrap(),
-                state_flags: 6240,
+                state_flags: 14432,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -560753,7 +560753,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30671u16).unwrap(),
-                state_flags: 6216,
+                state_flags: 14408,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -560767,7 +560767,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30672u16).unwrap(),
-                state_flags: 6240,
+                state_flags: 14432,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -560781,7 +560781,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30673u16).unwrap(),
-                state_flags: 6216,
+                state_flags: 14408,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -560795,7 +560795,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30674u16).unwrap(),
-                state_flags: 6240,
+                state_flags: 14432,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -560809,7 +560809,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30675u16).unwrap(),
-                state_flags: 6216,
+                state_flags: 14408,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -560823,7 +560823,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30676u16).unwrap(),
-                state_flags: 6240,
+                state_flags: 14432,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -560837,7 +560837,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30677u16).unwrap(),
-                state_flags: 6216,
+                state_flags: 14408,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -560851,7 +560851,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30678u16).unwrap(),
-                state_flags: 6240,
+                state_flags: 14432,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -560865,7 +560865,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30679u16).unwrap(),
-                state_flags: 6216,
+                state_flags: 14408,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -560879,7 +560879,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30680u16).unwrap(),
-                state_flags: 6240,
+                state_flags: 14432,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -560893,7 +560893,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30681u16).unwrap(),
-                state_flags: 6216,
+                state_flags: 14408,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -560907,7 +560907,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30682u16).unwrap(),
-                state_flags: 6240,
+                state_flags: 14432,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -560921,7 +560921,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30683u16).unwrap(),
-                state_flags: 6216,
+                state_flags: 14408,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -560935,7 +560935,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30684u16).unwrap(),
-                state_flags: 6240,
+                state_flags: 14432,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -560949,7 +560949,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30685u16).unwrap(),
-                state_flags: 6216,
+                state_flags: 14408,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -560963,7 +560963,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30686u16).unwrap(),
-                state_flags: 6240,
+                state_flags: 14432,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -560977,7 +560977,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30687u16).unwrap(),
-                state_flags: 6216,
+                state_flags: 14408,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -560991,7 +560991,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30688u16).unwrap(),
-                state_flags: 6240,
+                state_flags: 14432,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -561005,7 +561005,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30689u16).unwrap(),
-                state_flags: 6216,
+                state_flags: 14408,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -561019,7 +561019,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30690u16).unwrap(),
-                state_flags: 6240,
+                state_flags: 14432,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -561033,7 +561033,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30691u16).unwrap(),
-                state_flags: 6216,
+                state_flags: 14408,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -561047,7 +561047,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30692u16).unwrap(),
-                state_flags: 6240,
+                state_flags: 14432,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -561061,7 +561061,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30693u16).unwrap(),
-                state_flags: 6216,
+                state_flags: 14408,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -561075,7 +561075,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30694u16).unwrap(),
-                state_flags: 6240,
+                state_flags: 14432,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -561089,7 +561089,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30695u16).unwrap(),
-                state_flags: 6216,
+                state_flags: 14408,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -561103,7 +561103,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30696u16).unwrap(),
-                state_flags: 6240,
+                state_flags: 14432,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -561117,7 +561117,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30697u16).unwrap(),
-                state_flags: 6216,
+                state_flags: 14408,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -561131,7 +561131,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30698u16).unwrap(),
-                state_flags: 6240,
+                state_flags: 14432,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -561145,7 +561145,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30699u16).unwrap(),
-                state_flags: 6216,
+                state_flags: 14408,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -561159,7 +561159,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30700u16).unwrap(),
-                state_flags: 6240,
+                state_flags: 14432,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -561173,7 +561173,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30701u16).unwrap(),
-                state_flags: 6216,
+                state_flags: 14408,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -561187,7 +561187,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30702u16).unwrap(),
-                state_flags: 6240,
+                state_flags: 14432,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -561201,7 +561201,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30703u16).unwrap(),
-                state_flags: 6216,
+                state_flags: 14408,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -561215,7 +561215,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30704u16).unwrap(),
-                state_flags: 6240,
+                state_flags: 14432,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -561229,7 +561229,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30705u16).unwrap(),
-                state_flags: 6216,
+                state_flags: 14408,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -561243,7 +561243,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30706u16).unwrap(),
-                state_flags: 6240,
+                state_flags: 14432,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -561257,7 +561257,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30707u16).unwrap(),
-                state_flags: 6216,
+                state_flags: 14408,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -561271,7 +561271,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30708u16).unwrap(),
-                state_flags: 6240,
+                state_flags: 14432,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -561285,7 +561285,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30709u16).unwrap(),
-                state_flags: 6216,
+                state_flags: 14408,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -561299,7 +561299,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30710u16).unwrap(),
-                state_flags: 6240,
+                state_flags: 14432,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -561313,7 +561313,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30711u16).unwrap(),
-                state_flags: 6216,
+                state_flags: 14408,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -561327,7 +561327,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30712u16).unwrap(),
-                state_flags: 6240,
+                state_flags: 14432,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -561341,7 +561341,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30713u16).unwrap(),
-                state_flags: 6216,
+                state_flags: 14408,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -561355,7 +561355,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30714u16).unwrap(),
-                state_flags: 6240,
+                state_flags: 14432,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -561369,7 +561369,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30715u16).unwrap(),
-                state_flags: 6216,
+                state_flags: 14408,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -561383,7 +561383,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30716u16).unwrap(),
-                state_flags: 6240,
+                state_flags: 14432,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -561397,7 +561397,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30717u16).unwrap(),
-                state_flags: 6216,
+                state_flags: 14408,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -561411,7 +561411,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30718u16).unwrap(),
-                state_flags: 6240,
+                state_flags: 14432,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -561425,7 +561425,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30719u16).unwrap(),
-                state_flags: 6216,
+                state_flags: 14408,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -561439,7 +561439,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30720u16).unwrap(),
-                state_flags: 6240,
+                state_flags: 14432,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -561453,7 +561453,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30721u16).unwrap(),
-                state_flags: 6216,
+                state_flags: 14408,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -561467,7 +561467,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30722u16).unwrap(),
-                state_flags: 6240,
+                state_flags: 14432,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -561481,7 +561481,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30723u16).unwrap(),
-                state_flags: 6216,
+                state_flags: 14408,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -561495,7 +561495,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30724u16).unwrap(),
-                state_flags: 6240,
+                state_flags: 14432,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -561509,7 +561509,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30725u16).unwrap(),
-                state_flags: 6216,
+                state_flags: 14408,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -561523,7 +561523,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30726u16).unwrap(),
-                state_flags: 6240,
+                state_flags: 14432,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -561537,7 +561537,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30727u16).unwrap(),
-                state_flags: 6216,
+                state_flags: 14408,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -561551,7 +561551,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30728u16).unwrap(),
-                state_flags: 6240,
+                state_flags: 14432,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -561565,7 +561565,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30729u16).unwrap(),
-                state_flags: 6216,
+                state_flags: 14408,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -561579,7 +561579,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30730u16).unwrap(),
-                state_flags: 6240,
+                state_flags: 14432,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -561593,7 +561593,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30731u16).unwrap(),
-                state_flags: 6216,
+                state_flags: 14408,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -561607,7 +561607,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30732u16).unwrap(),
-                state_flags: 6240,
+                state_flags: 14432,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -561621,7 +561621,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30733u16).unwrap(),
-                state_flags: 6216,
+                state_flags: 14408,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -561635,7 +561635,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30734u16).unwrap(),
-                state_flags: 6240,
+                state_flags: 14432,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -561649,7 +561649,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30735u16).unwrap(),
-                state_flags: 6216,
+                state_flags: 14408,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -561663,7 +561663,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30736u16).unwrap(),
-                state_flags: 6240,
+                state_flags: 14432,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -561677,7 +561677,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30737u16).unwrap(),
-                state_flags: 6216,
+                state_flags: 14408,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -561691,7 +561691,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30738u16).unwrap(),
-                state_flags: 6240,
+                state_flags: 14432,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -561705,7 +561705,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30739u16).unwrap(),
-                state_flags: 6216,
+                state_flags: 14408,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -561719,7 +561719,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30740u16).unwrap(),
-                state_flags: 6240,
+                state_flags: 14432,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -561733,7 +561733,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30741u16).unwrap(),
-                state_flags: 6216,
+                state_flags: 14408,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -561747,7 +561747,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30742u16).unwrap(),
-                state_flags: 6240,
+                state_flags: 14432,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -561761,7 +561761,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30743u16).unwrap(),
-                state_flags: 6216,
+                state_flags: 14408,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -561775,7 +561775,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30744u16).unwrap(),
-                state_flags: 6240,
+                state_flags: 14432,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -561789,7 +561789,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30745u16).unwrap(),
-                state_flags: 6216,
+                state_flags: 14408,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -561803,7 +561803,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30746u16).unwrap(),
-                state_flags: 6240,
+                state_flags: 14432,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -561817,7 +561817,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30747u16).unwrap(),
-                state_flags: 6216,
+                state_flags: 14408,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -561831,7 +561831,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30748u16).unwrap(),
-                state_flags: 6240,
+                state_flags: 14432,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -561845,7 +561845,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30749u16).unwrap(),
-                state_flags: 6216,
+                state_flags: 14408,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -561859,7 +561859,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30750u16).unwrap(),
-                state_flags: 6240,
+                state_flags: 14432,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -561873,7 +561873,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30751u16).unwrap(),
-                state_flags: 6216,
+                state_flags: 14408,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -561887,7 +561887,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30752u16).unwrap(),
-                state_flags: 6240,
+                state_flags: 14432,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -561901,7 +561901,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30753u16).unwrap(),
-                state_flags: 6216,
+                state_flags: 14408,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -561915,7 +561915,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30754u16).unwrap(),
-                state_flags: 6240,
+                state_flags: 14432,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -561929,7 +561929,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30755u16).unwrap(),
-                state_flags: 6216,
+                state_flags: 14408,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -561943,7 +561943,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30756u16).unwrap(),
-                state_flags: 6240,
+                state_flags: 14432,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -561957,7 +561957,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30757u16).unwrap(),
-                state_flags: 6216,
+                state_flags: 14408,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -561971,7 +561971,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30758u16).unwrap(),
-                state_flags: 6240,
+                state_flags: 14432,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -561985,7 +561985,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30759u16).unwrap(),
-                state_flags: 6216,
+                state_flags: 14408,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -561999,7 +561999,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30760u16).unwrap(),
-                state_flags: 6240,
+                state_flags: 14432,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -562013,7 +562013,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30761u16).unwrap(),
-                state_flags: 6216,
+                state_flags: 14408,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -562027,7 +562027,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30762u16).unwrap(),
-                state_flags: 6240,
+                state_flags: 14432,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -562041,7 +562041,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30763u16).unwrap(),
-                state_flags: 6216,
+                state_flags: 14408,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -562055,7 +562055,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30764u16).unwrap(),
-                state_flags: 6240,
+                state_flags: 14432,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -562069,7 +562069,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30765u16).unwrap(),
-                state_flags: 6216,
+                state_flags: 14408,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -562083,7 +562083,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30766u16).unwrap(),
-                state_flags: 6240,
+                state_flags: 14432,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -562097,7 +562097,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30767u16).unwrap(),
-                state_flags: 6216,
+                state_flags: 14408,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -562111,7 +562111,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30768u16).unwrap(),
-                state_flags: 6240,
+                state_flags: 14432,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -562125,7 +562125,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30769u16).unwrap(),
-                state_flags: 6216,
+                state_flags: 14408,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -562139,7 +562139,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30770u16).unwrap(),
-                state_flags: 6240,
+                state_flags: 14432,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -562153,7 +562153,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30771u16).unwrap(),
-                state_flags: 6216,
+                state_flags: 14408,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -562167,7 +562167,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30772u16).unwrap(),
-                state_flags: 6240,
+                state_flags: 14432,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -562181,7 +562181,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30773u16).unwrap(),
-                state_flags: 6216,
+                state_flags: 14408,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -562195,7 +562195,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30774u16).unwrap(),
-                state_flags: 6240,
+                state_flags: 14432,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -562209,7 +562209,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30775u16).unwrap(),
-                state_flags: 6216,
+                state_flags: 14408,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -562223,7 +562223,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30776u16).unwrap(),
-                state_flags: 6240,
+                state_flags: 14432,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -562237,7 +562237,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30777u16).unwrap(),
-                state_flags: 6216,
+                state_flags: 14408,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -562251,7 +562251,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30778u16).unwrap(),
-                state_flags: 6240,
+                state_flags: 14432,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -562265,7 +562265,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30779u16).unwrap(),
-                state_flags: 6216,
+                state_flags: 14408,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -562279,7 +562279,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30780u16).unwrap(),
-                state_flags: 6240,
+                state_flags: 14432,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -562293,7 +562293,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30781u16).unwrap(),
-                state_flags: 6216,
+                state_flags: 14408,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -562307,7 +562307,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30782u16).unwrap(),
-                state_flags: 6240,
+                state_flags: 14432,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -562321,7 +562321,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30783u16).unwrap(),
-                state_flags: 6216,
+                state_flags: 14408,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -562335,7 +562335,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30784u16).unwrap(),
-                state_flags: 6240,
+                state_flags: 14432,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -562349,7 +562349,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30785u16).unwrap(),
-                state_flags: 6216,
+                state_flags: 14408,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -562363,7 +562363,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30786u16).unwrap(),
-                state_flags: 6240,
+                state_flags: 14432,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -562377,7 +562377,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30787u16).unwrap(),
-                state_flags: 6216,
+                state_flags: 14408,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -562391,7 +562391,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30788u16).unwrap(),
-                state_flags: 6240,
+                state_flags: 14432,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -562405,7 +562405,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30789u16).unwrap(),
-                state_flags: 6216,
+                state_flags: 14408,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -562419,7 +562419,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30790u16).unwrap(),
-                state_flags: 6240,
+                state_flags: 14432,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -562433,7 +562433,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30791u16).unwrap(),
-                state_flags: 6216,
+                state_flags: 14408,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -562447,7 +562447,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30792u16).unwrap(),
-                state_flags: 6240,
+                state_flags: 14432,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -562461,7 +562461,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30793u16).unwrap(),
-                state_flags: 6216,
+                state_flags: 14408,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -562475,7 +562475,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30794u16).unwrap(),
-                state_flags: 6240,
+                state_flags: 14432,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -562489,7 +562489,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30795u16).unwrap(),
-                state_flags: 6216,
+                state_flags: 14408,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -562503,7 +562503,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30796u16).unwrap(),
-                state_flags: 6240,
+                state_flags: 14432,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -562517,7 +562517,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30797u16).unwrap(),
-                state_flags: 6216,
+                state_flags: 14408,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -562531,7 +562531,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30798u16).unwrap(),
-                state_flags: 6240,
+                state_flags: 14432,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -562545,7 +562545,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30799u16).unwrap(),
-                state_flags: 6216,
+                state_flags: 14408,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -562559,7 +562559,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30800u16).unwrap(),
-                state_flags: 6240,
+                state_flags: 14432,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -562573,7 +562573,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30801u16).unwrap(),
-                state_flags: 6216,
+                state_flags: 14408,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -562587,7 +562587,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30802u16).unwrap(),
-                state_flags: 6240,
+                state_flags: 14432,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -562601,7 +562601,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30803u16).unwrap(),
-                state_flags: 6216,
+                state_flags: 14408,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -562615,7 +562615,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30804u16).unwrap(),
-                state_flags: 6240,
+                state_flags: 14432,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -562629,7 +562629,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30805u16).unwrap(),
-                state_flags: 6216,
+                state_flags: 14408,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -562643,7 +562643,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30806u16).unwrap(),
-                state_flags: 6240,
+                state_flags: 14432,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -562657,7 +562657,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30807u16).unwrap(),
-                state_flags: 6216,
+                state_flags: 14408,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -562671,7 +562671,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30808u16).unwrap(),
-                state_flags: 6240,
+                state_flags: 14432,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -562685,7 +562685,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30809u16).unwrap(),
-                state_flags: 6216,
+                state_flags: 14408,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -562699,7 +562699,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30810u16).unwrap(),
-                state_flags: 6240,
+                state_flags: 14432,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -562713,7 +562713,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30811u16).unwrap(),
-                state_flags: 6216,
+                state_flags: 14408,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -562727,7 +562727,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30812u16).unwrap(),
-                state_flags: 6240,
+                state_flags: 14432,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -562741,7 +562741,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30813u16).unwrap(),
-                state_flags: 6216,
+                state_flags: 14408,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -562755,7 +562755,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30814u16).unwrap(),
-                state_flags: 6240,
+                state_flags: 14432,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -562769,7 +562769,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30815u16).unwrap(),
-                state_flags: 6216,
+                state_flags: 14408,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -562783,7 +562783,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30816u16).unwrap(),
-                state_flags: 6240,
+                state_flags: 14432,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -562797,7 +562797,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30817u16).unwrap(),
-                state_flags: 6216,
+                state_flags: 14408,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -562811,7 +562811,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30818u16).unwrap(),
-                state_flags: 6240,
+                state_flags: 14432,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -562825,7 +562825,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30819u16).unwrap(),
-                state_flags: 6216,
+                state_flags: 14408,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -562839,7 +562839,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30820u16).unwrap(),
-                state_flags: 6240,
+                state_flags: 14432,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -562853,7 +562853,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30821u16).unwrap(),
-                state_flags: 6216,
+                state_flags: 14408,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -562867,7 +562867,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30822u16).unwrap(),
-                state_flags: 6240,
+                state_flags: 14432,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -562881,7 +562881,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30823u16).unwrap(),
-                state_flags: 6216,
+                state_flags: 14408,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -562895,7 +562895,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30824u16).unwrap(),
-                state_flags: 6240,
+                state_flags: 14432,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -562909,7 +562909,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30825u16).unwrap(),
-                state_flags: 6216,
+                state_flags: 14408,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -562923,7 +562923,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30826u16).unwrap(),
-                state_flags: 6240,
+                state_flags: 14432,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -562937,7 +562937,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30827u16).unwrap(),
-                state_flags: 6216,
+                state_flags: 14408,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -562951,7 +562951,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30828u16).unwrap(),
-                state_flags: 6240,
+                state_flags: 14432,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -562965,7 +562965,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30829u16).unwrap(),
-                state_flags: 6216,
+                state_flags: 14408,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -562979,7 +562979,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30830u16).unwrap(),
-                state_flags: 6240,
+                state_flags: 14432,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -562993,7 +562993,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30831u16).unwrap(),
-                state_flags: 6216,
+                state_flags: 14408,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -563007,7 +563007,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30832u16).unwrap(),
-                state_flags: 6240,
+                state_flags: 14432,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -563021,7 +563021,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30833u16).unwrap(),
-                state_flags: 6216,
+                state_flags: 14408,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -563035,7 +563035,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30834u16).unwrap(),
-                state_flags: 6240,
+                state_flags: 14432,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -563049,7 +563049,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30835u16).unwrap(),
-                state_flags: 6216,
+                state_flags: 14408,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -563063,7 +563063,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30836u16).unwrap(),
-                state_flags: 6240,
+                state_flags: 14432,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -563077,7 +563077,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30837u16).unwrap(),
-                state_flags: 6216,
+                state_flags: 14408,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -563091,7 +563091,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30838u16).unwrap(),
-                state_flags: 6240,
+                state_flags: 14432,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -563105,7 +563105,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30839u16).unwrap(),
-                state_flags: 6216,
+                state_flags: 14408,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -563119,7 +563119,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30840u16).unwrap(),
-                state_flags: 6240,
+                state_flags: 14432,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -563133,7 +563133,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30841u16).unwrap(),
-                state_flags: 6216,
+                state_flags: 14408,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -563147,7 +563147,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30842u16).unwrap(),
-                state_flags: 6240,
+                state_flags: 14432,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -563161,7 +563161,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30843u16).unwrap(),
-                state_flags: 6216,
+                state_flags: 14408,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -563175,7 +563175,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30844u16).unwrap(),
-                state_flags: 6240,
+                state_flags: 14432,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -563189,7 +563189,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30845u16).unwrap(),
-                state_flags: 6216,
+                state_flags: 14408,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -563203,7 +563203,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30846u16).unwrap(),
-                state_flags: 6240,
+                state_flags: 14432,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -563217,7 +563217,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30847u16).unwrap(),
-                state_flags: 6216,
+                state_flags: 14408,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -563231,7 +563231,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30848u16).unwrap(),
-                state_flags: 6240,
+                state_flags: 14432,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -563245,7 +563245,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30849u16).unwrap(),
-                state_flags: 6216,
+                state_flags: 14408,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -563259,7 +563259,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30850u16).unwrap(),
-                state_flags: 6240,
+                state_flags: 14432,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -563273,7 +563273,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30851u16).unwrap(),
-                state_flags: 6216,
+                state_flags: 14408,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -563287,7 +563287,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30852u16).unwrap(),
-                state_flags: 6240,
+                state_flags: 14432,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -563301,7 +563301,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30853u16).unwrap(),
-                state_flags: 6216,
+                state_flags: 14408,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -563315,7 +563315,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30854u16).unwrap(),
-                state_flags: 6240,
+                state_flags: 14432,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -563329,7 +563329,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30855u16).unwrap(),
-                state_flags: 6216,
+                state_flags: 14408,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -563343,7 +563343,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30856u16).unwrap(),
-                state_flags: 6240,
+                state_flags: 14432,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -563357,7 +563357,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30857u16).unwrap(),
-                state_flags: 6216,
+                state_flags: 14408,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -563371,7 +563371,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30858u16).unwrap(),
-                state_flags: 6240,
+                state_flags: 14432,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -563385,7 +563385,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30859u16).unwrap(),
-                state_flags: 6216,
+                state_flags: 14408,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -563399,7 +563399,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30860u16).unwrap(),
-                state_flags: 6240,
+                state_flags: 14432,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -563413,7 +563413,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30861u16).unwrap(),
-                state_flags: 6216,
+                state_flags: 14408,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -563427,7 +563427,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30862u16).unwrap(),
-                state_flags: 6240,
+                state_flags: 14432,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -563441,7 +563441,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30863u16).unwrap(),
-                state_flags: 6216,
+                state_flags: 14408,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -563455,7 +563455,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30864u16).unwrap(),
-                state_flags: 6240,
+                state_flags: 14432,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -563469,7 +563469,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30865u16).unwrap(),
-                state_flags: 6216,
+                state_flags: 14408,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -563483,7 +563483,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30866u16).unwrap(),
-                state_flags: 6240,
+                state_flags: 14432,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -563497,7 +563497,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30867u16).unwrap(),
-                state_flags: 6216,
+                state_flags: 14408,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -563511,7 +563511,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30868u16).unwrap(),
-                state_flags: 6240,
+                state_flags: 14432,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -563525,7 +563525,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30869u16).unwrap(),
-                state_flags: 6216,
+                state_flags: 14408,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -563539,7 +563539,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30870u16).unwrap(),
-                state_flags: 6240,
+                state_flags: 14432,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -563553,7 +563553,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30871u16).unwrap(),
-                state_flags: 6216,
+                state_flags: 14408,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -563567,7 +563567,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30872u16).unwrap(),
-                state_flags: 6240,
+                state_flags: 14432,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -563581,7 +563581,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30873u16).unwrap(),
-                state_flags: 6216,
+                state_flags: 14408,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -563595,7 +563595,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30874u16).unwrap(),
-                state_flags: 6240,
+                state_flags: 14432,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -563609,7 +563609,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30875u16).unwrap(),
-                state_flags: 6216,
+                state_flags: 14408,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -563623,7 +563623,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30876u16).unwrap(),
-                state_flags: 6240,
+                state_flags: 14432,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -563637,7 +563637,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30877u16).unwrap(),
-                state_flags: 6216,
+                state_flags: 14408,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -563651,7 +563651,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30878u16).unwrap(),
-                state_flags: 6240,
+                state_flags: 14432,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -563665,7 +563665,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30879u16).unwrap(),
-                state_flags: 6216,
+                state_flags: 14408,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -563679,7 +563679,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30880u16).unwrap(),
-                state_flags: 6240,
+                state_flags: 14432,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -563693,7 +563693,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30881u16).unwrap(),
-                state_flags: 6216,
+                state_flags: 14408,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -563707,7 +563707,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30882u16).unwrap(),
-                state_flags: 6240,
+                state_flags: 14432,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -563721,7 +563721,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30883u16).unwrap(),
-                state_flags: 6216,
+                state_flags: 14408,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -563735,7 +563735,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30884u16).unwrap(),
-                state_flags: 6240,
+                state_flags: 14432,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -563749,7 +563749,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30885u16).unwrap(),
-                state_flags: 6216,
+                state_flags: 14408,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -563763,7 +563763,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30886u16).unwrap(),
-                state_flags: 6240,
+                state_flags: 14432,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -563777,7 +563777,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30887u16).unwrap(),
-                state_flags: 6216,
+                state_flags: 14408,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -563791,7 +563791,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30888u16).unwrap(),
-                state_flags: 6240,
+                state_flags: 14432,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -563805,7 +563805,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30889u16).unwrap(),
-                state_flags: 6216,
+                state_flags: 14408,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -563819,7 +563819,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30890u16).unwrap(),
-                state_flags: 6240,
+                state_flags: 14432,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -563833,7 +563833,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30891u16).unwrap(),
-                state_flags: 6216,
+                state_flags: 14408,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -563847,7 +563847,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30892u16).unwrap(),
-                state_flags: 6240,
+                state_flags: 14432,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -563861,7 +563861,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30893u16).unwrap(),
-                state_flags: 6216,
+                state_flags: 14408,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -563875,7 +563875,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30894u16).unwrap(),
-                state_flags: 6240,
+                state_flags: 14432,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -563889,7 +563889,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30895u16).unwrap(),
-                state_flags: 6216,
+                state_flags: 14408,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -563903,7 +563903,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30896u16).unwrap(),
-                state_flags: 6240,
+                state_flags: 14432,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -563917,7 +563917,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30897u16).unwrap(),
-                state_flags: 6216,
+                state_flags: 14408,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -563931,7 +563931,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30898u16).unwrap(),
-                state_flags: 6240,
+                state_flags: 14432,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -563945,7 +563945,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30899u16).unwrap(),
-                state_flags: 6216,
+                state_flags: 14408,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -563959,7 +563959,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30900u16).unwrap(),
-                state_flags: 6240,
+                state_flags: 14432,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -563973,7 +563973,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30901u16).unwrap(),
-                state_flags: 6216,
+                state_flags: 14408,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -563987,7 +563987,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30902u16).unwrap(),
-                state_flags: 6240,
+                state_flags: 14432,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -564001,7 +564001,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30903u16).unwrap(),
-                state_flags: 6216,
+                state_flags: 14408,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -564015,7 +564015,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30904u16).unwrap(),
-                state_flags: 6240,
+                state_flags: 14432,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -564029,7 +564029,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30905u16).unwrap(),
-                state_flags: 6216,
+                state_flags: 14408,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -564043,7 +564043,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30906u16).unwrap(),
-                state_flags: 6240,
+                state_flags: 14432,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -564057,7 +564057,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30907u16).unwrap(),
-                state_flags: 6216,
+                state_flags: 14408,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -564071,7 +564071,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30908u16).unwrap(),
-                state_flags: 6240,
+                state_flags: 14432,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -564085,7 +564085,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30909u16).unwrap(),
-                state_flags: 6216,
+                state_flags: 14408,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -564099,7 +564099,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30910u16).unwrap(),
-                state_flags: 6240,
+                state_flags: 14432,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -564113,7 +564113,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30911u16).unwrap(),
-                state_flags: 6216,
+                state_flags: 14408,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -564127,7 +564127,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30912u16).unwrap(),
-                state_flags: 6240,
+                state_flags: 14432,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -564141,7 +564141,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30913u16).unwrap(),
-                state_flags: 6216,
+                state_flags: 14408,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -564155,7 +564155,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30914u16).unwrap(),
-                state_flags: 6240,
+                state_flags: 14432,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -564169,7 +564169,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30915u16).unwrap(),
-                state_flags: 6216,
+                state_flags: 14408,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -564183,7 +564183,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30916u16).unwrap(),
-                state_flags: 6240,
+                state_flags: 14432,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -564197,7 +564197,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30917u16).unwrap(),
-                state_flags: 6216,
+                state_flags: 14408,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -564211,7 +564211,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30918u16).unwrap(),
-                state_flags: 6240,
+                state_flags: 14432,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -564225,7 +564225,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30919u16).unwrap(),
-                state_flags: 6216,
+                state_flags: 14408,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -564239,7 +564239,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30920u16).unwrap(),
-                state_flags: 6240,
+                state_flags: 14432,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -564253,7 +564253,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30921u16).unwrap(),
-                state_flags: 6216,
+                state_flags: 14408,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -564267,7 +564267,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30922u16).unwrap(),
-                state_flags: 6240,
+                state_flags: 14432,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -564281,7 +564281,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30923u16).unwrap(),
-                state_flags: 6216,
+                state_flags: 14408,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -564295,7 +564295,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30924u16).unwrap(),
-                state_flags: 6240,
+                state_flags: 14432,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -564309,7 +564309,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30925u16).unwrap(),
-                state_flags: 6216,
+                state_flags: 14408,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -564323,7 +564323,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30926u16).unwrap(),
-                state_flags: 6240,
+                state_flags: 14432,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -564337,7 +564337,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30927u16).unwrap(),
-                state_flags: 6216,
+                state_flags: 14408,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -564351,7 +564351,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30928u16).unwrap(),
-                state_flags: 6240,
+                state_flags: 14432,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -564365,7 +564365,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30929u16).unwrap(),
-                state_flags: 6216,
+                state_flags: 14408,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -564379,7 +564379,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30930u16).unwrap(),
-                state_flags: 6240,
+                state_flags: 14432,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -564393,7 +564393,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30931u16).unwrap(),
-                state_flags: 6216,
+                state_flags: 14408,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -564407,7 +564407,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30932u16).unwrap(),
-                state_flags: 6240,
+                state_flags: 14432,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -564421,7 +564421,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30933u16).unwrap(),
-                state_flags: 6216,
+                state_flags: 14408,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -564435,7 +564435,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30934u16).unwrap(),
-                state_flags: 6240,
+                state_flags: 14432,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -564449,7 +564449,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30935u16).unwrap(),
-                state_flags: 6216,
+                state_flags: 14408,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -564463,7 +564463,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30936u16).unwrap(),
-                state_flags: 6240,
+                state_flags: 14432,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -564477,7 +564477,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30937u16).unwrap(),
-                state_flags: 6216,
+                state_flags: 14408,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -564491,7 +564491,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30938u16).unwrap(),
-                state_flags: 6240,
+                state_flags: 14432,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -564505,7 +564505,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30939u16).unwrap(),
-                state_flags: 6216,
+                state_flags: 14408,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -564519,7 +564519,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30940u16).unwrap(),
-                state_flags: 6240,
+                state_flags: 14432,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -564533,7 +564533,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30941u16).unwrap(),
-                state_flags: 6216,
+                state_flags: 14408,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -564547,7 +564547,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30942u16).unwrap(),
-                state_flags: 6240,
+                state_flags: 14432,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -564561,7 +564561,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30943u16).unwrap(),
-                state_flags: 6216,
+                state_flags: 14408,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -564575,7 +564575,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30944u16).unwrap(),
-                state_flags: 6240,
+                state_flags: 14432,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -564589,7 +564589,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30945u16).unwrap(),
-                state_flags: 6216,
+                state_flags: 14408,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -564603,7 +564603,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30946u16).unwrap(),
-                state_flags: 6240,
+                state_flags: 14432,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -564617,7 +564617,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30947u16).unwrap(),
-                state_flags: 6216,
+                state_flags: 14408,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -564631,7 +564631,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30948u16).unwrap(),
-                state_flags: 6240,
+                state_flags: 14432,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -564645,7 +564645,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30949u16).unwrap(),
-                state_flags: 6216,
+                state_flags: 14408,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -564659,7 +564659,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30950u16).unwrap(),
-                state_flags: 6240,
+                state_flags: 14432,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -564673,7 +564673,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30951u16).unwrap(),
-                state_flags: 6216,
+                state_flags: 14408,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -564687,7 +564687,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30952u16).unwrap(),
-                state_flags: 6240,
+                state_flags: 14432,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -564701,7 +564701,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30953u16).unwrap(),
-                state_flags: 6216,
+                state_flags: 14408,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -564715,7 +564715,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30954u16).unwrap(),
-                state_flags: 6240,
+                state_flags: 14432,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -564729,7 +564729,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30955u16).unwrap(),
-                state_flags: 6216,
+                state_flags: 14408,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -564743,7 +564743,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30956u16).unwrap(),
-                state_flags: 6240,
+                state_flags: 14432,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -564757,7 +564757,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30957u16).unwrap(),
-                state_flags: 6216,
+                state_flags: 14408,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -564771,7 +564771,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30958u16).unwrap(),
-                state_flags: 6240,
+                state_flags: 14432,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -564785,7 +564785,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30959u16).unwrap(),
-                state_flags: 6216,
+                state_flags: 14408,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -564799,7 +564799,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30960u16).unwrap(),
-                state_flags: 6240,
+                state_flags: 14432,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -564813,7 +564813,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30961u16).unwrap(),
-                state_flags: 6216,
+                state_flags: 14408,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -564827,7 +564827,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30962u16).unwrap(),
-                state_flags: 6240,
+                state_flags: 14432,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -564841,7 +564841,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30963u16).unwrap(),
-                state_flags: 6216,
+                state_flags: 14408,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -564855,7 +564855,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30964u16).unwrap(),
-                state_flags: 6240,
+                state_flags: 14432,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -564869,7 +564869,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30965u16).unwrap(),
-                state_flags: 6216,
+                state_flags: 14408,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -564883,7 +564883,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30966u16).unwrap(),
-                state_flags: 6240,
+                state_flags: 14432,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -564897,7 +564897,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30967u16).unwrap(),
-                state_flags: 6216,
+                state_flags: 14408,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -564911,7 +564911,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30968u16).unwrap(),
-                state_flags: 6240,
+                state_flags: 14432,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -564925,7 +564925,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30969u16).unwrap(),
-                state_flags: 6216,
+                state_flags: 14408,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -564939,7 +564939,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30970u16).unwrap(),
-                state_flags: 6240,
+                state_flags: 14432,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -564953,7 +564953,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30971u16).unwrap(),
-                state_flags: 6216,
+                state_flags: 14408,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -564967,7 +564967,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30972u16).unwrap(),
-                state_flags: 6240,
+                state_flags: 14432,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -564981,7 +564981,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30973u16).unwrap(),
-                state_flags: 6216,
+                state_flags: 14408,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -564995,7 +564995,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30974u16).unwrap(),
-                state_flags: 6240,
+                state_flags: 14432,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -565009,7 +565009,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30975u16).unwrap(),
-                state_flags: 6216,
+                state_flags: 14408,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -565023,7 +565023,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30976u16).unwrap(),
-                state_flags: 6240,
+                state_flags: 14432,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -565037,7 +565037,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30977u16).unwrap(),
-                state_flags: 6216,
+                state_flags: 14408,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -565051,7 +565051,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30978u16).unwrap(),
-                state_flags: 6240,
+                state_flags: 14432,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -565065,7 +565065,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30979u16).unwrap(),
-                state_flags: 6216,
+                state_flags: 14408,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -565079,7 +565079,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30980u16).unwrap(),
-                state_flags: 6240,
+                state_flags: 14432,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -565093,7 +565093,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30981u16).unwrap(),
-                state_flags: 6216,
+                state_flags: 14408,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -565107,7 +565107,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30982u16).unwrap(),
-                state_flags: 6240,
+                state_flags: 14432,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -565121,7 +565121,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30983u16).unwrap(),
-                state_flags: 6216,
+                state_flags: 14408,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -565135,7 +565135,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30984u16).unwrap(),
-                state_flags: 6240,
+                state_flags: 14432,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -565149,7 +565149,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30985u16).unwrap(),
-                state_flags: 6216,
+                state_flags: 14408,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -565163,7 +565163,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30986u16).unwrap(),
-                state_flags: 6240,
+                state_flags: 14432,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -565177,7 +565177,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30987u16).unwrap(),
-                state_flags: 6216,
+                state_flags: 14408,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -565191,7 +565191,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30988u16).unwrap(),
-                state_flags: 6240,
+                state_flags: 14432,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -565205,7 +565205,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30989u16).unwrap(),
-                state_flags: 6216,
+                state_flags: 14408,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -565219,7 +565219,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30990u16).unwrap(),
-                state_flags: 6240,
+                state_flags: 14432,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -565233,7 +565233,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30991u16).unwrap(),
-                state_flags: 6216,
+                state_flags: 14408,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -565247,7 +565247,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30992u16).unwrap(),
-                state_flags: 6240,
+                state_flags: 14432,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -565261,7 +565261,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30993u16).unwrap(),
-                state_flags: 6216,
+                state_flags: 14408,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -565275,7 +565275,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30994u16).unwrap(),
-                state_flags: 6240,
+                state_flags: 14432,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -565289,7 +565289,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30995u16).unwrap(),
-                state_flags: 6216,
+                state_flags: 14408,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -565303,7 +565303,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30996u16).unwrap(),
-                state_flags: 6240,
+                state_flags: 14432,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -565317,7 +565317,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30997u16).unwrap(),
-                state_flags: 6216,
+                state_flags: 14408,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -565331,7 +565331,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30998u16).unwrap(),
-                state_flags: 6240,
+                state_flags: 14432,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -565345,7 +565345,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(30999u16).unwrap(),
-                state_flags: 6216,
+                state_flags: 14408,
                 side_flags: 65,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 1,
@@ -601368,7 +601368,7 @@ impl Block {
         item_id: 840,
         default_state: &BlockState {
             id: BlockStateId::new(33392u16).unwrap(),
-            state_flags: 588,
+            state_flags: 8780,
             side_flags: 192,
             instrument: NoteblockInstrument::Harp,
             luminance: 0,
@@ -601383,7 +601383,7 @@ impl Block {
         states: &[
             BlockState {
                 id: BlockStateId::new(33373u16).unwrap(),
-                state_flags: 612,
+                state_flags: 8804,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -601397,7 +601397,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(33374u16).unwrap(),
-                state_flags: 588,
+                state_flags: 8780,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -601411,7 +601411,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(33375u16).unwrap(),
-                state_flags: 612,
+                state_flags: 8804,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -601425,7 +601425,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(33376u16).unwrap(),
-                state_flags: 588,
+                state_flags: 8780,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -601439,7 +601439,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(33377u16).unwrap(),
-                state_flags: 612,
+                state_flags: 8804,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -601453,7 +601453,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(33378u16).unwrap(),
-                state_flags: 588,
+                state_flags: 8780,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -601467,7 +601467,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(33379u16).unwrap(),
-                state_flags: 612,
+                state_flags: 8804,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -601481,7 +601481,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(33380u16).unwrap(),
-                state_flags: 588,
+                state_flags: 8780,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -601495,7 +601495,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(33381u16).unwrap(),
-                state_flags: 612,
+                state_flags: 8804,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -601509,7 +601509,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(33382u16).unwrap(),
-                state_flags: 588,
+                state_flags: 8780,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -601523,7 +601523,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(33383u16).unwrap(),
-                state_flags: 612,
+                state_flags: 8804,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -601537,7 +601537,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(33384u16).unwrap(),
-                state_flags: 588,
+                state_flags: 8780,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -601551,7 +601551,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(33385u16).unwrap(),
-                state_flags: 612,
+                state_flags: 8804,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -601565,7 +601565,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(33386u16).unwrap(),
-                state_flags: 588,
+                state_flags: 8780,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -601579,7 +601579,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(33387u16).unwrap(),
-                state_flags: 612,
+                state_flags: 8804,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -601593,7 +601593,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(33388u16).unwrap(),
-                state_flags: 588,
+                state_flags: 8780,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -601607,7 +601607,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(33389u16).unwrap(),
-                state_flags: 612,
+                state_flags: 8804,
                 side_flags: 192,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -601621,7 +601621,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(33390u16).unwrap(),
-                state_flags: 588,
+                state_flags: 8780,
                 side_flags: 192,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -601635,7 +601635,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(33391u16).unwrap(),
-                state_flags: 612,
+                state_flags: 8804,
                 side_flags: 192,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -601649,7 +601649,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(33392u16).unwrap(),
-                state_flags: 588,
+                state_flags: 8780,
                 side_flags: 192,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -601663,7 +601663,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(33393u16).unwrap(),
-                state_flags: 612,
+                state_flags: 8804,
                 side_flags: 192,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -601677,7 +601677,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(33394u16).unwrap(),
-                state_flags: 588,
+                state_flags: 8780,
                 side_flags: 192,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -601691,7 +601691,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(33395u16).unwrap(),
-                state_flags: 612,
+                state_flags: 8804,
                 side_flags: 192,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -601705,7 +601705,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(33396u16).unwrap(),
-                state_flags: 588,
+                state_flags: 8780,
                 side_flags: 192,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -601734,7 +601734,7 @@ impl Block {
         item_id: 841,
         default_state: &BlockState {
             id: BlockStateId::new(33416u16).unwrap(),
-            state_flags: 588,
+            state_flags: 8780,
             side_flags: 192,
             instrument: NoteblockInstrument::Harp,
             luminance: 0,
@@ -601749,7 +601749,7 @@ impl Block {
         states: &[
             BlockState {
                 id: BlockStateId::new(33397u16).unwrap(),
-                state_flags: 612,
+                state_flags: 8804,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -601763,7 +601763,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(33398u16).unwrap(),
-                state_flags: 588,
+                state_flags: 8780,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -601777,7 +601777,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(33399u16).unwrap(),
-                state_flags: 612,
+                state_flags: 8804,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -601791,7 +601791,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(33400u16).unwrap(),
-                state_flags: 588,
+                state_flags: 8780,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -601805,7 +601805,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(33401u16).unwrap(),
-                state_flags: 612,
+                state_flags: 8804,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -601819,7 +601819,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(33402u16).unwrap(),
-                state_flags: 588,
+                state_flags: 8780,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -601833,7 +601833,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(33403u16).unwrap(),
-                state_flags: 612,
+                state_flags: 8804,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -601847,7 +601847,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(33404u16).unwrap(),
-                state_flags: 588,
+                state_flags: 8780,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -601861,7 +601861,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(33405u16).unwrap(),
-                state_flags: 612,
+                state_flags: 8804,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -601875,7 +601875,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(33406u16).unwrap(),
-                state_flags: 588,
+                state_flags: 8780,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -601889,7 +601889,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(33407u16).unwrap(),
-                state_flags: 612,
+                state_flags: 8804,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -601903,7 +601903,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(33408u16).unwrap(),
-                state_flags: 588,
+                state_flags: 8780,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -601917,7 +601917,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(33409u16).unwrap(),
-                state_flags: 612,
+                state_flags: 8804,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -601931,7 +601931,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(33410u16).unwrap(),
-                state_flags: 588,
+                state_flags: 8780,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -601945,7 +601945,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(33411u16).unwrap(),
-                state_flags: 612,
+                state_flags: 8804,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -601959,7 +601959,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(33412u16).unwrap(),
-                state_flags: 588,
+                state_flags: 8780,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -601973,7 +601973,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(33413u16).unwrap(),
-                state_flags: 612,
+                state_flags: 8804,
                 side_flags: 192,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -601987,7 +601987,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(33414u16).unwrap(),
-                state_flags: 588,
+                state_flags: 8780,
                 side_flags: 192,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -602001,7 +602001,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(33415u16).unwrap(),
-                state_flags: 612,
+                state_flags: 8804,
                 side_flags: 192,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -602015,7 +602015,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(33416u16).unwrap(),
-                state_flags: 588,
+                state_flags: 8780,
                 side_flags: 192,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -602029,7 +602029,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(33417u16).unwrap(),
-                state_flags: 612,
+                state_flags: 8804,
                 side_flags: 192,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -602043,7 +602043,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(33418u16).unwrap(),
-                state_flags: 588,
+                state_flags: 8780,
                 side_flags: 192,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -602057,7 +602057,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(33419u16).unwrap(),
-                state_flags: 612,
+                state_flags: 8804,
                 side_flags: 192,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -602071,7 +602071,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(33420u16).unwrap(),
-                state_flags: 588,
+                state_flags: 8780,
                 side_flags: 192,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -602100,7 +602100,7 @@ impl Block {
         item_id: 842,
         default_state: &BlockState {
             id: BlockStateId::new(33440u16).unwrap(),
-            state_flags: 588,
+            state_flags: 8780,
             side_flags: 192,
             instrument: NoteblockInstrument::Harp,
             luminance: 0,
@@ -602115,7 +602115,7 @@ impl Block {
         states: &[
             BlockState {
                 id: BlockStateId::new(33421u16).unwrap(),
-                state_flags: 612,
+                state_flags: 8804,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -602129,7 +602129,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(33422u16).unwrap(),
-                state_flags: 588,
+                state_flags: 8780,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -602143,7 +602143,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(33423u16).unwrap(),
-                state_flags: 612,
+                state_flags: 8804,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -602157,7 +602157,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(33424u16).unwrap(),
-                state_flags: 588,
+                state_flags: 8780,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -602171,7 +602171,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(33425u16).unwrap(),
-                state_flags: 612,
+                state_flags: 8804,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -602185,7 +602185,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(33426u16).unwrap(),
-                state_flags: 588,
+                state_flags: 8780,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -602199,7 +602199,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(33427u16).unwrap(),
-                state_flags: 612,
+                state_flags: 8804,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -602213,7 +602213,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(33428u16).unwrap(),
-                state_flags: 588,
+                state_flags: 8780,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -602227,7 +602227,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(33429u16).unwrap(),
-                state_flags: 612,
+                state_flags: 8804,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -602241,7 +602241,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(33430u16).unwrap(),
-                state_flags: 588,
+                state_flags: 8780,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -602255,7 +602255,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(33431u16).unwrap(),
-                state_flags: 612,
+                state_flags: 8804,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -602269,7 +602269,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(33432u16).unwrap(),
-                state_flags: 588,
+                state_flags: 8780,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -602283,7 +602283,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(33433u16).unwrap(),
-                state_flags: 612,
+                state_flags: 8804,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -602297,7 +602297,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(33434u16).unwrap(),
-                state_flags: 588,
+                state_flags: 8780,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -602311,7 +602311,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(33435u16).unwrap(),
-                state_flags: 612,
+                state_flags: 8804,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -602325,7 +602325,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(33436u16).unwrap(),
-                state_flags: 588,
+                state_flags: 8780,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -602339,7 +602339,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(33437u16).unwrap(),
-                state_flags: 612,
+                state_flags: 8804,
                 side_flags: 192,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -602353,7 +602353,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(33438u16).unwrap(),
-                state_flags: 588,
+                state_flags: 8780,
                 side_flags: 192,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -602367,7 +602367,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(33439u16).unwrap(),
-                state_flags: 612,
+                state_flags: 8804,
                 side_flags: 192,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -602381,7 +602381,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(33440u16).unwrap(),
-                state_flags: 588,
+                state_flags: 8780,
                 side_flags: 192,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -602395,7 +602395,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(33441u16).unwrap(),
-                state_flags: 612,
+                state_flags: 8804,
                 side_flags: 192,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -602409,7 +602409,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(33442u16).unwrap(),
-                state_flags: 588,
+                state_flags: 8780,
                 side_flags: 192,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -602423,7 +602423,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(33443u16).unwrap(),
-                state_flags: 612,
+                state_flags: 8804,
                 side_flags: 192,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -602437,7 +602437,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(33444u16).unwrap(),
-                state_flags: 588,
+                state_flags: 8780,
                 side_flags: 192,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -602466,7 +602466,7 @@ impl Block {
         item_id: 843,
         default_state: &BlockState {
             id: BlockStateId::new(33464u16).unwrap(),
-            state_flags: 76,
+            state_flags: 8268,
             side_flags: 192,
             instrument: NoteblockInstrument::Harp,
             luminance: 0,
@@ -602481,7 +602481,7 @@ impl Block {
         states: &[
             BlockState {
                 id: BlockStateId::new(33445u16).unwrap(),
-                state_flags: 100,
+                state_flags: 8292,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -602495,7 +602495,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(33446u16).unwrap(),
-                state_flags: 76,
+                state_flags: 8268,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -602509,7 +602509,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(33447u16).unwrap(),
-                state_flags: 100,
+                state_flags: 8292,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -602523,7 +602523,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(33448u16).unwrap(),
-                state_flags: 76,
+                state_flags: 8268,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -602537,7 +602537,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(33449u16).unwrap(),
-                state_flags: 100,
+                state_flags: 8292,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -602551,7 +602551,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(33450u16).unwrap(),
-                state_flags: 76,
+                state_flags: 8268,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -602565,7 +602565,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(33451u16).unwrap(),
-                state_flags: 100,
+                state_flags: 8292,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -602579,7 +602579,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(33452u16).unwrap(),
-                state_flags: 76,
+                state_flags: 8268,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -602593,7 +602593,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(33453u16).unwrap(),
-                state_flags: 100,
+                state_flags: 8292,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -602607,7 +602607,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(33454u16).unwrap(),
-                state_flags: 76,
+                state_flags: 8268,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -602621,7 +602621,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(33455u16).unwrap(),
-                state_flags: 100,
+                state_flags: 8292,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -602635,7 +602635,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(33456u16).unwrap(),
-                state_flags: 76,
+                state_flags: 8268,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -602649,7 +602649,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(33457u16).unwrap(),
-                state_flags: 100,
+                state_flags: 8292,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -602663,7 +602663,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(33458u16).unwrap(),
-                state_flags: 76,
+                state_flags: 8268,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -602677,7 +602677,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(33459u16).unwrap(),
-                state_flags: 100,
+                state_flags: 8292,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -602691,7 +602691,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(33460u16).unwrap(),
-                state_flags: 76,
+                state_flags: 8268,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -602705,7 +602705,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(33461u16).unwrap(),
-                state_flags: 100,
+                state_flags: 8292,
                 side_flags: 192,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -602719,7 +602719,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(33462u16).unwrap(),
-                state_flags: 76,
+                state_flags: 8268,
                 side_flags: 192,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -602733,7 +602733,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(33463u16).unwrap(),
-                state_flags: 100,
+                state_flags: 8292,
                 side_flags: 192,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -602747,7 +602747,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(33464u16).unwrap(),
-                state_flags: 76,
+                state_flags: 8268,
                 side_flags: 192,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -602761,7 +602761,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(33465u16).unwrap(),
-                state_flags: 100,
+                state_flags: 8292,
                 side_flags: 192,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -602775,7 +602775,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(33466u16).unwrap(),
-                state_flags: 76,
+                state_flags: 8268,
                 side_flags: 192,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -602789,7 +602789,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(33467u16).unwrap(),
-                state_flags: 100,
+                state_flags: 8292,
                 side_flags: 192,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -602803,7 +602803,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(33468u16).unwrap(),
-                state_flags: 76,
+                state_flags: 8268,
                 side_flags: 192,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -602832,7 +602832,7 @@ impl Block {
         item_id: 844,
         default_state: &BlockState {
             id: BlockStateId::new(33488u16).unwrap(),
-            state_flags: 76,
+            state_flags: 8268,
             side_flags: 192,
             instrument: NoteblockInstrument::Harp,
             luminance: 0,
@@ -602847,7 +602847,7 @@ impl Block {
         states: &[
             BlockState {
                 id: BlockStateId::new(33469u16).unwrap(),
-                state_flags: 100,
+                state_flags: 8292,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -602861,7 +602861,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(33470u16).unwrap(),
-                state_flags: 76,
+                state_flags: 8268,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -602875,7 +602875,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(33471u16).unwrap(),
-                state_flags: 100,
+                state_flags: 8292,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -602889,7 +602889,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(33472u16).unwrap(),
-                state_flags: 76,
+                state_flags: 8268,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -602903,7 +602903,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(33473u16).unwrap(),
-                state_flags: 100,
+                state_flags: 8292,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -602917,7 +602917,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(33474u16).unwrap(),
-                state_flags: 76,
+                state_flags: 8268,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -602931,7 +602931,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(33475u16).unwrap(),
-                state_flags: 100,
+                state_flags: 8292,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -602945,7 +602945,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(33476u16).unwrap(),
-                state_flags: 76,
+                state_flags: 8268,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -602959,7 +602959,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(33477u16).unwrap(),
-                state_flags: 100,
+                state_flags: 8292,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -602973,7 +602973,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(33478u16).unwrap(),
-                state_flags: 76,
+                state_flags: 8268,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -602987,7 +602987,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(33479u16).unwrap(),
-                state_flags: 100,
+                state_flags: 8292,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -603001,7 +603001,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(33480u16).unwrap(),
-                state_flags: 76,
+                state_flags: 8268,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -603015,7 +603015,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(33481u16).unwrap(),
-                state_flags: 100,
+                state_flags: 8292,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -603029,7 +603029,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(33482u16).unwrap(),
-                state_flags: 76,
+                state_flags: 8268,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -603043,7 +603043,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(33483u16).unwrap(),
-                state_flags: 100,
+                state_flags: 8292,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -603057,7 +603057,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(33484u16).unwrap(),
-                state_flags: 76,
+                state_flags: 8268,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -603071,7 +603071,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(33485u16).unwrap(),
-                state_flags: 100,
+                state_flags: 8292,
                 side_flags: 192,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -603085,7 +603085,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(33486u16).unwrap(),
-                state_flags: 76,
+                state_flags: 8268,
                 side_flags: 192,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -603099,7 +603099,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(33487u16).unwrap(),
-                state_flags: 100,
+                state_flags: 8292,
                 side_flags: 192,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -603113,7 +603113,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(33488u16).unwrap(),
-                state_flags: 76,
+                state_flags: 8268,
                 side_flags: 192,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -603127,7 +603127,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(33489u16).unwrap(),
-                state_flags: 100,
+                state_flags: 8292,
                 side_flags: 192,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -603141,7 +603141,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(33490u16).unwrap(),
-                state_flags: 76,
+                state_flags: 8268,
                 side_flags: 192,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -603155,7 +603155,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(33491u16).unwrap(),
-                state_flags: 100,
+                state_flags: 8292,
                 side_flags: 192,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -603169,7 +603169,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(33492u16).unwrap(),
-                state_flags: 76,
+                state_flags: 8268,
                 side_flags: 192,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -603198,7 +603198,7 @@ impl Block {
         item_id: 845,
         default_state: &BlockState {
             id: BlockStateId::new(33512u16).unwrap(),
-            state_flags: 76,
+            state_flags: 8268,
             side_flags: 192,
             instrument: NoteblockInstrument::Harp,
             luminance: 0,
@@ -603213,7 +603213,7 @@ impl Block {
         states: &[
             BlockState {
                 id: BlockStateId::new(33493u16).unwrap(),
-                state_flags: 100,
+                state_flags: 8292,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -603227,7 +603227,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(33494u16).unwrap(),
-                state_flags: 76,
+                state_flags: 8268,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -603241,7 +603241,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(33495u16).unwrap(),
-                state_flags: 100,
+                state_flags: 8292,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -603255,7 +603255,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(33496u16).unwrap(),
-                state_flags: 76,
+                state_flags: 8268,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -603269,7 +603269,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(33497u16).unwrap(),
-                state_flags: 100,
+                state_flags: 8292,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -603283,7 +603283,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(33498u16).unwrap(),
-                state_flags: 76,
+                state_flags: 8268,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -603297,7 +603297,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(33499u16).unwrap(),
-                state_flags: 100,
+                state_flags: 8292,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -603311,7 +603311,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(33500u16).unwrap(),
-                state_flags: 76,
+                state_flags: 8268,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -603325,7 +603325,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(33501u16).unwrap(),
-                state_flags: 100,
+                state_flags: 8292,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -603339,7 +603339,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(33502u16).unwrap(),
-                state_flags: 76,
+                state_flags: 8268,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -603353,7 +603353,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(33503u16).unwrap(),
-                state_flags: 100,
+                state_flags: 8292,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -603367,7 +603367,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(33504u16).unwrap(),
-                state_flags: 76,
+                state_flags: 8268,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -603381,7 +603381,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(33505u16).unwrap(),
-                state_flags: 100,
+                state_flags: 8292,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -603395,7 +603395,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(33506u16).unwrap(),
-                state_flags: 76,
+                state_flags: 8268,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -603409,7 +603409,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(33507u16).unwrap(),
-                state_flags: 100,
+                state_flags: 8292,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -603423,7 +603423,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(33508u16).unwrap(),
-                state_flags: 76,
+                state_flags: 8268,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -603437,7 +603437,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(33509u16).unwrap(),
-                state_flags: 100,
+                state_flags: 8292,
                 side_flags: 192,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -603451,7 +603451,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(33510u16).unwrap(),
-                state_flags: 76,
+                state_flags: 8268,
                 side_flags: 192,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -603465,7 +603465,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(33511u16).unwrap(),
-                state_flags: 100,
+                state_flags: 8292,
                 side_flags: 192,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -603479,7 +603479,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(33512u16).unwrap(),
-                state_flags: 76,
+                state_flags: 8268,
                 side_flags: 192,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -603493,7 +603493,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(33513u16).unwrap(),
-                state_flags: 100,
+                state_flags: 8292,
                 side_flags: 192,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -603507,7 +603507,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(33514u16).unwrap(),
-                state_flags: 76,
+                state_flags: 8268,
                 side_flags: 192,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -603521,7 +603521,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(33515u16).unwrap(),
-                state_flags: 100,
+                state_flags: 8292,
                 side_flags: 192,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -603535,7 +603535,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(33516u16).unwrap(),
-                state_flags: 76,
+                state_flags: 8268,
                 side_flags: 192,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -603564,7 +603564,7 @@ impl Block {
         item_id: 846,
         default_state: &BlockState {
             id: BlockStateId::new(33536u16).unwrap(),
-            state_flags: 76,
+            state_flags: 8268,
             side_flags: 192,
             instrument: NoteblockInstrument::Harp,
             luminance: 0,
@@ -603579,7 +603579,7 @@ impl Block {
         states: &[
             BlockState {
                 id: BlockStateId::new(33517u16).unwrap(),
-                state_flags: 100,
+                state_flags: 8292,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -603593,7 +603593,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(33518u16).unwrap(),
-                state_flags: 76,
+                state_flags: 8268,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -603607,7 +603607,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(33519u16).unwrap(),
-                state_flags: 100,
+                state_flags: 8292,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -603621,7 +603621,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(33520u16).unwrap(),
-                state_flags: 76,
+                state_flags: 8268,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -603635,7 +603635,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(33521u16).unwrap(),
-                state_flags: 100,
+                state_flags: 8292,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -603649,7 +603649,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(33522u16).unwrap(),
-                state_flags: 76,
+                state_flags: 8268,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -603663,7 +603663,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(33523u16).unwrap(),
-                state_flags: 100,
+                state_flags: 8292,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -603677,7 +603677,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(33524u16).unwrap(),
-                state_flags: 76,
+                state_flags: 8268,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -603691,7 +603691,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(33525u16).unwrap(),
-                state_flags: 100,
+                state_flags: 8292,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -603705,7 +603705,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(33526u16).unwrap(),
-                state_flags: 76,
+                state_flags: 8268,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -603719,7 +603719,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(33527u16).unwrap(),
-                state_flags: 100,
+                state_flags: 8292,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -603733,7 +603733,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(33528u16).unwrap(),
-                state_flags: 76,
+                state_flags: 8268,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -603747,7 +603747,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(33529u16).unwrap(),
-                state_flags: 100,
+                state_flags: 8292,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -603761,7 +603761,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(33530u16).unwrap(),
-                state_flags: 76,
+                state_flags: 8268,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -603775,7 +603775,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(33531u16).unwrap(),
-                state_flags: 100,
+                state_flags: 8292,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -603789,7 +603789,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(33532u16).unwrap(),
-                state_flags: 76,
+                state_flags: 8268,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -603803,7 +603803,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(33533u16).unwrap(),
-                state_flags: 100,
+                state_flags: 8292,
                 side_flags: 192,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -603817,7 +603817,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(33534u16).unwrap(),
-                state_flags: 76,
+                state_flags: 8268,
                 side_flags: 192,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -603831,7 +603831,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(33535u16).unwrap(),
-                state_flags: 100,
+                state_flags: 8292,
                 side_flags: 192,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -603845,7 +603845,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(33536u16).unwrap(),
-                state_flags: 76,
+                state_flags: 8268,
                 side_flags: 192,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -603859,7 +603859,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(33537u16).unwrap(),
-                state_flags: 100,
+                state_flags: 8292,
                 side_flags: 192,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -603873,7 +603873,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(33538u16).unwrap(),
-                state_flags: 76,
+                state_flags: 8268,
                 side_flags: 192,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -603887,7 +603887,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(33539u16).unwrap(),
-                state_flags: 100,
+                state_flags: 8292,
                 side_flags: 192,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -603901,7 +603901,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(33540u16).unwrap(),
-                state_flags: 76,
+                state_flags: 8268,
                 side_flags: 192,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -603930,7 +603930,7 @@ impl Block {
         item_id: 847,
         default_state: &BlockState {
             id: BlockStateId::new(33560u16).unwrap(),
-            state_flags: 76,
+            state_flags: 8268,
             side_flags: 192,
             instrument: NoteblockInstrument::Harp,
             luminance: 0,
@@ -603945,7 +603945,7 @@ impl Block {
         states: &[
             BlockState {
                 id: BlockStateId::new(33541u16).unwrap(),
-                state_flags: 100,
+                state_flags: 8292,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -603959,7 +603959,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(33542u16).unwrap(),
-                state_flags: 76,
+                state_flags: 8268,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -603973,7 +603973,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(33543u16).unwrap(),
-                state_flags: 100,
+                state_flags: 8292,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -603987,7 +603987,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(33544u16).unwrap(),
-                state_flags: 76,
+                state_flags: 8268,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -604001,7 +604001,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(33545u16).unwrap(),
-                state_flags: 100,
+                state_flags: 8292,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -604015,7 +604015,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(33546u16).unwrap(),
-                state_flags: 76,
+                state_flags: 8268,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -604029,7 +604029,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(33547u16).unwrap(),
-                state_flags: 100,
+                state_flags: 8292,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -604043,7 +604043,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(33548u16).unwrap(),
-                state_flags: 76,
+                state_flags: 8268,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -604057,7 +604057,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(33549u16).unwrap(),
-                state_flags: 100,
+                state_flags: 8292,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -604071,7 +604071,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(33550u16).unwrap(),
-                state_flags: 76,
+                state_flags: 8268,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -604085,7 +604085,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(33551u16).unwrap(),
-                state_flags: 100,
+                state_flags: 8292,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -604099,7 +604099,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(33552u16).unwrap(),
-                state_flags: 76,
+                state_flags: 8268,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -604113,7 +604113,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(33553u16).unwrap(),
-                state_flags: 100,
+                state_flags: 8292,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -604127,7 +604127,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(33554u16).unwrap(),
-                state_flags: 76,
+                state_flags: 8268,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -604141,7 +604141,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(33555u16).unwrap(),
-                state_flags: 100,
+                state_flags: 8292,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -604155,7 +604155,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(33556u16).unwrap(),
-                state_flags: 76,
+                state_flags: 8268,
                 side_flags: 0,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -604169,7 +604169,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(33557u16).unwrap(),
-                state_flags: 100,
+                state_flags: 8292,
                 side_flags: 192,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -604183,7 +604183,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(33558u16).unwrap(),
-                state_flags: 76,
+                state_flags: 8268,
                 side_flags: 192,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -604197,7 +604197,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(33559u16).unwrap(),
-                state_flags: 100,
+                state_flags: 8292,
                 side_flags: 192,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -604211,7 +604211,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(33560u16).unwrap(),
-                state_flags: 76,
+                state_flags: 8268,
                 side_flags: 192,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -604225,7 +604225,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(33561u16).unwrap(),
-                state_flags: 100,
+                state_flags: 8292,
                 side_flags: 192,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -604239,7 +604239,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(33562u16).unwrap(),
-                state_flags: 76,
+                state_flags: 8268,
                 side_flags: 192,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -604253,7 +604253,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(33563u16).unwrap(),
-                state_flags: 100,
+                state_flags: 8292,
                 side_flags: 192,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -604267,7 +604267,7 @@ impl Block {
             },
             BlockState {
                 id: BlockStateId::new(33564u16).unwrap(),
-                state_flags: 76,
+                state_flags: 8268,
                 side_flags: 192,
                 instrument: NoteblockInstrument::Harp,
                 luminance: 0,
@@ -636431,7 +636431,10 @@ impl Block {
             BlockId::AZALEA_LEAVES => SpawnFloorPredicate::OcelotOrParrot,
             BlockId::FLOWERING_AZALEA_LEAVES => SpawnFloorPredicate::OcelotOrParrot,
             BlockId::GLASS => SpawnFloorPredicate::Never,
+            BlockId::MOVING_PISTON => SpawnFloorPredicate::Never,
             BlockId::ICE => SpawnFloorPredicate::PolarBear,
+            BlockId::SOUL_SAND => SpawnFloorPredicate::Always,
+            BlockId::CARVED_PUMPKIN => SpawnFloorPredicate::Always,
             BlockId::JACK_O_LANTERN => SpawnFloorPredicate::Always,
             BlockId::WHITE_STAINED_GLASS => SpawnFloorPredicate::Never,
             BlockId::ORANGE_STAINED_GLASS => SpawnFloorPredicate::Never,
@@ -636463,6 +636466,7 @@ impl Block {
             BlockId::REDSTONE_LAMP => SpawnFloorPredicate::Always,
             BlockId::BARRIER => SpawnFloorPredicate::Never,
             BlockId::IRON_TRAPDOOR => SpawnFloorPredicate::Never,
+            BlockId::CHORUS_FLOWER => SpawnFloorPredicate::Never,
             BlockId::FROSTED_ICE => SpawnFloorPredicate::PolarBear,
             BlockId::MAGMA_BLOCK => SpawnFloorPredicate::FireImmune,
             BlockId::SCAFFOLDING => SpawnFloorPredicate::Never,
@@ -636485,6 +636489,7 @@ impl Block {
             BlockId::WAXED_EXPOSED_COPPER_GRATE => SpawnFloorPredicate::Never,
             BlockId::WAXED_WEATHERED_COPPER_GRATE => SpawnFloorPredicate::Never,
             BlockId::WAXED_OXIDIZED_COPPER_GRATE => SpawnFloorPredicate::Never,
+            BlockId::MUD => SpawnFloorPredicate::Always,
             _ => SpawnFloorPredicate::Default,
         }
     }

@@ -121,6 +121,11 @@ impl BlockState {
         self.state_flags & IS_LIQUID != 0
     }
 
+    /// Vanilla `BlockState.isSignalSource`: a redstone component that emits a signal.
+    pub const fn is_signal_source(&self) -> bool {
+        self.state_flags & IS_SIGNAL_SOURCE != 0
+    }
+
     /// Returns the legacy value for whether a block is solid.
     #[must_use]
     pub const fn is_solid(&self) -> bool {
@@ -417,6 +422,9 @@ const HAS_RANDOM_TICKS: u16 = 1 << 9;
 const IS_SOLID_RENDER: u16 = 1 << 10;
 const CAN_OCCLUDE: u16 = 1 << 11;
 const HAS_ANALOG_OUTPUT_SIGNAL: u16 = 1 << 12;
+/// Vanilla `BlockState.isSignalSource`, written into `assets/blocks.json` from the vanilla
+/// source until the Extractor dumps it.
+const IS_SIGNAL_SOURCE: u16 = 1 << 13;
 
 // side_flags
 const DOWN_SIDE_SOLID: u8 = 1 << 0;

@@ -1183,6 +1183,9 @@ pub fn is_valid_empty_spawn_block(
     if state.is_full_cube() {
         return false;
     }
+    if state.is_signal_source() {
+        return false;
+    }
     if fluid.id != Fluid::EMPTY.id {
         return false;
     }
