@@ -1486,6 +1486,17 @@ pub trait Mob: EntityBase + Send + Sync {
         false
     }
 
+    /// Vanilla `LivingEntity.canStandOnFluid`: walks on the fluid instead of swimming in it.
+    fn mob_can_stand_on_fluid(&self, _fluid: &pumpkin_data::fluid::Fluid) -> bool {
+        false
+    }
+
+    /// Vanilla `LivingEntity.getLiquidCollisionShape`: the shape it stands on in a fluid it
+    /// can stand on, in block coordinates.
+    fn mob_liquid_collision_shape(&self) -> Option<pumpkin_util::math::boundingbox::BoundingBox> {
+        None
+    }
+
     /// See [`EntityBase::sound_source`].
     fn mob_sound_source(&self) -> SoundCategory {
         self.get_entity().entity_type.sound_source

@@ -1696,12 +1696,20 @@ impl LivingEntity {
             .get_mob()
             .is_none_or(|mob| !mob.get_mob_entity().is_no_ai());
 
-        // Strider is the only entity that has canWalkOnFluid = false
+        // Vanilla `shouldTravelInFluid`: not in a fluid the mob stands on, like a strider in lava.
+        let stands_on_fluid = caller.get_mob().is_some_and(|mob| {
+            mob.mob_can_stand_on_fluid(
+                self.entity
+                    .world
+                    .load()
+                    .get_fluid(&self.entity.block_pos.load()),
+            )
+        });
 
         if !effective_ai || caller.get_mob().is_some_and(|mob| mob.travel(caller)) {
         } else if (touching_water || self.entity.touching_lava.load(SeqCst))
             && should_swim_in_fluids
-            && self.entity.entity_type != &EntityType::STRIDER
+            && !stands_on_fluid
         {
             self.travel_in_fluid(caller, touching_water);
         } else {

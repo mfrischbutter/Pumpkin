@@ -96,3 +96,40 @@ pub trait FluidBehaviour: Send + Sync {
 
     fn create_legacy_block(&self, _world: &Arc<World>, _block_pos: &BlockPos) {}
 }
+
+/// Vanilla `Fluid.isSame`: still and flowing water, or still and flowing lava.
+fn same_fluid(a: &Fluid, b: &Fluid) -> bool {
+    let kind = |fluid: &Fluid| {
+        if fluid.id == Fluid::FLOWING_WATER.id {
+            Fluid::WATER.id
+        } else if fluid.id == Fluid::FLOWING_LAVA.id {
+            Fluid::LAVA.id
+        } else {
+            fluid.id
+        }
+    };
+    kind(a) == kind(b)
+}
+
+/// Vanilla `LiquidBlock.getCollisionShape`: a mob that can stand on the fluid, like a
+/// strider on lava, stands on its liquid shape on a source block when its feet are above
+/// that shape and the fluid does not go on above.
+pub(crate) fn collision_shape_for_entity(
+    world: &World,
+    entity: &dyn EntityBase,
+    pos: &BlockPos,
+    state_id: BlockStateId,
+) -> Option<pumpkin_util::math::boundingbox::BoundingBox> {
+    let mob = entity.get_mob()?;
+    let shape = mob.mob_liquid_collision_shape()?;
+    if pumpkin_data::block_properties::WaterLikeProperties::from_state_id(state_id).level != 0 {
+        return None;
+    }
+    let bottom = entity.get_entity().bounding_box.load().min.y;
+    if bottom <= f64::from(pos.0.y) + shape.max.y - 1.0e-5 {
+        return None;
+    }
+    let fluid = world.get_fluid(pos);
+    (mob.mob_can_stand_on_fluid(fluid) && !same_fluid(world.get_fluid(&pos.up()), fluid))
+        .then_some(shape)
+}

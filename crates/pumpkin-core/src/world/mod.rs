@@ -2741,10 +2741,17 @@ impl World {
             let block = Block::from_state_id(state.id);
             let mut collided = false;
 
-            if block == &Block::POWDER_SNOW {
-                if let Some(shape) =
-                    crate::block::blocks::powder_snow::collision_shape_for_entity(entity, &pos)
-                {
+            let entity_shape = if block == &Block::POWDER_SNOW {
+                Some(crate::block::blocks::powder_snow::collision_shape_for_entity(entity, &pos))
+            } else if block == &Block::LAVA || block == &Block::WATER {
+                Some(crate::block::fluid::collision_shape_for_entity(
+                    self, entity, &pos, state.id,
+                ))
+            } else {
+                None
+            };
+            if let Some(shape) = entity_shape {
+                if let Some(shape) = shape {
                     let shape = shape.at_pos(pos);
                     if shape.intersects(&bounding_box) {
                         collided = true;
