@@ -23,6 +23,7 @@ use crate::entity::{
     mob::{Mob, MobEntity},
 };
 use crate::world::World;
+use crate::world::level_accessor::LevelAccessor;
 
 const EMERGE_DURATION: i32 = 134;
 const DARKNESS_DISPLAY_LIMIT: i32 = 200;
@@ -163,11 +164,11 @@ impl Mob for WardenEntity {
         &self.mob_entity
     }
 
-    fn check_spawn_obstruction(&self, world: &World) -> bool {
+    fn check_spawn_obstruction(&self, level: &dyn LevelAccessor) -> bool {
         let entity = &self.mob_entity.living_entity.entity;
         let bounding_box = entity.bounding_box.load();
-        !world.contains_any_liquid(bounding_box)
-            && world.is_unobstructed(entity)
-            && world.is_space_empty(bounding_box)
+        !level.contains_any_liquid(bounding_box)
+            && level.is_unobstructed(entity)
+            && level.no_collision(&bounding_box)
     }
 }

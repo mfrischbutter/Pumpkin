@@ -31,6 +31,7 @@ use crate::entity::r#type::{
 };
 use crate::plugin::api::events::entity::spawner_spawn::SpawnerSpawnEvent;
 use crate::world::World;
+use crate::world::level_accessor::LevelAccessor;
 use crate::world::loot::{LootContextParameters, generate_loot_from_handle};
 use crate::world::natural_spawner::mob_may_spawn;
 
@@ -443,7 +444,7 @@ impl MobSpawnerBlockEntity {
             return Attempt::Reset;
         };
         let spawn_pos = data.position().unwrap_or_else(|| self.random_spawn_pos());
-        if !world.is_space_empty(entity_type.get_spawn_bounding_box(
+        if !world.no_collision(&entity_type.get_spawn_bounding_box(
             spawn_pos.x,
             spawn_pos.y,
             spawn_pos.z,
@@ -466,9 +467,9 @@ impl MobSpawnerBlockEntity {
             .set_rotation(rng().random::<f32>() * 360.0, 0.0);
         if let Some(mob) = entity.get_mob() {
             let allowed = if data.custom_spawn_rules.is_some() {
-                mob.check_spawn_obstruction(world)
+                mob.check_spawn_obstruction(world.as_ref())
             } else {
-                mob_may_spawn(world, entity.as_ref())
+                mob_may_spawn(world.as_ref(), entity.as_ref())
             };
             if !allowed {
                 return Attempt::Skipped;

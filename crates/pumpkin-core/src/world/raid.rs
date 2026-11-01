@@ -493,7 +493,7 @@ impl Raid {
 
     /// Vanilla `RAVAGER_SPAWN_PLACEMENT_TYPE.isSpawnPositionOk`, or snow under air.
     fn can_spawn_wave_at(world: &Arc<World>, pos: &BlockPos) -> bool {
-        is_spawn_position_ok(world, pos, &EntityType::RAVAGER)
+        is_spawn_position_ok(world.as_ref(), pos, &EntityType::RAVAGER)
             || (world.get_block(&pos.down()) == &Block::SNOW && world.get_block_state(pos).is_air())
     }
 

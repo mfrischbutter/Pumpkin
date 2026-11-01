@@ -1,3 +1,4 @@
+use crate::world::level_accessor::LevelAccessor;
 use pumpkin_data::damage::DamageType;
 use rand::RngExt;
 
@@ -10,8 +11,8 @@ use crate::entity::{
 pub const AMBIENT_SOUND_INTERVAL: i32 = 120;
 
 pub trait WaterAnimal: Mob {
-    fn water_animal_spawn_obstruction(&self, world: &crate::world::World) -> bool {
-        check_spawn_obstruction(self, world)
+    fn water_animal_spawn_obstruction(&self, level: &dyn LevelAccessor) -> bool {
+        check_spawn_obstruction(self, level)
     }
 
     fn handle_air_supply(&self, pre_tick_air_supply: i32, caller: &dyn EntityBase) {
@@ -24,11 +25,8 @@ pub trait WaterAnimal: Mob {
 }
 
 /// Vanilla `WaterAnimal.checkSpawnObstruction`: only entities obstruct, the water does not.
-pub(super) fn check_spawn_obstruction<M: Mob + ?Sized>(
-    mob: &M,
-    world: &crate::world::World,
-) -> bool {
-    world.is_unobstructed(mob.get_entity())
+pub(super) fn check_spawn_obstruction<M: Mob + ?Sized>(mob: &M, level: &dyn LevelAccessor) -> bool {
+    level.is_unobstructed(mob.get_entity())
 }
 
 pub(super) fn handle_air_supply<M: Mob + ?Sized>(

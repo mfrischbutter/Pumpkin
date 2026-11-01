@@ -329,9 +329,12 @@ macro_rules! fish_mob_hooks {
             )
         }
 
-        fn check_spawn_obstruction(&self, world: &$crate::world::World) -> bool {
+        fn check_spawn_obstruction(
+            &self,
+            level: &dyn $crate::world::level_accessor::LevelAccessor,
+        ) -> bool {
             $crate::entity::passive::water_animal::WaterAnimal::water_animal_spawn_obstruction(
-                self, world,
+                self, level,
             )
         }
 

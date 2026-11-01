@@ -36,6 +36,7 @@ use crate::entity::{
     mob::{Mob, MobEntity},
 };
 use crate::world::World;
+use crate::world::level_accessor::LevelAccessor;
 use pumpkin_data::entity::EntityType;
 use pumpkin_nbt::compound::NbtCompound;
 
@@ -185,8 +186,8 @@ impl Mob for DrownedEntity {
     }
 
     /// Vanilla `Drowned.checkSpawnObstruction`: only entities obstruct, the water does not.
-    fn check_spawn_obstruction(&self, world: &World) -> bool {
-        world.is_unobstructed(&self.entity.mob_entity.living_entity.entity)
+    fn check_spawn_obstruction(&self, level: &dyn LevelAccessor) -> bool {
+        level.is_unobstructed(&self.entity.mob_entity.living_entity.entity)
     }
 
     /// Vanilla `Drowned.isPushedByFluid`: not while it swims.

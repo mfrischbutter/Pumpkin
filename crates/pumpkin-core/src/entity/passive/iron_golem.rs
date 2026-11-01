@@ -7,6 +7,7 @@ use pumpkin_data::BlockState;
 use pumpkin_data::attributes::Attributes;
 use pumpkin_data::damage::DamageType;
 use pumpkin_data::entity::{EntityStatus, EntityType};
+use pumpkin_data::fluid::Fluid;
 use pumpkin_data::item::Item;
 use pumpkin_data::item_stack::ItemStack;
 use pumpkin_data::sound::Sound;
@@ -18,6 +19,7 @@ use rand::RngExt;
 
 use crate::entity::ai::behavior::hunting::{self, Hunt};
 use crate::entity::ai::target_match::TargetMatch;
+use crate::entity::spawn_util::is_face_full_up;
 use crate::entity::{
     Entity, EntityBase,
     ai::behavior::neutral::apply_targets,
@@ -32,6 +34,8 @@ use crate::entity::{
     },
     player::Player,
 };
+use crate::world::level_accessor::LevelAccessor;
+use crate::world::natural_spawner::is_valid_empty_spawn_block;
 
 /// Represents an Iron Golem, a powerful neutral mob that protects villagers and players.
 ///
@@ -170,6 +174,32 @@ impl NeutralMob for IronGolemEntity {
 }
 
 impl Mob for IronGolemEntity {
+    /// Vanilla `IronGolem.checkSpawnObstruction`: standing room for the village golem: a floor
+    /// it can stand on, two empty spawn blocks above its feet, its own block empty whatever
+    /// its fluid, and no entity in the way.
+    fn check_spawn_obstruction(&self, level: &dyn LevelAccessor) -> bool {
+        let entity = self.get_entity();
+        let pos = entity.block_pos.load();
+        if !is_face_full_up(level.get_block_state(&pos.down())) {
+            return false;
+        }
+        for height in 1..3 {
+            let above = pos.add(0, height, 0);
+            if !is_valid_empty_spawn_block(
+                level.get_block_state(&above),
+                level.get_fluid(&above),
+                &EntityType::IRON_GOLEM,
+            ) {
+                return false;
+            }
+        }
+        is_valid_empty_spawn_block(
+            level.get_block_state(&pos),
+            &Fluid::EMPTY,
+            &EntityType::IRON_GOLEM,
+        ) && level.is_unobstructed(entity)
+    }
+
     /// Vanilla `AbstractGolem.removeWhenFarAway`.
     fn remove_when_far_away(&self, _distance_sq: f64) -> bool {
         false

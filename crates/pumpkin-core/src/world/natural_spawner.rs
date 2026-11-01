@@ -5,13 +5,16 @@ use crate::entity::mob::spawn::{EntitySpawnReason, SpawnGroupData, finalize_spaw
 use crate::entity::player::Player;
 use crate::entity::r#type::{check_spawn_rules, from_type};
 use crate::world::World;
+use crate::world::level_accessor::{GenerationRegion, LevelAccessor};
 use arc_swap::ArcSwap;
 use crossbeam::atomic::AtomicCell;
 use dashmap::DashMap;
 use pumpkin_data::biome::Spawner;
+use pumpkin_data::block_properties::CampfireLikeProperties;
 use pumpkin_data::chunk::Biome;
 use pumpkin_data::dimension::Dimension;
 use pumpkin_data::entity::{EntityType, MobCategory, SpawnLocation};
+use pumpkin_data::fluid::Fluid;
 use pumpkin_data::structures::{SpawnEntry, Structure, StructureKeys};
 use pumpkin_data::tag::Block::MINECRAFT_PREVENT_MOB_SPAWNING_INSIDE;
 use pumpkin_data::tag::Fluid::{MINECRAFT_LAVA, MINECRAFT_WATER};
@@ -107,11 +110,6 @@ impl MobCounts {
     }
 
     #[inline]
-    pub fn remove(&self, category: &'static MobCategory) {
-        self.0[category.id].fetch_sub(1, Relaxed);
-    }
-
-    #[inline]
     pub fn can_spawn(&self, category: &'static MobCategory) -> bool {
         self.0[category.id].load(Relaxed) < category.max
     }
@@ -183,20 +181,6 @@ impl LocalMobCapCalculator {
         }
     }
 
-    pub fn remove_mob(
-        &self,
-        chunk_pos: Vector2<i32>,
-        world: &World,
-        category: &'static MobCategory,
-    ) {
-        let players = self.get_players_near(world, chunk_pos);
-        for &player in players.iter() {
-            if let Some(count) = self.player_mob_counts.get(&player) {
-                count.remove(category);
-            }
-        }
-    }
-
     pub fn can_spawn(
         &self,
         category: &'static MobCategory,
@@ -259,18 +243,6 @@ impl PotentialCalculator {
                 .lock()
                 .unwrap_or_else(std::sync::PoisonError::into_inner)
                 .push(PointCharge(*pos, charge));
-        }
-    }
-
-    pub fn remove_charge(&self, pos: &BlockPos, charge: f64) {
-        if charge != 0.0 {
-            let mut charges = self
-                .0
-                .lock()
-                .unwrap_or_else(std::sync::PoisonError::into_inner);
-            if let Some(idx) = charges.iter().position(|c| c.0 == *pos && c.1 == charge) {
-                charges.swap_remove(idx);
-            }
         }
     }
 
@@ -338,60 +310,6 @@ impl SpawnState {
         self.spawnable_chunk_count = count;
     }
 
-    pub fn add_entity(&self, world: &World, entity: &dyn EntityBase) {
-        if let Some(mob) = entity.get_mob()
-            && (mob.get_mob_entity().persistence_required.load(Relaxed)
-                || mob.requires_custom_persistence())
-        {
-            return;
-        }
-        let base_entity = entity.get_entity();
-        let entity_type = base_entity.entity_type;
-        if entity_type.category == &MobCategory::MISC {
-            return;
-        }
-        let entity_pos = base_entity.block_pos.load();
-        let biome = base_entity.current_biome.load();
-        if let Some(cost) = biome.spawn_costs.get(entity_type.resource_name) {
-            self.spawn_potential.add_charge(&entity_pos, cost.charge);
-        }
-        if entity.get_mob().is_some() || entity_type.mob {
-            self.local_mob_cap_calculator.add_mob(
-                base_entity.chunk_pos.load(),
-                world,
-                entity_type.category,
-            );
-        }
-        self.mob_category_counts.add(entity_type.category);
-    }
-
-    pub fn remove_entity(&self, world: &World, entity: &dyn EntityBase) {
-        if let Some(mob) = entity.get_mob()
-            && (mob.get_mob_entity().persistence_required.load(Relaxed)
-                || mob.requires_custom_persistence())
-        {
-            return;
-        }
-        let base_entity = entity.get_entity();
-        let entity_type = base_entity.entity_type;
-        if entity_type.category == &MobCategory::MISC {
-            return;
-        }
-        let entity_pos = base_entity.block_pos.load();
-        let biome = base_entity.current_biome.load();
-        if let Some(cost) = biome.spawn_costs.get(entity_type.resource_name) {
-            self.spawn_potential.remove_charge(&entity_pos, cost.charge);
-        }
-        if entity.get_mob().is_some() || entity_type.mob {
-            self.local_mob_cap_calculator.remove_mob(
-                base_entity.chunk_pos.load(),
-                world,
-                entity_type.category,
-            );
-        }
-        self.mob_category_counts.remove(entity_type.category);
-    }
-
     pub fn new(
         chunk_count: i32,
         entities: &ArcSwap<Vec<Arc<dyn EntityBase>>>,
@@ -400,11 +318,8 @@ impl SpawnState {
         let potential = PotentialCalculator::default();
         let local_mob_cap = LocalMobCapCalculator::default();
         let counter = MobCounts::default();
-        let active_chunks = world
-            .active_chunks
-            .read()
-            .unwrap_or_else(std::sync::PoisonError::into_inner)
-            .clone();
+        // Vanilla `createState` counts every entity of a loaded chunk, not only those the
+        // simulation distance ticks.
         for entity in entities.load().iter() {
             if let Some(mob) = entity.get_mob()
                 && (mob.get_mob_entity().persistence_required.load(Relaxed)
@@ -418,9 +333,6 @@ impl SpawnState {
                 continue;
             }
             let chunk_pos = base_entity.chunk_pos.load();
-            if !active_chunks.contains(&chunk_pos) {
-                continue;
-            }
             let entity_pos = base_entity.block_pos.load();
             let biome = base_entity.current_biome.load();
             if let Some(cost) = biome.spawn_costs.get(entity_type.resource_name) {
@@ -551,24 +463,22 @@ pub fn spawn_for_chunk(
     spawn_state: &SpawnState,
     spawn_list: &Vec<&'static MobCategory>,
     is_thundering: bool,
-) -> Vec<Arc<dyn EntityBase>> {
-    let mut entities = Vec::new();
+) {
     for category in spawn_list {
         if spawn_state.can_spawn_for_category_local(world, category, chunk_pos) {
             let random_pos = get_random_pos_within(world.min_y, &chunk_pos, chunk);
             if random_pos.0.y > world.min_y {
-                entities.extend(spawn_category_for_position(
+                spawn_category_for_position(
                     category,
                     world,
                     random_pos,
                     &chunk_pos,
                     spawn_state,
                     is_thundering,
-                ));
+                );
             }
         }
     }
-    entities
 }
 
 pub fn get_random_pos_within(
@@ -580,14 +490,14 @@ pub fn get_random_pos_within(
 
     let x = (chunk_pos.x << 4) + rng.next_bounded_i32(16);
     let z = (chunk_pos.y << 4) + rng.next_bounded_i32(16);
-    // The heightmap holds the top block; vanilla's `getHeight` is the air above it, and the
-    // column reaches one block further.
+    // The heightmap holds the top block like vanilla `ChunkAccess.getHeight`; `topEmptyY` is
+    // the air above it.
     let top_empty_y = chunk
         .heightmap
         .lock()
         .unwrap_or_else(std::sync::PoisonError::into_inner)
         .get(ChunkHeightmapType::WorldSurface, x, z, chunk.section.min_y)
-        + 2;
+        + 1;
     let y = rng.next_inbetween_i32(min_y, top_empty_y);
     BlockPos::new(x, y, z)
 }
@@ -610,6 +520,9 @@ pub fn spawn_mobs_for_chunk_generation(
 
     let xo = chunk_x << 4;
     let zo = chunk_z << 4;
+    // Vanilla spawns into the `WorldGenRegion`: the rules, the collision test and the mob's
+    // own checks read the chunk being generated, which the world does not hold yet.
+    let region = GenerationRegion::new(world, cache);
 
     while rand::random::<f32>() < biome.creature_spawn_probability {
         let Some(spawner_data) = choose_spawner(creatures, &mut rand::rng()) else {
@@ -640,6 +553,7 @@ pub fn spawn_mobs_for_chunk_generation(
                 match chunk_generation_attempt(
                     world,
                     cache,
+                    &region,
                     entity_type,
                     (x, z),
                     (xo, zo),
@@ -677,13 +591,14 @@ enum Attempt {
 fn chunk_generation_attempt(
     world: &Arc<World>,
     cache: &dyn GenerationCache,
+    region: &GenerationRegion<'_>,
     entity_type: &'static EntityType,
     (x, z): (i32, i32),
     (xo, zo): (i32, i32),
     group_data: &mut Option<SpawnGroupData>,
 ) -> Attempt {
     let pos = get_top_non_colliding_pos(world, cache, entity_type, x, z);
-    if !entity_type.summonable || !is_spawn_position_ok_cache(cache, &pos, entity_type) {
+    if !entity_type.summonable || !is_spawn_position_ok(region, &pos, entity_type) {
         return Attempt::Failed;
     }
     let width = f64::from(entity_type.dimension[0]);
@@ -691,10 +606,10 @@ fn chunk_generation_attempt(
     let fz = f64::from(z).clamp(f64::from(zo) + width, f64::from(zo) + 16.0 - width);
     let y = f64::from(pos.0.y);
     let check_pos = BlockPos::new(fx.floor() as i32, pos.0.y, fz.floor() as i32);
-    if !world.is_space_empty(entity_type.get_spawn_bounding_box(fx, y, fz))
+    if !region.no_collision(&entity_type.get_spawn_bounding_box(fx, y, fz))
         || !check_spawn_rules(
             entity_type,
-            world,
+            region,
             EntitySpawnReason::ChunkGeneration,
             &check_pos,
             world.is_thundering(),
@@ -706,7 +621,7 @@ fn chunk_generation_attempt(
     entity
         .get_entity()
         .set_rotation(rand::random::<f32>() * 360.0, 0.0);
-    if !mob_may_spawn(world, entity.as_ref()) {
+    if !mob_may_spawn(region, entity.as_ref()) {
         return Attempt::Failed;
     }
     *group_data = finalize_spawn(&entity, world, group_data.take());
@@ -810,13 +725,12 @@ pub fn spawn_category_for_position(
     chunk_pos: &Vector2<i32>,
     spawn_state: &SpawnState,
     is_thundering: bool,
-) -> Vec<Arc<dyn EntityBase>> {
-    let mut batch_buffer = Vec::new();
+) {
     let y_start = pos.0.y;
     let state = world.get_block_state(&pos);
     // Vanilla `isRedstoneConductor`.
     if state.is_solid_block() {
-        return batch_buffer;
+        return;
     }
 
     let mut cluster_size = 0;
@@ -905,10 +819,12 @@ pub fn spawn_category_for_position(
                         let max_group_size_reached = entity
                             .get_mob()
                             .is_some_and(|mob| mob.is_max_group_size_reached(group_size));
-                        batch_buffer.push(entity);
+                        // Vanilla `addFreshEntityWithPassengers` before the next position, so
+                        // the group's next mob sees this one in its obstruction test.
+                        world.spawn_entity_non_save(entity);
                         spawn_state.after_spawn(entity_type, &check_pos, world);
                         if cluster_size >= entity_type.limit_per_chunk {
-                            return batch_buffer;
+                            return;
                         }
 
                         if max_group_size_reached {
@@ -921,7 +837,6 @@ pub fn spawn_category_for_position(
             ll += 1;
         }
     }
-    batch_buffer
 }
 
 /// Vanilla `NaturalSpawner.isValidPositionForMob`: a mob that would despawn at once is
@@ -938,23 +853,23 @@ fn is_valid_position_for_mob(
     {
         return false;
     }
-    mob_rules_and_obstruction(world, mob)
+    mob_rules_and_obstruction(world.as_ref(), mob)
 }
 
 /// Vanilla's `mob.checkSpawnRules(level, reason) && mob.checkSpawnObstruction(level)` of
 /// every spawner: the mob's own rules and the obstruction test; anything that is not a
 /// mob passes.
 #[must_use]
-pub fn mob_may_spawn(world: &Arc<World>, entity: &dyn EntityBase) -> bool {
+pub fn mob_may_spawn(level: &dyn LevelAccessor, entity: &dyn EntityBase) -> bool {
     entity
         .get_mob()
-        .is_none_or(|mob| mob_rules_and_obstruction(world, mob))
+        .is_none_or(|mob| mob_rules_and_obstruction(level, mob))
 }
 
-fn mob_rules_and_obstruction(world: &Arc<World>, mob: &dyn Mob) -> bool {
+fn mob_rules_and_obstruction(level: &dyn LevelAccessor, mob: &dyn Mob) -> bool {
     mob.get_path_aware_entity()
-        .is_none_or(|mob| mob.can_spawn(world.clone()))
-        && mob.check_spawn_obstruction(world)
+        .is_none_or(|mob| mob.can_spawn(level))
+        && mob.check_spawn_obstruction(level)
 }
 
 #[must_use]
@@ -994,6 +909,7 @@ pub fn is_right_distance_to_player_and_spawn_point(
     let chunk_x = get_section_cord(pos.0.x);
     let chunk_z = get_section_cord(pos.0.z);
     let target_chunk = Vector2::new(chunk_x, chunk_z);
+    // Vanilla `canSpawnEntitiesInChunk`: the chunk ticks entities and lies inside the border.
     target_chunk == *chunk_pos
         || (world
             .active_chunks
@@ -1004,7 +920,7 @@ pub fn is_right_distance_to_player_and_spawn_point(
                 .worldborder
                 .lock()
                 .unwrap_or_else(std::sync::PoisonError::into_inner)
-                .contains_block(pos.0.x, pos.0.z))
+                .contains_chunk(target_chunk.x, target_chunk.y))
 }
 
 /// One entry of a spawn list: vanilla `MobSpawnSettings.SpawnerData`.
@@ -1180,19 +1096,19 @@ pub fn is_valid_spawn_position_for_type(
     if !entity_type.summonable || !can_spawn_mob_at(world, category, data, block_pos) {
         return false;
     }
-    if !is_spawn_position_ok(world, block_pos, entity_type) {
+    if !is_spawn_position_ok(world.as_ref(), block_pos, entity_type) {
         return false;
     }
     if !check_spawn_rules(
         entity_type,
-        world,
+        world.as_ref(),
         EntitySpawnReason::Natural,
         block_pos,
         is_thundering,
     ) {
         return false;
     }
-    if !world.is_space_empty(entity_type.get_spawn_bounding_box(
+    if !world.no_collision(&entity_type.get_spawn_bounding_box(
         f64::from(block_pos.0.x) + 0.5,
         f64::from(block_pos.0.y),
         f64::from(block_pos.0.z) + 0.5,
@@ -1203,12 +1119,15 @@ pub fn is_valid_spawn_position_for_type(
 }
 
 #[must_use]
+/// Vanilla `SpawnPlacements.isSpawnPositionOk`: the type's placement (on the ground, in
+/// water, in lava) at `block_pos`, inside the world border.
 pub fn is_spawn_position_ok(
-    world: &Arc<World>,
+    level: &dyn LevelAccessor,
     block_pos: &BlockPos,
     entity_type: &'static EntityType,
 ) -> bool {
-    let within_bounds = world
+    let within_bounds = level
+        .get_level()
         .worldborder
         .lock()
         .unwrap_or_else(std::sync::PoisonError::into_inner)
@@ -1216,86 +1135,49 @@ pub fn is_spawn_position_ok(
 
     match entity_type.spawn_restriction.location {
         SpawnLocation::InLava => {
-            within_bounds && world.get_fluid(block_pos).has_tag(&MINECRAFT_LAVA)
+            within_bounds && level.get_fluid(block_pos).has_tag(&MINECRAFT_LAVA)
         }
         SpawnLocation::InWater => {
             if !within_bounds {
                 return false;
             }
-            let above_state = world.get_block_state(&block_pos.up());
+            let above_state = level.get_block_state(&block_pos.up());
             // Vanilla: no redstone conductor above.
-            world.get_fluid(block_pos).has_tag(&MINECRAFT_WATER) && !above_state.is_solid_block()
+            level.get_fluid(block_pos).has_tag(&MINECRAFT_WATER) && !above_state.is_solid_block()
         }
         SpawnLocation::OnGround => {
             if !within_bounds {
                 return false;
             }
-            let down = world.get_block_state(&block_pos.down());
-            let up = world.get_block_state(&block_pos.up());
-            let cur = world.get_block_state(block_pos);
-            let is_valid_spawn_below = is_valid_spawn_floor(down, entity_type);
-
-            if is_valid_spawn_below {
-                is_valid_empty_spawn_block(cur, entity_type)
-                    && is_valid_empty_spawn_block(up, entity_type)
-            } else {
-                false
-            }
+            let up = block_pos.up();
+            is_valid_spawn_floor(level.get_block_state(&block_pos.down()), entity_type)
+                && is_valid_empty_spawn_block(
+                    level.get_block_state(block_pos),
+                    level.get_fluid(block_pos),
+                    entity_type,
+                )
+                && is_valid_empty_spawn_block(
+                    level.get_block_state(&up),
+                    level.get_fluid(&up),
+                    entity_type,
+                )
         }
         SpawnLocation::Unrestricted => true,
     }
 }
 
-#[must_use]
-pub fn is_spawn_position_ok_cache(
-    cache: &dyn GenerationCache,
-    block_pos: &BlockPos,
-    entity_type: &'static EntityType,
-) -> bool {
-    let pos_vec = block_pos.0;
-    let state = GenerationCache::get_block_state(cache, &pos_vec).to_state();
-
-    match entity_type.spawn_restriction.location {
-        SpawnLocation::InLava => {
-            state.is_liquid() && Block::from_state_id(state.id).has_tag(&MINECRAFT_LAVA)
-        }
-        SpawnLocation::InWater => {
-            let above_pos = block_pos.up().0;
-            let above_state = GenerationCache::get_block_state(cache, &above_pos).to_state();
-
-            state.is_liquid()
-                && Block::from_state_id(state.id).has_tag(&MINECRAFT_WATER)
-                && !above_state.is_solid_block()
-        }
-        SpawnLocation::OnGround => {
-            let down_pos = block_pos.down().0;
-            let up_pos = block_pos.up().0;
-
-            let down = GenerationCache::get_block_state(cache, &down_pos).to_state();
-            let up = GenerationCache::get_block_state(cache, &up_pos).to_state();
-
-            let is_valid_spawn_below = is_valid_spawn_floor(down, entity_type);
-
-            if is_valid_spawn_below {
-                is_valid_empty_spawn_block(state, entity_type)
-                    && is_valid_empty_spawn_block(up, entity_type)
-            } else {
-                false
-            }
-        }
-        SpawnLocation::Unrestricted => true,
-    }
-}
-
+/// Vanilla `NaturalSpawner.isValidEmptySpawnBlock`: a block a mob may spawn in, with the
+/// fluid state of that block.
 #[must_use]
 pub fn is_valid_empty_spawn_block(
     state: &'static BlockState,
+    fluid: &Fluid,
     entity_type: &'static EntityType,
 ) -> bool {
     if state.is_full_cube() {
         return false;
     }
-    if state.is_liquid() {
+    if fluid.id != Fluid::EMPTY.id {
         return false;
     }
     if Block::from_state_id(state.id).has_tag(&MINECRAFT_PREVENT_MOB_SPAWNING_INSIDE) {
@@ -1330,7 +1212,7 @@ fn is_block_dangerous(entity_type: &'static EntityType, state: &'static BlockSta
     if block.has_tag(entity_type.immune_to) {
         return false;
     }
-    if !entity_type.fire_immune && is_burning_block(block) {
+    if !entity_type.fire_immune && is_burning_block(state) {
         return true;
     }
     block.id == Block::WITHER_ROSE.id
@@ -1339,13 +1221,16 @@ fn is_block_dangerous(entity_type: &'static EntityType, state: &'static BlockSta
         || block.id == Block::POWDER_SNOW.id
 }
 
-fn is_burning_block(block: &Block) -> bool {
+/// Vanilla `NodeEvaluator.isBurningBlock`: fire, lava, magma, a lava cauldron or a lit
+/// campfire.
+fn is_burning_block(state: &'static BlockState) -> bool {
+    let block = Block::from_state_id(state.id);
     block.has_tag(&pumpkin_data::tag::Block::MINECRAFT_FIRE)
         || block.id == Block::LAVA.id
         || block.id == Block::MAGMA_BLOCK.id
         || block.id == Block::LAVA_CAULDRON.id
-        || block.id == Block::CAMPFIRE.id
-        || block.id == Block::SOUL_CAMPFIRE.id
+        || ((block.id == Block::CAMPFIRE.id || block.id == Block::SOUL_CAMPFIRE.id)
+            && CampfireLikeProperties::from_state_id(state.id).lit)
 }
 
 #[cfg(test)]

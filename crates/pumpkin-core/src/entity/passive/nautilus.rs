@@ -1,4 +1,5 @@
 use crate::entity::mob::requires_custom_persistence_base;
+use crate::world::level_accessor::LevelAccessor;
 use crossbeam::atomic::AtomicCell;
 use std::sync::{
     Arc, Mutex,
@@ -192,8 +193,8 @@ impl CustomSound for NautilusEntity {
 
 impl Mob for NautilusEntity {
     /// Vanilla `AbstractNautilus.checkSpawnObstruction`: only entities obstruct, the water does not.
-    fn check_spawn_obstruction(&self, world: &crate::world::World) -> bool {
-        world.is_unobstructed(&self.get_mob_entity().living_entity.entity)
+    fn check_spawn_obstruction(&self, level: &dyn LevelAccessor) -> bool {
+        level.is_unobstructed(&self.get_mob_entity().living_entity.entity)
     }
 
     /// Vanilla `AbstractNautilus.removeWhenFarAway`.

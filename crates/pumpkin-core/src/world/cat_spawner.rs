@@ -78,7 +78,7 @@ impl CatSpawner {
             spawn_pos.0.z - LOADED_RANGE,
             spawn_pos.0.x + LOADED_RANGE,
             spawn_pos.0.z + LOADED_RANGE,
-        ) || !is_spawn_position_ok(world, &spawn_pos, &EntityType::CAT)
+        ) || !is_spawn_position_ok(world.as_ref(), &spawn_pos, &EntityType::CAT)
         {
             return;
         }

@@ -41,6 +41,7 @@ use crate::entity::{
     },
 };
 use crate::world::World;
+use crate::world::level_accessor::LevelAccessor;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum PiglinActivity {
@@ -915,9 +916,9 @@ impl PiglinEntity {
     }
 
     #[must_use]
-    pub fn check_piglin_spawn_rules(world: &World, pos: &BlockPos) -> bool {
+    pub fn check_piglin_spawn_rules(level: &dyn LevelAccessor, pos: &BlockPos) -> bool {
         let below = BlockPos::new(pos.0.x, pos.0.y - 1, pos.0.z);
-        let state = world.get_block_state(&below);
+        let state = level.get_block_state(&below);
         state.id != Block::NETHER_WART_BLOCK.default_state.id
     }
 

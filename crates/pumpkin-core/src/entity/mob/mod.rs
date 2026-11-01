@@ -21,6 +21,7 @@ use crate::world::World;
 use crate::world::brightness::DAYLIGHT_BRIGHTNESS;
 use crate::world::entity_islands::{self, AuditedReach};
 use crate::world::game_event::notified_area;
+use crate::world::level_accessor::LevelAccessor;
 use crate::world::natural_spawner::is_valid_spawn_floor;
 use crossbeam::atomic::AtomicCell;
 use pumpkin_data::attributes::Attributes;
@@ -795,24 +796,28 @@ impl MobEntity {
         min_range <= 0.0 || !self.get_attack_box(min_range).intersects(&target_hitbox)
     }
 
-    pub fn is_dark_enough_to_spawn(world: &World, pos: &BlockPos, is_thundering: bool) -> bool {
-        let sky_light = world.get_sky_light_level(pos);
+    pub fn is_dark_enough_to_spawn(
+        level: &dyn LevelAccessor,
+        pos: &BlockPos,
+        is_thundering: bool,
+    ) -> bool {
+        let sky_light = level.get_sky_light_level(pos);
         if sky_light > rand::random_range(0..32) {
             return false;
         }
 
-        let dimension = &world.dimension;
+        let dimension = &level.get_level().dimension;
         let block_light_limit = dimension.monster_spawn_block_light_limit;
 
-        let block_light = world.get_block_light_level(pos).unwrap_or(0);
+        let block_light = level.get_block_light_level(pos);
         if block_light_limit < 15 && block_light > block_light_limit {
             return false;
         }
 
         let brightness = if is_thundering {
-            world.get_raw_brightness(pos, 10)
+            level.get_raw_brightness(pos, 10)
         } else {
-            world.get_max_local_raw_brightness(pos)
+            level.get_max_local_raw_brightness(pos)
         };
 
         // TODO
@@ -824,82 +829,90 @@ impl MobEntity {
     /// accept the type as spawn floor.
     pub fn check_mob_spawn_rules(
         entity_type: &'static EntityType,
-        world: &World,
+        level: &dyn LevelAccessor,
         reason: EntitySpawnReason,
         pos: &BlockPos,
     ) -> bool {
-        reason.is_spawner() || is_valid_spawn_floor(world.get_block_state(&pos.down()), entity_type)
+        reason.is_spawner() || is_valid_spawn_floor(level.get_block_state(&pos.down()), entity_type)
     }
 
     /// Vanilla `Monster.checkMonsterSpawnRules`.
     pub fn check_monster_spawn_rules(
         entity_type: &'static EntityType,
-        world: &World,
+        level: &dyn LevelAccessor,
         reason: EntitySpawnReason,
         pos: &BlockPos,
         is_thundering: bool,
     ) -> bool {
         if !reason.ignores_light_requirements()
-            && !Self::is_dark_enough_to_spawn(world, pos, is_thundering)
+            && !Self::is_dark_enough_to_spawn(level, pos, is_thundering)
         {
             return false;
         }
 
-        Self::check_mob_spawn_rules(entity_type, world, reason, pos)
+        Self::check_mob_spawn_rules(entity_type, level, reason, pos)
     }
 
     /// Vanilla `Monster.checkAnyLightMonsterSpawnRules`.
     pub fn check_any_light_monster_spawn_rules(
         entity_type: &'static EntityType,
-        world: &World,
+        level: &dyn LevelAccessor,
         reason: EntitySpawnReason,
         pos: &BlockPos,
     ) -> bool {
-        Self::check_mob_spawn_rules(entity_type, world, reason, pos)
+        Self::check_mob_spawn_rules(entity_type, level, reason, pos)
     }
 
     /// Vanilla `Monster.checkSurfaceMonstersSpawnRules`.
     pub fn check_surface_monsters_spawn_rules(
         entity_type: &'static EntityType,
-        world: &World,
+        level: &dyn LevelAccessor,
         reason: EntitySpawnReason,
         pos: &BlockPos,
         is_thundering: bool,
     ) -> bool {
-        Self::check_monster_spawn_rules(entity_type, world, reason, pos, is_thundering)
-            && (reason.is_spawner() || world.can_see_sky(pos))
+        Self::check_monster_spawn_rules(entity_type, level, reason, pos, is_thundering)
+            && (reason.is_spawner() || level.can_see_sky(pos))
     }
 
     /// Vanilla `Animal.checkAnimalSpawnRules`.
     pub fn check_animal_spawn_rules(
-        world: &World,
+        level: &dyn LevelAccessor,
         reason: EntitySpawnReason,
         pos: &BlockPos,
     ) -> bool {
         let below = pos.down();
-        world
+        level
             .get_block(&below)
             .has_tag(&tag::Block::MINECRAFT_ANIMALS_SPAWNABLE_ON)
-            && (reason.ignores_light_requirements() || Self::is_bright_enough_to_spawn(world, pos))
+            && (reason.ignores_light_requirements() || Self::is_bright_enough_to_spawn(level, pos))
     }
 
-    pub fn is_bright_enough_to_spawn(world: &World, pos: &BlockPos) -> bool {
-        world.get_max_local_raw_brightness(pos) > 8
+    /// Vanilla `Animal.isBrightEnoughToSpawn`: the raw brightness without the sky darkening,
+    /// so animals spawn at night too.
+    pub fn is_bright_enough_to_spawn(level: &dyn LevelAccessor, pos: &BlockPos) -> bool {
+        level.get_raw_brightness(pos, 0) > 8
     }
 
-    pub fn check_surface_water_animal_spawn_rules(world: &World, pos: &BlockPos) -> bool {
-        let sea_level = world.sea_level;
+    pub fn check_surface_water_animal_spawn_rules(
+        level: &dyn LevelAccessor,
+        pos: &BlockPos,
+    ) -> bool {
+        let sea_level = level.get_level().sea_level;
         let min_spawn_level = sea_level - 13;
         pos.0.y >= min_spawn_level
             && pos.0.y <= sea_level
-            && world
+            && level
                 .get_fluid(&pos.down())
                 .has_tag(&tag::Fluid::MINECRAFT_WATER)
-            && world.get_block(&pos.up()) == &Block::WATER
+            && level.get_block(&pos.up()) == &Block::WATER
     }
 
-    pub fn check_surface_ageable_water_creature_spawn_rules(world: &World, pos: &BlockPos) -> bool {
-        Self::check_surface_water_animal_spawn_rules(world, pos)
+    pub fn check_surface_ageable_water_creature_spawn_rules(
+        level: &dyn LevelAccessor,
+        pos: &BlockPos,
+    ) -> bool {
+        Self::check_surface_water_animal_spawn_rules(level, pos)
     }
 
     pub fn try_attack(&self, caller: &dyn EntityBase, target: &dyn EntityBase) -> bool {
@@ -1485,9 +1498,9 @@ pub trait Mob: EntityBase + Send + Sync {
 
     /// Vanilla `Mob.checkSpawnObstruction`: no liquid in the bounding box and no entity in
     /// the way.
-    fn check_spawn_obstruction(&self, world: &World) -> bool {
+    fn check_spawn_obstruction(&self, level: &dyn LevelAccessor) -> bool {
         let entity = self.get_entity();
-        !world.contains_any_liquid(entity.bounding_box.load()) && world.is_unobstructed(entity)
+        !level.contains_any_liquid(entity.bounding_box.load()) && level.is_unobstructed(entity)
     }
 
     /// Per-mob tick hook called each tick before AI runs. Override for mob-specific logic.
@@ -2612,19 +2625,32 @@ impl<T: Mob + Send + 'static> EntityBase for T {
     }
 }
 
-#[expect(dead_code)]
+/// Vanilla `PathfinderMob.getWalkTargetValue`.
 const DEFAULT_PATHFINDING_FAVOR: f32 = 0.0;
+/// Vanilla `Animal.getWalkTargetValue` over a grass block.
+const ANIMAL_GRASS_PATHFINDING_FAVOR: f32 = 10.0;
 
 pub trait PathAwareEntity: Mob + Send + Sync {
-    fn get_pathfinding_favor(&self, _block_pos: BlockPos, _world: Arc<World>) -> f32 {
-        0.0
+    /// Vanilla `PathfinderMob.getWalkTargetValue`: 0 for a mob; an animal prefers grass and
+    /// otherwise pays the light cost (`Animal.getWalkTargetValue`). `Monster`'s light cost
+    /// has no shared class marker here and stays with the species.
+    fn get_pathfinding_favor(&self, block_pos: BlockPos, level: &dyn LevelAccessor) -> f32 {
+        if self.as_animal().is_none() {
+            return DEFAULT_PATHFINDING_FAVOR;
+        }
+        if level.get_block(&block_pos.down()) == &Block::GRASS_BLOCK {
+            ANIMAL_GRASS_PATHFINDING_FAVOR
+        } else {
+            level.get_pathfinding_cost_from_light_levels(&block_pos)
+        }
     }
 
-    // TODO: missing SpawnReason attribute
-    fn can_spawn(&self, world: Arc<World>) -> bool {
+    /// Vanilla `PathfinderMob.checkSpawnRules`: the walk target value at the mob's position
+    /// is not negative.
+    fn can_spawn(&self, level: &dyn LevelAccessor) -> bool {
         self.get_pathfinding_favor(
             self.get_mob_entity().living_entity.entity.block_pos.load(),
-            world,
+            level,
         ) >= 0.0
     }
 

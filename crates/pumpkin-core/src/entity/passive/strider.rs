@@ -36,6 +36,7 @@ use crate::entity::{
     player::Player,
 };
 use crate::world::World;
+use crate::world::level_accessor::LevelAccessor;
 
 /// Vanilla `Strider.SUFFOCATING_MODIFIER`: a cold strider walks a third slower.
 const SUFFOCATING_MODIFIER: &str = "minecraft:suffocating";
@@ -259,8 +260,8 @@ impl CustomSound for StriderEntity {
 
 impl Mob for StriderEntity {
     /// Vanilla `Strider.checkSpawnObstruction`: only entities obstruct, the lava does not.
-    fn check_spawn_obstruction(&self, world: &crate::world::World) -> bool {
-        world.is_unobstructed(&self.get_mob_entity().living_entity.entity)
+    fn check_spawn_obstruction(&self, level: &dyn LevelAccessor) -> bool {
+        level.is_unobstructed(&self.get_mob_entity().living_entity.entity)
     }
 
     /// Vanilla `Strider.getAmbientSound`: silent while fleeing or tempted.

@@ -142,22 +142,19 @@ impl Worldborder {
         x >= min_x && x < max_x && z >= min_z && z < max_z
     }
 
+    /// Vanilla `WorldBorder.isWithinBounds(BlockPos)`: the block's corner is inside.
     #[must_use]
     pub fn contains_block(&self, x: i32, z: i32) -> bool {
         self.contains(f64::from(x), f64::from(z))
-            && self.contains(f64::from(x + 1), f64::from(z + 1))
     }
 
-    /// Vanilla `WorldBorder.isWithinBounds(ChunkPos)`: the chunk overlaps the border.
+    /// Vanilla `WorldBorder.isWithinBounds(ChunkPos)`: both the chunk's lowest and highest
+    /// block corner are inside.
     #[must_use]
     pub fn contains_chunk(&self, chunk_x: i32, chunk_z: i32) -> bool {
-        let half = self.new_diameter / 2.0;
-        let min_x = f64::from(chunk_x << 4);
-        let min_z = f64::from(chunk_z << 4);
-        min_x + 15.0 > self.center_x - half
-            && min_x < self.center_x + half
-            && min_z + 15.0 > self.center_z - half
-            && min_z < self.center_z + half
+        let min_x = chunk_x << 4;
+        let min_z = chunk_z << 4;
+        self.contains_block(min_x, min_z) && self.contains_block(min_x + 15, min_z + 15)
     }
 
     #[must_use]

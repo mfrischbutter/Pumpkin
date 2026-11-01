@@ -15,6 +15,7 @@ use rand::RngExt;
 use crate::entity::mob::{Mob, MobEntity};
 use crate::entity::{Entity, EntityBase};
 use crate::world::World;
+use crate::world::level_accessor::LevelAccessor;
 
 const ROOSTING_FLAG: u8 = 1;
 const CLOSE_PLAYER_DISTANCE: f64 = 4.0;
@@ -41,19 +42,24 @@ impl BatEntity {
     }
 
     #[must_use]
-    pub fn check_bat_spawn_rules(world: &World, pos: &BlockPos) -> bool {
-        if pos.0.y >= world.get_heightmap_height(ChunkHeightmapType::WorldSurface, pos.0.x, pos.0.z)
+    pub fn check_bat_spawn_rules(level: &dyn LevelAccessor, pos: &BlockPos) -> bool {
+        if pos.0.y
+            >= level.get_level().get_heightmap_height(
+                ChunkHeightmapType::WorldSurface,
+                pos.0.x,
+                pos.0.z,
+            )
         {
             return false;
         }
         if rand::random_bool(0.5) {
             return false;
         }
-        if world.get_max_local_raw_brightness(pos) > rand::random_range(0..4) {
+        if level.get_max_local_raw_brightness(pos) > rand::random_range(0..4) {
             return false;
         }
         let below_pos = BlockPos::new(pos.0.x, pos.0.y - 1, pos.0.z);
-        if !world
+        if !level
             .get_block(&below_pos)
             .has_tag(&tag::Block::MINECRAFT_BATS_SPAWNABLE_ON)
         {

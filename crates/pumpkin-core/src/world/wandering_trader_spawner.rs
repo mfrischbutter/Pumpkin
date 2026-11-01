@@ -245,7 +245,7 @@ impl WanderingTraderSpawner {
             let y = world.get_heightmap_height(HEIGHTMAP, x, z) + 1;
             let spawn_pos = BlockPos::new(x, y, z);
             if natural_spawner::is_spawn_position_ok(
-                world,
+                world.as_ref(),
                 &spawn_pos,
                 &EntityType::WANDERING_TRADER,
             ) {

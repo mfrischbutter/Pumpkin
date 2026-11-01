@@ -32,6 +32,7 @@ use crate::entity::{
 };
 use crate::plugin::api::events::entity::entity_target::TargetReason;
 use crate::world::World;
+use crate::world::level_accessor::LevelAccessor;
 
 const GUARDIAN_PREY: TargetMatch = TargetMatch::AnyOf(&[
     &EntityType::PLAYER,
@@ -330,8 +331,8 @@ impl Mob for GuardianEntity {
     }
 
     /// Vanilla `Guardian.checkSpawnObstruction`: only entities obstruct, the water does not.
-    fn check_spawn_obstruction(&self, world: &World) -> bool {
-        world.is_unobstructed(&self.mob_entity.living_entity.entity)
+    fn check_spawn_obstruction(&self, level: &dyn LevelAccessor) -> bool {
+        level.is_unobstructed(&self.mob_entity.living_entity.entity)
     }
 
     fn get_max_look_pitch_change(&self) -> f32 {

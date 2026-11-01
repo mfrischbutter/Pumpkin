@@ -37,6 +37,7 @@ use crate::entity::{
     mob::{Mob, MobEntity},
     player::Player,
 };
+use crate::world::level_accessor::LevelAccessor;
 
 const DOLPHIN_FLEES: &[Flee] = &[Flee::new(9, TargetMatch::GUARDIAN_LIKE, 8.0, 1.0, 1.0)];
 
@@ -231,6 +232,12 @@ fn drop_item(mob: &dyn Mob) -> bool {
 }
 
 impl Mob for DolphinEntity {
+    /// Vanilla `AgeableWaterCreature.checkSpawnObstruction`: only entities obstruct, the
+    /// water does not.
+    fn check_spawn_obstruction(&self, level: &dyn LevelAccessor) -> bool {
+        level.is_unobstructed(&self.get_mob_entity().living_entity.entity)
+    }
+
     /// Vanilla `Dolphin.getAmbientSound`.
     fn get_ambient_sound(&self) -> Option<Sound> {
         Some(if self.get_entity().is_in_water() {

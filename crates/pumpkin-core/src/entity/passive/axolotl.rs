@@ -4,6 +4,7 @@ use std::sync::{
 };
 
 use crate::entity::mob::requires_custom_persistence_base;
+use crate::world::level_accessor::LevelAccessor;
 use pumpkin_data::entity::EntityType;
 use pumpkin_data::item::Item;
 use pumpkin_data::item_stack::ItemStack;
@@ -236,8 +237,8 @@ impl Mob for AxolotlEntity {
     }
 
     /// Vanilla `Axolotl.checkSpawnObstruction`: only entities obstruct, the water does not.
-    fn check_spawn_obstruction(&self, world: &crate::world::World) -> bool {
-        world.is_unobstructed(&self.get_mob_entity().living_entity.entity)
+    fn check_spawn_obstruction(&self, level: &dyn LevelAccessor) -> bool {
+        level.is_unobstructed(&self.get_mob_entity().living_entity.entity)
     }
 
     /// Vanilla `Axolotl.removeWhenFarAway`: only wild, unnamed axolotls despawn.

@@ -334,8 +334,8 @@ macro_rules! squid_mob_hooks {
         }
         fn mob_is_pushed_by_fluids(&self) -> bool { false }
         fn get_mob_gravity(&self) -> f64 { $crate::entity::passive::squid::DEFAULT_GRAVITY }
-        fn check_spawn_obstruction(&self, world: &$crate::world::World) -> bool {
-            $crate::entity::passive::ageable_water_creature::AgeableWaterCreature::water_creature_spawn_obstruction(self, world)
+        fn check_spawn_obstruction(&self, level: &dyn $crate::world::level_accessor::LevelAccessor) -> bool {
+            $crate::entity::passive::ageable_water_creature::AgeableWaterCreature::water_creature_spawn_obstruction(self, level)
         }
         fn get_base_experience_reward(&self) -> u32 {
             $crate::entity::passive::ageable_water_creature::AgeableWaterCreature::water_creature_experience_reward(self)

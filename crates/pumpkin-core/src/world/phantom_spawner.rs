@@ -74,8 +74,11 @@ impl PhantomSpawner {
             let dx = rng.random_range(-SIDE_RANGE..=SIDE_RANGE);
             let dz = rng.random_range(-SIDE_RANGE..=SIDE_RANGE);
             let spawn_pos = player_pos.add(dx, dy, dz);
-            if !is_valid_empty_spawn_block(world.get_block_state(&spawn_pos), &EntityType::PHANTOM)
-            {
+            if !is_valid_empty_spawn_block(
+                world.get_block_state(&spawn_pos),
+                world.get_fluid(&spawn_pos),
+                &EntityType::PHANTOM,
+            ) {
                 continue;
             }
             let group_size = 1 + rng.random_range(0..=difficulty.base_difficulty as i32);

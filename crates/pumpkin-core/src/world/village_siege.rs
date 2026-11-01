@@ -166,7 +166,7 @@ fn find_random_spawn_pos(world: &Arc<World>, pos: BlockPos) -> Option<Vector3<f6
         if world.is_village(&spot)
             && MobEntity::check_monster_spawn_rules(
                 &EntityType::ZOMBIE,
-                world,
+                world.as_ref(),
                 EntitySpawnReason::Event,
                 &spot,
                 world.is_thundering(),

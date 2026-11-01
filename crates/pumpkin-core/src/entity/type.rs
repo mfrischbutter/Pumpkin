@@ -123,6 +123,7 @@ use crate::entity::vehicle::boat::BoatEntity;
 use crate::entity::vehicle::minecart::MinecartEntity;
 use crate::entity::{Entity, EntityBase, mob};
 use crate::world::World;
+use crate::world::level_accessor::LevelAccessor;
 use pumpkin_data::Block;
 use pumpkin_nbt::compound::NbtCompound;
 use std::sync::atomic::AtomicBool;
@@ -453,13 +454,13 @@ pub fn self_and_passengers(entity: &Arc<dyn EntityBase>) -> Vec<Arc<dyn EntityBa
 /// rules decide, and a type without one spawns anywhere.
 pub fn check_spawn_rules(
     entity_type: &'static EntityType,
-    world: &World,
+    level: &dyn LevelAccessor,
     reason: EntitySpawnReason,
     pos: &BlockPos,
     is_thundering: bool,
 ) -> bool {
     if !entity_type.is_allowed_in_peaceful
-        && world.level_info.load().difficulty == pumpkin_util::Difficulty::Peaceful
+        && level.get_level().level_info.load().difficulty == pumpkin_util::Difficulty::Peaceful
     {
         return false;
     }
@@ -489,7 +490,7 @@ pub fn check_spawn_rules(
     {
         return mob::MobEntity::check_monster_spawn_rules(
             entity_type,
-            world,
+            level,
             reason,
             pos,
             is_thundering,
@@ -500,7 +501,7 @@ pub fn check_spawn_rules(
     if id == EntityType::BLAZE.id || id == EntityType::BREEZE.id || id == EntityType::ZOGLIN.id {
         return mob::MobEntity::check_any_light_monster_spawn_rules(
             entity_type,
-            world,
+            level,
             reason,
             pos,
         );
@@ -511,7 +512,7 @@ pub fn check_spawn_rules(
     {
         return mob::MobEntity::check_surface_monsters_spawn_rules(
             entity_type,
-            world,
+            level,
             reason,
             pos,
             is_thundering,
@@ -521,26 +522,26 @@ pub fn check_spawn_rules(
     // Stray: the sky must be visible above the powder snow it may stand in.
     if id == EntityType::STRAY.id {
         let mut check_sky_pos = pos.up();
-        while world.get_block(&check_sky_pos) == &pumpkin_data::Block::POWDER_SNOW {
+        while level.get_block(&check_sky_pos) == &pumpkin_data::Block::POWDER_SNOW {
             check_sky_pos = check_sky_pos.up();
         }
         return mob::MobEntity::check_monster_spawn_rules(
             entity_type,
-            world,
+            level,
             reason,
             pos,
             is_thundering,
-        ) && (reason.is_spawner() || world.can_see_sky(&check_sky_pos.down()));
+        ) && (reason.is_spawner() || level.can_see_sky(&check_sky_pos.down()));
     }
 
     // Pillager (Patrolling Monster)
     if id == EntityType::PILLAGER.id {
-        if world.get_block_light_level(pos).unwrap_or(0) > 8 {
+        if level.get_block_light_level(pos) > 8 {
             return false;
         }
         return mob::MobEntity::check_any_light_monster_spawn_rules(
             entity_type,
-            world,
+            level,
             reason,
             pos,
         );
@@ -548,11 +549,12 @@ pub fn check_spawn_rules(
 
     // Endermite & Silverfish: no player in survival or adventure within 5 blocks.
     if id == EntityType::ENDERMITE.id || id == EntityType::SILVERFISH.id {
-        if !mob::MobEntity::check_any_light_monster_spawn_rules(entity_type, world, reason, pos) {
+        if !mob::MobEntity::check_any_light_monster_spawn_rules(entity_type, level, reason, pos) {
             return false;
         }
         return reason.is_spawner()
-            || world
+            || level
+                .get_level()
                 .get_nearest_player(pos.to_centered_f64(), 5.0, |player| {
                     !player.is_spectator() && !player.is_creative()
                 })
@@ -561,21 +563,21 @@ pub fn check_spawn_rules(
 
     // Ghast
     if id == EntityType::GHAST.id {
-        if world.level_info.load().difficulty == pumpkin_util::Difficulty::Peaceful {
+        if level.get_level().level_info.load().difficulty == pumpkin_util::Difficulty::Peaceful {
             return false;
         }
         if rand::random_range(0..20) != 0 {
             return false;
         }
-        return mob::MobEntity::check_mob_spawn_rules(entity_type, world, reason, pos);
+        return mob::MobEntity::check_mob_spawn_rules(entity_type, level, reason, pos);
     }
 
     // Magma Cube
     if id == EntityType::MAGMA_CUBE.id {
-        if world.level_info.load().difficulty == pumpkin_util::Difficulty::Peaceful {
+        if level.get_level().level_info.load().difficulty == pumpkin_util::Difficulty::Peaceful {
             return false;
         }
-        return mob::MobEntity::check_mob_spawn_rules(entity_type, world, reason, pos);
+        return mob::MobEntity::check_mob_spawn_rules(entity_type, level, reason, pos);
     }
 
     // Sulfur Cube
@@ -585,33 +587,34 @@ pub fn check_spawn_rules(
 
     // Slime
     if id == EntityType::SLIME.id {
-        return SlimeEntity::check_slime_spawn_rules(world, reason, pos);
+        return SlimeEntity::check_slime_spawn_rules(level, reason, pos);
     }
 
     // Nether Mobs: Hoglin, Piglin, Zombified Piglin (not on nether wart blocks)
     if id == EntityType::HOGLIN.id || id == EntityType::PIGLIN.id {
-        return world.get_block(&pos.down()) != &pumpkin_data::Block::NETHER_WART_BLOCK;
+        return level.get_block(&pos.down()) != &pumpkin_data::Block::NETHER_WART_BLOCK;
     }
     if id == EntityType::ZOMBIFIED_PIGLIN.id {
-        return world.level_info.load().difficulty != pumpkin_util::Difficulty::Peaceful
-            && world.get_block(&pos.down()) != &pumpkin_data::Block::NETHER_WART_BLOCK;
+        return level.get_level().level_info.load().difficulty
+            != pumpkin_util::Difficulty::Peaceful
+            && level.get_block(&pos.down()) != &pumpkin_data::Block::NETHER_WART_BLOCK;
     }
 
-    // Strider
+    // Strider: vanilla `checkStriderSpawnRules` moves up first, then past the lava.
     if id == EntityType::STRIDER.id {
-        let mut check_pos = *pos;
-        while world
+        let mut check_pos = pos.up();
+        while level
             .get_fluid(&check_pos)
             .has_tag(&pumpkin_data::tag::Fluid::MINECRAFT_LAVA)
         {
             check_pos = check_pos.up();
         }
-        return world.get_block(&check_pos).is_air();
+        return level.get_block(&check_pos).is_air();
     }
 
     // Bat
     if id == EntityType::BAT.id {
-        return bat::BatEntity::check_bat_spawn_rules(world, pos);
+        return bat::BatEntity::check_bat_spawn_rules(level, pos);
     }
 
     // Animals (General)
@@ -628,72 +631,72 @@ pub fn check_spawn_rules(
         || id == EntityType::PANDA.id
         || id == EntityType::TRADER_LLAMA.id
     {
-        return mob::MobEntity::check_animal_spawn_rules(world, reason, pos);
+        return mob::MobEntity::check_animal_spawn_rules(level, reason, pos);
     }
 
     // Tagged Animals: Armadillo, Camel, Frog, Goat, Mooshroom, Parrot, Rabbit, Wolf, Fox
     if id == EntityType::ARMADILLO.id {
         let below = pos.down();
-        return world
+        return level
             .get_block(&below)
             .has_tag(&pumpkin_data::tag::Block::MINECRAFT_ARMADILLO_SPAWNABLE_ON)
-            && mob::MobEntity::is_bright_enough_to_spawn(world, pos);
+            && mob::MobEntity::is_bright_enough_to_spawn(level, pos);
     }
     if id == EntityType::CAMEL.id {
         let below = pos.down();
-        return world
+        return level
             .get_block(&below)
             .has_tag(&pumpkin_data::tag::Block::MINECRAFT_CAMELS_SPAWNABLE_ON)
-            && mob::MobEntity::is_bright_enough_to_spawn(world, pos);
+            && mob::MobEntity::is_bright_enough_to_spawn(level, pos);
     }
     if id == EntityType::FROG.id {
         let below = pos.down();
-        return world
+        return level
             .get_block(&below)
             .has_tag(&pumpkin_data::tag::Block::MINECRAFT_FROGS_SPAWNABLE_ON)
-            && mob::MobEntity::is_bright_enough_to_spawn(world, pos);
+            && mob::MobEntity::is_bright_enough_to_spawn(level, pos);
     }
     if id == EntityType::GOAT.id {
         let below = pos.down();
-        return world
+        return level
             .get_block(&below)
             .has_tag(&pumpkin_data::tag::Block::MINECRAFT_GOATS_SPAWNABLE_ON)
-            && mob::MobEntity::is_bright_enough_to_spawn(world, pos);
+            && mob::MobEntity::is_bright_enough_to_spawn(level, pos);
     }
     if id == EntityType::MOOSHROOM.id {
         let below = pos.down();
-        return world
+        return level
             .get_block(&below)
             .has_tag(&pumpkin_data::tag::Block::MINECRAFT_MOOSHROOMS_SPAWNABLE_ON)
-            && mob::MobEntity::is_bright_enough_to_spawn(world, pos);
+            && mob::MobEntity::is_bright_enough_to_spawn(level, pos);
     }
     if id == EntityType::PARROT.id {
         let below = pos.down();
-        return world
+        return level
             .get_block(&below)
             .has_tag(&pumpkin_data::tag::Block::MINECRAFT_PARROTS_SPAWNABLE_ON)
-            && mob::MobEntity::is_bright_enough_to_spawn(world, pos);
+            && mob::MobEntity::is_bright_enough_to_spawn(level, pos);
     }
     if id == EntityType::RABBIT.id {
         let below = pos.down();
-        return world
+        return level
             .get_block(&below)
             .has_tag(&pumpkin_data::tag::Block::MINECRAFT_RABBITS_SPAWNABLE_ON)
-            && mob::MobEntity::is_bright_enough_to_spawn(world, pos);
+            && mob::MobEntity::is_bright_enough_to_spawn(level, pos);
     }
     if id == EntityType::WOLF.id {
         let below = pos.down();
-        return world
+        return level
             .get_block(&below)
             .has_tag(&pumpkin_data::tag::Block::MINECRAFT_WOLVES_SPAWNABLE_ON)
-            && mob::MobEntity::is_bright_enough_to_spawn(world, pos);
+            && mob::MobEntity::is_bright_enough_to_spawn(level, pos);
     }
     if id == EntityType::FOX.id {
         let below = pos.down();
-        return world
+        return level
             .get_block(&below)
             .has_tag(&pumpkin_data::tag::Block::MINECRAFT_FOXES_SPAWNABLE_ON)
-            && mob::MobEntity::is_bright_enough_to_spawn(world, pos);
+            && mob::MobEntity::is_bright_enough_to_spawn(level, pos);
     }
     // Ocelot: the ground test is its `check_spawn_obstruction`.
     if id == EntityType::OCELOT.id {
@@ -701,106 +704,107 @@ pub fn check_spawn_rules(
     }
     if id == EntityType::POLAR_BEAR.id {
         let below = pos.down();
-        let biome = world.get_biome(pos);
+        let biome = level.get_biome(pos);
         if biome.has_tag(
             &pumpkin_data::tag::WorldgenBiome::MINECRAFT_POLAR_BEARS_SPAWN_ON_ALTERNATE_BLOCKS,
         ) {
-            return mob::MobEntity::is_bright_enough_to_spawn(world, pos)
-                && world.get_block(&below).has_tag(
+            return mob::MobEntity::is_bright_enough_to_spawn(level, pos)
+                && level.get_block(&below).has_tag(
                     &pumpkin_data::tag::Block::MINECRAFT_POLAR_BEARS_SPAWNABLE_ON_ALTERNATE,
                 );
         }
-        return mob::MobEntity::check_animal_spawn_rules(world, reason, pos);
+        return mob::MobEntity::check_animal_spawn_rules(level, reason, pos);
     }
     if id == EntityType::TURTLE.id {
-        let sea_level = world.sea_level;
+        let sea_level = level.get_level().sea_level;
         let below = pos.down();
         return pos.0.y < sea_level + 4
-            && world
+            && level
                 .get_block(&below)
                 .has_tag(&pumpkin_data::tag::Block::MINECRAFT_SAND)
-            && mob::MobEntity::is_bright_enough_to_spawn(world, pos);
+            && mob::MobEntity::is_bright_enough_to_spawn(level, pos);
     }
     if id == EntityType::SKELETON_HORSE.id {
         if !reason.is_spawner() {
-            return mob::MobEntity::check_animal_spawn_rules(world, reason, pos);
+            return mob::MobEntity::check_animal_spawn_rules(level, reason, pos);
         }
         return reason.ignores_light_requirements()
-            || mob::MobEntity::is_bright_enough_to_spawn(world, pos);
+            || mob::MobEntity::is_bright_enough_to_spawn(level, pos);
     }
 
     // Water Animals / Creatures
     if id == EntityType::COD.id || id == EntityType::PUFFERFISH.id || id == EntityType::SALMON.id {
-        return mob::MobEntity::check_surface_water_animal_spawn_rules(world, pos);
+        return mob::MobEntity::check_surface_water_animal_spawn_rules(level, pos);
     }
     if id == EntityType::DOLPHIN.id || id == EntityType::SQUID.id {
-        return mob::MobEntity::check_surface_ageable_water_creature_spawn_rules(world, pos);
+        return mob::MobEntity::check_surface_ageable_water_creature_spawn_rules(level, pos);
     }
     if id == EntityType::TROPICAL_FISH.id {
-        let biome = world.get_biome(pos);
-        let valid_water = world
+        let biome = level.get_biome(pos);
+        let valid_water = level
             .get_fluid(&pos.down())
             .has_tag(&pumpkin_data::tag::Fluid::MINECRAFT_WATER)
-            && world.get_block(&pos.up()) == &pumpkin_data::Block::WATER;
+            && level.get_block(&pos.up()) == &pumpkin_data::Block::WATER;
         if !valid_water {
             return false;
         }
         return biome.has_tag(
             &pumpkin_data::tag::WorldgenBiome::MINECRAFT_ALLOWS_TROPICAL_FISH_SPAWNS_AT_ANY_HEIGHT,
-        ) || mob::MobEntity::check_surface_water_animal_spawn_rules(world, pos);
+        ) || mob::MobEntity::check_surface_water_animal_spawn_rules(level, pos);
     }
     if id == EntityType::AXOLOTL.id {
         let below = pos.down();
-        return world
+        return level
             .get_block(&below)
             .has_tag(&pumpkin_data::tag::Block::MINECRAFT_AXOLOTLS_SPAWNABLE_ON);
     }
     if id == EntityType::GLOW_SQUID.id {
-        let sea_level = world.sea_level;
+        let sea_level = level.get_level().sea_level;
         return pos.0.y <= sea_level - 33
-            && world.get_raw_brightness(pos, 0) == 0
-            && world.get_block(pos) == &pumpkin_data::Block::WATER;
+            && level.get_raw_brightness(pos, 0) == 0
+            && level.get_block(pos) == &pumpkin_data::Block::WATER;
     }
     if id == EntityType::NAUTILUS.id {
-        let sea_level = world.sea_level;
+        let sea_level = level.get_level().sea_level;
         let min_spawn_level = sea_level - 25;
         return pos.0.y >= min_spawn_level
             && pos.0.y <= sea_level - 5
-            && world
+            && level
                 .get_fluid(&pos.down())
                 .has_tag(&pumpkin_data::tag::Fluid::MINECRAFT_WATER)
-            && world.get_block(&pos.up()) == &pumpkin_data::Block::WATER;
+            && level.get_block(&pos.up()) == &pumpkin_data::Block::WATER;
     }
     // Drowned (vanilla `Drowned.checkDrownedSpawnRules`)
     if id == EntityType::DROWNED.id {
         let water = &pumpkin_data::tag::Fluid::MINECRAFT_WATER;
-        if !world.get_fluid(&pos.down()).has_tag(water) && !reason.is_spawner() {
+        if !level.get_fluid(&pos.down()).has_tag(water) && !reason.is_spawner() {
             return false;
         }
-        let can_monster_spawn = world.level_info.load().difficulty
+        let can_monster_spawn = level.get_level().level_info.load().difficulty
             != pumpkin_util::Difficulty::Peaceful
             && (reason.ignores_light_requirements()
-                || mob::MobEntity::is_dark_enough_to_spawn(world, pos, is_thundering))
-            && (reason.is_spawner() || world.get_fluid(pos).has_tag(water));
+                || mob::MobEntity::is_dark_enough_to_spawn(level, pos, is_thundering))
+            && (reason.is_spawner() || level.get_fluid(pos).has_tag(water));
         if can_monster_spawn && (reason.is_spawner() || reason == EntitySpawnReason::Reinforcement)
         {
             return true;
         }
-        let biome = world.get_biome(pos);
+        let biome = level.get_biome(pos);
         if biome.has_tag(&pumpkin_data::tag::WorldgenBiome::MINECRAFT_MORE_FREQUENT_DROWNED_SPAWNS)
         {
             return rand::random_range(0..15) == 0 && can_monster_spawn;
         }
         return rand::random_range(0..40) == 0
-            && pos.0.y < world.sea_level - 5
+            && pos.0.y < level.get_level().sea_level - 5
             && can_monster_spawn;
     }
     if id == EntityType::GUARDIAN.id || id == EntityType::ELDER_GUARDIAN.id {
         let water = &pumpkin_data::tag::Fluid::MINECRAFT_WATER;
-        return (rand::random_range(0..20) == 0 || !world.can_see_sky_from_below_water(pos))
-            && world.level_info.load().difficulty != pumpkin_util::Difficulty::Peaceful
-            && (reason.is_spawner() || world.get_fluid(pos).has_tag(water))
-            && world.get_fluid(&pos.down()).has_tag(water);
+        return (rand::random_range(0..20) == 0 || !level.can_see_sky_from_below_water(pos))
+            && level.get_level().level_info.load().difficulty
+                != pumpkin_util::Difficulty::Peaceful
+            && (reason.is_spawner() || level.get_fluid(pos).has_tag(water))
+            && level.get_fluid(&pos.down()).has_tag(water);
     }
 
     // `Mob.checkMobSpawnRules` for the types vanilla registers with it; every other type
@@ -813,7 +817,7 @@ pub fn check_spawn_rules(
         || id == EntityType::SHULKER.id
         || id == EntityType::WANDERING_TRADER.id
     {
-        return mob::MobEntity::check_mob_spawn_rules(entity_type, world, reason, pos);
+        return mob::MobEntity::check_mob_spawn_rules(entity_type, level, reason, pos);
     }
 
     true

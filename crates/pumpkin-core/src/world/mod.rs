@@ -191,6 +191,7 @@ pub mod dragon_fight;
 pub mod end_podium;
 pub mod entity_tracker;
 pub mod environment;
+pub mod level_accessor;
 pub mod natural_spawner;
 pub mod patrol_spawner;
 pub mod phantom_spawner;
@@ -205,6 +206,7 @@ pub mod weather;
 pub use environment::EnvironmentAttributes;
 pub use pumpkin_data::environment_attribute::{Activity, MoonPhase};
 
+use crate::world::level_accessor::LevelAccessor;
 use crate::world::natural_spawner::{SpawnState, spawn_for_chunk};
 use pumpkin_config::lighting::LightingEngineConfig;
 use pumpkin_data::effect::StatusEffect;
@@ -214,7 +216,11 @@ use pumpkin_world::generation::structure::references::StructureReference;
 use uuid::Uuid;
 use weather::Weather;
 
-const MAX_LIGHT_LEVEL: u8 = 15;
+pub(crate) const MAX_LIGHT_LEVEL: u8 = 15;
+/// Vanilla `Level.isRaining`: the rain level past which it rains.
+const RAIN_LEVEL_THRESHOLD: f32 = 0.2;
+/// Vanilla `Level.isThundering`: the thunder level past which it thunders.
+const THUNDER_LEVEL_THRESHOLD: f32 = 0.9;
 
 fn bedrock_chest_block_actor(state_id: BlockStateId, position: BlockPos) -> Option<NbtCompound> {
     crate::block::entities::bedrock::build_chest_actor(position, state_id, None)
@@ -631,14 +637,10 @@ impl World {
         }
 
         // Mob caps follow the 17 x 17 chunks around players, not the simulation distance.
-        let natural_spawn_chunks = Arc::new(natural_spawner::spawn_candidate_chunks(player_chunks));
-        let spawnable_chunks = natural_spawn_chunks.len() as i32;
-        self.natural_spawn_chunks.store(natural_spawn_chunks);
-        self.spawn_state.store(Arc::new(SpawnState::new(
-            spawnable_chunks,
-            &self.entities,
-            self,
-        )));
+        self.natural_spawn_chunks
+            .store(Arc::new(natural_spawner::spawn_candidate_chunks(
+                player_chunks,
+            )));
     }
 
     /// Adds or removes force tickets for `chunks`, mirroring vanilla
@@ -2419,8 +2421,14 @@ impl World {
             }
         });
 
-        // 4. Calculate Spawn List (Sequential setup)
-        let spawn_state = self.spawn_state.load();
+        // 4. The spawn state, a snapshot taken right before the pass like vanilla
+        // `NaturalSpawner.createState`; `afterSpawn` alone counts the pass's own spawns.
+        let spawn_state = Arc::new(SpawnState::new(
+            self.natural_spawn_chunks.load().len() as i32,
+            &self.entities,
+            self,
+        ));
+        self.spawn_state.store(spawn_state.clone());
         let (spawn_mobs, spawn_enemies) = self.natural_spawn_flags();
         // Vanilla takes the game time, so `/time set` does not shift the animal cadence.
         let spawn_passives = spawn_mobs && self.get_world_age() % 400 == 0;
@@ -2530,25 +2538,15 @@ impl World {
     }
 
     pub fn contains_any_liquid(&self, bounding_box: BoundingBox) -> bool {
-        let min_x = bounding_box.min.x.floor() as i32;
-        let max_x = bounding_box.max.x.ceil() as i32;
-        let min_y = bounding_box.min.y.floor() as i32;
-        let max_y = bounding_box.max.y.ceil() as i32;
-        let min_z = bounding_box.min.z.floor() as i32;
-        let max_z = bounding_box.max.z.ceil() as i32;
+        LevelAccessor::contains_any_liquid(self, bounding_box)
+    }
 
-        for x in min_x..max_x {
-            for y in min_y..max_y {
-                for z in min_z..max_z {
-                    let pos = BlockPos::new(x, y, z);
-                    if self.get_fluid_and_fluid_state(&pos).0.id != Fluid::EMPTY.id {
-                        return true;
-                    }
-                }
-            }
-        }
-
-        false
+    /// Vanilla `EntityGetter.getEntityCollisions(null, box)` being non-empty: an entity that
+    /// can be collided with (boats, shulkers) meets the box.
+    pub fn has_collidable_entity(&self, bounding_box: &BoundingBox) -> bool {
+        self.get_entities_at_box(&bounding_box.expand_all(1.0E-7))
+            .iter()
+            .any(|entity| entity.is_collidable(None))
     }
 
     // FlowingFluid.getFlow()
@@ -2881,7 +2879,7 @@ impl World {
         {
             return;
         }
-        let entities = spawn_for_chunk(
+        spawn_for_chunk(
             self,
             chunk_pos,
             chunk,
@@ -2889,9 +2887,6 @@ impl World {
             spawn_list,
             is_thundering,
         );
-        for entity in entities {
-            self.spawn_entity_non_save(entity);
-        }
     }
 
     pub fn get_world_age(&self) -> i64 {
@@ -2937,11 +2932,23 @@ impl World {
         level_time.send_time(self);
     }
 
+    /// Vanilla `Level.canHaveWeather`: sky light, no ceiling, not the End.
+    fn can_have_weather(&self) -> bool {
+        self.dimension.has_skylight
+            && !self.dimension.has_ceiling
+            && self.dimension != Dimension::THE_END
+    }
+
+    /// Vanilla `Level.isRaining`: the rain level, which ramps over 100 ticks, past its
+    /// threshold.
     pub fn is_raining(&self) -> bool {
-        self.weather
-            .lock()
-            .unwrap_or_else(std::sync::PoisonError::into_inner)
-            .raining
+        self.can_have_weather()
+            && self
+                .weather
+                .lock()
+                .unwrap_or_else(std::sync::PoisonError::into_inner)
+                .rain_level
+                > RAIN_LEVEL_THRESHOLD
     }
 
     pub fn is_raining_at(&self, pos: &BlockPos) -> bool {
@@ -2980,11 +2987,15 @@ impl World {
         }
     }
 
+    /// Vanilla `Level.isThundering`: the thunder level past its threshold.
     pub fn is_thundering(&self) -> bool {
-        self.weather
-            .lock()
-            .unwrap_or_else(std::sync::PoisonError::into_inner)
-            .thundering
+        self.can_have_weather()
+            && self
+                .weather
+                .lock()
+                .unwrap_or_else(std::sync::PoisonError::into_inner)
+                .thunder_level
+                > THUNDER_LEVEL_THRESHOLD
     }
 
     pub fn set_thundering(&self, thundering: bool) {
@@ -5456,7 +5467,6 @@ impl World {
     pub fn spawn_entity_non_save(&self, entity: Arc<dyn EntityBase>) {
         let _base_entity = entity.get_entity();
         self.entity_tracker.add_entity(&entity, self);
-        self.spawn_state.load().add_entity(self, entity.as_ref());
 
         self.entities.rcu(|current_entities| {
             let mut new_entities = (**current_entities).clone();
@@ -5623,7 +5633,6 @@ impl World {
         // The entity stays live-only: it is written to its chunk's saved data on
         // unload (see `save_entities_by_chunk`), never at spawn, so it can't be both live and
         // serialized at once (which would double it on the next reload).
-        self.spawn_state.load().add_entity(self, entity.as_ref());
         self.entity_tracker.add_entity(&entity, self);
 
         self.entities.rcu(|current_entities| {
@@ -5655,7 +5664,6 @@ impl World {
         }
         base_entity.removed.store(true, Ordering::Release);
 
-        self.spawn_state.load().remove_entity(self, entity);
         self.entity_tracker.remove_entity(entity, self);
         self.entities.rcu(|current_entities| {
             let mut new_entities = (**current_entities).clone();
@@ -5734,7 +5742,6 @@ impl World {
                 base.removed.store(true, Ordering::Release);
             }
             self.entity_tracker.remove_entity(entity.as_ref(), self);
-            self.spawn_state.load().remove_entity(self, entity.as_ref());
             if let Some(mob) = entity.get_mob() {
                 mob.get_mob_entity().finish_removal(mob);
             }
@@ -6220,19 +6227,17 @@ impl World {
     }
 
     pub fn get_raw_brightness(&self, pos: &BlockPos, sky_darken: u8) -> u8 {
-        let sky_light = self.get_sky_light_level(pos).saturating_sub(sky_darken);
-        let block_light = self.get_block_light_level(pos).unwrap_or(0);
-        sky_light.max(block_light)
+        LevelAccessor::get_raw_brightness(self, pos, sky_darken)
     }
 
     pub fn get_max_local_raw_brightness(&self, pos: &BlockPos) -> u8 {
-        self.get_raw_brightness(pos, self.get_sky_darken() as u8)
+        LevelAccessor::get_max_local_raw_brightness(self, pos)
     }
 
     /// local brightness through the dimension curve.
     #[must_use]
     pub fn get_light_level_dependent_magic_value(&self, pos: &BlockPos) -> f32 {
-        self.light_level_dependent_magic_value_with_sky(pos, self.get_sky_light_level(pos))
+        LevelAccessor::get_light_level_dependent_magic_value(self, pos)
     }
 
     /// [`Self::get_light_level_dependent_magic_value`] for a sky light the caller already read.
@@ -6257,30 +6262,14 @@ impl World {
 
     #[must_use]
     pub fn can_see_sky(&self, position: &BlockPos) -> bool {
-        self.is_within_build_height(position)
-            && self.get_sky_light_level(position) >= MAX_LIGHT_LEVEL
+        LevelAccessor::can_see_sky(self, position)
     }
 
     /// Vanilla `LevelReader.canSeeSkyFromBelowWater`: below the sea level the sky must be
     /// visible at the sea level, with only liquids and light-passing blocks in between.
     #[must_use]
     pub fn can_see_sky_from_below_water(&self, position: &BlockPos) -> bool {
-        if position.0.y >= self.sea_level {
-            return self.can_see_sky(position);
-        }
-        let scan_point = BlockPos::new(position.0.x, self.sea_level, position.0.z);
-        if !self.can_see_sky(&scan_point) {
-            return false;
-        }
-        let mut pos = scan_point.down();
-        while pos.0.y > position.0.y {
-            let state = self.get_block_state(&pos);
-            if state.opacity > 0 && !state.is_liquid() {
-                return false;
-            }
-            pos = pos.down();
-        }
-        true
+        LevelAccessor::can_see_sky_from_below_water(self, position)
     }
 
     /// [`Self::can_see_sky`] for a sky light the caller already read.
@@ -6289,7 +6278,7 @@ impl World {
         self.is_within_build_height(position) && sky_light >= MAX_LIGHT_LEVEL
     }
 
-    const fn is_within_build_height(&self, position: &BlockPos) -> bool {
+    pub(crate) const fn is_within_build_height(&self, position: &BlockPos) -> bool {
         position.0.y >= self.dimension.min_y
             && position.0.y < self.dimension.min_y + self.dimension.height
     }

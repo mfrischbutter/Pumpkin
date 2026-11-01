@@ -36,8 +36,8 @@ use crate::entity::{
         },
     },
 };
-use crate::world::World;
 use crate::world::game_event::GameEventContext;
+use crate::world::level_accessor::LevelAccessor;
 
 const BASE_MOVEMENT_SPEED: f64 = 0.3;
 const ATTACK_MOVEMENT_SPEED: f64 = 0.35;
@@ -340,8 +340,8 @@ impl Mob for RavagerEntity {
     }
 
     /// Vanilla `Ravager.checkSpawnObstruction`: only liquid obstructs it.
-    fn check_spawn_obstruction(&self, world: &World) -> bool {
-        !world.contains_any_liquid(self.mob_entity.living_entity.entity.bounding_box.load())
+    fn check_spawn_obstruction(&self, level: &dyn LevelAccessor) -> bool {
+        !level.contains_any_liquid(self.mob_entity.living_entity.entity.bounding_box.load())
     }
 
     /// Vanilla `Ravager.aiStep` after `super.aiStep()`.

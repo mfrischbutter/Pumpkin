@@ -23,6 +23,7 @@ use crate::entity::{
     player::Player,
 };
 use crate::world::World;
+use crate::world::level_accessor::LevelAccessor;
 
 const TEMPT_ITEMS: &[&Item] = &[&Item::SLIME_BALL];
 
@@ -79,6 +80,12 @@ impl AgeableMob for TadpoleEntity {
 }
 
 impl Mob for TadpoleEntity {
+    /// Vanilla `WaterAnimal.checkSpawnObstruction`: only entities obstruct, the water does
+    /// not.
+    fn check_spawn_obstruction(&self, level: &dyn LevelAccessor) -> bool {
+        level.is_unobstructed(&self.get_mob_entity().living_entity.entity)
+    }
+
     /// Vanilla `AbstractFish` steps silently.
     fn mob_play_step_sound(&self, _pos: &BlockPos, _state: &BlockState) {}
 

@@ -113,13 +113,17 @@ fn random_sign<R: rand::Rng + ?Sized>(rng: &mut R) -> i32 {
 /// Vanilla `PatrolSpawner.spawnPatrolMember`: a pillager at `pos` when the block is free
 /// and dim enough; the leader gets its patrol target.
 fn spawn_patrol_member(world: &Arc<World>, pos: BlockPos, is_leader: bool) -> bool {
-    if !is_valid_empty_spawn_block(world.get_block_state(&pos), &EntityType::PILLAGER) {
+    if !is_valid_empty_spawn_block(
+        world.get_block_state(&pos),
+        world.get_fluid(&pos),
+        &EntityType::PILLAGER,
+    ) {
         return false;
     }
     if world.get_block_light_level(&pos).unwrap_or(0) > MAX_BLOCK_LIGHT
         || !MobEntity::check_any_light_monster_spawn_rules(
             &EntityType::PILLAGER,
-            world,
+            world.as_ref(),
             EntitySpawnReason::Patrol,
             &pos,
         )

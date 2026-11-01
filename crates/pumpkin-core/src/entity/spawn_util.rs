@@ -1,6 +1,7 @@
 use std::sync::Arc;
 
-use pumpkin_data::{BlockState, entity::EntityType};
+use pumpkin_data::tag::Taggable;
+use pumpkin_data::{Block, BlockState, entity::EntityType};
 use pumpkin_util::math::{
     boundingbox::{BoundingBox, EntityDimensions},
     position::BlockPos,
@@ -11,10 +12,15 @@ use uuid::Uuid;
 
 use crate::entity::{Entity, EntityBase, mob::Mob};
 use crate::world::World;
+use crate::world::level_accessor::LevelAccessor;
 
+/// Vanilla `SpawnUtil.Strategy`: which floor a spawn position may rest on.
 #[derive(Clone, Copy)]
 pub enum SpawnStrategy {
     OnTopOfCollider,
+    /// The village golem's floor: a solid block or powder snow under air or liquid, none of
+    /// the blocks the legacy rule lists.
+    LegacyIronGolem,
 }
 
 impl SpawnStrategy {
@@ -23,8 +29,55 @@ impl SpawnStrategy {
             Self::OnTopOfCollider => {
                 above_state.get_block_collision_shapes().next().is_none() && is_face_full_up(state)
             }
+            Self::LegacyIronGolem => {
+                let block = Block::from_state_id(state.id);
+                !is_legacy_iron_golem_excluded(block)
+                    && (above_state.is_air() || above_state.is_liquid())
+                    && (state.is_solid() || block.id == Block::POWDER_SNOW.id)
+            }
         }
     }
+}
+
+/// The blocks vanilla `Strategy.LEGACY_IRON_GOLEM` refuses as the golem's floor: cobwebs,
+/// cacti, every glass block and pane, leaves, conduits, ice, TNT and the light blocks.
+fn is_legacy_iron_golem_excluded(block: &Block) -> bool {
+    block.id == Block::COBWEB.id
+        || block.id == Block::CACTUS.id
+        || block.id == Block::GLASS_PANE.id
+        || is_stained_glass_pane(block)
+        || block.has_tag(&pumpkin_data::tag::Block::MINECRAFT_IMPERMEABLE)
+        || block.has_tag(&pumpkin_data::tag::Block::MINECRAFT_LEAVES)
+        || block.id == Block::CONDUIT.id
+        || block.id == Block::ICE.id
+        || block.id == Block::TNT.id
+        || block.id == Block::GLOWSTONE.id
+        || block.id == Block::BEACON.id
+        || block.id == Block::SEA_LANTERN.id
+        || block.id == Block::FROSTED_ICE.id
+}
+
+/// Vanilla `StainedGlassPaneBlock`.
+fn is_stained_glass_pane(block: &Block) -> bool {
+    matches!(
+        block.id,
+        id if id == Block::WHITE_STAINED_GLASS_PANE.id
+            || id == Block::ORANGE_STAINED_GLASS_PANE.id
+            || id == Block::MAGENTA_STAINED_GLASS_PANE.id
+            || id == Block::LIGHT_BLUE_STAINED_GLASS_PANE.id
+            || id == Block::YELLOW_STAINED_GLASS_PANE.id
+            || id == Block::LIME_STAINED_GLASS_PANE.id
+            || id == Block::PINK_STAINED_GLASS_PANE.id
+            || id == Block::GRAY_STAINED_GLASS_PANE.id
+            || id == Block::LIGHT_GRAY_STAINED_GLASS_PANE.id
+            || id == Block::CYAN_STAINED_GLASS_PANE.id
+            || id == Block::PURPLE_STAINED_GLASS_PANE.id
+            || id == Block::BLUE_STAINED_GLASS_PANE.id
+            || id == Block::BROWN_STAINED_GLASS_PANE.id
+            || id == Block::GREEN_STAINED_GLASS_PANE.id
+            || id == Block::RED_STAINED_GLASS_PANE.id
+            || id == Block::BLACK_STAINED_GLASS_PANE.id
+    )
 }
 
 /// Vanilla `Block.isFaceFull(getCollisionShape(...), Direction.UP)`, what `entityCanStandOn` checks.
@@ -39,6 +92,8 @@ pub(crate) fn is_face_full_up(state: &BlockState) -> bool {
         })
 }
 
+/// Vanilla `SpawnUtil.trySpawnMob`: a mob at a spot the strategy accepts within the range
+/// around `start`, passing its own spawn rules and obstruction test.
 #[expect(clippy::too_many_arguments)]
 pub fn try_spawn_mob<T: Mob + 'static>(
     entity_type: &'static EntityType,
@@ -87,7 +142,7 @@ pub fn try_spawn_mob<T: Mob + 'static>(
             );
             let bounding_box =
                 BoundingBox::new_from_pos(position.x, position.y, position.z, &dimensions);
-            if !world.is_space_empty(bounding_box) {
+            if !world.no_collision(&bounding_box) {
                 continue;
             }
         }
@@ -98,10 +153,16 @@ pub fn try_spawn_mob<T: Mob + 'static>(
             position,
             entity_type,
         ));
-        if !mob.check_spawn_obstruction(world) {
+        let level: &World = world;
+        if !mob
+            .get_path_aware_entity()
+            .is_none_or(|mob| mob.can_spawn(level))
+            || !mob.check_spawn_obstruction(level)
+        {
             continue;
         }
         world.spawn_entity(mob.clone() as Arc<dyn EntityBase>);
+        mob.play_ambient_sound();
         return Some(mob);
     }
 

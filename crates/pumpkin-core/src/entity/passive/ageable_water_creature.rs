@@ -1,10 +1,11 @@
 use crate::entity::{EntityBase, ageable::AgeableMob};
+use crate::world::level_accessor::LevelAccessor;
 
 use super::water_animal;
 
 pub trait AgeableWaterCreature: AgeableMob {
-    fn water_creature_spawn_obstruction(&self, world: &crate::world::World) -> bool {
-        water_animal::check_spawn_obstruction(self, world)
+    fn water_creature_spawn_obstruction(&self, level: &dyn LevelAccessor) -> bool {
+        water_animal::check_spawn_obstruction(self, level)
     }
 
     fn handle_air_supply(&self, pre_tick_air_supply: i32, caller: &dyn EntityBase) {

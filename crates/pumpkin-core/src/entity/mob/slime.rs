@@ -31,6 +31,7 @@ use crate::entity::{
     },
 };
 use crate::world::World;
+use crate::world::level_accessor::LevelAccessor;
 use pumpkin_util::random::RandomImpl;
 use rand::RngExt;
 
@@ -240,40 +241,40 @@ impl SlimeEntity {
     /// Vanilla `Slime.checkSlimeSpawnRules`: surface slimes in swamps by the moon's spawn
     /// chance, slime chunks below y 40; a spawner only needs the floor.
     pub fn check_slime_spawn_rules(
-        world: &World,
+        level: &dyn LevelAccessor,
         reason: EntitySpawnReason,
         pos: &BlockPos,
     ) -> bool {
-        if world.level_info.load().difficulty == Difficulty::Peaceful {
+        if level.get_level().level_info.load().difficulty == Difficulty::Peaceful {
             return false;
         }
         let entity_type = &EntityType::SLIME;
         if reason.is_spawner() {
-            return MobEntity::check_mob_spawn_rules(entity_type, world, reason, pos);
+            return MobEntity::check_mob_spawn_rules(entity_type, level, reason, pos);
         }
 
         let mut rng = rand::rng();
-        if world
+        if level
             .get_biome(pos)
             .has_tag(&tag::WorldgenBiome::MINECRAFT_ALLOWS_SURFACE_SLIME_SPAWNS)
             && pos.0.y > 50
             && pos.0.y < 70
-            && rng.random::<f32>() < world.surface_slime_spawn_chance(pos)
-            && world.get_max_local_raw_brightness(pos) <= rng.random_range(0..8)
+            && rng.random::<f32>() < level.get_level().surface_slime_spawn_chance(pos)
+            && level.get_max_local_raw_brightness(pos) <= rng.random_range(0..8)
         {
-            return MobEntity::check_mob_spawn_rules(entity_type, world, reason, pos);
+            return MobEntity::check_mob_spawn_rules(entity_type, level, reason, pos);
         }
 
         let chunk_pos = pos.chunk_position();
         let slime_seed = pumpkin_util::random::seed_slime_chunk(
             chunk_pos.x,
             chunk_pos.y,
-            world.level.slime_seed(),
+            level.get_level().level.slime_seed(),
             987_234_911,
         );
         let mut slime_rand = pumpkin_util::random::legacy_rand::LegacyRand::from_seed(slime_seed);
         if rng.random_range(0..10) == 0 && slime_rand.next_bounded_i32(10) == 0 && pos.0.y < 40 {
-            return MobEntity::check_mob_spawn_rules(entity_type, world, reason, pos);
+            return MobEntity::check_mob_spawn_rules(entity_type, level, reason, pos);
         }
 
         false

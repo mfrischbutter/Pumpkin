@@ -32,6 +32,7 @@ use pumpkin_util::text::TextComponent;
 
 use crate::entity::ai::behavior::fleeing::{self, Flee};
 use crate::entity::player::Player;
+use crate::entity::spawn_util::{SpawnStrategy, try_spawn_mob};
 use crate::entity::{
     Entity, EntityBase,
     ai::{
@@ -348,6 +349,11 @@ const VILLAGER_FLEES: &[Flee] = &[Flee::nearest_of(
     0.75,
     0.75,
 )];
+
+/// Vanilla `Villager.spawnGolemIfNeeded`: the golem spawn attempts and their range.
+const IRON_GOLEM_SPAWN_ATTEMPTS: i32 = 10;
+const IRON_GOLEM_SPAWN_RANGE_XZ: i32 = 8;
+const IRON_GOLEM_SPAWN_RANGE_Y: i32 = 6;
 
 pub struct VillagerEntity {
     pub mob_entity: MobEntity,
@@ -1820,22 +1826,27 @@ impl VillagerEntity {
                             .count();
 
                         if nearby_golems == 0 {
-                            // Attempt to spawn an Iron Golem
-                            let spawn_pos = my_pos.add_raw(0.0, 0.5, 0.0);
-                            let golem_entity = Entity::new(
-                                world.clone(),
-                                spawn_pos,
+                            // Vanilla `SpawnUtil.trySpawnMob(IRON_GOLEM, MOB_SUMMONED, ...)`: the
+                            // golem lands on a legacy golem floor near the villager and passes
+                            // its own spawn rules and standing room test.
+                            let spawned = try_spawn_mob(
                                 &pumpkin_data::entity::EntityType::IRON_GOLEM,
+                                crate::entity::passive::iron_golem::IronGolemEntity::new,
+                                &world,
+                                &self.get_entity().block_pos.load(),
+                                IRON_GOLEM_SPAWN_ATTEMPTS,
+                                IRON_GOLEM_SPAWN_RANGE_XZ,
+                                IRON_GOLEM_SPAWN_RANGE_Y,
+                                SpawnStrategy::LegacyIronGolem,
+                                false,
                             );
-                            let golem = crate::entity::passive::iron_golem::IronGolemEntity::new(
-                                golem_entity,
-                            );
-                            world.spawn_entity_non_save(golem as Arc<dyn EntityBase>);
-                            world.send_entity_status(
-                                self.get_entity(),
-                                pumpkin_data::entity::EntityStatus::VillagerHappy,
-                                ActorEventID::VillagerHappy,
-                            );
+                            if spawned.is_some() {
+                                world.send_entity_status(
+                                    self.get_entity(),
+                                    pumpkin_data::entity::EntityStatus::VillagerHappy,
+                                    ActorEventID::VillagerHappy,
+                                );
+                            }
                         }
                     }
                 }
