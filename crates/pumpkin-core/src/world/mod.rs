@@ -4805,13 +4805,14 @@ impl World {
 
                 if first_load {
                     world.make_chunk_entities_live(&chunk, Some(&player)).await;
-                } else {
-                    // Already live for other watchers: pair this player now so
-                    // spawn packets and vehicle restore do not wait on a tracker tick.
-                    world
-                        .entity_tracker
-                        .update_player_chunks(&player, &world, &[position]);
                 }
+                // Vanilla `PlayerChunkSender.sendChunk`: the chunk's tracked entities pair
+                // with this player now, those its data held and those already live (chunk
+                // generation spawns, mobs that wandered in), so spawn packets and the
+                // vehicle restore wait neither on a tracker tick nor on a move of the player.
+                world
+                    .entity_tracker
+                    .update_player_chunks(&player, &world, &[position]);
             }
 
             #[cfg(debug_assertions)]
