@@ -48,6 +48,8 @@ use pumpkin_data::poi_type::PoiType;
 
 mod ai;
 pub mod data;
+mod social;
+mod work;
 pub use data::{
     BREEDING_FOOD_THRESHOLD, GossipType, VillagerData, VillagerProfession, VillagerType,
     get_food_points,
@@ -384,6 +386,8 @@ pub struct VillagerEntity {
     legacy_job_site: std::sync::Mutex<Option<BlockPos>>,
     /// Vanilla `Villager.refreshBrain`, done once the brain is free again.
     refresh_brain: AtomicBool,
+    /// Vanilla `DATA_VILLAGER_DATA_FINALIZED`: type and profession are settled.
+    villager_data_finalized: AtomicBool,
     pub self_weak: std::sync::Mutex<Option<Weak<Self>>>,
 }
 
@@ -452,6 +456,7 @@ impl VillagerEntity {
             is_trading: AtomicBool::new(false),
             legacy_job_site: std::sync::Mutex::new(None),
             refresh_brain: AtomicBool::new(false),
+            villager_data_finalized: AtomicBool::new(false),
             self_weak: std::sync::Mutex::new(None),
         };
         let mob_arc = Arc::new(villager);
@@ -983,7 +988,7 @@ impl VillagerEntity {
             .store(game_time, Ordering::Relaxed);
     }
 
-    fn notify_trading_player_offers_updated(&self) {
+    pub(crate) fn notify_trading_player_offers_updated(&self) {
         if self
             .trading_player
             .lock()
@@ -1185,6 +1190,186 @@ impl VillagerEntity {
         let time = self.get_entity().world.load().get_world_age();
         self.mob_entity
             .try_with_brain(|brain| brain.set(types::LAST_WOKEN, time));
+    }
+
+    /// Vanilla's `SimpleContainer.countItem`.
+    pub(crate) fn count_item(&self, item: &Item) -> i32 {
+        self.inventory
+            .lock()
+            .unwrap_or_else(std::sync::PoisonError::into_inner)
+            .iter()
+            .filter(|stack| !stack.is_empty() && stack.item == item)
+            .map(|stack| i32::from(stack.item_count))
+            .sum()
+    }
+
+    /// Vanilla's `SimpleContainer.removeItemType`.
+    pub(crate) fn remove_items(&self, item: &Item, count: i32) {
+        let mut left = count;
+        let mut inventory = self
+            .inventory
+            .lock()
+            .unwrap_or_else(std::sync::PoisonError::into_inner);
+        for stack in inventory.iter_mut() {
+            if left > 0 && !stack.is_empty() && stack.item == item {
+                let taken = left.min(i32::from(stack.item_count));
+                stack.decrement(taken as u8);
+                left -= taken;
+            }
+        }
+    }
+
+    /// Vanilla's `SimpleContainer.addItem`: what did not fit stays in `stack`.
+    fn add_to_inventory(&self, stack: &mut ItemStack) {
+        let mut inventory = self
+            .inventory
+            .lock()
+            .unwrap_or_else(std::sync::PoisonError::into_inner);
+        for slot in inventory.iter_mut() {
+            if stack.is_empty() {
+                return;
+            }
+            if !slot.is_empty() && slot.are_items_and_components_equal(stack) {
+                let room = slot.get_max_stack_size().saturating_sub(slot.item_count);
+                let moved = room.min(stack.item_count);
+                slot.item_count += moved;
+                stack.decrement(moved);
+            }
+        }
+        for slot in inventory.iter_mut() {
+            if stack.is_empty() {
+                return;
+            }
+            if slot.is_empty() {
+                *slot = stack.clone();
+                *stack = ItemStack::EMPTY.clone();
+            }
+        }
+    }
+
+    /// Vanilla `SimpleContainer.canAddItem`.
+    fn can_add_to_inventory(&self, stack: &ItemStack) -> bool {
+        self.inventory
+            .lock()
+            .unwrap_or_else(std::sync::PoisonError::into_inner)
+            .iter()
+            .any(|slot| {
+                slot.is_empty()
+                    || (slot.are_items_and_components_equal(stack)
+                        && slot.item_count < slot.get_max_stack_size())
+            })
+    }
+
+    /// Vanilla `Villager.hasFarmSeeds`.
+    pub(crate) fn has_farm_seeds(&self) -> bool {
+        self.inventory
+            .lock()
+            .unwrap_or_else(std::sync::PoisonError::into_inner)
+            .iter()
+            .any(|stack| {
+                !stack.is_empty()
+                    && stack
+                        .item
+                        .has_tag(&pumpkin_data::tag::Item::MINECRAFT_VILLAGER_PLANTABLE_SEEDS)
+            })
+    }
+
+    /// Vanilla `WorkAtComposter.makeBread`.
+    pub(crate) fn make_bread(&self) {
+        if self.count_item(&Item::BREAD) > 36 {
+            return;
+        }
+        let bread = 3.min(self.count_item(&Item::WHEAT) / 3);
+        if bread == 0 {
+            return;
+        }
+        self.remove_items(&Item::WHEAT, bread * 3);
+        let mut stack = ItemStack::new(bread as u8, &Item::BREAD);
+        self.add_to_inventory(&mut stack);
+        if !stack.is_empty() {
+            let world = self.get_entity().world.load_full();
+            world.drop_stack(&self.get_entity().block_pos.load(), stack);
+        }
+    }
+
+    /// The results of `ShowTradesToPlayer.updateDisplayItems` for a player holding `item`.
+    pub(crate) fn offers_paid_with(&self, item: &Item) -> Vec<ItemStack> {
+        self.offers
+            .lock()
+            .unwrap_or_else(std::sync::PoisonError::into_inner)
+            .iter()
+            .filter(|offer| {
+                !offer.is_out_of_stock()
+                    && (offer.base_cost_a.0.item == item
+                        || offer
+                            .cost_b
+                            .as_ref()
+                            .is_some_and(|cost| cost.0.item == item))
+            })
+            .map(|offer| offer.output.0.clone().into_owned())
+            .collect()
+    }
+
+    #[must_use]
+    pub(crate) fn villager_type(&self) -> VillagerType {
+        self.villager_data
+            .lock()
+            .unwrap_or_else(std::sync::PoisonError::into_inner)
+            .type_enum()
+    }
+
+    /// Vanilla `Mob.aiStep` with `Villager.pickUpItem`: what the villager wants goes into its
+    /// inventory.
+    fn pick_up_nearby_items(&self) {
+        self.mob_entity.for_each_item_in_pickup_reach(|item| {
+            let (wanted, mut stack) = {
+                let stack = item
+                    .get_item_stack()
+                    .lock()
+                    .unwrap_or_else(std::sync::PoisonError::into_inner);
+                (self.wants_to_pick_up(&stack), stack.clone())
+            };
+            if !wanted {
+                return;
+            }
+            let count = stack.item_count;
+            self.add_to_inventory(&mut stack);
+            let taken = count - stack.item_count;
+            if taken == 0
+                || !self.mob_entity.living_entity.pickup(
+                    item.get_entity(),
+                    Some(&stack),
+                    u32::from(taken),
+                )
+            {
+                return;
+            }
+            let mut left = item
+                .get_item_stack()
+                .lock()
+                .unwrap_or_else(std::sync::PoisonError::into_inner);
+            left.decrement(taken);
+            let empty = left.is_empty();
+            drop(left);
+            if empty {
+                item.get_entity().remove();
+            }
+        });
+    }
+
+    /// Vanilla `Villager.tellWitnessesThatIWasMurdered`.
+    fn tell_witnesses(&self, killer: &dyn EntityBase) {
+        let killer = killer.get_entity().entity_uuid;
+        let witnesses = self.mob_entity.with_brain(self, |brain| {
+            brain
+                .get(types::NEAREST_VISIBLE_LIVING_ENTITIES)
+                .map(|visible| visible.nearby().to_vec())
+        });
+        for witness in witnesses.into_iter().flatten() {
+            if let Some(witness) = witness.cast_any().downcast_ref::<Self>() {
+                witness.witness_murder(killer);
+            }
+        }
     }
 
     /// Vanilla `Villager.releaseAllPois`.
@@ -1547,6 +1732,13 @@ impl VillagerEntity {
     }
 }
 
+/// Vanilla `itemStack.has(DataComponents.VILLAGER_FOOD)`.
+pub(crate) fn is_villager_food(stack: &ItemStack) -> bool {
+    stack
+        .get_data_component::<pumpkin_data::data_component_impl::VillagerFoodImpl>()
+        .is_some()
+}
+
 impl AgeableMob for VillagerEntity {
     fn get_ageable_data(&self) -> &AgeableData {
         &self.ageable_data
@@ -1762,6 +1954,9 @@ impl Mob for VillagerEntity {
                 .unwrap_or_else(std::sync::PoisonError::into_inner) = Some(BlockPos::new(x, y, z));
         }
         self.refresh_brain.store(true, Ordering::Relaxed);
+        if nbt.get_compound("VillagerData").is_some() {
+            self.villager_data_finalized.store(true, Ordering::Relaxed);
+        }
 
         if let Some(offers_compound) = nbt.get_compound("Offers")
             && let Some(recipes) = offers_compound.get_list("Recipes")
@@ -1949,6 +2144,7 @@ impl Mob for VillagerEntity {
 
     fn mob_tick(&self, _caller: &dyn EntityBase) {
         self.villager_mob_tick();
+        self.pick_up_nearby_items();
     }
 
     fn make_brain(&self, packed: &PackedMemories) -> Brain {
@@ -1971,6 +2167,8 @@ impl Mob for VillagerEntity {
         if self.refresh_brain.swap(false, Ordering::Relaxed) {
             let world = self.get_entity().world.load_full();
             let time = world.get_world_age();
+            // Vanilla's constructor; saves from before villagers picked things up say no.
+            self.mob_entity.set_can_pick_up_loot(true);
             self.mob_entity.with_brain(self, |brain| {
                 brain.stop_all(&world, self, time);
                 let packed = brain.pack();
@@ -1980,11 +2178,45 @@ impl Mob for VillagerEntity {
     }
 
     /// Vanilla `Villager.die`: the places it held are free again.
-    fn mob_on_die(&self) {
+    fn mob_on_die(&self, killer: Option<&dyn EntityBase>) {
         if self.mob_entity.living_entity.is_sleeping() {
             stop_sleeping(self);
         }
+        if let Some(killer) = killer {
+            self.tell_witnesses(killer);
+        }
         self.release_all_pois();
+    }
+
+    /// Vanilla `Villager.wantsToPickUp`.
+    fn wants_to_pick_up(&self, stack: &ItemStack) -> bool {
+        (stack
+            .item
+            .has_tag(&pumpkin_data::tag::Item::MINECRAFT_VILLAGER_PICKS_UP)
+            || is_villager_food(stack)
+            || self.profession().requested_items().contains(&stack.item))
+            && self.can_add_to_inventory(stack)
+    }
+
+    /// Vanilla `Villager.finalizeSpawn` with `finalizeVillagerType`.
+    fn finalize_spawn(
+        &self,
+        world: &Arc<World>,
+        group_data: Option<crate::entity::mob::spawn::SpawnGroupData>,
+    ) -> Option<crate::entity::mob::spawn::SpawnGroupData> {
+        if !self.villager_data_finalized.swap(true, Ordering::Relaxed) {
+            let data = *self
+                .villager_data
+                .lock()
+                .unwrap_or_else(std::sync::PoisonError::into_inner);
+            let biome = world.get_biome(&self.get_entity().block_pos.load());
+            self.set_villager_data(VillagerData::new(
+                VillagerData::type_for_biome(biome),
+                data.profession_enum(),
+                data.level.0,
+            ));
+        }
+        self.finalize_spawn_super(group_data)
     }
 
     /// Vanilla `Villager.ageBoundaryReached`, through `AgeableMob`.

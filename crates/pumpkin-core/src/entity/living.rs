@@ -2470,7 +2470,7 @@ impl LivingEntity {
             self.movement_input.store(Vector3::default());
             self.jumping.store(false, Relaxed);
             if let Some(mob) = dyn_self.get_mob() {
-                mob.mob_on_die();
+                mob.mob_on_die(cause.or(source));
             }
 
             // Like vanilla, stats go to the kill credit, loot and XP to the killing blow.

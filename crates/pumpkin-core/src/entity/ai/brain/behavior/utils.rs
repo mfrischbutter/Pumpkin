@@ -10,6 +10,49 @@ use super::super::memory::walk_target::WalkTarget;
 use super::super::memory::{MemoryModuleType, types};
 use super::super::{BrainState, VisibilityContext};
 
+/// Vanilla `BehaviorUtils.throwItem` with its speed and the height below the eyes.
+pub fn throw_item_with(
+    thrower: &crate::entity::Entity,
+    stack: pumpkin_data::item_stack::ItemStack,
+    target: pumpkin_util::math::vector3::Vector3<f64>,
+    velocity: pumpkin_util::math::vector3::Vector3<f64>,
+    eye_offset: f64,
+) {
+    use pumpkin_util::math::vector3::Vector3;
+    let pos = thrower.pos.load();
+    let item = crate::entity::item::ItemEntity::new(
+        crate::entity::Entity::new(
+            thrower.world.load_full(),
+            Vector3::new(pos.x, thrower.get_eye_pos().y - eye_offset, pos.z),
+            &pumpkin_data::entity::EntityType::ITEM,
+        ),
+        stack,
+    );
+    item.set_thrower(thrower.entity_uuid);
+    item.get_entity().velocity.store(
+        (target - pos)
+            .normalize()
+            .multiply(velocity.x, velocity.y, velocity.z),
+    );
+    thrower.world.load().spawn_entity(Arc::new(item));
+}
+
+/// Vanilla `BehaviorUtils.throwItem`.
+pub fn throw_item(
+    thrower: &crate::entity::Entity,
+    stack: pumpkin_data::item_stack::ItemStack,
+    target: pumpkin_util::math::vector3::Vector3<f64>,
+) {
+    let speed = f64::from(0.3f32);
+    throw_item_with(
+        thrower,
+        stack,
+        target,
+        pumpkin_util::math::vector3::Vector3::new(speed, speed, speed),
+        f64::from(0.2f32),
+    );
+}
+
 #[must_use]
 pub fn entity_is_visible(ctx: &VisibilityContext<'_>, target: &dyn EntityBase) -> bool {
     ctx.state

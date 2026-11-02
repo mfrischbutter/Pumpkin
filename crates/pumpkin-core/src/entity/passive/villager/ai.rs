@@ -12,6 +12,10 @@ use pumpkin_data::tag::{self, Taggable};
 use pumpkin_data::villager::VillagerProfession;
 
 use super::VillagerEntity;
+use super::social::{TradeWithVillager, VillagerMakeLove};
+use super::work::{
+    GiveGiftToHero, HarvestFarmland, ShowTradesToPlayer, UseBonemeal, use_composter,
+};
 use crate::entity::EntityBase;
 use crate::entity::ai::brain::activity::ActivityData;
 use crate::entity::ai::brain::behavior::one_shot::trigger_one_shuffled;
@@ -26,8 +30,9 @@ use crate::entity::ai::brain::behavior::village::{
     update_activity_from_schedule, village_bound_random_stroll, wake_up,
 };
 use crate::entity::ai::brain::behavior::{
-    Behavior, BehaviorControl, DoNothing, LookAtTargetSink, MoveToTargetSink, OneShot, Swim, Timed,
-    run_one, run_one_with_conditions, set_walk_target_from_look_target, utils,
+    Behavior, BehaviorControl, DoNothing, GateBehavior, LookAtTargetSink, MoveToTargetSink,
+    OneShot, OrderPolicy, RunningPolicy, Swim, Timed, go_to_wanted_item, run_one,
+    run_one_with_conditions, set_walk_target_from_look_target, utils,
 };
 use crate::entity::ai::brain::memory::PackedMemories;
 use crate::entity::ai::brain::memory::position_tracker::{BlockPosTracker, EntityTracker};
@@ -72,6 +77,7 @@ pub(super) fn make_brain(villager: &VillagerEntity, packed: &PackedMemories) -> 
         sensor_types: &[
             SensorType::NearestLivingEntities,
             SensorType::NearestPlayers,
+            SensorType::NearestItems,
             SensorType::HurtBy,
             SensorType::VillagerHostiles,
             SensorType::VillagerBabies,
@@ -102,7 +108,9 @@ fn activities(mob: &dyn Mob) -> Vec<ActivityData> {
     if is_baby(mob) {
         activities.push(play_package());
     } else {
-        activities.push(work_package());
+        activities.push(work_package(
+            profession_of(mob) == VillagerProfession::Farmer,
+        ));
     }
     activities
 }
@@ -176,6 +184,10 @@ fn core_package() -> ActivityData {
         (2, Box::new(poi_competitor_scan())),
         (3, Box::new(Timed::new(LookAndFollowTradingPlayerSink))),
         (
+            5,
+            Box::new(go_to_wanted_item::create(SPEED_MODIFIER, false, 4)),
+        ),
+        (
             6,
             Box::new(acquire_poi(AcquirePoi {
                 kind: acquirable_job_site,
@@ -217,13 +229,20 @@ fn core_package() -> ActivityData {
 }
 
 /// Vanilla `VillagerGoalPackages.getWorkPackage`, until the farming behaviours are there.
-fn work_package() -> ActivityData {
+fn work_package(farmer: bool) -> ActivityData {
+    let farm_weights = if farmer { (2, 4) } else { (5, 7) };
     let packaged: Vec<(i32, Packaged)> = vec![
         minimal_look_behavior(),
         (
             5,
             Box::new(run_one(vec![
-                (Box::new(Timed::new(WorkAtPoi::default())), 7),
+                (
+                    Box::new(Timed::new(WorkAtPoi {
+                        last_check: 0,
+                        composter: farmer,
+                    })),
+                    7,
+                ),
                 (
                     Box::new(stroll_around_poi(types::JOB_SITE, STROLL_SPEED_MODIFIER, 4)),
                     2,
@@ -242,8 +261,14 @@ fn work_package() -> ActivityData {
                     )),
                     5,
                 ),
+                (
+                    Box::new(Timed::new(HarvestFarmland::default())),
+                    farm_weights.0,
+                ),
+                (Box::new(Timed::new(UseBonemeal::default())), farm_weights.1),
             ])),
         ),
+        (10, Box::new(Timed::new(ShowTradesToPlayer::new(400, 1600)))),
         (10, Box::new(set_look_and_interact(&EntityType::PLAYER, 4))),
         (
             2,
@@ -258,6 +283,7 @@ fn work_package() -> ActivityData {
                 release_memory_poi,
             )),
         ),
+        (3, Box::new(Timed::new(GiveGiftToHero::default()))),
         (99, Box::new(update_activity_from_schedule())),
     ];
     ActivityData::new(
@@ -353,6 +379,7 @@ fn meet_package() -> ActivityData {
                 ],
             )),
         ),
+        (10, Box::new(Timed::new(ShowTradesToPlayer::new(400, 1600)))),
         (10, Box::new(set_look_and_interact(&EntityType::PLAYER, 4))),
         (
             2,
@@ -367,10 +394,12 @@ fn meet_package() -> ActivityData {
                 release_memory_poi,
             )),
         ),
+        (3, Box::new(Timed::new(GiveGiftToHero::default()))),
         (
             3,
             Box::new(validate_nearby_poi(is_meeting, types::MEETING_POINT)),
         ),
+        (3, trade_gate()),
         full_look_behavior(),
         (99, Box::new(update_activity_from_schedule())),
     ];
@@ -380,6 +409,28 @@ fn meet_package() -> ActivityData {
         vec![(types::MEETING_POINT.id(), MemoryStatus::ValuePresent)],
         Vec::new(),
     )
+}
+
+/// The `GateBehavior` around `TradeWithVillager` in vanilla's meet and idle packages.
+fn trade_gate() -> Packaged {
+    Box::new(GateBehavior::new(
+        "TradeGate",
+        Vec::new(),
+        vec![types::INTERACTION_TARGET.id()],
+        OrderPolicy::Ordered,
+        RunningPolicy::RunOne,
+        vec![(Box::new(Timed::new(TradeWithVillager::default())), 1)],
+    ))
+}
+
+fn can_breed(mob: &dyn Mob) -> bool {
+    as_villager(mob).is_some_and(VillagerEntity::can_breed)
+}
+
+fn target_can_breed(mob: &Arc<dyn EntityBase>) -> bool {
+    mob.cast_any()
+        .downcast_ref::<VillagerEntity>()
+        .is_some_and(VillagerEntity::can_breed)
 }
 
 fn interact_with_kind(kind: &'static EntityType) -> OneShot {
@@ -401,6 +452,18 @@ fn idle_package() -> ActivityData {
             2,
             Box::new(run_one(vec![
                 (Box::new(interact_with_kind(&EntityType::VILLAGER)), 2),
+                (
+                    Box::new(interact_with(
+                        &EntityType::VILLAGER,
+                        8,
+                        can_breed,
+                        target_can_breed,
+                        types::BREED_TARGET,
+                        SPEED_MODIFIER,
+                        2,
+                    )),
+                    1,
+                ),
                 (Box::new(interact_with_kind(&EntityType::CAT)), 1),
                 (
                     Box::new(village_bound_random_stroll(SPEED_MODIFIER, 10, 7)),
@@ -413,7 +476,21 @@ fn idle_package() -> ActivityData {
                 (Box::new(DoNothing::new(30, 60)), 1),
             ])),
         ),
+        (3, Box::new(Timed::new(GiveGiftToHero::default()))),
         (3, Box::new(set_look_and_interact(&EntityType::PLAYER, 4))),
+        (3, Box::new(Timed::new(ShowTradesToPlayer::new(400, 1600)))),
+        (3, trade_gate()),
+        (
+            3,
+            Box::new(GateBehavior::new(
+                "BreedGate",
+                Vec::new(),
+                vec![types::BREED_TARGET.id()],
+                OrderPolicy::Ordered,
+                RunningPolicy::RunOne,
+                vec![(Box::new(Timed::new(VillagerMakeLove::default())), 1)],
+            )),
+        ),
         full_look_behavior(),
         (99, Box::new(update_activity_from_schedule())),
     ];
@@ -855,9 +932,10 @@ fn reset_profession() -> OneShot {
 }
 
 /// Vanilla `WorkAtPoi`.
-#[derive(Default)]
 struct WorkAtPoi {
     last_check: i64,
+    /// Vanilla `WorkAtComposter`, the farmer's kind.
+    composter: bool,
 }
 
 const WORK_AT_POI_CONDITIONS: [(MemoryModuleId, MemoryStatus); 2] = [
@@ -901,6 +979,11 @@ impl Behavior for WorkAtPoi {
         }
         if let Some(villager) = as_villager(tick.mob) {
             villager.play_work_sound();
+            if self.composter
+                && let Some(site) = tick.state.get(types::JOB_SITE)
+            {
+                use_composter(tick.world, site.pos, villager);
+            }
             villager.restock_if_needed(tick.world);
         }
     }

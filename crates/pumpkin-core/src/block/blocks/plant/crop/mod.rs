@@ -40,6 +40,24 @@ pub mod sweet_berry_bush;
 pub mod torch_flower;
 pub mod wheat;
 
+/// Vanilla `block instanceof CropBlock`: the age and the highest age of a growing crop.
+#[must_use]
+pub fn crop_age(block: &Block, state: BlockStateId) -> Option<(i32, i32)> {
+    fn of(crop: &impl CropBlockBase, block: &Block, state: BlockStateId) -> (i32, i32) {
+        (crop.get_age(state, block), crop.max_age())
+    }
+    Some(match block {
+        block if block == &Block::WHEAT => of(&wheat::WheatBlock, block, state),
+        block if block == &Block::CARROTS => of(&carrot::CarrotBlock, block, state),
+        block if block == &Block::POTATOES => of(&potatoes::PotatoBlock, block, state),
+        block if block == &Block::BEETROOTS => of(&beetroot::BeetrootBlock, block, state),
+        block if block == &Block::TORCHFLOWER_CROP => {
+            of(&torch_flower::TorchFlowerBlock, block, state)
+        }
+        _ => return None,
+    })
+}
+
 trait CropBlockBase: PlantBlockBase {
     // Deliberately NOT named `can_plant_on_top`: that would collide with the
     // `PlantBlockBase` method of the same name without overriding it, and

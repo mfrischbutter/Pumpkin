@@ -543,6 +543,15 @@ impl MobEntity {
         }
     }
 
+    /// Vanilla `Mob.setDropChance`.
+    pub fn set_drop_chance(&self, slot: &EquipmentSlot, chance: f32) {
+        self.living_entity
+            .equipment_drop_chances
+            .lock()
+            .unwrap_or_else(std::sync::PoisonError::into_inner)
+            .insert(slot.clone(), chance);
+    }
+
     pub fn set_guaranteed_drop(&self, slot: &EquipmentSlot) {
         self.living_entity
             .equipment_drop_chances
@@ -1558,7 +1567,7 @@ pub trait Mob: EntityBase + Send + Sync {
     fn mob_tick(&self, _caller: &dyn EntityBase) {}
 
     /// The species' part of vanilla `LivingEntity.die`.
-    fn mob_on_die(&self) {}
+    fn mob_on_die(&self, _killer: Option<&dyn EntityBase>) {}
 
     /// Vanilla `VillagerProfession.secondaryPoi`: the blocks `SecondaryPoiSensor` looks for.
     fn mob_secondary_poi_blocks(&self) -> &'static [&'static pumpkin_data::Block] {

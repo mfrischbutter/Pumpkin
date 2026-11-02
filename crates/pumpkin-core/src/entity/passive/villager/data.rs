@@ -1,3 +1,4 @@
+use pumpkin_data::chunk::Biome;
 use pumpkin_data::item::Item;
 pub use pumpkin_data::villager::{VillagerProfession, VillagerType};
 use pumpkin_protocol::codec::var_int::VarInt;
@@ -71,6 +72,16 @@ impl GossipType {
             Self::MinorNegative => -1,
             Self::MajorPositive => 5,
             Self::MinorPositive | Self::Trading => 1,
+        }
+    }
+
+    /// Vanilla `GossipType.decayPerTransfer`.
+    #[must_use]
+    pub const fn decay_per_transfer(self) -> i32 {
+        match self {
+            Self::MajorNegative => 10,
+            Self::MinorPositive => 5,
+            Self::MinorNegative | Self::MajorPositive | Self::Trading => 20,
         }
     }
 
@@ -148,6 +159,64 @@ impl VillagerData {
             r#type: VarInt(r#type as i32),
             profession: VarInt(profession as i32),
             level: VarInt(level),
+        }
+    }
+
+    /// Vanilla `VillagerType.byBiome`.
+    #[must_use]
+    pub fn type_for_biome(biome: &Biome) -> VillagerType {
+        match biome {
+            biome
+                if biome == &Biome::BADLANDS
+                    || biome == &Biome::DESERT
+                    || biome == &Biome::ERODED_BADLANDS
+                    || biome == &Biome::WOODED_BADLANDS =>
+            {
+                VillagerType::Desert
+            }
+            biome
+                if biome == &Biome::BAMBOO_JUNGLE
+                    || biome == &Biome::JUNGLE
+                    || biome == &Biome::SPARSE_JUNGLE =>
+            {
+                VillagerType::Jungle
+            }
+            biome
+                if biome == &Biome::SAVANNA_PLATEAU
+                    || biome == &Biome::SAVANNA
+                    || biome == &Biome::WINDSWEPT_SAVANNA =>
+            {
+                VillagerType::Savanna
+            }
+            biome
+                if biome == &Biome::DEEP_FROZEN_OCEAN
+                    || biome == &Biome::FROZEN_OCEAN
+                    || biome == &Biome::FROZEN_RIVER
+                    || biome == &Biome::ICE_SPIKES
+                    || biome == &Biome::SNOWY_BEACH
+                    || biome == &Biome::SNOWY_TAIGA
+                    || biome == &Biome::SNOWY_PLAINS
+                    || biome == &Biome::GROVE
+                    || biome == &Biome::SNOWY_SLOPES
+                    || biome == &Biome::FROZEN_PEAKS
+                    || biome == &Biome::JAGGED_PEAKS =>
+            {
+                VillagerType::Snow
+            }
+            biome if biome == &Biome::SWAMP || biome == &Biome::MANGROVE_SWAMP => {
+                VillagerType::Swamp
+            }
+            biome
+                if biome == &Biome::OLD_GROWTH_SPRUCE_TAIGA
+                    || biome == &Biome::OLD_GROWTH_PINE_TAIGA
+                    || biome == &Biome::WINDSWEPT_GRAVELLY_HILLS
+                    || biome == &Biome::WINDSWEPT_HILLS
+                    || biome == &Biome::TAIGA
+                    || biome == &Biome::WINDSWEPT_FOREST =>
+            {
+                VillagerType::Taiga
+            }
+            _ => VillagerType::Plains,
         }
     }
 

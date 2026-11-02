@@ -263,32 +263,6 @@ impl AllayEntity {
         }
     }
 
-    fn throw_item(
-        &self,
-        stack: ItemStack,
-        target: Vector3<f64>,
-        velocity: Vector3<f64>,
-        eye_offset: f64,
-    ) {
-        let entity = self.get_entity();
-        let pos = entity.pos.load();
-        let item = ItemEntity::new(
-            Entity::new(
-                entity.world.load_full(),
-                Vector3::new(pos.x, self.get_eye_pos().y - eye_offset, pos.z),
-                &EntityType::ITEM,
-            ),
-            stack,
-        );
-        item.set_thrower(entity.entity_uuid);
-        item.get_entity().velocity.store(
-            (target - pos)
-                .normalize()
-                .multiply(velocity.x, velocity.y, velocity.z),
-        );
-        entity.world.load().spawn_entity(Arc::new(item));
-    }
-
     fn throw_one_item(
         &self,
         target: Vector3<f64>,
@@ -305,7 +279,8 @@ impl AllayEntity {
         }
         let entity = self.get_entity();
         let world = entity.world.load();
-        self.throw_item(
+        crate::entity::ai::brain::behavior::utils::throw_item_with(
+            entity,
             stack.clone(),
             target + Vector3::new(0.0, 1.0, 0.0),
             velocity.to_f64(),
@@ -393,7 +368,8 @@ impl AllayEntity {
                 ItemStack::EMPTY.clone(),
             );
             if !stored.is_empty() {
-                self.throw_item(
+                crate::entity::ai::brain::behavior::utils::throw_item_with(
+                    entity,
                     stored,
                     entity.pos.load(),
                     Vector3::new(f64::from(0.3f32), f64::from(0.3f32), f64::from(0.3f32)),
