@@ -6719,6 +6719,20 @@ impl World {
         Self::get_fluid_from_state_id(id)
     }
 
+    /// The fluid as vanilla's `FluidState` names it, source and flowing apart. `get_fluid` folds
+    /// both into the flowing one, so a tag that lists only the source (`supports_frogspawn`,
+    /// `axolotl_tries_to_find`) needs this one to ever match.
+    pub fn get_exact_fluid(&self, position: &BlockPos) -> &'static pumpkin_data::fluid::Fluid {
+        let id = self.get_block_state_id(position);
+        Fluid::from_state_id(id).unwrap_or_else(|| {
+            if Self::get_fluid_from_state_id(id).matches_type(&Fluid::WATER) {
+                &Fluid::WATER
+            } else {
+                &Fluid::EMPTY
+            }
+        })
+    }
+
     pub fn get_block_and_fluid(
         &self,
         position: &BlockPos,

@@ -191,6 +191,9 @@ macro_rules! impl_abstract_fish {
         $crate::impl_abstract_fish!($fish, bucket: $bucket, flop: $flop, ambient: $ambient, bucket_extra: {});
     };
     ($fish:ty, bucket: $bucket:expr, flop: $flop:expr, ambient: $ambient:expr, bucket_extra: { $($extra:tt)* }) => {
+        $crate::impl_abstract_fish!($fish, bucket: $bucket, flop: $flop, ambient: $ambient, pickup: pumpkin_data::sound::Sound::ItemBucketFillFish, bucket_extra: { $($extra)* });
+    };
+    ($fish:ty, bucket: $bucket:expr, flop: $flop:expr, ambient: $ambient:expr, pickup: $pickup:expr, bucket_extra: { $($extra:tt)* }) => {
         impl $crate::entity::passive::water_animal::WaterAnimal for $fish {}
 
         impl $crate::entity::passive::abstract_fish::AbstractFish for $fish {
@@ -243,7 +246,7 @@ macro_rules! impl_abstract_fish {
             }
 
             fn pickup_sound(&self) -> pumpkin_data::sound::Sound {
-                pumpkin_data::sound::Sound::ItemBucketFillFish
+                $pickup
             }
 
             $($extra)*

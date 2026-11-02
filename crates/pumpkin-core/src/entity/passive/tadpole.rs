@@ -1,114 +1,115 @@
+use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, Ordering};
-use std::sync::{Arc, Weak};
 
-use pumpkin_data::BlockState;
 use pumpkin_data::entity::EntityType;
 use pumpkin_data::item::Item;
 use pumpkin_data::item_stack::ItemStack;
 use pumpkin_data::particle::Particle;
-use pumpkin_data::sound::{Sound, SoundCategory};
+use pumpkin_data::sound::Sound;
 use pumpkin_data::tag::{self, Taggable};
+use pumpkin_data::tracked_data;
 use pumpkin_nbt::compound::NbtCompound;
-use pumpkin_util::math::position::BlockPos;
 use pumpkin_util::math::vector3::Vector3;
 
-use crate::entity::bucketable::{
-    Bucketable, bucket_mob_pickup, load_age_from_bucket_tag, save_age_to_bucket_tag,
-};
-use crate::entity::mob::requires_custom_persistence_base;
+use super::abstract_fish::{AbstractFish, FishData};
+use super::frog_ai;
+use crate::entity::ai::brain::memory::{MemoryModuleId, PackedMemories};
+use crate::entity::ai::brain::sensing::SensorType;
+use crate::entity::ai::brain::{Brain, BrainProvider};
+use crate::entity::ai::control::smooth_swimming_look_control::SmoothSwimmingLookControl;
+use crate::entity::ai::control::smooth_swimming_move_control::SmoothSwimmingMoveControl;
+use crate::entity::ai::pathfinder::{Navigator, node::PathType};
+use crate::entity::bucketable::{load_age_from_bucket_tag, save_age_to_bucket_tag};
+use crate::entity::mob::conversion::{ConversionParams, convert_to};
+use crate::entity::mob::spawn::SpawnGroupData;
 use crate::entity::{
     Entity, EntityBase,
     ageable::{AgeableData, AgeableMob},
-    ai::goal::{
-        escape_danger::EscapeDangerGoal, look_around::RandomLookAroundGoal,
-        look_at_entity::LookAtEntityGoal, swim::SwimGoal, tempt::TemptGoal,
-        try_find_water::TryFindWaterGoal, wander_around::WanderAroundGoal,
-    },
-    mob::{Mob, MobEntity, spawn::SpawnGroupData},
+    mob::{Mob, MobEntity},
     player::Player,
 };
 use crate::world::World;
-use crate::world::level_accessor::LevelAccessor;
 
-const TEMPT_ITEMS: &[&Item] = &[&Item::SLIME_BALL];
+/// Vanilla `Tadpole.ticksToBeFrog`.
+const TICKS_TO_BE_FROG: i32 = 24000;
 
+const MEMORIES: [MemoryModuleId; 0] = [];
+
+/// A tadpole: a fish that grows up. Its age counts up from 0 to the frog, and it stays until
+/// then wherever it is (vanilla `Tadpole.fromBucket` is always true).
 pub struct TadpoleEntity {
     pub mob_entity: MobEntity,
     pub ageable_data: AgeableData,
-    /// Vanilla `AbstractFish.fromBucket`: a released tadpole stays.
-    from_bucket: AtomicBool,
+    fish_data: FishData,
 }
 
 impl TadpoleEntity {
     pub fn new(entity: Entity) -> Arc<Self> {
-        let mob_entity = MobEntity::new(entity);
-        let tadpole = Self {
+        let mut mob_entity = MobEntity::new(entity);
+        Self::set_up_movement(&mut mob_entity);
+        Arc::new(Self {
             mob_entity,
             ageable_data: AgeableData::default(),
-            from_bucket: AtomicBool::new(false),
-        };
-        let mob_arc = Arc::new(tadpole);
-        let mob_weak: Weak<dyn Mob> = {
-            let mob_arc: Arc<dyn Mob> = mob_arc.clone();
-            Arc::downgrade(&mob_arc)
-        };
+            fish_data: FishData {
+                from_bucket: AtomicBool::new(true),
+            },
+        })
+    }
 
-        {
-            let goal_selector = &mob_arc.mob_entity.goals_selector;
-
-            goal_selector.add_goal(0, Box::new(TryFindWaterGoal));
-            goal_selector.add_goal(0, Box::new(SwimGoal::default()));
-            goal_selector.add_goal(1, EscapeDangerGoal::new(1.5));
-            goal_selector.add_goal(2, Box::new(TemptGoal::new(1.25, TEMPT_ITEMS, false)));
-            goal_selector.add_goal(3, Box::new(WanderAroundGoal::new(1.0)));
-            goal_selector.add_goal(
-                4,
-                LookAtEntityGoal::with_default(mob_weak, &EntityType::PLAYER, 6.0),
-            );
-            goal_selector.add_goal(5, Box::new(RandomLookAroundGoal::default()));
-        };
-
-        mob_arc
+    /// Vanilla `Tadpole` constructor and `createNavigation`.
+    fn set_up_movement(mob_entity: &mut MobEntity) {
+        *mob_entity
+            .move_control
+            .get_mut()
+            .unwrap_or_else(std::sync::PoisonError::into_inner) =
+            Box::new(SmoothSwimmingMoveControl::new(85, 10, 0.02, 0.1, true));
+        *mob_entity
+            .look_control
+            .get_mut()
+            .unwrap_or_else(std::sync::PoisonError::into_inner) =
+            Box::new(SmoothSwimmingLookControl::new(10));
+        let navigator = mob_entity
+            .navigator
+            .get_mut()
+            .unwrap_or_else(std::sync::PoisonError::into_inner);
+        *navigator = Navigator::water_bound(false);
+        navigator.set_pathfinding_malus(PathType::Water, 0.0);
     }
 
     fn is_food(item_stack: &ItemStack) -> bool {
         item_stack.item.has_tag(&tag::Item::MINECRAFT_FROG_FOOD)
-            || item_stack.item == &Item::SLIME_BALL
-    }
-}
-
-impl Bucketable for TadpoleEntity {
-    fn is_from_bucket(&self) -> bool {
-        self.from_bucket.load(Ordering::Relaxed)
     }
 
-    fn set_from_bucket(&self, from_bucket: bool) {
-        self.from_bucket.store(from_bucket, Ordering::Relaxed);
-        self.get_entity().set_synced_data(
-            pumpkin_data::tracked_data::abstract_fish::FROM_BUCKET,
-            from_bucket,
+    /// Vanilla `Tadpole.feed`.
+    fn feed(&self, player: &Arc<Player>, item_stack: &mut ItemStack) {
+        item_stack.decrement_unless_creative(player.gamemode.load(), 1);
+        let ticks_left = (TICKS_TO_BE_FROG - self.get_age()).max(0);
+        let seconds = (ticks_left as f32 / 20.0 * 0.1) as i32;
+        self.set_age(self.get_age() + seconds * 20);
+
+        let entity = self.get_entity();
+        entity.world.load().spawn_particle(
+            entity.pos.load() + Vector3::new(0.0, f64::from(entity.height()), 0.0),
+            Vector3::new(0.5, 0.5, 0.5),
+            1.0,
+            7,
+            Particle::HappyVillager,
         );
     }
 
-    fn bucket_item(&self) -> &'static Item {
-        &Item::TADPOLE_BUCKET
-    }
-
-    /// Vanilla `Tadpole.getPickupSound`.
-    fn pickup_sound(&self) -> Sound {
-        Sound::ItemBucketFillTadpole
-    }
-
-    /// Vanilla `Tadpole.saveToBucketTag`: the age and its lock go along.
-    fn save_to_bucket_tag(&self, bucket: &mut ItemStack) {
-        self.save_default_data_to_bucket_tag(bucket);
-        save_age_to_bucket_tag(self, bucket);
-    }
-
-    /// Vanilla `Tadpole.loadFromBucketTag`.
-    fn load_from_bucket_tag(&self, nbt: &NbtCompound) {
-        self.load_default_data_from_bucket_tag(nbt);
-        load_age_from_bucket_tag(self, nbt);
+    /// Vanilla `Tadpole.ageUp`.
+    fn grow_into_frog(&self) {
+        let world = self.get_entity().world.load_full();
+        let _ = convert_to(
+            self,
+            &EntityType::FROG,
+            ConversionParams::single(false, false),
+            |frog| {
+                frog.finalize_spawn(&world, None);
+                frog.get_mob_entity().set_persistence_required();
+                self.play_entity_sound(Sound::EntityTadpoleGrowUp, 0.15, 1.0);
+            },
+        );
     }
 }
 
@@ -117,63 +118,76 @@ impl AgeableMob for TadpoleEntity {
         &self.ageable_data
     }
 
-    fn ageable_interact(&self, _player: &Arc<Player>, _stack: &mut ItemStack) -> bool {
-        false
+    /// For the golden dandelion: it works on a tadpole of any age.
+    fn is_baby(&self) -> bool {
+        true
+    }
+
+    /// The age the golden dandelion sets back to.
+    fn get_baby_start_age(&self) -> i32 {
+        0
+    }
+
+    /// Vanilla `Tadpole.setAge`.
+    fn set_age(&self, new_age: i32) {
+        self.get_entity().age.store(new_age, Ordering::Relaxed);
+        if new_age >= TICKS_TO_BE_FROG {
+            self.grow_into_frog();
+        }
+    }
+
+    /// Vanilla `Tadpole.setAgeLocked`.
+    fn set_age_locked(&self, locked: bool) {
+        self.ageable_data
+            .age_locked
+            .store(locked, Ordering::Relaxed);
+        self.get_entity()
+            .set_synced_data(tracked_data::tadpole::AGE_LOCKED, locked);
+    }
+
+    /// Vanilla `Tadpole.aiStep`.
+    fn ageable_ai_step(&self) {
+        self.tick_age_lock_particle_timer();
+        if !self.is_age_locked() {
+            self.set_age(self.get_age() + 1);
+        }
     }
 }
 
 impl Mob for TadpoleEntity {
-    /// Vanilla `WaterAnimal.checkSpawnObstruction`: only entities obstruct, the water does
-    /// not.
-    fn check_spawn_obstruction(&self, level: &dyn LevelAccessor) -> bool {
-        level.is_unobstructed(&self.get_mob_entity().living_entity.entity)
-    }
-
-    /// Vanilla `AbstractFish` steps silently.
-    fn mob_play_step_sound(&self, _pos: &BlockPos, _state: &BlockState) {}
+    crate::fish_mob_hooks!();
 
     fn as_ageable(&self) -> Option<&dyn AgeableMob> {
         Some(self)
     }
 
-    fn as_bucketable(&self) -> Option<&dyn Bucketable> {
-        Some(self)
+    /// A spawn egg on a tadpole gives none: vanilla's is no `AgeableMob`.
+    fn spawn_as_baby(&self) -> bool {
+        false
     }
 
-    /// Vanilla `Tadpole.mobInteract`: the water bucket picks it up first.
-    fn mob_interact_with_hand(
-        &self,
-        player: &Arc<Player>,
-        item_stack: &mut ItemStack,
-        _hand: pumpkin_util::Hand,
-    ) -> Option<bool> {
-        bucket_mob_pickup(player, item_stack, self)
-    }
-
-    /// Vanilla `AbstractFish.removeWhenFarAway`: a bucketed or named tadpole stays.
-    fn remove_when_far_away(&self, _distance_sq: f64) -> bool {
-        !self.is_from_bucket() && self.get_entity().custom_name.load().is_none()
-    }
-
-    /// Vanilla `AbstractFish.requiresCustomPersistence`.
-    fn requires_custom_persistence(&self) -> bool {
-        requires_custom_persistence_base(self) || self.is_from_bucket()
-    }
-
-    fn mob_write_nbt(&self, nbt: &mut NbtCompound) {
-        self.write_ageable_nbt(nbt);
-        nbt.put_bool("FromBucket", self.is_from_bucket());
-    }
-
-    fn mob_read_nbt(&self, nbt: &NbtCompound) {
-        self.read_ageable_nbt(nbt);
-        if let Some(from_bucket) = nbt.get_bool("FromBucket") {
-            self.set_from_bucket(from_bucket);
+    fn make_brain(&self, packed: &PackedMemories) -> Brain {
+        BrainProvider {
+            memory_types: &MEMORIES,
+            sensor_types: &[
+                SensorType::NearestLivingEntities,
+                SensorType::NearestPlayers,
+                SensorType::HurtBy,
+                SensorType::FrogTemptations,
+            ],
+            activities: frog_ai::tadpole_activities,
         }
+        .make_brain(self, packed)
     }
 
-    fn get_mob_entity(&self) -> &MobEntity {
-        &self.mob_entity
+    /// Vanilla `Tadpole.customServerAiStep`.
+    fn custom_server_ai_step(&self, _caller: &dyn EntityBase) {
+        self.mob_entity.tick_brain(self);
+        self.mob_entity.with_brain(self, |brain| {
+            brain.set_active_activity_to_first_valid(&[
+                pumpkin_data::environment_attribute::Activity::Idle,
+            ]);
+        });
     }
 
     fn finalize_spawn(
@@ -185,74 +199,45 @@ impl Mob for TadpoleEntity {
         group_data
     }
 
-    fn should_drop_loot(&self) -> bool {
-        self.mob_entity
-            .living_entity
-            .entity
-            .world
-            .load()
-            .level_info
-            .load()
-            .game_rules
-            .mob_drops
-    }
-
     fn should_drop_experience(&self) -> bool {
         false
     }
 
+    fn mob_init_data_tracker(&self) {
+        self.set_age_locked(self.is_age_locked());
+    }
+
+    fn mob_write_nbt(&self, nbt: &mut NbtCompound) {
+        self.fish_write_nbt(nbt);
+    }
+
+    /// Vanilla `Tadpole.mobInteract` past the bucket; a locked one does not eat.
     fn mob_interact(&self, player: &Arc<Player>, item_stack: &mut ItemStack) -> bool {
-        if Self::is_food(item_stack) {
-            item_stack.decrement_unless_creative(player.gamemode.load(), 1);
-            let age = self
-                .get_mob_entity()
-                .living_entity
-                .entity
-                .age
-                .load(std::sync::atomic::Ordering::Relaxed);
-            let speedup = (-age / 10).max(1);
-            self.get_mob_entity()
-                .living_entity
-                .entity
-                .age
-                .fetch_add(speedup, std::sync::atomic::Ordering::Relaxed);
-
-            let entity = self.get_entity();
-            let world = entity.world.load();
-            let pos = entity.pos.load();
-            world.spawn_particle(
-                pos + Vector3::new(0.0, f64::from(entity.height()), 0.0),
-                Vector3::new(0.5, 0.5, 0.5),
-                1.0,
-                7,
-                Particle::HappyVillager,
-            );
-            world.play_sound(Sound::EntityTadpoleGrowUp, SoundCategory::Neutral, &pos);
+        if Self::is_food(item_stack) && !self.is_age_locked() {
+            self.feed(player, item_stack);
             return true;
         }
-
-        if item_stack.get_item() == &Item::WATER_BUCKET {
-            let entity = self.get_entity();
-            let world = entity.world.load();
-            if let Some(server) = world.server.upgrade() {
-                let mut event = crate::plugin::api::events::player::player_bucket_entity::PlayerBucketEntityEvent {
-                    player: player.clone(),
-                    entity_id: entity.entity_id,
-                    bucket_item: "tadpole_bucket".to_string(),
-                    cancelled: false,
-                };
-                server.plugin_manager.fire_blocking(&server, &mut event);
-                if event.cancelled {
-                    return false;
-                }
-            }
-            item_stack.decrement_unless_creative(player.gamemode.load(), 1);
-            let pos = entity.pos.load();
-            world.play_sound(Sound::ItemBucketFillTadpole, SoundCategory::Neutral, &pos);
-            entity.remove();
-            return true;
-        }
-
         false
     }
 }
+
+crate::impl_abstract_fish!(
+    TadpoleEntity,
+    bucket: &Item::TADPOLE_BUCKET,
+    flop: Sound::EntityTadpoleFlop,
+    ambient: None,
+    pickup: Sound::ItemBucketFillTadpole,
+    bucket_extra: {
+        /// Vanilla `Tadpole.saveToBucketTag`: the age and its lock go along.
+        fn save_to_bucket_tag(&self, bucket: &mut ItemStack) {
+            self.save_default_data_to_bucket_tag(bucket);
+            save_age_to_bucket_tag(self, bucket);
+        }
+
+        /// Vanilla `Tadpole.loadFromBucketTag`.
+        fn load_from_bucket_tag(&self, nbt: &NbtCompound) {
+            self.load_default_data_from_bucket_tag(nbt);
+            load_age_from_bucket_tag(self, nbt);
+        }
+    }
+);

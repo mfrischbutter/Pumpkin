@@ -106,6 +106,8 @@ pub struct LivingEntity {
     pub active_effects: std::sync::Mutex<FxHashMap<&'static StatusEffect, Effect>>,
     pub entity_equipment: Arc<std::sync::Mutex<EntityEquipment>>,
     pub equipment_drop_chances: Arc<std::sync::Mutex<FxHashMap<EquipmentSlot, f32>>>,
+    /// Vanilla `setDiscardFriction`, for long jumps.
+    pub discard_friction: AtomicBool,
     pub movement_input: AtomicCell<Vector3<f64>>,
     /// Vanilla `LivingEntity.getSleepingPos`, of mobs; players keep their own.
     pub sleeping_pos: AtomicCell<Option<BlockPos>>,
@@ -371,6 +373,7 @@ impl LivingEntity {
             last_hurt_by_player: AtomicCell::new(None),
             last_hurt_by_player_memory_time: AtomicI32::new(0),
             no_action_time: AtomicI32::new(0),
+            discard_friction: AtomicBool::new(false),
             movement_input: AtomicCell::new(Vector3::default()),
             sleeping_pos: AtomicCell::new(None),
             speed: AtomicCell::new(0.0),
@@ -1917,7 +1920,11 @@ impl LivingEntity {
             // if below world's bottom y then -0.1, else 0.0
         }
 
-        // If entity has no drag: store velo and return
+        // Vanilla `shouldDiscardFriction`.
+        if self.discard_friction.load(Ordering::Relaxed) {
+            self.entity.velocity.store(velo);
+            return;
+        }
 
         velo.x *= friction;
 
@@ -2223,10 +2230,22 @@ impl LivingEntity {
     pub(crate) fn get_jump_velocity(&self, mut strength: f64) -> f64 {
         strength *= self.get_attribute_value(&Attributes::JUMP_STRENGTH);
         strength *= f64::from(self.entity.get_jump_velocity_multiplier());
-        if let Some(effect) = self.get_effect(&StatusEffect::JUMP_BOOST) {
-            strength += 0.1 * f64::from(effect.amplifier + 1);
-        }
-        strength
+        strength + self.get_jump_boost_power()
+    }
+
+    /// Vanilla `LivingEntity.getJumpBoostPower`.
+    pub(crate) fn get_jump_boost_power(&self) -> f64 {
+        self.get_effect(&StatusEffect::JUMP_BOOST)
+            .map_or(0.0, |effect| 0.1 * f64::from(effect.amplifier + 1))
+    }
+
+    /// Vanilla `Axolotl.travelInWater` and `Frog.travelInWater`: no gravity, no fluid speed
+    /// rules.
+    pub(crate) fn travel_in_water_freely(&self, caller: &dyn EntityBase) {
+        let entity = &self.entity;
+        entity.update_velocity_from_input(self.movement_input.load(), f64::from(self.get_speed()));
+        self.make_move(caller);
+        entity.velocity.store(entity.velocity.load() * 0.9);
     }
 
     pub fn fall(
@@ -2347,7 +2366,10 @@ impl LivingEntity {
         let safe_fall_distance = self.get_attribute_value(&Attributes::SAFE_FALL_DISTANCE) as f32;
         let unsafe_fall_distance = fall_distance + 1.0E-6 - safe_fall_distance;
 
-        let damage = (unsafe_fall_distance * damage_per_distance).floor();
+        let reduction = caller
+            .get_mob()
+            .map_or(0.0, crate::entity::mob::Mob::mob_fall_damage_reduction);
+        let damage = (unsafe_fall_distance * damage_per_distance).floor() - reduction;
         if damage > 0.0 {
             caller.play_entity_sound(Self::get_fall_damage_sound(caller, damage), 1.0, 1.0);
             self.play_block_fall_sound(caller);

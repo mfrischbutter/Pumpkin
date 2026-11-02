@@ -1792,6 +1792,11 @@ pub trait Mob: EntityBase + Send + Sync {
         true
     }
 
+    /// What a vanilla `calculateFallDamage` override takes off the fall damage.
+    fn mob_fall_damage_reduction(&self) -> f32 {
+        0.0
+    }
+
     /// Runs after the living entity's `causeFallDamage`, like a vanilla override calling super first.
     fn mob_cause_fall_damage(&self, _fall_distance: f32) {}
 

@@ -9,6 +9,7 @@ use super::{BrainTick, VisibilityContext};
 pub mod armadillo_scare;
 pub mod axolotl_attackables;
 pub mod dummy;
+pub mod frog;
 pub mod hoglin;
 pub mod hurt_by;
 pub mod nearest_adult;
@@ -47,6 +48,9 @@ pub enum SensorType {
     GolemDetected,
     NearestBed,
     HoglinSpecific,
+    FrogAttackables,
+    FrogTemptations,
+    IsInWater,
 }
 
 impl SensorType {
@@ -68,6 +72,9 @@ impl SensorType {
             Self::GolemDetected => "minecraft:golem_detected",
             Self::NearestBed => "minecraft:nearest_bed",
             Self::HoglinSpecific => "minecraft:hoglin_specific_sensor",
+            Self::FrogAttackables => "minecraft:frog_attackables",
+            Self::FrogTemptations => "minecraft:frog_temptations",
+            Self::IsInWater => "minecraft:is_in_water",
         }
     }
 
@@ -83,6 +90,9 @@ impl SensorType {
             | Self::NearestAdult
             | Self::AxolotlAttackables
             | Self::HoglinSpecific
+            | Self::FrogAttackables
+            | Self::FrogTemptations
+            | Self::IsInWater
             | Self::VillagerHostiles
             | Self::VillagerBabies => DEFAULT_SCAN_RATE,
             // Vanilla `SecondaryPoiSensor.SCAN_RATE`.
@@ -113,6 +123,9 @@ impl SensorType {
             Self::GolemDetected => Box::new(villager::GolemSensor),
             Self::NearestBed => Box::new(villager::NearestBedSensor::default()),
             Self::HoglinSpecific => Box::new(hoglin::HoglinSpecificSensor),
+            Self::FrogAttackables => Box::new(frog::FrogAttackablesSensor),
+            Self::FrogTemptations => Box::new(tempting::FrogTemptingSensor),
+            Self::IsInWater => Box::new(frog::IsInWaterSensor),
         }
     }
 

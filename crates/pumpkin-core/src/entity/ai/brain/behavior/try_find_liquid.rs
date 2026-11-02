@@ -22,7 +22,10 @@ pub fn try_find_liquid(range: i32, speed_modifier: f32, fluid_tag: &'static tag:
         move |tick| {
             let entity = tick.mob.get_entity();
             let world = entity.world.load();
-            if world.get_fluid(&entity.block_pos.load()).has_tag(fluid_tag) {
+            if world
+                .get_exact_fluid(&entity.block_pos.load())
+                .has_tag(fluid_tag)
+            {
                 return false;
             }
             if tick.time < next_ok_start_time {
@@ -58,9 +61,9 @@ fn find_liquid(
         if pos.0.x == center.0.x && pos.0.z == center.0.z {
             continue;
         }
-        let (block, fluid) = world.get_block_and_fluid(&pos);
+        let block = world.get_block(&pos);
         let is_liquid = block.id == Block::WATER.id || block.id == Block::LAVA.id;
-        if !is_liquid || !fluid.has_tag(fluid_tag) {
+        if !is_liquid || !world.get_exact_fluid(&pos).has_tag(fluid_tag) {
             continue;
         }
         if world.get_block_state(&pos.up()).is_air() {

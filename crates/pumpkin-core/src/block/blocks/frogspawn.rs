@@ -25,8 +25,11 @@ use crate::{
 
 const MIN_TADPOLES_SPAWN: u8 = 2;
 const MAX_TADPOLES_SPAWN: u8 = 5;
-/// Clamped to `u8::MAX` due to Pumpkin's block tick delay representation.
-const HATCH_DELAY: u8 = u8::MAX;
+/// The longest wait Pumpkin's block tick scheduler holds.
+const HATCH_CHECK_DELAY: u8 = u8::MAX;
+/// Vanilla waits 3600 to 12000 ticks and the block has nowhere to count, so each check hatches
+/// with this chance: on average after vanilla's 7800 ticks.
+const HATCH_CHANCE: f32 = HATCH_CHECK_DELAY as f32 / 7800.0;
 
 #[pumpkin_block("minecraft:frogspawn")]
 pub struct FrogspawnBlock;
@@ -35,13 +38,23 @@ impl FrogspawnBlock {
     #[must_use]
     pub fn may_place_on_world(world: &World, pos: &BlockPos) -> bool {
         let below_pos = pos.down();
-        let (below_fluid, below_fluid_state) = world.get_fluid_and_fluid_state(&below_pos);
         let below_block = world.get_block(&below_pos);
         let above_fluid = world.get_fluid(pos);
-        ((below_fluid.has_tag(&tag::Fluid::MINECRAFT_SUPPORTS_FROGSPAWN)
-            && below_fluid_state.is_source)
+        (world
+            .get_exact_fluid(&below_pos)
+            .has_tag(&tag::Fluid::MINECRAFT_SUPPORTS_FROGSPAWN)
             || below_block.has_tag(&tag::Block::MINECRAFT_SUPPORTS_FROGSPAWN))
             && *above_fluid == Fluid::EMPTY
+    }
+
+    /// For a frogspawn set straight into the world, as a frog lays it.
+    pub fn schedule_hatch_check(world: &World, pos: BlockPos) {
+        world.schedule_block_tick(
+            &Block::FROGSPAWN,
+            pos,
+            HATCH_CHECK_DELAY,
+            TickPriority::Normal,
+        );
     }
 
     #[must_use]
@@ -66,12 +79,7 @@ impl BlockBehaviour for FrogspawnBlock {
     }
 
     fn placed(&self, args: PlacedArgs<'_>) {
-        args.world.schedule_block_tick(
-            args.block,
-            *args.position,
-            HATCH_DELAY,
-            TickPriority::Normal,
-        );
+        Self::schedule_hatch_check(args.world, *args.position);
     }
 
     fn get_state_for_neighbor_update(
@@ -88,6 +96,10 @@ impl BlockBehaviour for FrogspawnBlock {
         if !Self::may_place_on_world(args.world, args.position) {
             args.world
                 .break_block(args.position, None, BlockFlags::SKIP_DROPS);
+            return;
+        }
+        if rand::rng().random::<f32>() >= HATCH_CHANCE {
+            Self::schedule_hatch_check(args.world, *args.position);
             return;
         }
         args.world

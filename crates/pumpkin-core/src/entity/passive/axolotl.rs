@@ -540,14 +540,7 @@ impl Mob for AxolotlEntity {
 
     /// Vanilla `Axolotl.travelInWater`: no gravity, no fluid speed rules.
     fn travel_in_water(&self, caller: &dyn EntityBase, _gravity: f64, _falling: bool) {
-        let living = &self.mob_entity.living_entity;
-        let entity = &living.entity;
-        entity.update_velocity_from_input(
-            living.movement_input.load(),
-            f64::from(living.get_speed()),
-        );
-        living.make_move(caller);
-        entity.velocity.store(entity.velocity.load() * 0.9);
+        self.mob_entity.living_entity.travel_in_water_freely(caller);
     }
 
     /// The vanilla `Axolotl.playAttackSound` that `Mob.doHurtTarget` plays.
