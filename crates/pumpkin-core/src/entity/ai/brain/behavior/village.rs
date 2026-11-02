@@ -580,3 +580,45 @@ pub fn set_walk_target_away_from_entity(
         },
     )
 }
+
+/// Vanilla `SetWalkTargetAwayFrom.pos`.
+#[must_use]
+pub fn set_walk_target_away_from_pos(
+    memory: MemoryModuleType<BlockPos>,
+    speed_modifier: f32,
+    desired_distance: i32,
+) -> OneShot {
+    OneShot::new(
+        "SetWalkTargetAwayFrom",
+        vec![
+            (types::WALK_TARGET.id(), MemoryStatus::Registered),
+            (memory.id(), MemoryStatus::ValuePresent),
+        ],
+        move |tick| {
+            let Some(avoid) = tick.state.get(memory).map(|pos| bottom_center(*pos)) else {
+                return false;
+            };
+            let position = tick.mob.get_entity().pos.load();
+            if position.squared_distance_to_vec(&avoid) >= f64::from(desired_distance.pow(2)) {
+                return false;
+            }
+            if let Some(walk) = tick.state.get(types::WALK_TARGET)
+                && (walk.speed_modifier() - speed_modifier).abs() < f32::EPSILON
+            {
+                let current = walk.target().current_position() - position;
+                if current.dot(&(avoid - position)) < 0.0 {
+                    return false;
+                }
+            }
+            let flee_to =
+                (0..10).find_map(|_| land_random_pos::get_pos_away(tick.mob, 16, 7, avoid));
+            if let Some(flee_to) = flee_to {
+                tick.state.set(
+                    types::WALK_TARGET,
+                    WalkTarget::from_vec(flee_to, speed_modifier, 0),
+                );
+            }
+            true
+        },
+    )
+}

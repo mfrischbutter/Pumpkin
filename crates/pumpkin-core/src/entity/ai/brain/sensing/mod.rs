@@ -9,6 +9,7 @@ use super::{BrainTick, VisibilityContext};
 pub mod armadillo_scare;
 pub mod axolotl_attackables;
 pub mod dummy;
+pub mod hoglin;
 pub mod hurt_by;
 pub mod nearest_adult;
 pub mod nearest_items;
@@ -45,6 +46,7 @@ pub enum SensorType {
     SecondaryPois,
     GolemDetected,
     NearestBed,
+    HoglinSpecific,
 }
 
 impl SensorType {
@@ -65,6 +67,7 @@ impl SensorType {
             Self::SecondaryPois => "minecraft:secondary_pois",
             Self::GolemDetected => "minecraft:golem_detected",
             Self::NearestBed => "minecraft:nearest_bed",
+            Self::HoglinSpecific => "minecraft:hoglin_specific_sensor",
         }
     }
 
@@ -79,6 +82,7 @@ impl SensorType {
             | Self::FoodTemptations
             | Self::NearestAdult
             | Self::AxolotlAttackables
+            | Self::HoglinSpecific
             | Self::VillagerHostiles
             | Self::VillagerBabies => DEFAULT_SCAN_RATE,
             // Vanilla `SecondaryPoiSensor.SCAN_RATE`.
@@ -108,6 +112,7 @@ impl SensorType {
             Self::SecondaryPois => Box::new(villager::SecondaryPoiSensor),
             Self::GolemDetected => Box::new(villager::GolemSensor),
             Self::NearestBed => Box::new(villager::NearestBedSensor::default()),
+            Self::HoglinSpecific => Box::new(hoglin::HoglinSpecificSensor),
         }
     }
 
