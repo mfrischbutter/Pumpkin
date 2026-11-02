@@ -56,6 +56,16 @@ pub struct CamelEntity {
     dashing: std::sync::atomic::AtomicBool,
 }
 
+/// Vanilla `isMobControlled`: a mob rides in front.
+fn is_mob_controlled(mob: &dyn Mob) -> bool {
+    mob.get_entity()
+        .passengers
+        .lock()
+        .unwrap_or_else(std::sync::PoisonError::into_inner)
+        .first()
+        .is_some_and(|rider| rider.get_mob().is_some())
+}
+
 fn as_camel(mob: &dyn Mob) -> Option<&CamelEntity> {
     mob.cast_any().downcast_ref::<CamelEntity>()
 }
@@ -73,6 +83,15 @@ impl CamelEntity {
         // Vanilla `Camel.isTamed` is always true.
         horse_base::set_flag(camel.as_ref(), horse_base::FLAG_TAME, true);
         camel
+    }
+
+    /// Vanilla `CamelHusk`, which shares the camel's body.
+    fn is_husk(&self) -> bool {
+        self.get_entity().entity_type == &EntityType::CAMEL_HUSK
+    }
+
+    fn sound(&self, camel: Sound, husk: Sound) -> Sound {
+        if self.is_husk() { husk } else { camel }
     }
 
     fn game_time(&self) -> i64 {
@@ -119,7 +138,11 @@ impl CamelEntity {
         if self.is_camel_sitting() {
             return;
         }
-        self.play_entity_sound(Sound::EntityCamelSit, 1.0, self.voice_pitch());
+        self.play_entity_sound(
+            self.sound(Sound::EntityCamelSit, Sound::EntityCamelHuskSit),
+            1.0,
+            self.voice_pitch(),
+        );
         self.get_entity().set_pose(EntityPose::Sitting);
         self.set_last_pose_tick(-self.game_time());
     }
@@ -129,7 +152,11 @@ impl CamelEntity {
         if !self.is_camel_sitting() {
             return;
         }
-        self.play_entity_sound(Sound::EntityCamelStand, 1.0, self.voice_pitch());
+        self.play_entity_sound(
+            self.sound(Sound::EntityCamelStand, Sound::EntityCamelHuskStand),
+            1.0,
+            self.voice_pitch(),
+        );
         self.get_entity().set_pose(EntityPose::Standing);
         self.set_last_pose_tick(self.game_time());
     }
@@ -171,7 +198,11 @@ impl CamelEntity {
         if cooldown > 0 {
             self.dash_cooldown.store(cooldown - 1, Ordering::Relaxed);
             if cooldown == 1 {
-                self.play_entity_sound(Sound::EntityCamelDashReady, 1.0, 1.0);
+                self.play_entity_sound(
+                    self.sound(Sound::EntityCamelDashReady, Sound::EntityCamelHuskDashReady),
+                    1.0,
+                    1.0,
+                );
             }
         }
         if self.is_camel_sitting() && entity.is_in_water() {
@@ -191,7 +222,8 @@ impl CamelEntity {
         if heal {
             living.heal(2.0);
         }
-        let love = self.get_entity().age.load(Ordering::Relaxed) == 0
+        let love = !self.is_husk()
+            && self.get_entity().age.load(Ordering::Relaxed) == 0
             && mob_entity.is_breeding_ready()
             && !mob_entity.is_in_love();
         if love {
@@ -208,7 +240,11 @@ impl CamelEntity {
             let mut rng = self.get_random();
             (rng.random::<f32>() - rng.random::<f32>()).mul_add(0.2, 1.0)
         };
-        self.play_entity_sound(Sound::EntityCamelEat, 1.0, pitch);
+        self.play_entity_sound(
+            self.sound(Sound::EntityCamelEat, Sound::EntityCamelHuskEat),
+            1.0,
+            pitch,
+        );
         stack.decrement_unless_creative(player.gamemode.load(), 1);
         true
     }
@@ -218,17 +254,27 @@ impl AgeableMob for CamelEntity {
     fn get_ageable_data(&self) -> &AgeableData {
         &self.ageable_data
     }
+
+    /// Vanilla `CamelHusk.canBeABaby`.
+    fn can_be_a_baby(&self) -> bool {
+        !self.is_husk()
+    }
 }
 
 impl Animal for CamelEntity {
-    /// Vanilla `Camel.isFood`.
+    /// Vanilla `Camel.isFood` and `CamelHusk.isFood`.
     fn is_food(&self, item_stack: &ItemStack) -> bool {
-        item_stack.item.has_tag(&tag::Item::MINECRAFT_CAMEL_FOOD)
+        item_stack.item.has_tag(if self.is_husk() {
+            &tag::Item::MINECRAFT_CAMEL_HUSK_FOOD
+        } else {
+            &tag::Item::MINECRAFT_CAMEL_FOOD
+        })
     }
 
-    /// Vanilla `Camel.canMate`.
+    /// Vanilla `Camel.canMate`; a camel husk does not.
     fn can_mate(&self, partner: &dyn EntityBase) -> bool {
-        partner.get_entity().entity_type == &EntityType::CAMEL
+        !self.is_husk()
+            && partner.get_entity().entity_type == &EntityType::CAMEL
             && partner
                 .get_mob()
                 .and_then(|mob| mob.as_abstract_horse())
@@ -243,7 +289,7 @@ impl AbstractHorse for CamelEntity {
     }
 
     fn horse_eating_sound(&self) -> Option<Sound> {
-        Some(Sound::EntityCamelEat)
+        Some(self.sound(Sound::EntityCamelEat, Sound::EntityCamelHuskEat))
     }
 
     fn can_perform_rearing(&self) -> bool {
@@ -253,17 +299,17 @@ impl AbstractHorse for CamelEntity {
 
 impl CustomSound for CamelEntity {
     fn hurt_sound(&self) -> Option<Sound> {
-        Some(Sound::EntityCamelHurt)
+        Some(self.sound(Sound::EntityCamelHurt, Sound::EntityCamelHuskHurt))
     }
 
     fn death_sound(&self) -> Option<Sound> {
-        Some(Sound::EntityCamelDeath)
+        Some(self.sound(Sound::EntityCamelDeath, Sound::EntityCamelHuskDeath))
     }
 }
 
 impl Mob for CamelEntity {
     fn get_ambient_sound(&self) -> Option<Sound> {
-        Some(Sound::EntityCamelAmbient)
+        Some(self.sound(Sound::EntityCamelAmbient, Sound::EntityCamelHuskAmbient))
     }
 
     fn as_custom_sound(&self) -> Option<&dyn CustomSound> {
@@ -280,11 +326,22 @@ impl Mob for CamelEntity {
             .to_block()
             .has_tag(&tag::Block::MINECRAFT_CAMEL_SAND_STEP_SOUND_BLOCKS)
         {
-            Sound::EntityCamelStepSand
+            self.sound(Sound::EntityCamelStepSand, Sound::EntityCamelHuskStepSand)
         } else {
-            Sound::EntityCamelStep
+            self.sound(Sound::EntityCamelStep, Sound::EntityCamelHuskStep)
         };
-        self.play_entity_sound(sound, 1.0, 1.0);
+        // Vanilla `CamelHusk.playStepSound` is quieter.
+        self.play_entity_sound(sound, if self.is_husk() { 0.4 } else { 1.0 }, 1.0);
+    }
+
+    /// Vanilla `CamelHusk.removeWhenFarAway`.
+    fn remove_when_far_away(&self, _distance_sq: f64) -> bool {
+        self.is_husk()
+    }
+
+    /// Vanilla `CamelHusk.canBeLeashed`.
+    fn can_be_leashed(&self) -> bool {
+        !self.is_husk() || !is_mob_controlled(self)
     }
 
     fn as_ageable(&self) -> Option<&dyn AgeableMob> {
@@ -329,7 +386,11 @@ impl Mob for CamelEntity {
         {
             return;
         }
-        self.play_entity_sound(Sound::EntityCamelDash, 1.0, self.voice_pitch());
+        self.play_entity_sound(
+            self.sound(Sound::EntityCamelDash, Sound::EntityCamelHuskDash),
+            1.0,
+            self.voice_pitch(),
+        );
         self.set_dashing(true);
     }
 
@@ -361,7 +422,7 @@ impl Mob for CamelEntity {
     }
 
     fn saddle_sound(&self) -> Sound {
-        Sound::EntityCamelSaddle
+        self.sound(Sound::EntityCamelSaddle, Sound::EntityCamelHuskSaddle)
     }
 
     /// Vanilla `AbstractHorse.getControllingPassenger`: a player in a saddle.
@@ -401,6 +462,12 @@ impl Mob for CamelEntity {
 
     /// Vanilla `Camel.mobInteract`: saddle, food, then up to two riders.
     fn mob_interact(&self, player: &Arc<Player>, item_stack: &mut ItemStack) -> bool {
+        if self.is_husk() {
+            // Vanilla `CamelHusk.interact`: every click keeps it loaded.
+            self.mob_entity
+                .persistence_required
+                .store(true, Ordering::Relaxed);
+        }
         if player.get_entity().is_sneaking() && !self.is_baby() {
             // TODO: the camel inventory screen (`openCustomInventoryScreen`).
             return false;
@@ -469,7 +536,11 @@ fn activities(_mob: &dyn Mob) -> Vec<ActivityData> {
             0,
             vec![
                 Box::new(Timed::new(Swim::new(0.8))),
-                Box::new(Timed::new(AnimalPanic::new(4.0).on_start(stand_up_to_flee))),
+                Box::new(Timed::new(
+                    AnimalPanic::new(4.0)
+                        .on_start(stand_up_to_flee)
+                        .unless(is_mob_controlled),
+                )),
                 Box::new(Timed::new(LookAtTargetSink::new(45, 90))),
                 Box::new(Timed::new(MoveToTargetSink::default())),
                 Box::new(CountDownCooldownTicks::new(

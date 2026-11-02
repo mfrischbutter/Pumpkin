@@ -20,7 +20,7 @@ use tracing::error;
 
 use crate::entity::mob::Mob;
 use crate::entity::mob::spawn::finalize_spawn;
-use crate::entity::passive::trader_llama::TraderLlamaEntity;
+use crate::entity::passive::llama::LlamaEntity;
 use crate::entity::passive::wandering_trader::WanderingTraderEntity;
 use crate::entity::{Entity, EntityBase};
 use crate::world::World;
@@ -200,7 +200,7 @@ impl WanderingTraderSpawner {
             return;
         };
 
-        let llama = TraderLlamaEntity::new(Entity::new(
+        let llama = LlamaEntity::new(Entity::new(
             world.clone(),
             spawn_position(spawn_pos),
             &EntityType::TRADER_LLAMA,

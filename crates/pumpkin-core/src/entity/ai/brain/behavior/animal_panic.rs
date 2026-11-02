@@ -21,6 +21,8 @@ pub struct AnimalPanic {
     on_start: Option<fn(&dyn crate::entity::mob::Mob)>,
     /// Vanilla's `flyHeight`: it flees through the air by this much, not to a spot on land.
     fly_height: Option<i32>,
+    /// Vanilla `CamelPanic`: a mob for which this holds does not panic.
+    unless: Option<fn(&dyn crate::entity::mob::Mob) -> bool>,
 }
 
 impl AnimalPanic {
@@ -36,7 +38,15 @@ impl AnimalPanic {
             panic_causes: &tag::DamageType::MINECRAFT_PANIC_CAUSES,
             on_start: None,
             fly_height: None,
+            unless: None,
         }
+    }
+
+    /// Panics only while `unless` does not hold.
+    #[must_use]
+    pub const fn unless(mut self, unless: fn(&dyn crate::entity::mob::Mob) -> bool) -> Self {
+        self.unless = Some(unless);
+        self
     }
 
     /// Vanilla `AnimalPanic(speedMultiplier, flyHeight)`.
@@ -128,6 +138,9 @@ impl Behavior for AnimalPanic {
     }
 
     fn check_extra_start_conditions(&mut self, tick: &mut BrainTick<'_>) -> bool {
+        if self.unless.is_some_and(|unless| unless(tick.mob)) {
+            return false;
+        }
         tick.state
             .get(types::HURT_BY)
             .is_some_and(|damage| damage.damage_type.has_tag(self.panic_causes))

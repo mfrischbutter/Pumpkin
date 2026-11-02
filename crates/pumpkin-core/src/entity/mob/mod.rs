@@ -1575,6 +1575,16 @@ pub trait Mob: EntityBase + Send + Sync {
         None
     }
 
+    /// The part of vanilla `finalizeSpawn` that reads the spawn reason.
+    fn after_finalize_spawn(
+        &self,
+        _world: &std::sync::Arc<crate::world::World>,
+        _reason: spawn::EntitySpawnReason,
+        group_data: Option<spawn::SpawnGroupData>,
+    ) -> Option<spawn::SpawnGroupData> {
+        group_data
+    }
+
     /// Vanilla `tickRidden`, each tick a player steers the mob.
     fn mob_tick_ridden(&self, _controller: &crate::entity::player::Player) {}
 

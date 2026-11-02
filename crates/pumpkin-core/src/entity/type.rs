@@ -95,7 +95,6 @@ use crate::entity::passive::snow_golem::SnowGolemEntity;
 use crate::entity::passive::squid::SquidEntity;
 use crate::entity::passive::strider::StriderEntity;
 use crate::entity::passive::tadpole::TadpoleEntity;
-use crate::entity::passive::trader_llama::TraderLlamaEntity;
 use crate::entity::passive::tropical_fish::TropicalFishEntity;
 use crate::entity::passive::turtle::TurtleEntity;
 use crate::entity::passive::villager::VillagerEntity;
@@ -207,13 +206,15 @@ pub fn from_type(
         id if id == EntityType::ZOMBIE_HORSE.id => ZombieHorseEntity::new(entity),
         id if id == EntityType::SKELETON_HORSE.id => SkeletonHorseEntity::new(entity),
         id if id == EntityType::LLAMA.id => LlamaEntity::new(entity),
-        id if id == EntityType::TRADER_LLAMA.id => TraderLlamaEntity::new(entity),
+        id if id == EntityType::TRADER_LLAMA.id => LlamaEntity::new(entity),
         id if id == EntityType::WANDERING_TRADER.id => WanderingTraderEntity::new(entity),
         id if id == EntityType::ALLAY.id => AllayEntity::new(entity),
         id if id == EntityType::ARMADILLO.id => ArmadilloEntity::new(entity),
         id if id == EntityType::AXOLOTL.id => AxolotlEntity::new(entity),
         id if id == EntityType::BEE.id => BeeEntity::new(entity),
-        id if id == EntityType::CAMEL.id => CamelEntity::new(entity),
+        id if id == EntityType::CAMEL.id || id == EntityType::CAMEL_HUSK.id => {
+            CamelEntity::new(entity)
+        }
         id if id == EntityType::COPPER_GOLEM.id => CopperGolemEntity::new(entity),
         id if id == EntityType::FROG.id => FrogEntity::new(entity),
         id if id == EntityType::GOAT.id => GoatEntity::new(entity),

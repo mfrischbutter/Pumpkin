@@ -76,6 +76,8 @@ pub enum SpawnGroupData {
         leader: std::sync::Weak<dyn EntityBase>,
         variant: i32,
     },
+    /// Vanilla `HuskGroupData.triedToSpawnCamelHusk`: this group had its chance of a camel.
+    HuskTriedCamel,
     /// The effect the first spider of a group rolled on hard difficulty.
     SpiderEffects(Option<&'static StatusEffect>),
     /// Vanilla `FoxGroupData`: the group's variant and how many joined so far.
@@ -177,6 +179,7 @@ pub fn finalize_spawn(
         return group_data;
     };
     let group_data = mob.finalize_spawn(world, group_data);
+    let group_data = mob.after_finalize_spawn(world, reason, group_data);
     // Vanilla `PatrollingMonster.finalizeSpawn`, part of every patrolling monster's chain.
     if let Some(patroller) = mob.as_patrolling_monster() {
         patroller.finalize_patrol_spawn(reason);

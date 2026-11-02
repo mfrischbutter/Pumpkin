@@ -28,10 +28,13 @@ use crate::entity::{
         ranged_attack::RangedAttackGoal, revenge::RevengeGoal, swim::SwimGoal, tempt::TemptGoal,
         wander_around::WanderAroundGoal,
     },
-    mob::{Mob, MobEntity, RangedAttackMob, spawn::SpawnGroupData},
+    mob::{
+        Mob, MobEntity, RangedAttackMob,
+        spawn::{EntitySpawnReason, SpawnGroupData},
+    },
     passive::{
         animal::{Animal, get_carpet_color_from_item},
-        trader_llama::TraderLlamaEntity,
+        trader_llama,
     },
     player::Player,
     projectile::llama_spit::LlamaSpitEntity,
@@ -94,14 +97,10 @@ fn random_strength() -> i32 {
 
 /// Vanilla `Wolf.avoidLlama`: the stronger the llama, the likelier a wolf flees.
 pub fn scares_wolves(threat: &dyn EntityBase) -> bool {
-    let any = threat.cast_any();
-    let strength = any
+    let strength = threat
+        .cast_any()
         .downcast_ref::<LlamaEntity>()
-        .map(LlamaEntity::get_strength)
-        .or_else(|| {
-            any.downcast_ref::<TraderLlamaEntity>()
-                .map(TraderLlamaEntity::get_strength)
-        });
+        .map(LlamaEntity::get_strength);
     strength.is_some_and(|strength| strength >= rand::rng().random_range(0..5))
 }
 
@@ -121,6 +120,8 @@ pub struct LlamaEntity {
     pub has_chest: AtomicBool,
     pub temper: AtomicI32,
     pub owner: AtomicCell<Option<Uuid>>,
+    /// Vanilla `TraderLlama.despawnDelay`.
+    pub despawn_delay: AtomicI32,
 }
 
 impl LlamaEntity {
@@ -139,6 +140,7 @@ impl LlamaEntity {
             has_chest: AtomicBool::new(false),
             temper: AtomicI32::new(0),
             owner: AtomicCell::new(None),
+            despawn_delay: AtomicI32::new(trader_llama::DEFAULT_DESPAWN_DELAY),
         };
         let mob_arc = Arc::new(llama);
         let mob_weak: Weak<dyn Mob> = {
@@ -181,9 +183,18 @@ impl LlamaEntity {
 
             target_selector.add_goal(1, Box::new(RevengeGoal::new(true)));
             hunting::apply(target_selector, &mob_arc.mob_entity, LLAMA_HUNTS);
+            if mob_arc.is_trader() {
+                trader_llama::register_goals(&mob_arc.mob_entity);
+            }
         };
 
         mob_arc
+    }
+
+    /// Vanilla `isTraderLlama`.
+    #[must_use]
+    pub fn is_trader(&self) -> bool {
+        self.get_entity().entity_type == &EntityType::TRADER_LLAMA
     }
 
     #[must_use]
@@ -307,8 +318,14 @@ impl Animal for LlamaEntity {
         let baby = Self::new(Entity::new(
             entity.world.load_full(),
             entity.pos.load(),
-            &EntityType::LLAMA,
+            entity.entity_type,
         ));
+        // Vanilla `TraderLlama.makeNewLlama`: a bred trader llama stays loaded.
+        if self.is_trader() {
+            baby.mob_entity
+                .persistence_required
+                .store(true, Ordering::Relaxed);
+        }
         if let Some(partner) = partner.cast_any().downcast_ref::<Self>() {
             let mut rng = self.get_random();
             let stronger = self.get_strength().max(partner.get_strength());
@@ -361,7 +378,8 @@ impl Mob for LlamaEntity {
         // `LlamaGroupData` is ageable group data that spawns babies after the first llama.
         self.finalize_ageable_spawn(Some(SpawnGroupData::Ageable {
             group_size,
-            should_spawn_baby: true,
+            // Vanilla `TraderLlama.finalizeSpawn`: no babies with a trader.
+            should_spawn_baby: !self.is_trader(),
             baby_spawn_chance: self.default_baby_spawn_chance(),
         }));
         Some(SpawnGroupData::Llama {
@@ -393,6 +411,9 @@ impl Mob for LlamaEntity {
         nbt.put_bool("ChestedHorse", self.has_chest());
         nbt.put_bool("Tame", self.is_tame());
         nbt.put_int("Temper", self.temper.load(Ordering::Relaxed));
+        if self.is_trader() {
+            nbt.put_int("DespawnDelay", self.despawn_delay.load(Ordering::Relaxed));
+        }
         if let Some(owner) = self.owner.load() {
             nbt.put_uuid("Owner", owner);
         }
@@ -415,6 +436,9 @@ impl Mob for LlamaEntity {
         if let Some(temper) = nbt.get_int("Temper") {
             self.temper.store(temper, Ordering::Relaxed);
         }
+        if let Some(delay) = nbt.get_int("DespawnDelay") {
+            self.despawn_delay.store(delay, Ordering::Relaxed);
+        }
         if let Some(owner) = nbt.get_uuid("Owner") {
             self.owner.store(Some(owner));
         }
@@ -422,6 +446,26 @@ impl Mob for LlamaEntity {
 
     fn get_mob_entity(&self) -> &MobEntity {
         &self.mob_entity
+    }
+
+    /// Vanilla `TraderLlama.aiStep`.
+    fn mob_tick(&self, _caller: &dyn EntityBase) {
+        if self.is_trader() {
+            trader_llama::maybe_despawn(self);
+        }
+    }
+
+    /// Vanilla `TraderLlama.finalizeSpawn`: one that comes with a trader is grown.
+    fn after_finalize_spawn(
+        &self,
+        _world: &Arc<World>,
+        reason: EntitySpawnReason,
+        group_data: Option<SpawnGroupData>,
+    ) -> Option<SpawnGroupData> {
+        if self.is_trader() && reason == EntitySpawnReason::Event {
+            self.set_age(0);
+        }
+        group_data
     }
 
     fn mob_init_data_tracker(&self) {
@@ -481,6 +525,10 @@ impl Mob for LlamaEntity {
         }
 
         if !self.is_baby() && !self.is_food(item_stack) {
+            // Vanilla `TraderLlama.doPlayerRide` refuses a llama leashed to its trader.
+            if trader_llama::leashing_trader(self.get_entity()).is_some() {
+                return true;
+            }
             let world = player.world();
             let ent = &self.mob_entity.living_entity.entity;
             if let Some(vehicle) = world.get_entity_by_id(ent.entity_id)
