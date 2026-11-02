@@ -24,6 +24,12 @@ use pumpkin_util::{
 };
 use pumpkin_world::world::BlockFlags;
 
+use crate::entity::ai::control::flying_move_control::FlyingMoveControl;
+use crate::entity::ai::goal::ranged_attack::RangedAttackGoal;
+use crate::entity::ai::goal::water_avoiding_random_flying::WaterAvoidingRandomFlyingGoal;
+use crate::entity::ai::goal::{Controls, Goal};
+use crate::entity::ai::pathfinder::Navigator;
+use crate::entity::mob::RangedAttackMob;
 use crate::{
     entity::{
         Entity, EntityBase,
@@ -66,7 +72,6 @@ pub struct WitherEntity {
     pub next_head_update: [AtomicI32; 2],
     pub idle_head_updates: [AtomicI32; 2],
     pub alternative_targets: [AtomicI32; 3],
-    pub main_attack_timer: AtomicI32,
     pub bossbar_uuid: Uuid,
     pub bossbar_players: Mutex<Vec<Uuid>>,
     bossbar_progress: AtomicCell<f32>,
@@ -75,7 +80,19 @@ pub struct WitherEntity {
 
 impl WitherEntity {
     pub fn new(entity: Entity) -> Arc<Self> {
-        let mob_entity = MobEntity::new(entity);
+        let mut mob_entity = MobEntity::new(entity);
+        *mob_entity
+            .move_control
+            .get_mut()
+            .unwrap_or_else(std::sync::PoisonError::into_inner) =
+            Box::new(FlyingMoveControl::new(10, false));
+        let navigator = mob_entity
+            .navigator
+            .get_mut()
+            .unwrap_or_else(std::sync::PoisonError::into_inner);
+        *navigator = Navigator::flying();
+        navigator.set_can_open_doors(false);
+        navigator.set_can_float(true);
         let wither = Self {
             mob_entity,
             invulnerable_ticks: AtomicI32::new(0),
@@ -83,7 +100,6 @@ impl WitherEntity {
             next_head_update: [AtomicI32::new(0), AtomicI32::new(0)],
             idle_head_updates: [AtomicI32::new(0), AtomicI32::new(0)],
             alternative_targets: [AtomicI32::new(0), AtomicI32::new(0), AtomicI32::new(0)],
-            main_attack_timer: AtomicI32::new(0),
             bossbar_uuid: Uuid::new_v4(),
             bossbar_players: Mutex::new(Vec::new()),
             bossbar_progress: AtomicCell::new(1.0),
@@ -94,11 +110,21 @@ impl WitherEntity {
             let mob_arc: Arc<dyn Mob> = mob_arc.clone();
             Arc::downgrade(&mob_arc)
         };
+        let ranged_weak: Weak<dyn RangedAttackMob> = {
+            let mob_arc: Arc<dyn RangedAttackMob> = mob_arc.clone();
+            Arc::downgrade(&mob_arc)
+        };
 
         {
             let goal_selector = &mob_arc.mob_entity.goals_selector;
             let target_selector = &mob_arc.mob_entity.target_selector;
 
+            goal_selector.add_goal(0, Box::new(WitherDoNothingGoal));
+            goal_selector.add_goal(
+                2,
+                Box::new(RangedAttackGoal::new(ranged_weak, 1.0, 40, 20.0)),
+            );
+            goal_selector.add_goal(5, Box::new(WaterAvoidingRandomFlyingGoal::new(1.0)));
             goal_selector.add_goal(
                 6,
                 LookAtEntityGoal::with_default(mob_weak, &EntityType::PLAYER, 8.0),
@@ -200,7 +226,7 @@ impl WitherEntity {
         self.mob_entity.living_entity.entity.pos.load().z + (angle.sin() as f64) * 1.3
     }
 
-    pub fn perform_ranged_attack(
+    pub fn shoot_skull(
         &self,
         head: usize,
         target_x: f64,
@@ -360,41 +386,13 @@ impl WitherEntity {
         }
     }
 
+    /// Vanilla: head 0 aims at the mob's target; the ranged goal does the shooting.
     fn tick_main_head_attack(&self) {
-        let entity = &self.mob_entity.living_entity.entity;
-        let wither_pos = entity.pos.load();
-        if let Some(target) = self.mob_entity.get_target() {
-            if target.get_entity().is_alive() {
-                let target_pos = target.get_entity().pos.load();
-                self.set_alternative_target(0, target.get_entity().entity_id);
-
-                // Main head attack
-                let dist_sq = (wither_pos - target_pos).length_squared();
-                if dist_sq <= 400.0 {
-                    let attack_timer = self.main_attack_timer.load(Ordering::Relaxed);
-                    if attack_timer <= 0 {
-                        self.main_attack_timer.store(40, Ordering::Relaxed);
-                        let dangerous = rand::random_range(0.0..1.0) < 0.001;
-                        let eye_h = target.get_entity().get_eye_height();
-                        self.perform_ranged_attack(
-                            0,
-                            target_pos.x,
-                            target_pos.y + eye_h * 0.5,
-                            target_pos.z,
-                            dangerous,
-                        );
-                    } else {
-                        self.main_attack_timer
-                            .store(attack_timer - 1, Ordering::Relaxed);
-                    }
-                }
-            } else {
-                self.set_alternative_target(0, 0);
-                self.mob_entity.set_target(None);
-            }
-        } else {
-            self.set_alternative_target(0, 0);
-        }
+        let target = self
+            .mob_entity
+            .get_target()
+            .filter(|target| target.get_entity().is_alive());
+        self.set_alternative_target(0, target.map_or(0, |target| target.get_entity().entity_id));
     }
 
     fn tick_wither_lifecycle(&self) -> bool {
@@ -477,7 +475,7 @@ impl WitherEntity {
                             wither_pos.y + rand::random_range(-5.0..5.0),
                             wither_pos.z + rand::random_range(-10.0..10.0),
                         );
-                        self.perform_ranged_attack(i, xt, yt, zt, true);
+                        self.shoot_skull(i, xt, yt, zt, true);
                         self.idle_head_updates[i - 1].store(0, Ordering::Relaxed);
                     }
 
@@ -491,13 +489,7 @@ impl WitherEntity {
                                 && self.has_line_of_sight(target.get_entity())
                             {
                                 let eye_h = target.get_entity().get_eye_height();
-                                self.perform_ranged_attack(
-                                    i,
-                                    t_pos.x,
-                                    t_pos.y + eye_h * 0.5,
-                                    t_pos.z,
-                                    false,
-                                );
+                                self.shoot_skull(i, t_pos.x, t_pos.y + eye_h * 0.5, t_pos.z, false);
                                 let next_delay = 40 + rand::random_range(0..20);
                                 self.next_head_update[i - 1]
                                     .store(tick_count + next_delay, Ordering::Relaxed);
@@ -707,5 +699,40 @@ impl Mob for WitherEntity {
         if let Some(invul) = nbt.get_int("Invul") {
             self.set_invulnerable_ticks(invul);
         }
+    }
+}
+
+impl RangedAttackMob for WitherEntity {
+    /// Vanilla `WitherBoss.performRangedAttack(target, power)`: the main head.
+    fn perform_ranged_attack(&self, target: &Arc<dyn EntityBase>, _power: f32) {
+        let entity = target.get_entity();
+        let pos = entity.pos.load();
+        let dangerous = rand::random_range(0.0..1.0) < 0.001;
+        self.shoot_skull(
+            0,
+            pos.x,
+            pos.y + entity.get_eye_height() * 0.5,
+            pos.z,
+            dangerous,
+        );
+    }
+}
+
+/// Vanilla `WitherBoss.WitherDoNothingGoal`: nothing moves it while it charges.
+struct WitherDoNothingGoal;
+
+impl Goal for WitherDoNothingGoal {
+    fn can_start(&mut self, mob: &dyn Mob) -> bool {
+        mob.cast_any()
+            .downcast_ref::<WitherEntity>()
+            .is_some_and(|wither| wither.get_invulnerable_ticks() > 0)
+    }
+
+    fn should_continue(&mut self, mob: &dyn Mob) -> bool {
+        self.can_start(mob)
+    }
+
+    fn controls(&self) -> Controls {
+        Controls::MOVE | Controls::JUMP | Controls::LOOK
     }
 }
