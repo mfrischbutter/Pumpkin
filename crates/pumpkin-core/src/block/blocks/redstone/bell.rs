@@ -20,7 +20,7 @@ use pumpkin_macros::pumpkin_block;
 use pumpkin_util::math::position::BlockPos;
 use pumpkin_world::world::{BlockAccessor, BlockFlags};
 
-fn ring_bell(
+pub(crate) fn ring_bell(
     position: BlockPos,
     world: &Arc<World>,
     hit_direction: Option<HorizontalFacing>,
@@ -49,6 +49,7 @@ fn ring_bell(
         && let Some(be) = block_entity.as_any().downcast_ref::<BellBlockEntity>()
     {
         be.activate(direction);
+        be.alert_nearby_mobs(world);
     }
 
     world.play_sound_fine(

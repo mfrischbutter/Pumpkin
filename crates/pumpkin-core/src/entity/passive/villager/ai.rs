@@ -12,13 +12,18 @@ use pumpkin_data::tag::{self, Taggable};
 use pumpkin_data::villager::VillagerProfession;
 
 use super::VillagerEntity;
+use super::raid::{
+    CelebrateVillagersSurvivedRaid, JumpOnBed, locate_hiding_place, move_to_sky_seeing_spot,
+    play_tag_with_other_kids, raid_is_running, raid_is_won, react_to_bell, reset_raid_status,
+    ring_bell_behavior, set_hidden_state, set_raid_status,
+};
 use super::social::{TradeWithVillager, VillagerMakeLove};
 use super::work::{
     GiveGiftToHero, HarvestFarmland, ShowTradesToPlayer, UseBonemeal, use_composter,
 };
 use crate::entity::EntityBase;
 use crate::entity::ai::brain::activity::ActivityData;
-use crate::entity::ai::brain::behavior::one_shot::trigger_one_shuffled;
+use crate::entity::ai::brain::behavior::one_shot::{sequence, trigger_one_shuffled};
 use crate::entity::ai::brain::behavior::poi::{
     AcquirePoi, BlockMemoryWalk, acquire_poi, closer_to_center_than, is_in_dimension,
     set_closest_home_as_walk_target, set_walk_target_from_block_memory, stroll_around_poi,
@@ -51,7 +56,8 @@ const STROLL_SPEED_MODIFIER: f32 = 0.4;
 
 type Packaged = Box<dyn BehaviorControl>;
 
-const MEMORIES: [MemoryModuleId; 4] = [
+const MEMORIES: [MemoryModuleId; 5] = [
+    types::HEARD_BELL_TIME.id(),
     types::LAST_WORKED_AT_POI.id(),
     types::GOLEM_DETECTED_RECENTLY.id(),
     types::INTERACTION_TARGET.id(),
@@ -78,6 +84,7 @@ pub(super) fn make_brain(villager: &VillagerEntity, packed: &PackedMemories) -> 
             SensorType::NearestLivingEntities,
             SensorType::NearestPlayers,
             SensorType::NearestItems,
+            SensorType::NearestBed,
             SensorType::HurtBy,
             SensorType::VillagerHostiles,
             SensorType::VillagerBabies,
@@ -104,6 +111,9 @@ fn activities(mob: &dyn Mob) -> Vec<ActivityData> {
         rest_package(),
         idle_package(),
         panic_package(),
+        pre_raid_package(),
+        raid_package(),
+        hide_package(),
     ];
     if is_baby(mob) {
         activities.push(play_package());
@@ -169,6 +179,8 @@ fn core_package() -> ActivityData {
         (0, Box::new(Timed::new(LookAtTargetSink::new(45, 90)))),
         (0, Box::new(Timed::new(VillagerPanicTrigger))),
         (0, Box::new(wake_up())),
+        (0, Box::new(react_to_bell())),
+        (0, Box::new(set_raid_status())),
         (
             0,
             Box::new(validate_nearby_poi(held_job_site, types::JOB_SITE)),
@@ -299,6 +311,7 @@ fn play_package() -> ActivityData {
     let packaged: Vec<(i32, Packaged)> = vec![
         (0, Box::new(Timed::new(MoveToTargetSink::new(80, 120)))),
         full_look_behavior(),
+        (5, Box::new(play_tag_with_other_kids())),
         (
             5,
             Box::new(run_one_with_conditions(
@@ -317,6 +330,7 @@ fn play_package() -> ActivityData {
                         Box::new(set_walk_target_from_look_target::create(SPEED_MODIFIER, 2)),
                         1,
                     ),
+                    (Box::new(Timed::new(JumpOnBed::new(SPEED_MODIFIER))), 2),
                     (Box::new(DoNothing::new(20, 40)), 2),
                 ],
             )),
@@ -473,6 +487,7 @@ fn idle_package() -> ActivityData {
                     Box::new(set_walk_target_from_look_target::create(SPEED_MODIFIER, 2)),
                     1,
                 ),
+                (Box::new(Timed::new(JumpOnBed::new(SPEED_MODIFIER))), 1),
                 (Box::new(DoNothing::new(30, 60)), 1),
             ])),
         ),
@@ -525,6 +540,91 @@ fn panic_package() -> ActivityData {
         minimal_look_behavior(),
     ];
     ActivityData::with_pairs(Activity::Panic, packaged)
+}
+
+/// Vanilla `VillagerGoalPackages.getPreRaidPackage`.
+fn pre_raid_package() -> ActivityData {
+    let running = SPEED_MODIFIER * 1.5;
+    let packaged: Vec<(i32, Packaged)> = vec![
+        (0, Box::new(ring_bell_behavior())),
+        (
+            0,
+            Box::new(trigger_one_shuffled(
+                "PreRaidRun",
+                vec![
+                    (
+                        set_walk_target_from_block_memory(
+                            types::MEETING_POINT,
+                            BlockMemoryWalk {
+                                speed_modifier: running,
+                                close_enough_dist: 2,
+                                too_far_distance: 150,
+                                too_long_unreachable_duration: 200,
+                            },
+                            release_memory_poi,
+                        )
+                        .into_trigger(),
+                        6,
+                    ),
+                    (
+                        village_bound_random_stroll(running, 10, 7).into_trigger(),
+                        2,
+                    ),
+                ],
+            )),
+        ),
+        minimal_look_behavior(),
+        (99, Box::new(reset_raid_status())),
+    ];
+    ActivityData::with_pairs(Activity::PreRaid, packaged)
+}
+
+/// Vanilla `VillagerGoalPackages.getRaidPackage`.
+fn raid_package() -> ActivityData {
+    let packaged: Vec<(i32, Packaged)> = vec![
+        (
+            0,
+            Box::new(sequence(
+                "RaidWon",
+                raid_is_won,
+                trigger_one_shuffled(
+                    "RaidWonRun",
+                    vec![
+                        (move_to_sky_seeing_spot(SPEED_MODIFIER).into_trigger(), 5),
+                        (
+                            village_bound_random_stroll(SPEED_MODIFIER * 1.1, 10, 7).into_trigger(),
+                            2,
+                        ),
+                    ],
+                ),
+            )),
+        ),
+        (0, Box::new(Timed::new(CelebrateVillagersSurvivedRaid))),
+        (
+            2,
+            Box::new(sequence(
+                "RaidRunning",
+                raid_is_running,
+                locate_hiding_place(24, SPEED_MODIFIER * 1.4, 1),
+            )),
+        ),
+        minimal_look_behavior(),
+        (99, Box::new(reset_raid_status())),
+    ];
+    ActivityData::with_pairs(Activity::Raid, packaged)
+}
+
+/// Vanilla `VillagerGoalPackages.getHidePackage`.
+fn hide_package() -> ActivityData {
+    let packaged: Vec<(i32, Packaged)> = vec![
+        (0, Box::new(set_hidden_state(15, 3))),
+        (
+            1,
+            Box::new(locate_hiding_place(32, SPEED_MODIFIER * 1.25, 2)),
+        ),
+        minimal_look_behavior(),
+    ];
+    ActivityData::with_pairs(Activity::Hide, packaged)
 }
 
 fn is_kind<const VILLAGER: bool>(mob: &Arc<dyn EntityBase>) -> bool {

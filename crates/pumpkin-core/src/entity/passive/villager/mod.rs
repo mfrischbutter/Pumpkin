@@ -48,6 +48,7 @@ use pumpkin_data::poi_type::PoiType;
 
 mod ai;
 pub mod data;
+mod raid;
 mod social;
 mod work;
 pub use data::{

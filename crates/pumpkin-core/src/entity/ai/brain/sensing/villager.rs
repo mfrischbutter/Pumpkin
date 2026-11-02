@@ -7,7 +7,7 @@ use pumpkin_data::Block;
 use pumpkin_data::entity::EntityType;
 use pumpkin_util::math::position::BlockPos;
 
-use super::super::behavior::poi::global_pos;
+use super::super::behavior::poi::{HomeBatch, global_pos};
 use super::super::memory::{MemoryModuleId, types};
 use super::super::{BrainState, BrainTick};
 use super::Sensor;
@@ -160,6 +160,32 @@ impl Sensor for GolemSensor {
             });
         if present {
             golem_detected(tick.state);
+        }
+    }
+}
+
+const BED_REQUIRE: [MemoryModuleId; 1] = [types::NEAREST_BED.id()];
+
+/// Vanilla `NearestBedSensor`.
+#[derive(Default)]
+pub struct NearestBedSensor {
+    batch: HomeBatch,
+}
+
+impl Sensor for NearestBedSensor {
+    fn requires(&self) -> &'static [MemoryModuleId] {
+        &BED_REQUIRE
+    }
+
+    fn do_tick(&mut self, tick: &mut BrainTick<'_>) {
+        if tick.mob.get_entity().age.load(Relaxed) >= 0 {
+            return;
+        }
+        if let Some(bed) = self
+            .batch
+            .find_reachable_home(tick.mob, tick.world, tick.time)
+        {
+            tick.state.set(types::NEAREST_BED, bed);
         }
     }
 }

@@ -44,6 +44,7 @@ pub enum SensorType {
     VillagerBabies,
     SecondaryPois,
     GolemDetected,
+    NearestBed,
 }
 
 impl SensorType {
@@ -63,6 +64,7 @@ impl SensorType {
             Self::VillagerBabies => "minecraft:villager_babies",
             Self::SecondaryPois => "minecraft:secondary_pois",
             Self::GolemDetected => "minecraft:golem_detected",
+            Self::NearestBed => "minecraft:nearest_bed",
         }
     }
 
@@ -83,6 +85,8 @@ impl SensorType {
             Self::SecondaryPois => 40,
             // Vanilla `GolemSensor.GOLEM_SCAN_RATE`.
             Self::GolemDetected => 200,
+            // Vanilla `NearestBedSensor.RATE`.
+            Self::NearestBed => 20,
             // Vanilla scans for scary mobs every 5 ticks.
             Self::ArmadilloScareDetected => 5,
         }
@@ -103,6 +107,7 @@ impl SensorType {
             Self::VillagerBabies => Box::new(villager::VillagerBabiesSensor),
             Self::SecondaryPois => Box::new(villager::SecondaryPoiSensor),
             Self::GolemDetected => Box::new(villager::GolemSensor),
+            Self::NearestBed => Box::new(villager::NearestBedSensor::default()),
         }
     }
 
