@@ -4,9 +4,12 @@ use pumpkin_data::structures::{
 };
 use pumpkin_util::math::{floor_div, position::BlockPos};
 
+use crate::generation::structure::height_sampler::NoiseHeightSampler;
 use crate::generation::structure::placement::{
     GlobalStructureCache, StrongholdLayout, get_structure_chunk_in_region,
+    should_generate_structure,
 };
+use crate::generation::structure::references::claiming_structure_start;
 
 use super::WorldGenerator;
 
@@ -122,7 +125,6 @@ pub enum StructureSearch {
 /// and `/locate structure` use this instead of pointing at a placement-only
 /// candidate whose biome may reject the requested structure.
 #[must_use]
-#[expect(clippy::too_many_lines)]
 pub fn find_nearest_structure_start(
     origin: BlockPos,
     set_index: usize,
@@ -130,20 +132,6 @@ pub fn find_nearest_structure_start(
     max_search_radius: i32,
     generator: &WorldGenerator,
 ) -> Option<(BlockPos, pumpkin_data::structures::StructureKeys)> {
-    use crate::{
-        biome::BiomeSupplier,
-        generation::{
-            noise::router::multi_noise_sampler::MultiNoiseSampler,
-            structure::{
-                height_sampler::NoiseHeightSampler,
-                lazily_generate_structure,
-                placement::should_generate_structure,
-                structures::{StructureGeneratorContext, create_chunk_random},
-            },
-        },
-    };
-    use pumpkin_data::structures::Structure;
-
     let WorldGenerator::Noise(noise_generator) = generator else {
         return None;
     };
@@ -160,6 +148,10 @@ pub fn find_nearest_structure_start(
     let world_seed = noise_generator.random_config.structure_seed as i64;
     let salt = noise_generator.structure_salts[set_index];
     let global_cache = &noise_generator.global_structure_cache;
+    if !noise_generator.enabled_structure_sets.contains(&set_index) {
+        return None;
+    }
+    let mut height_sampler = NoiseHeightSampler::new(noise_generator);
 
     for radius in 0..=max_search_radius {
         let mut nearest: Option<(FoundStructure, pumpkin_data::structures::StructureKeys)> = None;
@@ -186,62 +178,35 @@ pub fn find_nearest_structure_start(
                     continue;
                 }
 
-                for &key in target_structures {
-                    // The start lands in the cache chunk generation reads, so it is
-                    // computed the way `ProtoChunk::set_structure_starts` does: with this
-                    // world's biome source (the overworld's rejects every nether
-                    // structure) and its noise height sampler.
-                    let start =
-                        global_cache.get_or_compute_structure_start(key, chunk_x, chunk_z, || {
-                            let settings = noise_generator.settings;
-                            let mut height_sampler = NoiseHeightSampler::new(noise_generator);
-                            let mut biome_sampler = MultiNoiseSampler::generate(
-                                &noise_generator.base_router.multi_noise,
-                            );
-                            let biome_supplier: &dyn BiomeSupplier =
-                                &noise_generator.biome_supplier;
-                            let context = StructureGeneratorContext {
-                                seed: world_seed,
-                                chunk_x,
-                                chunk_z,
-                                random: create_chunk_random(world_seed, chunk_x, chunk_z),
-                                sea_level: settings.sea_level,
-                                min_y: (settings.shape.min_y as i32)
-                                    .max(noise_generator.dimension.min_y),
-                                height: settings
-                                    .shape
-                                    .height
-                                    .min(noise_generator.dimension.height as u16),
-                                height_sampler: Some(&mut height_sampler),
-                                structure_key: Some(key),
-                            };
-                            lazily_generate_structure(
-                                &key,
-                                Structure::get(&key),
-                                context,
-                                biome_supplier,
-                                &mut biome_sampler,
-                            )
-                        });
-                    let Some(_start) = start else {
-                        continue;
-                    };
-                    // Vanilla getLocatePos: chunkPos.getMinBlockX(), 0, chunkPos.getMinBlockZ()
-                    let locate_x = chunk_x << 4;
-                    let locate_z = chunk_z << 4;
-                    let position = BlockPos::new(locate_x, 0, locate_z);
-                    let dx = f64::from(position.0.x - origin.0.x);
-                    let dz = f64::from(position.0.z - origin.0.z);
-                    let found = FoundStructure {
-                        pos: position,
-                        distance_sq: dx * dx + dz * dz,
-                    };
-                    if nearest
-                        .as_ref()
-                        .is_none_or(|(current, _)| found.distance_sq < current.distance_sq)
-                    {
-                        nearest = Some((found, key));
-                    }
+                // The chunk's start is the one chunk generation places there (a set's
+                // structures displace each other), computed into the cache generation reads.
+                let Some((key, _)) = claiming_structure_start(
+                    noise_generator,
+                    structure_set,
+                    chunk_x,
+                    chunk_z,
+                    &mut height_sampler,
+                ) else {
+                    continue;
+                };
+                if !target_structures.contains(&key) {
+                    continue;
+                }
+                // Vanilla getLocatePos: chunkPos.getMinBlockX(), 0, chunkPos.getMinBlockZ()
+                let locate_x = chunk_x << 4;
+                let locate_z = chunk_z << 4;
+                let position = BlockPos::new(locate_x, 0, locate_z);
+                let dx = f64::from(position.0.x - origin.0.x);
+                let dz = f64::from(position.0.z - origin.0.z);
+                let found = FoundStructure {
+                    pos: position,
+                    distance_sq: dx * dx + dz * dz,
+                };
+                if nearest
+                    .as_ref()
+                    .is_none_or(|(current, _)| found.distance_sq < current.distance_sq)
+                {
+                    nearest = Some((found, key));
                 }
             }
         }
@@ -370,5 +335,42 @@ mod tests {
             &generator,
         );
         assert!(matches!(found, Some((_, StructureKeys::Fortress))));
+    }
+
+    /// A set's structures displace each other: where the weighted draw gives the chunk to
+    /// the bastion remnant, the search must not report a fortress (the finder once resolved
+    /// every requested structure on its own, so `/locate fortress` could lead to a bastion).
+    #[test]
+    fn a_chunk_another_structure_of_the_set_claims_is_not_found() {
+        let generator = WorldGenerator::Noise(Box::new(VanillaGenerator::new(
+            Seed(13579),
+            Dimension::THE_NETHER,
+        )));
+        let set_index = StructureSet::NAMES
+            .iter()
+            .position(|name| *name == "nether_complexes")
+            .expect("nether_complexes is a structure set");
+        let origin = BlockPos::new(0, 64, 0);
+        let fortress = find_nearest_structure_start(
+            origin,
+            set_index,
+            &[StructureKeys::Fortress],
+            8,
+            &generator,
+        );
+        let bastion = find_nearest_structure_start(
+            origin,
+            set_index,
+            &[StructureKeys::BastionRemnant],
+            8,
+            &generator,
+        );
+        assert!(matches!(fortress, Some((_, StructureKeys::Fortress))));
+        assert!(matches!(bastion, Some((_, StructureKeys::BastionRemnant))));
+        assert_ne!(
+            fortress.map(|(pos, _)| pos),
+            bastion.map(|(pos, _)| pos),
+            "a chunk holds one structure of its set"
+        );
     }
 }

@@ -22,8 +22,10 @@ use crate::generation::structure::lazily_generate_structure;
 use crate::generation::structure::placement::{
     get_structure_chunk_in_region, should_generate_structure,
 };
+use crate::generation::structure::structures::ocean_monument;
 use crate::generation::structure::structures::{
-    StructureGeneratorContext, StructurePiecesCollector, create_chunk_random,
+    HeightSampler, StructureGeneratorContext, StructurePiecesCollector, StructurePosition,
+    create_chunk_random,
 };
 
 /// A structure start a chunk references: its key and its pieces.
@@ -218,4 +220,86 @@ pub fn weighted_structure_order(
     }
 
     ordered
+}
+
+/// Vanilla `ChunkGenerator.tryGenerateStructure`: the start `entry` places in the chunk,
+/// `None` where the structure refuses it.
+///
+/// The start lands in the generator's start cache, so chunk generation and the structure
+/// search resolve a chunk once and alike.
+pub fn structure_start(
+    generator: &VanillaGenerator,
+    entry: &WeightedEntry,
+    chunk_x: i32,
+    chunk_z: i32,
+    height_sampler: &mut dyn HeightSampler,
+) -> Option<StructurePosition> {
+    let sea_level = generator.settings.sea_level;
+    if entry.structure == StructureKeys::Monument {
+        let mut sampler = MultiNoiseSampler::generate(&generator.base_router.multi_noise);
+        let center_x = chunk_pos::get_center_x(chunk_x);
+        let center_z = chunk_pos::get_center_z(chunk_z);
+        let start_y = height_sampler.estimate_ocean_floor_height(center_x, center_z);
+        if !ocean_monument::has_valid_biomes(
+            &generator.biome_supplier,
+            &mut sampler,
+            chunk_x,
+            chunk_z,
+            sea_level,
+            start_y,
+        ) {
+            return None;
+        }
+    }
+    // Vanilla `WorldGenerationContext`: the generator's shape clipped to the dimension.
+    let dimension = &generator.dimension;
+    let shape = generator.settings.shape.trim_height(
+        dimension.min_y as i8,
+        (dimension.min_y + dimension.height) as u16,
+    );
+    generator
+        .global_structure_cache
+        .get_or_compute_structure_start(entry.structure, chunk_x, chunk_z, || {
+            let seed = generator.random_config.structure_seed as i64;
+            let context = StructureGeneratorContext {
+                seed,
+                chunk_x,
+                chunk_z,
+                random: create_chunk_random(seed, chunk_x, chunk_z),
+                sea_level,
+                min_y: i32::from(shape.min_y).max(dimension.min_y),
+                height: shape.height.min(dimension.height as u16),
+                height_sampler: Some(height_sampler),
+                structure_key: Some(entry.structure),
+            };
+            let mut sampler = MultiNoiseSampler::generate(&generator.base_router.multi_noise);
+            lazily_generate_structure(
+                &entry.structure,
+                Structure::get(&entry.structure),
+                context,
+                &generator.biome_supplier,
+                &mut sampler,
+            )
+        })
+}
+
+/// Vanilla `StructureCheck` for a chunk a structure set places in: the set's structure
+/// that claims it.
+///
+/// That is the first of the weighted order with a valid start, the way chunk generation
+/// decides it, so a search never names a structure another one of the set displaced.
+pub fn claiming_structure_start(
+    generator: &VanillaGenerator,
+    set: &StructureSet,
+    chunk_x: i32,
+    chunk_z: i32,
+    height_sampler: &mut dyn HeightSampler,
+) -> Option<(StructureKeys, StructurePosition)> {
+    let seed = generator.random_config.structure_seed;
+    weighted_structure_order(set.structures, seed, chunk_x, chunk_z)
+        .iter()
+        .find_map(|entry| {
+            structure_start(generator, entry, chunk_x, chunk_z, height_sampler)
+                .map(|start| (entry.structure, start))
+        })
 }

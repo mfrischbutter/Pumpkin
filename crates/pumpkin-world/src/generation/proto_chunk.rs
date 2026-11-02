@@ -1,10 +1,9 @@
-use crate::generation::structure::placement::GlobalStructureCache;
 use std::sync::{Arc, LazyLock, Mutex};
 
 use pumpkin_data::block_properties::is_air;
 use pumpkin_data::chunk::DoublePerlinNoiseParameters;
 use pumpkin_data::fluid::{Fluid, FluidState};
-use pumpkin_data::structures::{Structure, StructureKeys, StructureSet, WeightedEntry};
+use pumpkin_data::structures::{Structure, StructureKeys, StructureSet};
 use pumpkin_data::tag::RegistryKey;
 use pumpkin_data::{Block, BlockState, block_properties::blocks_movement, chunk::Biome};
 use pumpkin_data::{BlockId, BlockStateId, tag};
@@ -47,12 +46,9 @@ use crate::generation::noise::router::{
 };
 use crate::generation::noise::{CHUNK_DIM, ChunkNoiseGenerator, LAVA_BLOCK, WATER_BLOCK};
 use crate::generation::section_coords::section_to_block;
-use crate::generation::structure::lazily_generate_structure;
 use crate::generation::structure::placement::should_generate_structure;
-use crate::generation::structure::references::{structure_references, weighted_structure_order};
-use crate::generation::structure::structures::{
-    StructureGeneratorContext, StructureInstance, StructurePiecesCollector, create_chunk_random,
-};
+use crate::generation::structure::references::{claiming_structure_start, structure_references};
+use crate::generation::structure::structures::{StructureInstance, StructurePiecesCollector};
 use crate::generation::surface::rule::try_apply_material_rule;
 use crate::{
     chunk::CHUNK_AREA,
@@ -1519,126 +1515,33 @@ impl ProtoChunk {
         allowed_biomes
     }
 
-    /// Returns the deterministic weighted fallback order for structures in a set.
     /// Creates the structure starts owned by this chunk.
     pub fn set_structure_starts(&mut self, generator: &super::generator::VanillaGenerator) {
         debug_assert_eq!(self.stage, StagedChunkEnum::Biomes);
-        let random_config = &generator.random_config;
-        let settings = generator.settings;
-        let global_cache = &generator.global_structure_cache;
-        let calculator = &generator.structure_calculator;
-
-        let seed = random_config.structure_seed;
-
         let mut height_sampler =
             crate::generation::structure::height_sampler::NoiseHeightSampler::new(generator);
 
         for (i, set) in StructureSet::ALL.iter().enumerate() {
-            if !generator.enabled_structure_sets.contains(&i) {
+            if !generator.enabled_structure_sets.contains(&i)
+                || !should_generate_structure(
+                    i,
+                    &generator.structure_calculator,
+                    &generator.structure_salts,
+                    self.x,
+                    self.z,
+                    &generator.global_structure_cache,
+                )
+            {
                 continue;
             }
-
-            if !should_generate_structure(
-                i,
-                calculator,
-                &generator.structure_salts,
-                self.x,
-                self.z,
-                global_cache,
-            ) {
-                continue;
-            }
-
-            if set.structures.len() == 1 {
-                if let Some(entry) = set.structures.first() {
-                    self.try_set_structure_start(
-                        global_cache,
-                        settings.sea_level,
-                        entry,
-                        generator,
-                        &mut height_sampler,
-                    );
-                }
-                continue;
-            }
-
-            for entry in weighted_structure_order(set.structures, seed, self.x, self.z) {
-                if self.try_set_structure_start(
-                    global_cache,
-                    settings.sea_level,
-                    &entry,
-                    generator,
-                    &mut height_sampler,
-                ) {
-                    break;
-                }
+            if let Some((key, start)) =
+                claiming_structure_start(generator, set, self.x, self.z, &mut height_sampler)
+            {
+                self.structure_starts
+                    .insert(key, StructureInstance::Start(start));
             }
         }
         self.stage = StagedChunkEnum::StructureStart;
-    }
-
-    /// Attempts to create and store the selected structure start in this chunk.
-    fn try_set_structure_start(
-        &mut self,
-        global_cache: &GlobalStructureCache,
-        sea_level: i32,
-        entry: &WeightedEntry,
-        generator: &super::generator::VanillaGenerator,
-        height_sampler: &mut dyn crate::generation::structure::structures::HeightSampler,
-    ) -> bool {
-        if entry.structure == StructureKeys::Monument {
-            let mut sampler = MultiNoiseSampler::generate(&generator.base_router.multi_noise);
-            let center_x = chunk_pos::get_center_x(self.x);
-            let center_z = chunk_pos::get_center_z(self.z);
-            let start_y = height_sampler.estimate_ocean_floor_height(center_x, center_z);
-            if !crate::generation::structure::structures::ocean_monument::has_valid_biomes(
-                &generator.biome_supplier,
-                &mut sampler,
-                self.x,
-                self.z,
-                sea_level,
-                start_y,
-            ) {
-                return false;
-            }
-        }
-
-        let chunk_x = self.x;
-        let chunk_z = self.z;
-        let position =
-            global_cache.get_or_compute_structure_start(entry.structure, chunk_x, chunk_z, || {
-                let structure = Structure::get(&entry.structure);
-                let context = StructureGeneratorContext {
-                    seed: generator.random_config.structure_seed as i64,
-                    chunk_x,
-                    chunk_z,
-                    random: create_chunk_random(
-                        generator.random_config.structure_seed as i64,
-                        chunk_x,
-                        chunk_z,
-                    ),
-                    sea_level,
-                    min_y: (self.generation_bottom_y() as i32).max(self.bottom_y() as i32),
-                    height: self.generation_height().min(self.height()),
-                    height_sampler: Some(height_sampler),
-                    structure_key: Some(entry.structure),
-                };
-                let mut sampler = MultiNoiseSampler::generate(&generator.base_router.multi_noise);
-                lazily_generate_structure(
-                    &entry.structure,
-                    structure,
-                    context,
-                    &generator.biome_supplier,
-                    &mut sampler,
-                )
-            });
-
-        if let Some(pos) = position {
-            self.structure_starts
-                .insert(entry.structure, StructureInstance::Start(pos));
-            return true;
-        }
-        false
     }
 
     /// Adds references to nearby structure starts that intersect this chunk.
