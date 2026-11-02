@@ -62,6 +62,13 @@ impl LookAtEntityGoal {
         }
     }
 
+    /// Vanilla `InteractGoal`: it also holds the movement.
+    #[must_use]
+    pub fn holding_still(mut self) -> Self {
+        self.goal_control = Controls::LOOK | Controls::MOVE;
+        self
+    }
+
     #[must_use]
     pub fn with_default(
         mob_weak: Weak<dyn Mob>,

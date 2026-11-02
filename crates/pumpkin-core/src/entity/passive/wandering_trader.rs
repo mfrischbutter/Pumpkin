@@ -215,18 +215,15 @@ impl WanderingTraderEntity {
             goal_selector.add_goal(4, Box::new(MoveTowardsRestrictionGoal::new(0.35)));
 
             // Priority 8: WaterAvoidingRandomStrollGoal (WanderAroundGoal)
-            goal_selector.add_goal(8, Box::new(WanderAroundGoal::new(0.35)));
+            goal_selector.add_goal(8, Box::new(WanderAroundGoal::water_avoiding(0.35)));
 
             // Priority 9: InteractGoal (Player.class, 3.0F, 1.0F)
             goal_selector.add_goal(
                 9,
-                Box::new(LookAtEntityGoal::new(
-                    mob_weak.clone(),
-                    &EntityType::PLAYER,
-                    3.0,
-                    1.0,
-                    false,
-                )),
+                Box::new(
+                    LookAtEntityGoal::new(mob_weak.clone(), &EntityType::PLAYER, 3.0, 1.0, false)
+                        .holding_still(),
+                ),
             );
 
             // Priority 10: LookAtPlayerGoal (Mob.class, 8.0F)
