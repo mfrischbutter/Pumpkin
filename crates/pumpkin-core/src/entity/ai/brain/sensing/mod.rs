@@ -51,6 +51,7 @@ pub enum SensorType {
     HoglinSpecific,
     FrogAttackables,
     FrogTemptations,
+    NautilusTemptations,
     IsInWater,
 }
 
@@ -76,6 +77,7 @@ impl SensorType {
             Self::HoglinSpecific => "minecraft:hoglin_specific_sensor",
             Self::FrogAttackables => "minecraft:frog_attackables",
             Self::FrogTemptations => "minecraft:frog_temptations",
+            Self::NautilusTemptations => "minecraft:nautilus_temptations",
             Self::IsInWater => "minecraft:is_in_water",
         }
     }
@@ -95,6 +97,7 @@ impl SensorType {
             | Self::HoglinSpecific
             | Self::FrogAttackables
             | Self::FrogTemptations
+            | Self::NautilusTemptations
             | Self::IsInWater
             | Self::VillagerHostiles
             | Self::VillagerBabies => DEFAULT_SCAN_RATE,
@@ -129,6 +132,7 @@ impl SensorType {
             Self::HoglinSpecific => Box::new(hoglin::HoglinSpecificSensor),
             Self::FrogAttackables => Box::new(frog::FrogAttackablesSensor),
             Self::FrogTemptations => Box::new(tempting::FrogTemptingSensor),
+            Self::NautilusTemptations => Box::new(tempting::NautilusTemptingSensor),
             Self::IsInWater => Box::new(frog::IsInWaterSensor),
         }
     }

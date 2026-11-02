@@ -232,7 +232,9 @@ pub fn from_type(
         id if id == EntityType::TROPICAL_FISH.id => TropicalFishEntity::new(entity),
         id if id == EntityType::TADPOLE.id => TadpoleEntity::new(entity),
         id if id == EntityType::DOLPHIN.id => DolphinEntity::new(entity),
-        id if id == EntityType::NAUTILUS.id => NautilusEntity::new(entity),
+        id if id == EntityType::NAUTILUS.id || id == EntityType::ZOMBIE_NAUTILUS.id => {
+            NautilusEntity::new(entity)
+        }
 
         id if id == EntityType::SNOW_GOLEM.id => SnowGolemEntity::new(entity),
         id if id == EntityType::IRON_GOLEM.id => IronGolemEntity::new(entity),
@@ -768,7 +770,7 @@ pub fn check_spawn_rules(
             && level.get_raw_brightness(pos, 0) == 0
             && level.get_block(pos) == &pumpkin_data::Block::WATER;
     }
-    if id == EntityType::NAUTILUS.id {
+    if id == EntityType::NAUTILUS.id || id == EntityType::ZOMBIE_NAUTILUS.id {
         let sea_level = level.get_level().sea_level;
         let min_spawn_level = sea_level - 25;
         return pos.0.y >= min_spawn_level

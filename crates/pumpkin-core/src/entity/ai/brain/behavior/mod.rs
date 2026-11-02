@@ -6,6 +6,7 @@ use super::memory::position_tracker::PositionTracker;
 
 pub mod animal;
 pub mod animal_panic;
+pub mod charge_attack;
 pub mod count_down_cooldown_ticks;
 pub mod do_nothing;
 pub mod fight;
@@ -35,7 +36,7 @@ pub use count_down_cooldown_ticks::CountDownCooldownTicks;
 pub use do_nothing::DoNothing;
 pub use fight::{
     erase_memory_if, melee_attack, set_walk_target_from_attack_target, start_attacking,
-    stop_attacking_if_target_invalid,
+    start_attacking_with, stop_attacking_if_target_invalid,
 };
 pub use gate::{GateBehavior, OrderPolicy, RunningPolicy, run_one, run_one_with_conditions};
 pub use go_and_give_items_to_target::GoAndGiveItemsToTarget;

@@ -30,6 +30,21 @@ impl Sensor for TemptingSensor {
     }
 }
 
+/// Vanilla `TemptingSensor` of `NAUTILUS_TEMPTATIONS`: its food, whatever tames it.
+pub struct NautilusTemptingSensor;
+
+impl Sensor for NautilusTemptingSensor {
+    fn requires(&self) -> &'static [MemoryModuleId] {
+        &REQUIRES
+    }
+
+    fn do_tick(&mut self, tick: &mut BrainTick<'_>) {
+        set_tempting_player(tick, |stack| {
+            stack.item.has_tag(&tag::Item::MINECRAFT_NAUTILUS_FOOD)
+        });
+    }
+}
+
 /// Vanilla `TemptingSensor` of `FROG_TEMPTATIONS`, for the tadpole, which is no animal.
 pub struct FrogTemptingSensor;
 

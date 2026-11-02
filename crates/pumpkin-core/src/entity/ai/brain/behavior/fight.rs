@@ -20,6 +20,14 @@ const TIMEOUT_TO_GET_WITHIN_ATTACK_RANGE: i64 = 200;
 /// Vanilla `StartAttacking`: `finder` picks the target, if the mob may attack it.
 #[must_use]
 pub fn start_attacking(finder: fn(&BrainTick<'_>) -> Option<Arc<dyn EntityBase>>) -> OneShot {
+    start_attacking_with(move |tick| finder(tick))
+}
+
+/// [`start_attacking`] for a finder that also writes to the brain.
+#[must_use]
+pub fn start_attacking_with(
+    mut finder: impl FnMut(&mut BrainTick<'_>) -> Option<Arc<dyn EntityBase>> + Send + Sync + 'static,
+) -> OneShot {
     OneShot::new(
         "StartAttacking",
         vec![

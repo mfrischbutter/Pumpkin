@@ -27,6 +27,7 @@ pub mod iron_golem;
 pub mod llama;
 pub mod mooshroom;
 pub mod nautilus;
+pub mod nautilus_ai;
 pub mod ocelot;
 pub mod panda;
 pub mod parrot;
