@@ -37,6 +37,7 @@ pub mod salmon;
 pub mod sheep;
 pub mod skeleton_horse;
 pub mod sniffer;
+pub mod sniffer_ai;
 pub mod snow_golem;
 pub mod squid;
 pub mod strider;

@@ -1,37 +1,51 @@
 use std::sync::{
-    Arc, Weak,
-    atomic::{AtomicI32, Ordering},
+    Arc,
+    atomic::{AtomicBool, AtomicI32, Ordering},
 };
 
 use pumpkin_data::BlockState;
 use pumpkin_data::entity::{EntityStatus, EntityType};
+use pumpkin_data::game_event::GameEvent;
 use pumpkin_data::item::Item;
 use pumpkin_data::item_stack::ItemStack;
 use pumpkin_data::sound::{Sound, SoundCategory};
 use pumpkin_data::tag::{self, Taggable};
-use pumpkin_nbt::compound::NbtCompound;
 use pumpkin_protocol::bedrock::server::ActorEventID;
 use pumpkin_protocol::codec::var_int::VarInt;
 use pumpkin_util::math::position::BlockPos;
 use pumpkin_util::math::vector3::Vector3;
+use rand::RngExt;
 
+use super::sniffer_ai;
+use crate::entity::ai::brain::behavior::poi::global_pos;
+use crate::entity::ai::brain::memory::{MemoryModuleId, PackedMemories, types};
+use crate::entity::ai::brain::sensing::SensorType;
+use crate::entity::ai::brain::{Brain, BrainProvider, BrainTick};
+use crate::entity::ai::pathfinder::node::PathType;
+use crate::entity::ai::util::land_random_pos;
 use crate::entity::{
     Entity, EntityBase,
     ageable::{AgeableData, AgeableMob},
-    ai::goal::{
-        breed::BreedGoal, follow_parent::FollowParentGoal, look_around::RandomLookAroundGoal,
-        look_at_entity::LookAtEntityGoal, swim::SwimGoal, tempt::TemptGoal,
-        wander_around::WanderAroundGoal,
-    },
     item::ItemEntity,
     mob::{Mob, MobEntity},
     passive::animal::Animal,
     player::Player,
 };
+use crate::world::loot::{LootContextParameters, generate_loot_from_handle};
 
-pub const SNIFFER_FOOD: &[&Item] = &[&Item::TORCHFLOWER_SEEDS, &Item::PITCHER_POD];
 pub const SNIFFER_BABY_START_AGE: i32 = -48000;
 pub const DIGGING_DROP_SEED_OFFSET_TICKS: i32 = 120;
+/// Vanilla `Sniffer.DIGGING_BB_HEIGHT_OFFSET`.
+const DIGGING_HEIGHT_OFFSET: f32 = 0.4;
+/// Vanilla `DIGGING_DIMENSIONS.withEyeHeight`.
+const DIGGING_EYE_HEIGHT: f32 = 0.81;
+/// Vanilla `storeExploredPosition` keeps these and adds the new one.
+const MAX_EXPLORED_POSITIONS: usize = 20;
+/// Vanilla `Sniffer.jumpFromGround`: below this it would not get over the step.
+const JUMP_PUSH_BELOW_SPEED_SQR: f64 = 0.01;
+const JUMP_PUSH_SPEED: f64 = 0.1;
+
+const MEMORIES: [MemoryModuleId; 1] = [types::SNIFFER_EXPLORED_POSITIONS.id()];
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 #[repr(i32)]
@@ -74,41 +88,28 @@ pub struct SnifferEntity {
     pub ageable_data: AgeableData,
     pub state: AtomicI32,
     pub drop_seed_at_tick: AtomicI32,
-    pub explored_positions: std::sync::Mutex<Vec<BlockPos>>,
+    /// Vanilla `onPathfindingStart`: on fire or in water it may path through water.
+    water_allowed: AtomicBool,
 }
 
 impl SnifferEntity {
     pub fn new(entity: Entity) -> Arc<Self> {
-        let mob_entity = MobEntity::new(entity);
-        let sniffer = Self {
+        let mut mob_entity = MobEntity::new(entity);
+        let navigator = mob_entity
+            .navigator
+            .get_mut()
+            .unwrap_or_else(std::sync::PoisonError::into_inner);
+        navigator.set_can_float(true);
+        navigator.set_pathfinding_malus(PathType::Water, -1.0);
+        navigator.set_pathfinding_malus(PathType::DangerPowderSnow, -1.0);
+        navigator.set_pathfinding_malus(PathType::DamageCautious, -1.0);
+        Arc::new(Self {
             mob_entity,
             ageable_data: AgeableData::default(),
             state: AtomicI32::new(SnifferState::Idling.id()),
             drop_seed_at_tick: AtomicI32::new(0),
-            explored_positions: std::sync::Mutex::new(Vec::new()),
-        };
-        let mob_arc = Arc::new(sniffer);
-        let mob_weak: Weak<dyn Mob> = {
-            let mob_arc: Arc<dyn Mob> = mob_arc.clone();
-            Arc::downgrade(&mob_arc)
-        };
-
-        {
-            let goal_selector = &mob_arc.mob_entity.goals_selector;
-
-            goal_selector.add_goal(0, Box::new(SwimGoal::default()));
-            goal_selector.add_goal(1, BreedGoal::new(1.0));
-            goal_selector.add_goal(2, Box::new(TemptGoal::new(1.2, SNIFFER_FOOD, false)));
-            goal_selector.add_goal(3, Box::new(FollowParentGoal::new(1.1)));
-            goal_selector.add_goal(4, Box::new(WanderAroundGoal::new(1.0)));
-            goal_selector.add_goal(
-                5,
-                LookAtEntityGoal::with_default(mob_weak, &EntityType::PLAYER, 6.0),
-            );
-            goal_selector.add_goal(6, Box::new(RandomLookAroundGoal::default()));
-        };
-
-        mob_arc
+            water_allowed: AtomicBool::new(false),
+        })
     }
 
     #[must_use]
@@ -116,192 +117,210 @@ impl SnifferEntity {
         SnifferState::from_id(self.state.load(Ordering::Relaxed))
     }
 
+    /// Vanilla `setState` with the part of `onSyncedDataUpdated` that resizes it.
     pub fn set_state(&self, state: SnifferState) {
+        let was_digging = self.get_state() == SnifferState::Digging;
         self.state.store(state.id(), Ordering::Relaxed);
         let entity = self.get_entity();
         entity.set_synced_data(
             pumpkin_data::tracked_data::sniffer::STATE,
             VarInt(state.id()),
         );
+        let digging = state == SnifferState::Digging;
+        if digging != was_digging {
+            let full = Entity::type_dimensions(&EntityType::SNIFFER);
+            entity.set_default_dimensions(if digging {
+                pumpkin_util::math::boundingbox::EntityDimensions::new(
+                    full.width,
+                    full.height - DIGGING_HEIGHT_OFFSET,
+                    DIGGING_EYE_HEIGHT,
+                )
+            } else {
+                full
+            });
+        }
     }
 
+    /// Vanilla `transitionTo`.
     pub fn transition_to(&self, state: SnifferState) {
-        let entity = self.get_entity();
-        let world = entity.world.load();
-        let pos = entity.pos.load();
-
+        let sound = match state {
+            SnifferState::FeelingHappy => Some(Sound::EntitySnifferHappy),
+            SnifferState::Sniffing => Some(Sound::EntitySnifferSniffing),
+            SnifferState::Rising => Some(Sound::EntitySnifferDiggingStop),
+            _ => None,
+        };
+        if let Some(sound) = sound {
+            self.play_entity_sound(sound, 1.0, 1.0);
+        }
+        self.set_state(state);
         match state {
-            SnifferState::Idling => {
-                self.set_state(SnifferState::Idling);
-            }
-            SnifferState::FeelingHappy => {
-                world.play_sound(Sound::EntitySnifferHappy, SoundCategory::Neutral, &pos);
-                self.set_state(SnifferState::FeelingHappy);
-            }
-            SnifferState::Scenting => {
-                self.set_state(SnifferState::Scenting);
-                self.on_scenting_start();
-            }
-            SnifferState::Sniffing => {
-                world.play_sound(Sound::EntitySnifferSniffing, SoundCategory::Neutral, &pos);
-                self.set_state(SnifferState::Sniffing);
-            }
-            SnifferState::Searching => {
-                self.set_state(SnifferState::Searching);
-            }
-            SnifferState::Digging => {
-                self.set_state(SnifferState::Digging);
-                self.on_digging_start();
-            }
-            SnifferState::Rising => {
-                world.play_sound(
-                    Sound::EntitySnifferDiggingStop,
-                    SoundCategory::Neutral,
-                    &pos,
-                );
-                self.set_state(SnifferState::Rising);
-            }
+            SnifferState::Scenting => self.on_scenting_start(),
+            SnifferState::Digging => self.on_digging_start(),
+            _ => {}
         }
     }
 
     fn on_scenting_start(&self) {
-        let entity = self.get_entity();
-        let world = entity.world.load();
-        let pos = entity.pos.load();
         let pitch = if self.is_baby() { 1.3 } else { 1.0 };
-        world.play_sound_fine(
-            Sound::EntitySnifferScenting,
-            SoundCategory::Neutral,
-            &pos,
-            1.0,
-            pitch,
-        );
+        self.play_entity_sound(Sound::EntitySnifferScenting, 1.0, pitch);
     }
 
     fn on_digging_start(&self) {
         let entity = self.get_entity();
-        let world = entity.world.load();
-        let current_ticks = world.level_time.try_lock().map_or(0, |t| t.world_age);
-        let drop_tick = current_ticks as i32 + DIGGING_DROP_SEED_OFFSET_TICKS;
+        let drop_tick = entity.tick_count.load(Ordering::Relaxed) + DIGGING_DROP_SEED_OFFSET_TICKS;
         self.drop_seed_at_tick.store(drop_tick, Ordering::Relaxed);
         entity.set_synced_data(
             pumpkin_data::tracked_data::sniffer::DROP_SEED_AT_TICK,
             VarInt(drop_tick),
         );
-        world.send_entity_status(
+        entity.world.load().send_entity_status(
             entity,
             EntityStatus::SnifferDiggingSound,
             ActorEventID::None,
         );
     }
 
-    pub fn on_digging_complete(&self, success: bool) {
-        if success {
-            let head_block = self.get_head_block().down();
-            self.store_explored_position(head_block);
-        }
+    /// Vanilla `storeExploredPosition(getOnPos())`.
+    pub(super) fn store_explored_position(&self, tick: &mut BrainTick<'_>) {
+        let on_pos = self
+            .get_entity()
+            .get_block_pos_below_that_affects_my_movement();
+        let mut explored = tick
+            .state
+            .get(types::SNIFFER_EXPLORED_POSITIONS)
+            .cloned()
+            .unwrap_or_default();
+        explored.truncate(MAX_EXPLORED_POSITIONS);
+        explored.insert(0, global_pos(tick.world, on_pos));
+        tick.state.set(types::SNIFFER_EXPLORED_POSITIONS, explored);
     }
 
+    /// Vanilla `getHeadPosition`.
     #[must_use]
     pub fn get_head_position(&self) -> Vector3<f64> {
         let entity = self.get_entity();
-        let pos = entity.pos.load();
-        let yaw = f64::from(entity.yaw.load());
-        let yaw_rad = yaw.to_radians();
+        let yaw_rad = f64::from(entity.yaw.load()).to_radians();
         let forward = Vector3::new(-yaw_rad.sin(), 0.0, yaw_rad.cos());
-        pos + forward * 2.25
+        entity.pos.load() + forward * 2.25
     }
 
+    /// Vanilla `getHeadBlock`.
     #[must_use]
     pub fn get_head_block(&self) -> BlockPos {
         let head_pos = self.get_head_position();
-        let entity = self.get_entity();
-        let pos = entity.pos.load();
-        BlockPos::floored(head_pos.x, pos.y + 0.2, head_pos.z)
+        let y = self.get_entity().pos.load().y + 0.2;
+        BlockPos::floored(head_pos.x, y, head_pos.z)
     }
 
-    #[must_use]
-    pub fn can_dig(&self) -> bool {
+    /// Vanilla `canDig()`, with the brain at hand.
+    pub(super) fn can_dig(&self, tick: &BrainTick<'_>) -> bool {
         let entity = self.get_entity();
-        !self.is_panicking()
+        !tick.state.has_memory_value(types::IS_PANICKING.id())
+            && !sniffer_ai::is_tempted(tick.state)
             && !self.is_baby()
-            && !self.mob_entity.living_entity.is_in_water()
+            && !entity.is_in_water()
             && entity.on_ground.load(Ordering::Relaxed)
-            && self.can_dig_at(self.get_head_block().down())
+            && !entity.has_vehicle()
+            && self.can_dig_at(tick, self.get_head_block().down())
     }
 
-    fn can_dig_at(&self, pos: BlockPos) -> bool {
-        let entity = self.get_entity();
-        let world = entity.world.load();
-        let block_state = world.get_block_state(&pos);
-        let block = pumpkin_data::Block::from_state_id(block_state.id);
-
-        if !block.has_tag(&tag::Block::MINECRAFT_SNIFFER_DIGGABLE_BLOCK) {
+    /// Vanilla `canDig(BlockPos)`.
+    fn can_dig_at(&self, tick: &BrainTick<'_>, pos: BlockPos) -> bool {
+        if !tick
+            .world
+            .get_block(&pos)
+            .has_tag(&tag::Block::MINECRAFT_SNIFFER_DIGGABLE_BLOCK)
+        {
             return false;
         }
-
-        let explored = self
-            .explored_positions
-            .lock()
-            .unwrap_or_else(std::sync::PoisonError::into_inner);
-        !explored.contains(&pos)
-    }
-
-    fn store_explored_position(&self, pos: BlockPos) {
-        let mut explored = self
-            .explored_positions
-            .lock()
-            .unwrap_or_else(std::sync::PoisonError::into_inner);
-        if explored.len() >= 20 {
-            explored.pop();
+        let spot = global_pos(tick.world, pos);
+        let explored = tick
+            .state
+            .get(types::SNIFFER_EXPLORED_POSITIONS)
+            .is_some_and(|explored| {
+                explored
+                    .iter()
+                    .any(|seen| seen.dimension.id == spot.dimension.id && seen.pos == spot.pos)
+            });
+        if explored {
+            return false;
         }
-        explored.insert(0, pos);
+        self.mob_entity
+            .navigator
+            .lock()
+            .unwrap_or_else(std::sync::PoisonError::into_inner)
+            .create_path(&self.mob_entity.living_entity, pos.to_f64(), 1)
+            .is_some_and(|path| path.can_reach())
     }
 
-    pub fn drop_seed(&self) {
+    /// Vanilla `calculateDigPosition`.
+    pub(super) fn calculate_dig_position(&self, tick: &BrainTick<'_>) -> Option<BlockPos> {
+        (0..5).find_map(|idx| {
+            let found = land_random_pos::get_pos(self, 10 + 2 * idx, 3)?;
+            let pos = BlockPos::floored(found.x, found.y, found.z);
+            if !tick
+                .world
+                .worldborder
+                .lock()
+                .unwrap_or_else(std::sync::PoisonError::into_inner)
+                .contains_block(pos.0.x, pos.0.z)
+            {
+                return None;
+            }
+            let below = pos.down();
+            self.can_dig_at(tick, below).then_some(below)
+        })
+    }
+
+    /// Vanilla `dropSeed`.
+    fn drop_seed(&self) {
         let entity = self.get_entity();
+        if self.drop_seed_at_tick.load(Ordering::Relaxed)
+            != entity.tick_count.load(Ordering::Relaxed)
+        {
+            return;
+        }
         let world = entity.world.load();
-        let current_tick = world.get_world_age() as i32;
+        let Some(table) = world.get_loot_table("gameplay/sniffer_digging") else {
+            return;
+        };
+        let this: &dyn EntityBase = self;
+        let params = LootContextParameters {
+            world: Some(&world),
+            position: Some(entity.pos.load()),
+            this_entity: Some(this),
+            ..Default::default()
+        };
+        let head = self.get_head_block();
+        for stack in generate_loot_from_handle(&table, rand::random(), &params) {
+            let item = Entity::new(world.clone(), head.to_f64(), &EntityType::ITEM);
+            world.spawn_entity(Arc::new(ItemEntity::new(item, stack)));
+        }
+        self.play_entity_sound(Sound::EntitySnifferDropSeed, 1.0, 1.0);
+    }
 
-        if self.drop_seed_at_tick.load(Ordering::Relaxed) == current_tick {
-            let head_pos = self.get_head_position();
-            let seed_item = if rand::random::<bool>() {
-                &Item::TORCHFLOWER_SEEDS
-            } else {
-                &Item::PITCHER_POD
-            };
-            let item_stack = ItemStack::new(1, seed_item);
-
-            let item_entity = Entity::new(world.clone(), head_pos, &EntityType::ITEM);
-            let item_arc = Arc::new(ItemEntity::new(item_entity, item_stack));
-            world.spawn_entity_non_save(item_arc as Arc<dyn EntityBase>);
-
-            world.play_sound(
-                Sound::EntitySnifferDropSeed,
-                SoundCategory::Neutral,
-                &head_pos,
+    /// The server's part of vanilla `emitDiggingParticles`: the client draws the particles.
+    fn emit_digging_game_event(&self) {
+        let entity = self.get_entity();
+        if entity.tick_count.load(Ordering::Relaxed) % 10 == 0 {
+            entity.world.load().emit_game_event(
+                GameEvent::EntityAction.name(),
+                self.get_head_block().to_f64(),
             );
         }
     }
 
-    pub fn spawn_child_from_breeding(&self, partner: &dyn EntityBase) {
+    /// Vanilla `onPathfindingStart` and `onPathfindingDone`.
+    fn update_water_malus(&self) {
         let entity = self.get_entity();
-        let world = entity.world.load();
-        let pos = entity.pos.load();
-
-        let item_stack = ItemStack::new(1, &Item::SNIFFER_EGG);
-        let egg_entity = Entity::new(world.clone(), pos, &EntityType::ITEM);
-        let egg_arc = Arc::new(ItemEntity::new(egg_entity, item_stack));
-        world.spawn_entity_non_save(egg_arc as Arc<dyn EntityBase>);
-
-        world.play_sound(Sound::BlockSnifferEggPlop, SoundCategory::Neutral, &pos);
-
-        self.mob_entity.reset_love_ticks();
-        self.mob_entity
-            .breeding_cooldown
-            .store(6000, Ordering::Relaxed);
-        partner.reset_love();
-        partner.set_breeding_cooldown(6000);
+        let allowed = entity.is_on_fire() || entity.is_in_water();
+        if self.water_allowed.swap(allowed, Ordering::Relaxed) != allowed {
+            self.mob_entity
+                .navigator
+                .lock()
+                .unwrap_or_else(std::sync::PoisonError::into_inner)
+                .set_pathfinding_malus(PathType::Water, if allowed { 0.0 } else { -1.0 });
+        }
     }
 }
 
@@ -315,14 +334,111 @@ impl AgeableMob for SnifferEntity {
     }
 }
 
+/// Vanilla `Sniffer.canMate`: not while it is busy with something else.
+const fn is_free_to_mate(state: SnifferState) -> bool {
+    matches!(
+        state,
+        SnifferState::Idling | SnifferState::Scenting | SnifferState::FeelingHappy
+    )
+}
+
 impl Animal for SnifferEntity {
     fn is_food(&self, item_stack: &ItemStack) -> bool {
         item_stack.item.has_tag(&tag::Item::MINECRAFT_SNIFFER_FOOD)
-            || SNIFFER_FOOD.iter().any(|i| i.id == item_stack.item.id)
+    }
+
+    fn can_mate(&self, partner: &dyn EntityBase) -> bool {
+        is_free_to_mate(self.get_state())
+            && partner
+                .cast_any()
+                .downcast_ref::<Self>()
+                .is_some_and(|partner| is_free_to_mate(partner.get_state()))
+    }
+
+    /// Vanilla `Sniffer.spawnChildFromBreeding`: no baby, an egg on the ground.
+    fn breeds_eggs(&self) -> bool {
+        true
+    }
+
+    fn on_bred_egg(&self) {
+        let entity = self.get_entity();
+        let world = entity.world.load();
+        let pos = entity.pos.load();
+        let egg = Entity::new(world.clone(), pos, &EntityType::ITEM);
+        world.spawn_entity(Arc::new(ItemEntity::new(
+            egg,
+            ItemStack::new(1, &Item::SNIFFER_EGG),
+        )));
+        let mut random = self.get_random();
+        let spread = random.random::<f32>() - random.random::<f32>();
+        world.play_sound_fine(
+            Sound::BlockSnifferEggPlop,
+            SoundCategory::Neutral,
+            &pos,
+            1.0,
+            spread * 0.2 + 0.5,
+        );
     }
 }
 
 impl Mob for SnifferEntity {
+    fn make_brain(&self, packed: &PackedMemories) -> Brain {
+        BrainProvider {
+            memory_types: &MEMORIES,
+            sensor_types: &[
+                SensorType::NearestLivingEntities,
+                SensorType::HurtBy,
+                SensorType::NearestPlayers,
+                SensorType::FoodTemptations,
+            ],
+            activities: sniffer_ai::activities,
+        }
+        .make_brain(self, packed)
+    }
+
+    /// Vanilla `Sniffer.customServerAiStep`.
+    fn custom_server_ai_step(&self, _caller: &dyn EntityBase) {
+        self.update_water_malus();
+        self.mob_entity.tick_brain(self);
+        self.mob_entity
+            .with_brain(self, |brain| sniffer_ai::update_activity(brain));
+    }
+
+    /// Vanilla `Sniffer.jumpFromGround`.
+    fn on_jump_from_ground(&self) {
+        let speed = self
+            .mob_entity
+            .move_control
+            .lock()
+            .unwrap_or_else(std::sync::PoisonError::into_inner)
+            .get_speed_modifier();
+        let entity = self.get_entity();
+        if speed > 0.0
+            && entity.velocity.load().horizontal_length_squared() < JUMP_PUSH_BELOW_SPEED_SQR
+        {
+            entity.update_velocity_from_input(Vector3::new(0.0, 0.0, 1.0), JUMP_PUSH_SPEED);
+        }
+    }
+
+    /// Vanilla `Sniffer.die`.
+    fn mob_on_die(&self, _killer: Option<&dyn EntityBase>) {
+        self.transition_to(SnifferState::Idling);
+    }
+
+    /// Vanilla `Sniffer.getMaxHeadYRot`.
+    fn get_max_head_rotation(&self) -> f32 {
+        50.0
+    }
+
+    /// Vanilla `Sniffer.getAmbientSound`: quiet at work.
+    fn get_ambient_sound(&self) -> Option<Sound> {
+        (!matches!(
+            self.get_state(),
+            SnifferState::Digging | SnifferState::Searching
+        ))
+        .then_some(Sound::EntitySnifferIdle)
+    }
+
     fn mob_play_step_sound(&self, _pos: &BlockPos, _state: &BlockState) {
         self.play_entity_sound(Sound::EntitySnifferStep, 0.15, 1.0);
     }
@@ -335,46 +451,15 @@ impl Mob for SnifferEntity {
         Some(self)
     }
 
-    fn mob_write_nbt(&self, nbt: &mut NbtCompound) {
-        nbt.put_int("State", self.get_state().id());
-        nbt.put_int(
-            "DropSeedAtTick",
-            self.drop_seed_at_tick.load(Ordering::Relaxed),
-        );
-    }
-
-    fn mob_read_nbt(&self, nbt: &NbtCompound) {
-        if let Some(state_id) = nbt.get_int("State") {
-            self.state.store(state_id, Ordering::Relaxed);
-        }
-        if let Some(drop_tick) = nbt.get_int("DropSeedAtTick") {
-            self.drop_seed_at_tick.store(drop_tick, Ordering::Relaxed);
-        }
-    }
-
     fn get_mob_entity(&self) -> &MobEntity {
         &self.mob_entity
     }
 
+    /// Vanilla `Sniffer.tick`; the searching sound is the client's own.
     fn mob_tick(&self, _caller: &dyn EntityBase) {
-        let state = self.get_state();
-        match state {
-            SnifferState::Searching => {
-                let entity = self.get_entity();
-                let world = entity.world.load();
-                let ticks = world.get_world_age();
-                if ticks % 20 == 0 {
-                    world.play_sound(
-                        Sound::EntitySnifferSearching,
-                        SoundCategory::Neutral,
-                        &entity.pos.load(),
-                    );
-                }
-            }
-            SnifferState::Digging => {
-                self.drop_seed();
-            }
-            _ => {}
+        if self.get_state() == SnifferState::Digging {
+            self.emit_digging_game_event();
+            self.drop_seed();
         }
     }
 
