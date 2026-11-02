@@ -18,6 +18,8 @@ use crate::world::level_accessor::LevelAccessor;
 #[derive(Clone, Copy)]
 pub enum SpawnStrategy {
     OnTopOfCollider,
+    /// Vanilla `ON_TOP_OF_COLLIDER_NO_LEAVES`: as above, not on leaves.
+    OnTopOfColliderNoLeaves,
     /// The village golem's floor: a solid block or powder snow under air or liquid, none of
     /// the blocks the legacy rule lists.
     LegacyIronGolem,
@@ -26,6 +28,10 @@ pub enum SpawnStrategy {
 impl SpawnStrategy {
     fn can_spawn_on(self, state: &BlockState, above_state: &BlockState) -> bool {
         match self {
+            Self::OnTopOfColliderNoLeaves => {
+                !Block::from_state_id(state.id).has_tag(&pumpkin_data::tag::Block::MINECRAFT_LEAVES)
+                    && Self::OnTopOfCollider.can_spawn_on(state, above_state)
+            }
             Self::OnTopOfCollider => {
                 above_state.get_block_collision_shapes().next().is_none() && is_face_full_up(state)
             }

@@ -56,6 +56,7 @@ pub mod breeze;
 pub mod breeze_ai;
 pub mod conversion;
 pub mod creaking;
+pub mod creaking_ai;
 pub mod creeper;
 pub mod crossbow_attack_mob;
 pub mod enderman;
@@ -1586,6 +1587,11 @@ pub trait Mob: EntityBase + Send + Sync {
         group_data
     }
 
+    /// Vanilla `isPushable`, for mobs that refuse at times.
+    fn mob_is_pushable(&self) -> bool {
+        self.get_mob_entity().living_entity.is_pushable()
+    }
+
     /// Vanilla `tickRidden`, each tick a player steers the mob.
     fn mob_tick_ridden(&self, _controller: &crate::entity::player::Player) {}
 
@@ -2473,7 +2479,7 @@ impl<T: Mob + Send + 'static> EntityBase for T {
     }
 
     fn is_pushable(&self) -> bool {
-        self.get_mob_entity().living_entity.is_pushable()
+        self.mob_is_pushable()
     }
 
     fn push(&self, entity: &dyn EntityBase) {

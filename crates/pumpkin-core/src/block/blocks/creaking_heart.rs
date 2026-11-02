@@ -1,42 +1,53 @@
 use std::sync::Arc;
 
 use pumpkin_data::BlockStateId;
-use pumpkin_data::block_properties::{
-    Axis, CreakingHeartLikeProperties, CreakingHeartState, PaleOakWoodLikeProperties,
-};
+use pumpkin_data::block_properties::{Axis, CreakingHeartLikeProperties, CreakingHeartState};
 use pumpkin_data::sound::{Sound, SoundCategory};
-use pumpkin_data::tag::{self, Taggable};
 use pumpkin_macros::pumpkin_block;
+use pumpkin_util::GameMode;
 use pumpkin_world::world::BlockFlags;
+use rand::RngExt;
 
-use crate::block::entities::creaking_heart::CreakingHeartBlockEntity;
-use crate::block::{BlockBehaviour, BrokenArgs, OnNeighborUpdateArgs, OnPlaceArgs, PlacedArgs};
+use crate::block::entities::creaking_heart::{
+    CreakingHeartBlockEntity, creaking_active, has_required_logs, with_heart,
+};
+use crate::block::{
+    BlockBehaviour, BrokenArgs, GetComparatorOutputArgs, OnNeighborUpdateArgs, OnPlaceArgs,
+    OnStateReplacedArgs, PlacedArgs,
+};
+use crate::entity::experience_orb::ExperienceOrbEntity;
+use crate::world::World;
+
+/// Vanilla `tryAwardExperience`.
+const NATURAL_HEART_XP: std::ops::RangeInclusive<u32> = 20..=24;
 
 #[pumpkin_block("minecraft:creaking_heart")]
 pub struct CreakingHeartBlock;
 
 impl CreakingHeartBlock {
-    fn is_aligned_pale_oak_log(state_id: BlockStateId, axis: Axis) -> bool {
-        let block = state_id.to_block();
-        block.has_tag(&tag::Block::MINECRAFT_PALE_OAK_LOGS)
-            && PaleOakWoodLikeProperties::from_state_id(state_id).axis == axis
+    /// Vanilla `updateState`: an uprooted heart between two logs wakes up or dozes off.
+    fn root_if_possible(world: &Arc<World>, position: &pumpkin_util::math::position::BlockPos) {
+        let state_id = world.get_block_state_id(position);
+        let mut props = CreakingHeartLikeProperties::from_state_id(state_id);
+        if props.creaking_heart_state != CreakingHeartState::Uprooted
+            || !has_required_logs(world, position, props.axis)
+        {
+            return;
+        }
+        props.creaking_heart_state = Self::rooted_state(world);
+        world.set_block_state(
+            position,
+            props.to_state_id(state_id.to_block()),
+            BlockFlags::NOTIFY_ALL,
+        );
     }
 
-    fn check_active_logs(
-        world: &dyn pumpkin_world::world::BlockAccessor,
-        pos: &pumpkin_util::math::position::BlockPos,
-        axis: Axis,
-    ) -> bool {
-        let (pos_a, pos_b) = match axis {
-            Axis::X => (pos.west(), pos.east()),
-            Axis::Y => (pos.down(), pos.up()),
-            Axis::Z => (pos.north(), pos.south()),
-        };
-
-        let state_a = world.get_block_state_id(&pos_a);
-        let state_b = world.get_block_state_id(&pos_b);
-
-        Self::is_aligned_pale_oak_log(state_a, axis) && Self::is_aligned_pale_oak_log(state_b, axis)
+    fn rooted_state(world: &World) -> CreakingHeartState {
+        if creaking_active(world) {
+            CreakingHeartState::Awake
+        } else {
+            CreakingHeartState::Dormant
+        }
     }
 }
 
@@ -53,66 +64,55 @@ impl BlockBehaviour for CreakingHeartBlock {
     }
 
     fn placed(&self, args: PlacedArgs<'_>) {
-        {
-            let entity = CreakingHeartBlockEntity::new(*args.position);
-            args.world.add_block_entity(Arc::new(entity));
-
-            let state_id = args.world.get_block_state_id(args.position);
-            let mut props = CreakingHeartLikeProperties::from_state_id(state_id);
-
-            if Self::check_active_logs(args.world.as_ref(), args.position, props.axis) {
-                props.creaking_heart_state = CreakingHeartState::Dormant;
-                args.world.set_block_state(
-                    args.position,
-                    props.to_state_id(args.block),
-                    BlockFlags::NOTIFY_ALL,
-                );
-
-                args.world.play_sound(
-                    Sound::BlockCreakingHeartSpawn,
-                    SoundCategory::Blocks,
-                    &args.position.to_f64(),
-                );
-            }
-        }
+        let entity = CreakingHeartBlockEntity::new(*args.position);
+        args.world.add_block_entity(Arc::new(entity));
+        Self::root_if_possible(args.world, args.position);
     }
 
+    /// Vanilla `updateShape` and `tick`: only the rooting; the block entity uproots it.
     fn on_neighbor_update(&self, args: OnNeighborUpdateArgs<'_>) {
+        Self::root_if_possible(args.world, args.position);
+    }
+
+    /// Vanilla `preRemoveSideEffects`.
+    fn on_state_replaced(&self, args: OnStateReplacedArgs<'_>) {
+        if args.old_state_id.to_block() == args.block
+            && args.world.get_block_state_id(args.position).to_block() != args.block
         {
-            let state_id = args.world.get_block_state_id(args.position);
-            let mut props = CreakingHeartLikeProperties::from_state_id(state_id);
-
-            let active_logs =
-                Self::check_active_logs(args.world.as_ref(), args.position, props.axis);
-            let new_state = if active_logs {
-                if props.creaking_heart_state == CreakingHeartState::Uprooted {
-                    args.world.play_sound(
-                        Sound::BlockCreakingHeartSpawn,
-                        SoundCategory::Blocks,
-                        &args.position.to_f64(),
-                    );
-                }
-                CreakingHeartState::Dormant
-            } else {
-                CreakingHeartState::Uprooted
-            };
-
-            if props.creaking_heart_state != new_state {
-                props.creaking_heart_state = new_state;
-                args.world.set_block_state(
-                    args.position,
-                    props.to_state_id(args.block),
-                    BlockFlags::NOTIFY_ALL,
-                );
-            }
+            with_heart(args.world, args.position, |heart| {
+                heart.remove_protector(args.world);
+            });
         }
     }
 
+    /// The experience of vanilla `playerWillDestroy`, for a natural heart.
     fn broken(&self, args: BrokenArgs<'_>) {
         args.world.play_sound(
             Sound::BlockCreakingHeartBreak,
             SoundCategory::Blocks,
             &args.position.to_f64(),
         );
+        let gamemode = args.player.gamemode.load();
+        if CreakingHeartLikeProperties::from_state_id(args.state.id).natural
+            && gamemode != GameMode::Creative
+            && gamemode != GameMode::Spectator
+        {
+            ExperienceOrbEntity::spawn(
+                args.world,
+                args.position.to_centered_f64(),
+                rand::rng().random_range(NATURAL_HEART_XP),
+            );
+        }
+    }
+
+    /// Vanilla `getAnalogOutputSignal`.
+    fn get_comparator_output(&self, args: GetComparatorOutputArgs<'_>) -> Option<u8> {
+        let props = CreakingHeartLikeProperties::from_state_id(args.state.id);
+        if props.creaking_heart_state == CreakingHeartState::Uprooted {
+            return Some(0);
+        }
+        with_heart(args.world, args.position, |heart| {
+            heart.output_signal() as u8
+        })
     }
 }
