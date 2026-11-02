@@ -5006,6 +5006,11 @@ impl Entity {
                 }
             };
 
+            let own_spot = world
+                .get_entity_by_id(self.entity_id)
+                .and_then(|vehicle| vehicle.get_mob().and_then(mob::Mob::dismount_location));
+            let dismount_pos = own_spot.unwrap_or(dismount_pos);
+
             // Clean up any remaining reference to the dismounted passenger.
             passenger_entity.set_pos(dismount_pos);
 

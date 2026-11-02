@@ -293,6 +293,11 @@ impl MobEntity {
         self.position_target_range.load(Relaxed) != -1
     }
 
+    /// Vanilla `Mob.clearHome`.
+    pub fn clear_home(&self) {
+        self.position_target_range.store(-1, Relaxed);
+    }
+
     /// Vanilla `Mob.setHomeTo`: the centre and radius restriction goals keep the mob inside.
     pub fn set_home_to(&self, center: BlockPos, radius: i32) {
         self.position_target.store(center);
@@ -678,6 +683,16 @@ impl MobEntity {
         };
         self.process_brain_memory_clear();
         result
+    }
+
+    /// Vanilla `getBrain().stopAll` and `clearMemories`.
+    pub fn reset_brain(&self, mob: &dyn Mob) {
+        let world = self.living_entity.entity.world.load_full();
+        let time = world.get_world_age();
+        self.with_brain(mob, |brain| {
+            brain.stop_all(&world, mob, time);
+            brain.clear_memories();
+        });
     }
 
     /// Installs an already built brain, such as one restored from saved memories.
@@ -1551,6 +1566,12 @@ pub trait Mob: EntityBase + Send + Sync {
     /// saddled pig ridden with a carrot on a stick. That player's client moves the mob, so its
     /// own AI and physics rest.
     fn mob_controlling_player(&self) -> Option<Arc<crate::entity::player::Player>> {
+        None
+    }
+
+    /// Vanilla `getDismountLocationForPassenger` when a mob has its own spot: `None` searches
+    /// around it as `DismountHelper` does.
+    fn dismount_location(&self) -> Option<pumpkin_util::math::vector3::Vector3<f64>> {
         None
     }
 

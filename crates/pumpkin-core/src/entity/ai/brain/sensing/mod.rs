@@ -40,6 +40,7 @@ pub enum SensorType {
     NearestItems,
     FoodTemptations,
     NearestAdult,
+    NearestAdultAnyType,
     ArmadilloScareDetected,
     AxolotlAttackables,
     VillagerHostiles,
@@ -64,6 +65,7 @@ impl SensorType {
             Self::NearestItems => "minecraft:nearest_items",
             Self::FoodTemptations => "minecraft:food_temptations",
             Self::NearestAdult => "minecraft:nearest_adult",
+            Self::NearestAdultAnyType => "minecraft:nearest_adult_any_type",
             Self::ArmadilloScareDetected => "minecraft:armadillo_scare_detected",
             Self::AxolotlAttackables => "minecraft:axolotl_attackables",
             Self::VillagerHostiles => "minecraft:villager_hostiles",
@@ -88,6 +90,7 @@ impl SensorType {
             | Self::NearestItems
             | Self::FoodTemptations
             | Self::NearestAdult
+            | Self::NearestAdultAnyType
             | Self::AxolotlAttackables
             | Self::HoglinSpecific
             | Self::FrogAttackables
@@ -115,6 +118,7 @@ impl SensorType {
             Self::NearestItems => Box::new(nearest_items::NearestItemSensor),
             Self::FoodTemptations => Box::new(tempting::TemptingSensor),
             Self::NearestAdult => Box::new(nearest_adult::AdultSensor),
+            Self::NearestAdultAnyType => Box::new(nearest_adult::AdultSensorAnyType),
             Self::ArmadilloScareDetected => Box::new(armadillo_scare::ArmadilloScareSensor),
             Self::AxolotlAttackables => Box::new(axolotl_attackables::AxolotlAttackablesSensor),
             Self::VillagerHostiles => Box::new(villager::VillagerHostilesSensor),

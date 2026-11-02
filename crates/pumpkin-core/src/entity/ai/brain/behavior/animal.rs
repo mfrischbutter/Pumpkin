@@ -39,6 +39,8 @@ const FOLLOW_TEMPTATION_CONDITIONS: [(MemoryModuleId, MemoryStatus); 6] = [
 pub struct FollowTemptation {
     speed: fn(&dyn Mob) -> f32,
     close_enough: fn(&dyn Mob) -> f64,
+    /// Vanilla `lookInTheEyes`: heads for the player's eyes, as a flyer does.
+    in_the_eyes: bool,
 }
 
 impl FollowTemptation {
@@ -47,7 +49,15 @@ impl FollowTemptation {
         Self {
             speed,
             close_enough,
+            in_the_eyes: false,
         }
+    }
+
+    /// Vanilla's third constructor argument.
+    #[must_use]
+    pub const fn in_the_eyes(mut self) -> Self {
+        self.in_the_eyes = true;
+        self
     }
 }
 
@@ -92,7 +102,7 @@ impl Behavior for FollowTemptation {
             tick.state.set(
                 types::WALK_TARGET,
                 WalkTarget::new(
-                    Arc::new(EntityTracker::new(player, false)),
+                    Arc::new(EntityTracker::new(player, self.in_the_eyes)),
                     (self.speed)(tick.mob),
                     2,
                 ),
@@ -339,6 +349,53 @@ pub fn baby_follow_adult(min: i32, max: i32, speed: fn(&dyn Mob) -> f32) -> OneS
                     speed(tick.mob),
                     min - 1,
                 ),
+            );
+            true
+        },
+    )
+}
+
+/// Vanilla `BabyFollowAdult.create(range, speed, nearestVisibleType, true)`: a baby in the air
+/// heads for the eyes of what `target` reads.
+#[must_use]
+pub fn baby_follow_in_air(
+    memory: MemoryModuleId,
+    target: fn(&super::super::BrainState) -> Option<Arc<dyn EntityBase>>,
+    min: i32,
+    max: i32,
+    speed: f32,
+) -> OneShot {
+    OneShot::new(
+        "BabyFollowAdult",
+        vec![
+            (memory, MemoryStatus::ValuePresent),
+            (types::LOOK_TARGET.id(), MemoryStatus::Registered),
+            (types::WALK_TARGET.id(), MemoryStatus::ValueAbsent),
+        ],
+        move |tick| {
+            if !tick.mob.get_mob_entity().living_entity.is_baby() {
+                return false;
+            }
+            let Some(adult) = target(tick.state) else {
+                return false;
+            };
+            let distance = tick
+                .mob
+                .get_entity()
+                .pos
+                .load()
+                .squared_distance_to_vec(&adult.get_entity().pos.load());
+            let (near, far) = (f64::from(min), f64::from(max + 1));
+            if distance >= far * far || distance < near * near {
+                return false;
+            }
+            tick.state.set(
+                types::LOOK_TARGET,
+                Arc::new(EntityTracker::new(adult.clone(), true)) as Arc<dyn PositionTracker>,
+            );
+            tick.state.set(
+                types::WALK_TARGET,
+                WalkTarget::new(Arc::new(EntityTracker::new(adult, true)), speed, min - 1),
             );
             true
         },

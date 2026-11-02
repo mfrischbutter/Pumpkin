@@ -34,3 +34,30 @@ impl Sensor for AdultSensor {
         tick.state.set_optional(types::NEAREST_VISIBLE_ADULT, adult);
     }
 }
+
+/// Vanilla `AdultSensorAnyType` (`NEAREST_ADULT_ANY_TYPE`): the closest visible grown-up that
+/// babies follow, of any kind.
+pub struct AdultSensorAnyType;
+
+impl Sensor for AdultSensorAnyType {
+    fn requires(&self) -> &'static [MemoryModuleId] {
+        &REQUIRES
+    }
+
+    fn do_tick(&mut self, tick: &mut BrainTick<'_>) {
+        let adult = {
+            let Some(visible) = tick.state.get(types::NEAREST_VISIBLE_LIVING_ENTITIES) else {
+                return;
+            };
+            let ctx = tick.visibility();
+            visible.find_closest(&ctx, |entity| {
+                let entity = entity.get_entity();
+                pumpkin_data::tag::Taggable::has_tag(
+                    entity.entity_type,
+                    &pumpkin_data::tag::EntityType::MINECRAFT_FOLLOWABLE_FRIENDLY_MOBS,
+                ) && entity.age.load(std::sync::atomic::Ordering::Relaxed) >= 0
+            })
+        };
+        tick.state.set_optional(types::NEAREST_VISIBLE_ADULT, adult);
+    }
+}

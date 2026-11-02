@@ -13,6 +13,7 @@ pub mod look_control;
 pub mod move_control;
 pub mod smooth_swimming_look_control;
 pub mod smooth_swimming_move_control;
+pub mod still_look_control;
 pub mod vex_move_control;
 
 pub trait Control: Send + Sync {
@@ -29,6 +30,9 @@ pub trait MoveControlTrait: Control {
     fn set_wanted_position(&mut self, _x: f64, _y: f64, _z: f64, _speed_modifier: f64) {}
 
     fn strafe(&mut self, _forward: f32, _right: f32) {}
+
+    /// Vanilla `setWait`.
+    fn set_wait(&mut self) {}
 
     fn has_wanted(&self) -> bool {
         false

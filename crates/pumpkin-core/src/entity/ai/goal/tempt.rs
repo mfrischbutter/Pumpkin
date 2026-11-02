@@ -1,3 +1,4 @@
+use rand::RngExt;
 use std::sync::Arc;
 
 use super::{Controls, Goal, GoalReach, to_goal_ticks};
@@ -18,6 +19,8 @@ const SCARE_ROTATION: f32 = 5.0;
 enum TemptItems {
     Items(&'static [&'static Item]),
     Tag(&'static Tag),
+    /// What tempts this mob right now.
+    ForMob(fn(&dyn Mob, &pumpkin_data::item_stack::ItemStack) -> bool),
 }
 
 pub struct TemptGoal {
@@ -32,6 +35,8 @@ pub struct TemptGoal {
     watched_pitch: f32,
     cooldown: i32,
     running: bool,
+    /// Vanilla `TemptGoal.ForNonPathfinders`: it steers by the move control, no path.
+    non_pathfinder: bool,
 }
 
 impl TemptGoal {
@@ -84,6 +89,26 @@ impl TemptGoal {
             watched_pitch: 0.0,
             cooldown: 0,
             running: false,
+            non_pathfinder: false,
+        }
+    }
+
+    /// Vanilla `TemptGoal.ForNonPathfinders`.
+    #[must_use]
+    pub fn for_non_pathfinders(
+        speed: f64,
+        tempted_by: fn(&dyn Mob, &pumpkin_data::item_stack::ItemStack) -> bool,
+        can_scare: bool,
+        stop_distance: f64,
+    ) -> Self {
+        Self {
+            non_pathfinder: true,
+            ..Self::tempted_by(
+                speed,
+                TemptItems::ForMob(tempted_by),
+                can_scare,
+                stop_distance,
+            )
         }
     }
 
@@ -92,17 +117,18 @@ impl TemptGoal {
         self.running
     }
 
-    fn is_tempt_item(&self, stack: &pumpkin_data::item_stack::ItemStack) -> bool {
+    fn is_tempt_item(&self, mob: &dyn Mob, stack: &pumpkin_data::item_stack::ItemStack) -> bool {
         stack.item_count > 0
             && match self.tempt_items {
                 TemptItems::Items(items) => items.iter().any(|i| i.id == stack.item.id),
                 TemptItems::Tag(tag) => stack.item.has_tag(tag),
+                TemptItems::ForMob(tempted_by) => tempted_by(mob, stack),
             }
     }
 
-    fn is_holding_tempt_item(&self, player: &Player) -> bool {
-        self.is_tempt_item(&player.inventory().held_item())
-            || self.is_tempt_item(&player.inventory().off_hand_item())
+    fn is_holding_tempt_item(&self, mob: &dyn Mob, player: &Player) -> bool {
+        self.is_tempt_item(mob, &player.inventory().held_item())
+            || self.is_tempt_item(mob, &player.inventory().off_hand_item())
     }
 
     /// Non-combat, line of sight ignored, ranged by `tempt_range` and filtered on the held item.
@@ -121,7 +147,7 @@ impl TemptGoal {
             mob_entity.living_entity.entity.pos.load(),
             range,
             |player| {
-                self.is_holding_tempt_item(player)
+                self.is_holding_tempt_item(mob, player)
                     && conditions.test(&world, Some(mob), player.as_ref())
             },
         )
@@ -227,6 +253,20 @@ impl Goal for TemptGoal {
 
         let mob_pos = mob_entity.living_entity.entity.pos.load();
         let steered = mob_entity.steered();
+        if self.non_pathfinder {
+            let mut move_control = steered.move_control();
+            if mob_pos.squared_distance_to_vec(&player_pos)
+                < self.stop_distance * self.stop_distance
+            {
+                move_control.set_wait();
+            } else {
+                let eye = player.get_entity().get_eye_pos();
+                let share = mob.get_random().random::<f64>();
+                let target = mob_pos + (eye - mob_pos) * share;
+                move_control.set_wanted_position(target.x, target.y, target.z, self.speed);
+            }
+            return;
+        }
         let mut navigator = steered.navigator();
         if mob_pos.squared_distance_to_vec(&player_pos) < self.stop_distance * self.stop_distance {
             navigator.stop();
@@ -237,7 +277,11 @@ impl Goal for TemptGoal {
 
     fn stop(&mut self, mob: &dyn Mob) {
         self.target_player = None;
-        mob.get_mob_entity().steered().navigator().stop();
+        if self.non_pathfinder {
+            mob.get_mob_entity().steered().move_control().set_wait();
+        } else {
+            mob.get_mob_entity().steered().navigator().stop();
+        }
         self.cooldown = to_goal_ticks(100);
         self.running = false;
     }

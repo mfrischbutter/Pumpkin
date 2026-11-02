@@ -78,7 +78,7 @@ impl GhastEntity {
         });
 
         let goal_selector = &ghast.mob_entity.goals_selector;
-        goal_selector.add_goal(5, Box::new(RandomFloatAroundGoal));
+        goal_selector.add_goal(5, Box::new(RandomFloatAroundGoal::default()));
         goal_selector.add_goal(7, Box::new(GhastLookGoal));
         goal_selector.add_goal(7, Box::new(GhastShootFireballGoal::default()));
 
@@ -206,7 +206,7 @@ fn as_ghast(mob: &dyn Mob) -> Option<&GhastEntity> {
 
 /// Vanilla `Ghast.faceMovementDirection`: towards the target within 64 blocks, else where
 /// it flies.
-fn face_movement_direction(mob: &dyn Mob) {
+pub(crate) fn face_movement_direction(mob: &dyn Mob) {
     let entity = mob.get_entity();
     let Some(target) = mob.get_mob_entity().get_target() else {
         let movement = entity.velocity.load();
@@ -339,8 +339,19 @@ fn shoot_fireball(mob: &dyn Mob, target: &Entity) {
     world.spawn_entity(Arc::new(fireball));
 }
 
-/// Vanilla `Ghast.RandomFloatAroundGoal` as the ghast uses it, with no distance to blocks.
-struct RandomFloatAroundGoal;
+/// Vanilla `Ghast.RandomFloatAroundGoal`.
+#[derive(Default)]
+pub struct RandomFloatAroundGoal {
+    distance_to_blocks: i32,
+}
+
+impl RandomFloatAroundGoal {
+    /// It floats to spots with a block within `distance_to_blocks`.
+    #[must_use]
+    pub const fn keeping_near_blocks(distance_to_blocks: i32) -> Self {
+        Self { distance_to_blocks }
+    }
+}
 
 impl Goal for RandomFloatAroundGoal {
     fn can_start(&mut self, mob: &dyn Mob) -> bool {
@@ -362,7 +373,7 @@ impl Goal for RandomFloatAroundGoal {
     }
 
     fn start(&mut self, mob: &dyn Mob) {
-        let target = suitable_fly_to_position(mob);
+        let target = suitable_fly_to_position(mob, self.distance_to_blocks);
         mob.get_mob_entity()
             .steered()
             .move_control()
@@ -374,25 +385,57 @@ impl Goal for RandomFloatAroundGoal {
     }
 }
 
-/// Vanilla `RandomFloatAroundGoal.getSuitableFlyToPosition` with no distance to blocks.
+/// Vanilla `RandomFloatAroundGoal.isGoodTarget`.
+fn is_good_target(world: &crate::world::World, target: Vector3<f64>, distance: i32) -> bool {
+    if distance <= 0 {
+        return true;
+    }
+    let pos = BlockPos::floored_v(target);
+    if !world.get_block_state(&pos).is_air() {
+        return false;
+    }
+    let directions = [
+        pumpkin_data::BlockDirection::Down,
+        pumpkin_data::BlockDirection::Up,
+        pumpkin_data::BlockDirection::North,
+        pumpkin_data::BlockDirection::South,
+        pumpkin_data::BlockDirection::West,
+        pumpkin_data::BlockDirection::East,
+    ];
+    directions.iter().any(|dir| {
+        (1..distance).any(|steps| {
+            let offset = dir.to_offset();
+            let beside = BlockPos::new(
+                pos.0.x + offset.x * steps,
+                pos.0.y + offset.y * steps,
+                pos.0.z + offset.z * steps,
+            );
+            !world.get_block_state(&beside).is_air()
+        })
+    })
+}
+
+/// Vanilla `RandomFloatAroundGoal.getSuitableFlyToPosition`.
 ///
-/// Any random position in the home is good. Only when none was, a random one is taken,
-/// mirrored downwards when it lies above the ground.
-fn suitable_fly_to_position(mob: &dyn Mob) -> Vector3<f64> {
+/// A random position in the home and near enough to blocks is good. Only when none was, a random
+/// one is taken, mirrored downwards when it lies above the ground.
+fn suitable_fly_to_position(mob: &dyn Mob, distance_to_blocks: i32) -> Vector3<f64> {
     let mob_entity = mob.get_mob_entity();
     let entity = &mob_entity.living_entity.entity;
     let center = entity.pos.load();
+    let world = entity.world.load();
     let mut rng = mob.get_random();
     for _ in 0..MAX_ATTEMPTS {
         let target = random_position(center, &mut rng);
-        if mob_entity.is_in_position_target_range_pos(&BlockPos::floored_v(target)) {
+        if mob_entity.is_in_position_target_range_pos(&BlockPos::floored_v(target))
+            && is_good_target(&world, target, distance_to_blocks)
+        {
             return target;
         }
     }
 
     let target = random_position(center, &mut rng);
     let pos = BlockPos::floored_v(target);
-    let world = entity.world.load();
     let top = world.get_heightmap_height(ChunkHeightmapType::MotionBlocking, pos.0.x, pos.0.z);
     // Vanilla `getHeight`: the first free block above the top one.
     let height = top + 1;
