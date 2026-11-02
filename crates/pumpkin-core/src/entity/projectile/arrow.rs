@@ -819,6 +819,9 @@ impl EntityBase for ArrowEntity {
                     caller.on_hit(h);
                 }
                 ProjectileHit::Entity { .. } => {
+                    if super::deflected_by_target(caller, &h) {
+                        return;
+                    }
                     let pierce = self.pierce_level.load(Ordering::Relaxed);
                     let pierced_len = self
                         .pierced_entities

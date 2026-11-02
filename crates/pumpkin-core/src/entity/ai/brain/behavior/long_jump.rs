@@ -237,7 +237,7 @@ impl LongJumpToRandomPos {
             * f64::from(self.settings.max_velocity_multiplier);
         angles
             .into_iter()
-            .find_map(|angle| jump_vector_for_angle(tick.mob, target, max_velocity, angle))
+            .find_map(|angle| jump_vector_for_angle(tick.mob, target, max_velocity, angle, true))
     }
 }
 
@@ -258,11 +258,12 @@ fn can_walk_to(mob: &dyn Mob, target: BlockPos) -> bool {
 }
 
 /// Vanilla `LongJumpUtil.calculateJumpVectorForAngle`, with its collision check.
-fn jump_vector_for_angle(
+pub(crate) fn jump_vector_for_angle(
     mob: &dyn Mob,
     target: Vector3<f64>,
     max_velocity: f64,
     angle: i32,
+    check_clear: bool,
 ) -> Option<Vector3<f64>> {
     let entity = mob.get_entity();
     let position = entity.pos.load();
@@ -295,7 +296,8 @@ fn jump_vector_for_angle(
             position.y + yi,
             position.z + ri * sin_xz,
         );
-        if let Some(previous) = previous
+        if check_clear
+            && let Some(previous) = previous
             && !is_clear_transition(mob, previous, sample)
         {
             return None;

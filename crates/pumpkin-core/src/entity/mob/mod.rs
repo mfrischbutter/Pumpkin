@@ -53,6 +53,7 @@ use uuid::Uuid;
 pub mod bat;
 pub mod blaze;
 pub mod breeze;
+pub mod breeze_ai;
 pub mod conversion;
 pub mod creaking;
 pub mod creeper;

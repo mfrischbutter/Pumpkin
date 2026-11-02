@@ -55,6 +55,16 @@ pub fn start_attacking_with(
 /// reached for 10 seconds, telling `on_erased`.
 #[must_use]
 pub fn stop_attacking_if_target_invalid(on_erased: fn(&dyn Mob, &Arc<dyn EntityBase>)) -> OneShot {
+    stop_attacking_if(|_, _| false, on_erased)
+}
+
+/// Vanilla `StopAttackingIfTargetInvalid.create(stopCondition, ...)`: also drops the target when
+/// `stop` says so.
+#[must_use]
+pub fn stop_attacking_if(
+    mut stop: impl FnMut(&BrainTick<'_>, &dyn EntityBase) -> bool + Send + Sync + 'static,
+    on_erased: fn(&dyn Mob, &Arc<dyn EntityBase>),
+) -> OneShot {
     OneShot::new(
         "StopAttackingIfTargetInvalid",
         vec![
@@ -73,7 +83,8 @@ pub fn stop_attacking_if_target_invalid(on_erased: fn(&dyn Mob, &Arc<dyn EntityB
                 .get(types::CANT_REACH_WALK_TARGET_SINCE)
                 .is_some_and(|since| tick.time - since > TIMEOUT_TO_GET_WITHIN_ATTACK_RANGE);
             let entity = target.get_entity();
-            let valid = tick.mob.can_attack(target.as_ref())
+            let valid = !stop(tick, target.as_ref())
+                && tick.mob.can_attack(target.as_ref())
                 && !tired
                 && entity.is_alive()
                 && Arc::ptr_eq(&entity.world.load_full(), tick.world);

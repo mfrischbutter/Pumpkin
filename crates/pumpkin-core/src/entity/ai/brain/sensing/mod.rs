@@ -8,6 +8,7 @@ use super::{BrainTick, VisibilityContext};
 
 pub mod armadillo_scare;
 pub mod axolotl_attackables;
+pub mod breeze;
 pub mod dummy;
 pub mod frog;
 pub mod hoglin;
@@ -41,6 +42,7 @@ pub enum SensorType {
     FoodTemptations,
     NearestAdult,
     NearestAdultAnyType,
+    BreezeAttackEntity,
     ArmadilloScareDetected,
     AxolotlAttackables,
     VillagerHostiles,
@@ -66,6 +68,7 @@ impl SensorType {
             Self::NearestItems => "minecraft:nearest_items",
             Self::FoodTemptations => "minecraft:food_temptations",
             Self::NearestAdult => "minecraft:nearest_adult",
+            Self::BreezeAttackEntity => "minecraft:breeze_attack_entity_sensor",
             Self::NearestAdultAnyType => "minecraft:nearest_adult_any_type",
             Self::ArmadilloScareDetected => "minecraft:armadillo_scare_detected",
             Self::AxolotlAttackables => "minecraft:axolotl_attackables",
@@ -92,6 +95,7 @@ impl SensorType {
             | Self::NearestItems
             | Self::FoodTemptations
             | Self::NearestAdult
+            | Self::BreezeAttackEntity
             | Self::NearestAdultAnyType
             | Self::AxolotlAttackables
             | Self::HoglinSpecific
@@ -121,6 +125,7 @@ impl SensorType {
             Self::NearestItems => Box::new(nearest_items::NearestItemSensor),
             Self::FoodTemptations => Box::new(tempting::TemptingSensor),
             Self::NearestAdult => Box::new(nearest_adult::AdultSensor),
+            Self::BreezeAttackEntity => Box::new(breeze::BreezeAttackEntitySensor),
             Self::NearestAdultAnyType => Box::new(nearest_adult::AdultSensorAnyType),
             Self::ArmadilloScareDetected => Box::new(armadillo_scare::ArmadilloScareSensor),
             Self::AxolotlAttackables => Box::new(axolotl_attackables::AxolotlAttackablesSensor),

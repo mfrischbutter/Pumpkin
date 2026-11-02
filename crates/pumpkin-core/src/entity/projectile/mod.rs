@@ -263,6 +263,9 @@ impl ThrownItemEntity {
 
         // Handle hit or continue
         if let Some(h) = hit {
+            if deflected_by_target(caller, &h) {
+                return;
+            }
             if !fire_projectile_hit_event(caller, &h) {
                 return;
             }
@@ -453,4 +456,37 @@ impl ProjectileHit {
             Self::Entity { .. } => None,
         }
     }
+}
+
+/// Vanilla `Projectile.hitTargetOrDeflectSelf` with `Breeze.deflection`: what hits a mob that
+/// deflects projectiles turns around, a wind charge goes through to its target.
+pub(crate) fn deflected_by_target(projectile: &dyn EntityBase, hit: &ProjectileHit) -> bool {
+    use pumpkin_data::tag::{self, Taggable};
+    let ProjectileHit::Entity { entity: target, .. } = hit else {
+        return false;
+    };
+    let kind = projectile.get_entity().entity_type;
+    let target = target.get_entity();
+    if kind == &EntityType::WIND_CHARGE
+        || kind == &EntityType::BREEZE_WIND_CHARGE
+        || !target
+            .entity_type
+            .has_tag(&tag::EntityType::MINECRAFT_DEFLECTS_PROJECTILES)
+    {
+        return false;
+    }
+    // Vanilla `lastDeflectedBy`: once turned around it flies off through the box it is still in.
+    let projectile_entity = projectile.get_entity();
+    let to_target = target.pos.load() - projectile_entity.pos.load();
+    let velocity = projectile_entity.velocity.load();
+    if velocity.x * to_target.x + velocity.y * to_target.y + velocity.z * to_target.z <= 0.0 {
+        return true;
+    }
+    target.world.load().play_sound(
+        pumpkin_data::sound::Sound::EntityBreezeDeflect,
+        pumpkin_data::sound::SoundCategory::Hostile,
+        &target.pos.load(),
+    );
+    super::projectile_deflection::ProjectileDeflectionType::Simple.deflect(projectile, None);
+    true
 }
