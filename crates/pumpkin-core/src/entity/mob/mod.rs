@@ -641,6 +641,17 @@ impl MobEntity {
                 .swap(false, Ordering::AcqRel)
     }
 
+    /// Another mob's brain from inside this mob's tick: `None` while that brain is busy or not
+    /// built, as a blocking lock could wait for this mob's own brain.
+    pub fn try_with_brain<R>(&self, callback: impl FnOnce(&mut Brain) -> R) -> Option<R> {
+        let mut slot = match self.brain.try_lock() {
+            Ok(slot) => slot,
+            Err(std::sync::TryLockError::Poisoned(error)) => error.into_inner(),
+            Err(std::sync::TryLockError::WouldBlock) => return None,
+        };
+        slot.as_mut().map(callback)
+    }
+
     /// Accesses the species' brain, building it on first use.
     /// Neither `make_brain` nor the callback may lock this brain again; Brain callbacks use `BrainTick`.
     pub fn with_brain<R>(&self, mob: &dyn Mob, callback: impl FnOnce(&mut Brain) -> R) -> R {
@@ -1545,6 +1556,14 @@ pub trait Mob: EntityBase + Send + Sync {
 
     /// Per-mob tick hook called each tick before AI runs. Override for mob-specific logic.
     fn mob_tick(&self, _caller: &dyn EntityBase) {}
+
+    /// The species' part of vanilla `LivingEntity.die`.
+    fn mob_on_die(&self) {}
+
+    /// Vanilla `VillagerProfession.secondaryPoi`: the blocks `SecondaryPoiSensor` looks for.
+    fn mob_secondary_poi_blocks(&self) -> &'static [&'static pumpkin_data::Block] {
+        &[]
+    }
 
     fn mob_is_pushed_by_fluids(&self) -> bool {
         true

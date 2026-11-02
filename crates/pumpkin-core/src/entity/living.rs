@@ -107,6 +107,8 @@ pub struct LivingEntity {
     pub entity_equipment: Arc<std::sync::Mutex<EntityEquipment>>,
     pub equipment_drop_chances: Arc<std::sync::Mutex<FxHashMap<EquipmentSlot, f32>>>,
     pub movement_input: AtomicCell<Vector3<f64>>,
+    /// Vanilla `LivingEntity.getSleepingPos`, of mobs; players keep their own.
+    pub sleeping_pos: AtomicCell<Option<BlockPos>>,
     speed: AtomicCell<f32>,
     pub equipment_slots: Arc<FxHashMap<usize, EquipmentSlot>>,
 
@@ -370,6 +372,7 @@ impl LivingEntity {
             last_hurt_by_player_memory_time: AtomicI32::new(0),
             no_action_time: AtomicI32::new(0),
             movement_input: AtomicCell::new(Vector3::default()),
+            sleeping_pos: AtomicCell::new(None),
             speed: AtomicCell::new(0.0),
             water_movement_speed_multiplier,
             last_block_pos: AtomicCell::new(None),
@@ -2435,6 +2438,20 @@ impl LivingEntity {
     /// `Death` (3) entity event, and hand out XP. Safe to call on every lethal
     /// damage event; only the first call has an effect.
     #[allow(clippy::too_many_lines)]
+    /// Vanilla `LivingEntity.isSleeping`, of mobs.
+    #[must_use]
+    pub fn is_sleeping(&self) -> bool {
+        self.sleeping_pos.load().is_some()
+    }
+
+    /// Vanilla `LivingEntity.setSleepingPos` and `clearSleepingPos`, of mobs.
+    pub fn set_sleeping_pos(&self, pos: Option<BlockPos>) {
+        self.sleeping_pos.store(pos);
+        self.entity
+            .set_synced_data(pumpkin_data::tracked_data::villager::SLEEPING_POS_ID, pos);
+    }
+
+    #[expect(clippy::too_many_lines)]
     pub fn on_death(
         &self,
         damage_type: DamageType,
@@ -2452,6 +2469,9 @@ impl LivingEntity {
         {
             self.movement_input.store(Vector3::default());
             self.jumping.store(false, Relaxed);
+            if let Some(mob) = dyn_self.get_mob() {
+                mob.mob_on_die();
+            }
 
             // Like vanilla, stats go to the kill credit, loot and XP to the killing blow.
             let kill_credit = self.get_kill_credit();

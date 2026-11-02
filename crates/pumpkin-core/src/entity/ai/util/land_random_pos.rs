@@ -37,6 +37,49 @@ pub fn get_pos(mob: &dyn Mob, horizontal_dist: i32, vertical_dist: i32) -> Optio
     )
 }
 
+/// Vanilla `LandRandomPos.getPosAway`.
+#[must_use]
+pub fn get_pos_away(
+    mob: &dyn Mob,
+    horizontal_dist: i32,
+    vertical_dist: i32,
+    avoid_pos: Vector3<f64>,
+) -> Option<Vector3<f64>> {
+    let away = mob.get_entity().pos.load() - avoid_pos;
+    let restrict = goal_utils::mob_restricted(mob, f64::from(horizontal_dist));
+    let world = mob.get_entity().world.load_full();
+    let block_pos = mob.get_entity().block_pos.load();
+    let mut context = PathfindingContext::new(
+        Vector3::new(block_pos.0.x, block_pos.0.y, block_pos.0.z),
+        world.clone(),
+    );
+    let mut rng = mob.get_random();
+    random_pos::generate_random_pos(
+        || {
+            let direction = random_pos::generate_random_direction_within_radians(
+                &mut rng,
+                0.0,
+                f64::from(horizontal_dist),
+                vertical_dist,
+                0,
+                away.x,
+                away.z,
+                std::f64::consts::FRAC_PI_2,
+            )?;
+            let pos = toward_direction(
+                mob,
+                &world,
+                f64::from(horizontal_dist),
+                restrict,
+                direction,
+                &mut rng,
+            )?;
+            move_pos_up_out_of_solid(mob, &world, &mut context, pos)
+        },
+        |pos| f64::from(mob.get_walk_target_value(pos, world.as_ref())),
+    )
+}
+
 #[must_use]
 pub fn move_pos_up_out_of_solid(
     mob: &dyn Mob,

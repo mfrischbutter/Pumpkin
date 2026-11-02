@@ -417,6 +417,17 @@ pub trait PathNavigationTrait: Send + Sync {
         destination: Vector3<f64>,
         reach_range: i32,
     ) -> Option<Path>;
+    /// Vanilla `PathNavigation.createPath(Set, reachRange)`: a path to the best of `targets`.
+    fn create_path_to_any(
+        &mut self,
+        entity: &LivingEntity,
+        targets: &[BlockPos],
+        reach_range: i32,
+    ) -> Option<Path> {
+        targets
+            .iter()
+            .find_map(|target| self.create_path(entity, target.0.to_f64(), reach_range))
+    }
     fn recompute_path(&mut self, entity: &LivingEntity);
     fn should_recompute_path(&self, entity: &LivingEntity, position: BlockPos) -> bool;
     fn set_avoid_sun(&mut self, avoid_sun: bool);
@@ -683,6 +694,57 @@ impl PathNavigation {
         self.evaluator.done();
         if let Some(path) = &mut path {
             path.world_change = Some(world_change);
+        }
+        path
+    }
+
+    /// Vanilla `PathNavigation.createPath(Set, reachRange)`.
+    fn create_path_to_any(
+        &mut self,
+        entity: &LivingEntity,
+        targets: &[BlockPos],
+        reach_range: i32,
+    ) -> Option<Path> {
+        if targets.is_empty()
+            || entity.entity.pos.load().y < f64::from(entity.entity.world.load().get_bottom_y())
+            || !self.can_update_path(entity)
+        {
+            return None;
+        }
+        if let (Some(path), Some(target)) = (&self.path, self.target_pos)
+            && !path.is_done()
+            && targets.contains(&target)
+        {
+            return Some(path.clone());
+        }
+        let world_change = self.prepare_evaluator(entity);
+        let max_path_length = self.mob_max_follow_range(entity);
+        let finder = self.path_finder.get_or_insert_with(|| {
+            PathFinder::new(
+                (entity.get_attribute_base(&Attributes::FOLLOW_RANGE)
+                    * f64::from(MAX_VISITED_NODES_MULTIPLIER))
+                .floor() as usize,
+            )
+        });
+        if self.update_pathfinder_max_visited_nodes {
+            finder.set_max_visited_nodes(
+                (max_path_length * MAX_VISITED_NODES_MULTIPLIER).floor() as usize
+            );
+            self.update_pathfinder_max_visited_nodes = false;
+        }
+        let mut path = finder.find_path(
+            &mut self.evaluator,
+            targets,
+            max_path_length,
+            reach_range,
+            self.max_visited_nodes_multiplier,
+        );
+        self.evaluator.done();
+        if let Some(path) = &mut path {
+            path.world_change = Some(world_change);
+            self.target_pos = Some(path.get_target());
+            self.reach_range = reach_range;
+            self.reset_stuck_timeout();
         }
         path
     }
@@ -1143,6 +1205,15 @@ impl GroundPathNavigation {
 }
 
 impl PathNavigationTrait for GroundPathNavigation {
+    fn create_path_to_any(
+        &mut self,
+        entity: &LivingEntity,
+        targets: &[BlockPos],
+        reach_range: i32,
+    ) -> Option<Path> {
+        self.inner.create_path_to_any(entity, targets, reach_range)
+    }
+
     fn set_progress(&mut self, goal: NavigatorGoal) {
         self.inner.set_progress(goal);
     }

@@ -4,7 +4,7 @@ use std::ops::{Deref, DerefMut};
 use std::sync::Arc;
 
 use pumpkin_data::attributes::Attributes;
-use pumpkin_data::environment_attribute::Activity;
+use pumpkin_data::environment_attribute::{Activity, ActivityKeyframe, VillagerScheduleTimeline};
 
 use crate::entity::mob::Mob;
 use crate::world::World;
@@ -70,6 +70,8 @@ pub struct BrainState {
     core_activities: ActivitySet,
     active_activities: ActivitySet,
     default_activity: Activity,
+    schedule: Option<&'static [ActivityKeyframe]>,
+    last_schedule_update: i64,
 }
 
 impl Default for BrainState {
@@ -81,6 +83,8 @@ impl Default for BrainState {
             core_activities: ActivitySet::single(Activity::Core),
             active_activities: ActivitySet::default(),
             default_activity: Activity::Idle,
+            schedule: None,
+            last_schedule_update: -9999,
         };
         state.use_default_activity();
         state
@@ -212,6 +216,25 @@ impl BrainState {
             self.set_active_activity(activity);
         } else {
             self.use_default_activity();
+        }
+    }
+
+    /// Vanilla `Brain.setSchedule`.
+    pub const fn set_schedule(&mut self, schedule: &'static [ActivityKeyframe]) {
+        self.schedule = Some(schedule);
+    }
+
+    /// Vanilla `Brain.updateActivityFromSchedule`.
+    pub fn update_activity_from_schedule(&mut self, game_time: i64, day_time: i64) {
+        if game_time - self.last_schedule_update <= 20 {
+            return;
+        }
+        self.last_schedule_update = game_time;
+        let scheduled = self.schedule.map_or(self.default_activity, |schedule| {
+            scheduled_activity(schedule, day_time)
+        });
+        if !self.active_activities.contains(scheduled) {
+            self.set_active_activity_if_possible(scheduled);
         }
     }
 
@@ -432,6 +455,17 @@ pub struct BrainProvider {
     pub memory_types: &'static [MemoryModuleId],
     pub sensor_types: &'static [SensorType],
     pub activities: fn(&dyn Mob) -> Vec<ActivityData>,
+}
+
+/// The activity of the last keyframe at or before `day_time`, wrapping over midnight.
+fn scheduled_activity(schedule: &[ActivityKeyframe], day_time: i64) -> Activity {
+    let day_time = day_time.rem_euclid(i64::from(VillagerScheduleTimeline::PERIOD_TICKS));
+    schedule
+        .iter()
+        .rev()
+        .find(|keyframe| i64::from(keyframe.ticks) <= day_time)
+        .or_else(|| schedule.last())
+        .map_or(Activity::Idle, |keyframe| keyframe.value)
 }
 
 impl BrainProvider {

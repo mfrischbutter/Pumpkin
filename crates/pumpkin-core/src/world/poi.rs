@@ -10,12 +10,72 @@ use pumpkin_data::villager::VillagerProfession;
 use pumpkin_util::math::position::BlockPos;
 use pumpkin_util::math::vector2::Vector2;
 use pumpkin_world::chunk::palette::BlockPalette;
-use pumpkin_world::poi::{MAX_VILLAGE_DISTANCE, section_of};
+use pumpkin_world::poi::{MAX_VILLAGE_DISTANCE, Occupancy, section_of};
 
 use super::World;
 use crate::entity::EntityBase;
 
 impl World {
+    /// Vanilla `PoiManager.getInRange`: the points of interest of the accepted kinds.
+    pub fn pois_in_range(
+        &self,
+        origin: BlockPos,
+        radius: i32,
+        kind: impl Fn(&'static PoiType) -> bool,
+        occupancy: Occupancy,
+    ) -> Vec<(BlockPos, &'static PoiType)> {
+        self.portal_poi
+            .lock()
+            .unwrap_or_else(PoisonError::into_inner)
+            .in_range(origin, radius, kind, occupancy)
+    }
+
+    /// Vanilla `PoiManager.findClosest`.
+    pub fn closest_poi(
+        &self,
+        origin: BlockPos,
+        radius: i32,
+        kind: impl Fn(&'static PoiType) -> bool,
+        occupancy: Occupancy,
+    ) -> Option<BlockPos> {
+        self.portal_poi
+            .lock()
+            .unwrap_or_else(PoisonError::into_inner)
+            .find_closest(origin, radius, kind, |_| true, occupancy)
+    }
+
+    /// Vanilla `PoiManager.getType`.
+    pub fn poi_type_at(&self, position: BlockPos) -> Option<&'static PoiType> {
+        self.portal_poi
+            .lock()
+            .unwrap_or_else(PoisonError::into_inner)
+            .get_type(position)
+    }
+
+    /// Vanilla `PoiManager.take`: one ticket of the point of interest at `position`.
+    pub fn take_poi(&self, position: BlockPos) -> bool {
+        self.portal_poi
+            .lock()
+            .unwrap_or_else(PoisonError::into_inner)
+            .acquire_ticket(position)
+    }
+
+    /// Vanilla `PoiManager.release`.
+    pub fn release_poi(&self, position: BlockPos) {
+        self.portal_poi
+            .lock()
+            .unwrap_or_else(PoisonError::into_inner)
+            .release_ticket(position);
+    }
+
+    /// Vanilla `PoiManager.sectionsToVillage`.
+    pub fn sections_to_village(&self, section: (i32, i32, i32)) -> i32 {
+        self.portal_poi
+            .lock()
+            .unwrap_or_else(PoisonError::into_inner)
+            .sections_to_village(section)
+    }
+
     /// A villager takes a job site's ticket (see `VillagerPoiStorage::claim`).
     pub fn claim_job_site(
         &self,

@@ -15,6 +15,7 @@ pub mod nearest_items;
 pub mod nearest_living_entities;
 pub mod nearest_players;
 pub mod tempting;
+pub mod villager;
 
 pub use dummy::DummySensor;
 pub use hurt_by::HurtBySensor;
@@ -39,6 +40,10 @@ pub enum SensorType {
     NearestAdult,
     ArmadilloScareDetected,
     AxolotlAttackables,
+    VillagerHostiles,
+    VillagerBabies,
+    SecondaryPois,
+    GolemDetected,
 }
 
 impl SensorType {
@@ -54,6 +59,10 @@ impl SensorType {
             Self::NearestAdult => "minecraft:nearest_adult",
             Self::ArmadilloScareDetected => "minecraft:armadillo_scare_detected",
             Self::AxolotlAttackables => "minecraft:axolotl_attackables",
+            Self::VillagerHostiles => "minecraft:villager_hostiles",
+            Self::VillagerBabies => "minecraft:villager_babies",
+            Self::SecondaryPois => "minecraft:secondary_pois",
+            Self::GolemDetected => "minecraft:golem_detected",
         }
     }
 
@@ -67,7 +76,13 @@ impl SensorType {
             | Self::NearestItems
             | Self::FoodTemptations
             | Self::NearestAdult
-            | Self::AxolotlAttackables => DEFAULT_SCAN_RATE,
+            | Self::AxolotlAttackables
+            | Self::VillagerHostiles
+            | Self::VillagerBabies => DEFAULT_SCAN_RATE,
+            // Vanilla `SecondaryPoiSensor.SCAN_RATE`.
+            Self::SecondaryPois => 40,
+            // Vanilla `GolemSensor.GOLEM_SCAN_RATE`.
+            Self::GolemDetected => 200,
             // Vanilla scans for scary mobs every 5 ticks.
             Self::ArmadilloScareDetected => 5,
         }
@@ -84,6 +99,10 @@ impl SensorType {
             Self::NearestAdult => Box::new(nearest_adult::AdultSensor),
             Self::ArmadilloScareDetected => Box::new(armadillo_scare::ArmadilloScareSensor),
             Self::AxolotlAttackables => Box::new(axolotl_attackables::AxolotlAttackablesSensor),
+            Self::VillagerHostiles => Box::new(villager::VillagerHostilesSensor),
+            Self::VillagerBabies => Box::new(villager::VillagerBabiesSensor),
+            Self::SecondaryPois => Box::new(villager::SecondaryPoiSensor),
+            Self::GolemDetected => Box::new(villager::GolemSensor),
         }
     }
 

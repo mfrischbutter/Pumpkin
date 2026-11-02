@@ -2136,7 +2136,7 @@ impl Player {
     /// Find a valid spawn position around a bed.
     /// Vanilla uses a complex algorithm based on bed facing direction.
     /// We use a simplified version that tries cardinal directions first.
-    fn find_bed_spawn_position(
+    pub(crate) fn find_bed_spawn_position(
         world: &Arc<crate::world::World>,
         bed_pos: &BlockPos,
         facing: HorizontalFacing,

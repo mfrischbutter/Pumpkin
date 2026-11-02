@@ -15,6 +15,7 @@ pub mod go_to_wanted_item;
 pub mod look_at_target_sink;
 pub mod move_to_target_sink;
 pub mod one_shot;
+pub mod poi;
 pub mod random_stroll;
 pub mod set_entity_look_target_sometimes;
 pub mod set_walk_target_from_look_target;
@@ -24,6 +25,7 @@ pub mod swim;
 pub mod timed;
 pub mod try_find_liquid;
 pub mod utils;
+pub mod village;
 
 pub use animal::{AnimalMakeLove, FollowTemptation, RandomLookAround, baby_follow_adult};
 pub use animal_panic::AnimalPanic;
