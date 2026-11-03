@@ -85,6 +85,7 @@ impl BlockBehaviour for ShulkerBoxBlock {
             );
             args.player
                 .open_handled_screen(factory.as_ref(), Some(*args.position));
+            crate::entity::mob::piglin_anger::anger_nearby_piglins(args.world, args.player, true);
         }
 
         BlockActionResult::Success

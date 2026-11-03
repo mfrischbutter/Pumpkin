@@ -120,7 +120,17 @@ fn target_in_reach(tick: &BrainTick<'_>, target: &dyn EntityBase) -> bool {
     tick.state
         .get(types::NEAREST_VISIBLE_LIVING_ENTITIES)
         .is_some_and(|visible| visible.contains(target, &tick.visibility()))
-        && tick.mob.get_mob_entity().is_in_attack_range(target)
+        && tick.mob.mob_weapon_range().map_or_else(
+            || tick.mob.get_mob_entity().is_in_attack_range(target),
+            |range| {
+                target
+                    .get_entity()
+                    .pos
+                    .load()
+                    .squared_distance_to_vec(&tick.mob.get_entity().pos.load())
+                    < (range - 1.0) * (range - 1.0)
+            },
+        )
 }
 
 /// Vanilla `SetWalkTargetFromAttackTargetIfTargetOutOfReach`, for melee mobs.
@@ -180,7 +190,7 @@ pub fn melee_attack(cooldown_between_attacks: i64) -> OneShot {
             let Some(target) = tick.state.get(types::ATTACK_TARGET).cloned() else {
                 return false;
             };
-            if !target_in_reach(tick, target.as_ref()) {
+            if tick.mob.holds_non_melee_weapon() || !target_in_reach(tick, target.as_ref()) {
                 return false;
             }
             tick.state.set(

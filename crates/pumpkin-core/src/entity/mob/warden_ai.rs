@@ -16,6 +16,7 @@ use crate::entity::EntityBase;
 use crate::entity::ai::brain::BrainState;
 use crate::entity::ai::brain::BrainTick;
 use crate::entity::ai::brain::activity::ActivityData;
+use crate::entity::ai::brain::behavior::target_location::go_to_target_location;
 use crate::entity::ai::brain::behavior::timed::Behavior;
 use crate::entity::ai::brain::behavior::{
     DoNothing, LookAtTargetSink, MoveToTargetSink, OneShot, Swim, Timed, melee_attack,
@@ -25,7 +26,6 @@ use crate::entity::ai::brain::behavior::{
 use crate::entity::ai::brain::memory::position_tracker::{
     BlockPosTracker, EntityTracker, PositionTracker,
 };
-use crate::entity::ai::brain::memory::walk_target::WalkTarget;
 use crate::entity::ai::brain::memory::{MemoryModuleId, MemoryStatus, types};
 use crate::entity::mob::Mob;
 
@@ -448,46 +448,6 @@ impl Behavior for Sniffing {
     }
 }
 
-/// Vanilla `GoToTargetLocation.create(DISTURBANCE_LOCATION, 2, 0.7F)`.
-fn investigate_disturbance() -> OneShot {
-    OneShot::new(
-        "GoToTargetLocation",
-        vec![
-            (types::DISTURBANCE_LOCATION.id(), MemoryStatus::ValuePresent),
-            (types::ATTACK_TARGET.id(), MemoryStatus::ValueAbsent),
-            (types::WALK_TARGET.id(), MemoryStatus::ValueAbsent),
-            (types::LOOK_TARGET.id(), MemoryStatus::Registered),
-        ],
-        |tick| {
-            let Some(location) = tick.state.get(types::DISTURBANCE_LOCATION).copied() else {
-                return false;
-            };
-            let here = tick.mob.get_entity().block_pos.load();
-            let (dx, dy, dz) = (
-                f64::from(location.0.x - here.0.x),
-                f64::from(location.0.y - here.0.y),
-                f64::from(location.0.z - here.0.z),
-            );
-            if dx * dx + dy * dy + dz * dz >= 4.0 {
-                let nearby = pumpkin_util::math::position::BlockPos::new(
-                    location.0.x + rand::random_range(-1..=1),
-                    location.0.y,
-                    location.0.z + rand::random_range(-1..=1),
-                );
-                tick.state.set(
-                    types::LOOK_TARGET,
-                    Arc::new(BlockPosTracker::new(nearby)) as Arc<dyn PositionTracker>,
-                );
-                tick.state.set(
-                    types::WALK_TARGET,
-                    WalkTarget::from_block_pos(nearby, SPEED_WHEN_INVESTIGATING, 0),
-                );
-            }
-            true
-        },
-    )
-}
-
 /// Vanilla `SonicBoom`.
 struct SonicBoom;
 
@@ -758,7 +718,11 @@ pub(super) fn activities(_mob: &dyn Mob) -> Vec<ActivityData> {
             5,
             vec![
                 Box::new(set_roar_target()),
-                Box::new(investigate_disturbance()),
+                Box::new(go_to_target_location(
+                    types::DISTURBANCE_LOCATION,
+                    2,
+                    SPEED_WHEN_INVESTIGATING,
+                )),
             ],
             types::DISTURBANCE_LOCATION.id(),
         ),

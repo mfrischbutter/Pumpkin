@@ -24,6 +24,7 @@ pub mod set_walk_target_from_look_target;
 pub mod shuffling_list;
 pub mod stay_close_to_target;
 pub mod swim;
+pub mod target_location;
 pub mod timed;
 pub mod try_find_land;
 pub mod try_find_liquid;

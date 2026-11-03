@@ -77,7 +77,11 @@ pub mod patrol;
 pub mod phantom;
 pub mod piglin;
 pub mod piglin_ai;
+pub mod piglin_anger;
+pub mod piglin_behaviors;
+pub mod piglin_brain;
 pub mod piglin_brute;
+pub mod piglin_items;
 pub mod pillager;
 pub mod raider;
 pub mod ravager;
@@ -1756,6 +1760,16 @@ pub trait Mob: EntityBase + Send + Sync {
     }
 
     fn travel(&self, _caller: &dyn EntityBase) -> bool {
+        false
+    }
+
+    /// Vanilla `BehaviorUtils.isWithinAttackRange`'s projectile weapon range, for one in hand.
+    fn mob_weapon_range(&self) -> Option<f64> {
+        None
+    }
+
+    /// Vanilla `MeleeAttack.isHoldingUsableNonMeleeWeapon`.
+    fn holds_non_melee_weapon(&self) -> bool {
         false
     }
 

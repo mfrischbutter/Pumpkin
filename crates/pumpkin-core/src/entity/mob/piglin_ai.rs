@@ -1,6 +1,5 @@
 use std::sync::Arc;
 
-use pumpkin_data::attributes::Attributes;
 use pumpkin_data::data_component_impl::EquipmentSlot;
 use pumpkin_data::entity::EntityType;
 use pumpkin_data::item::Item;
@@ -11,8 +10,8 @@ use pumpkin_util::math::vector3::Vector3;
 
 use crate::entity::Entity;
 use crate::entity::EntityBase;
+use crate::entity::ai::brain::memory::types;
 use crate::entity::ai::random_pos::land_random_pos;
-use crate::entity::ai::target_predicate::TargetPredicate;
 use crate::entity::item::ItemEntity;
 use crate::entity::living::LivingEntity;
 use crate::entity::mob::piglin::{PiglinActivity, PiglinEntity};
@@ -21,6 +20,8 @@ use crate::entity::player::Player;
 pub struct PiglinAi;
 
 impl PiglinAi {
+    /// Vanilla `isNearAvoidTarget`.
+    pub const AVOID_NEAR_SOUND_DISTANCE: f64 = 12.0;
     pub const REPELLENT_DETECTION_RANGE_HORIZONTAL: i32 = 8;
     pub const REPELLENT_DETECTION_RANGE_VERTICAL: i32 = 4;
     pub const BARTERING_ITEM: &'static Item = &Item::GOLD_INGOT;
@@ -57,6 +58,16 @@ impl PiglinAi {
     }
 
     #[must_use]
+    pub fn item_entity_is_loved(item: &ItemEntity) -> bool {
+        Self::is_loved_item(
+            &item
+                .get_item_stack()
+                .lock()
+                .unwrap_or_else(std::sync::PoisonError::into_inner),
+        )
+    }
+
+    #[must_use]
     pub fn is_food(item_stack: &ItemStack) -> bool {
         item_stack.item.has_tag(&tag::Item::MINECRAFT_PIGLIN_FOOD)
     }
@@ -88,8 +99,7 @@ impl PiglinAi {
         ] {
             if let Some(stack) = guard.equipment.get(&slot)
                 && !stack.is_empty()
-                && (stack.item.has_tag(&tag::Item::MINECRAFT_PIGLIN_SAFE_ARMOR)
-                    || stack.item.has_tag(&tag::Item::MINECRAFT_PIGLIN_LOVED))
+                && stack.item.has_tag(&tag::Item::MINECRAFT_PIGLIN_SAFE_ARMOR)
             {
                 return true;
             }
@@ -217,7 +227,11 @@ impl PiglinAi {
     }
 
     #[must_use]
-    pub fn get_sound_for_activity(piglin: &PiglinEntity, activity: PiglinActivity) -> Sound {
+    pub fn get_sound_for_activity(
+        piglin: &PiglinEntity,
+        activity: PiglinActivity,
+        brain: &crate::entity::ai::brain::BrainState,
+    ) -> Sound {
         if activity == PiglinActivity::Fight {
             return Sound::EntityPiglinAngry;
         }
@@ -228,44 +242,30 @@ impl PiglinAi {
         match activity {
             PiglinActivity::AdmireItem => Sound::EntityPiglinAdmiringItem,
             PiglinActivity::Celebrate => Sound::EntityPiglinCelebrate,
-            _ if Self::sees_player_holding_loved_item(piglin) => Sound::EntityPiglinJealous,
-            _ if piglin.is_near_repellent() => Sound::EntityPiglinRetreat,
+            PiglinActivity::Avoid
+                if brain.get(types::AVOID_TARGET).is_some_and(|avoid| {
+                    avoid
+                        .get_entity()
+                        .pos
+                        .load()
+                        .squared_distance_to_vec(&piglin.get_entity().pos.load())
+                        <= Self::AVOID_NEAR_SOUND_DISTANCE * Self::AVOID_NEAR_SOUND_DISTANCE
+                }) =>
+            {
+                Sound::EntityPiglinRetreat
+            }
+            _ if brain.has_memory_value(types::NEAREST_PLAYER_HOLDING_WANTED_ITEM.id()) => {
+                Sound::EntityPiglinJealous
+            }
+            _ if brain.has_memory_value(types::NEAREST_REPELLENT.id()) => {
+                Sound::EntityPiglinRetreat
+            }
             _ => Sound::EntityPiglinAmbient,
         }
     }
 
-    fn sees_player_holding_loved_item(piglin: &PiglinEntity) -> bool {
-        piglin
-            .nearest_visible_player()
-            .is_some_and(|player| Self::is_player_holding_loved_item(&player))
-    }
-
-    /// Vanilla `Sensor.isEntityTargetable`: non-combat test within the follow range,
-    /// unscaled by sneaking and invisibility for the current attack target.
-    #[must_use]
-    pub fn is_entity_targetable(piglin: &PiglinEntity, target: &Player) -> bool {
-        let living = &piglin.mob_entity.living_entity;
-        let target_id = target.get_entity().entity_id;
-        let is_attack_target = piglin
-            .mob_entity
-            .target
-            .lock()
-            .unwrap_or_else(std::sync::PoisonError::into_inner)
-            .as_ref()
-            .is_some_and(|current| current.get_entity().entity_id == target_id);
-        let conditions = TargetPredicate::create_non_attackable()
-            .set_base_max_distance(living.get_attribute_value(&Attributes::FOLLOW_RANGE));
-        let conditions = if is_attack_target {
-            conditions.ignore_distance_scaling_factor()
-        } else {
-            conditions
-        };
-        let world = living.entity.world.load();
-        conditions.test(&world, Some(piglin), target)
-    }
-
-    pub fn throw_items(piglin: &PiglinEntity, items: Vec<ItemStack>) {
-        match piglin.nearest_visible_player() {
+    pub fn throw_items(piglin: &PiglinEntity, items: Vec<ItemStack>, player: Option<Arc<Player>>) {
+        match player {
             Some(player) => {
                 Self::throw_items_toward_pos(piglin, items, player.get_entity().pos.load());
             }

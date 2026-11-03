@@ -1,31 +1,51 @@
 use std::sync::{
-    Arc, Weak,
+    Arc,
     atomic::{AtomicBool, AtomicI32, Ordering},
 };
+
+use std::sync::Mutex;
 
 use pumpkin_data::Block;
 use pumpkin_data::BlockState;
 use pumpkin_data::entity::EntityType;
+use pumpkin_data::environment_attribute::Activity;
 use pumpkin_data::sound::{Sound, SoundCategory};
 use pumpkin_data::tracked_data;
 use pumpkin_nbt::compound::NbtCompound;
 use pumpkin_util::math::position::BlockPos;
 
-use crate::entity::ai::target_match::TargetMatch;
+use crate::entity::ai::brain::behavior::poi::global_pos;
+use crate::entity::ai::brain::memory::{MemoryModuleId, PackedMemories, types};
+use crate::entity::ai::brain::sensing::SensorType;
+use crate::entity::ai::brain::{Brain, BrainProvider};
+use crate::entity::mob::piglin_anger::{self, AbstractPiglin, QueuedChange};
+use crate::entity::mob::piglin_brain;
+use crate::entity::mob::spawn::SpawnGroupData;
 use crate::entity::{
     Entity, EntityBase,
-    ai::goal::{
-        active_target::ActiveTargetGoal, look_around::RandomLookAroundGoal,
-        look_at_entity::LookAtEntityGoal, melee_attack::MeleeAttackGoal, open_door::OpenDoorGoal,
-        revenge::RevengeGoal, swim::SwimGoal, wander_around::WanderAroundGoal,
-    },
+    ai::goal::open_door::OpenDoorGoal,
     mob::{Mob, MobEntity},
 };
 use crate::world::World;
 use crate::world::level_accessor::LevelAccessor;
 
+const MEMORIES: [MemoryModuleId; 9] = [
+    types::NEAREST_VISIBLE_ADULT_PIGLINS.id(),
+    types::NEARBY_ADULT_PIGLINS.id(),
+    types::NEAREST_VISIBLE_NEMESIS.id(),
+    types::ANGRY_AT.id(),
+    types::ATTACK_TARGET.id(),
+    types::ATTACK_COOLING_DOWN.id(),
+    types::CANT_REACH_WALK_TARGET_SINCE.id(),
+    types::HOME.id(),
+    types::UNIVERSAL_ANGER.id(),
+];
+/// Vanilla `PiglinBruteAi.ACTIVITY_SOUND_LIKELIHOOD_PER_TICK`.
+const ACTIVITY_SOUND_LIKELIHOOD_PER_TICK: f32 = 0.0125;
+
 pub struct PiglinBruteEntity {
     pub mob_entity: MobEntity,
+    queued: Mutex<Vec<QueuedChange>>,
     pub immune_to_zombification: AtomicBool,
     pub time_in_overworld: AtomicI32,
 }
@@ -38,38 +58,16 @@ impl PiglinBruteEntity {
         let mob_entity = MobEntity::new(entity);
         let piglin = Self {
             mob_entity,
+            queued: Mutex::new(Vec::new()),
             immune_to_zombification: AtomicBool::new(false),
             time_in_overworld: AtomicI32::new(0),
         };
         let mob_arc = Arc::new(piglin);
-        let mob_weak: Weak<dyn Mob> = {
-            let mob_arc: Arc<dyn Mob> = mob_arc.clone();
-            Arc::downgrade(&mob_arc)
-        };
-
         {
             let goal_selector = &mob_arc.mob_entity.goals_selector;
 
-            goal_selector.add_goal(0, Box::new(SwimGoal::default()));
-            goal_selector.add_goal(1, Box::new(OpenDoorGoal::new(true)));
-            goal_selector.add_goal(2, Box::new(MeleeAttackGoal::new(1.0, true)));
-            goal_selector.add_goal(5, Box::new(WanderAroundGoal::new(1.0)));
-            goal_selector.add_goal(
-                6,
-                LookAtEntityGoal::with_default(mob_weak.clone(), &EntityType::PLAYER, 8.0),
-            );
-            goal_selector.add_goal(7, Box::new(RandomLookAroundGoal::default()));
-
-            let target_selector = &mob_arc.mob_entity.target_selector;
-            target_selector.add_goal(1, Box::new(RevengeGoal::new(true)));
-            target_selector.add_goal(
-                2,
-                ActiveTargetGoal::with_default(&mob_arc.mob_entity, &EntityType::PLAYER, true),
-            );
-            target_selector.add_goal(
-                3,
-                ActiveTargetGoal::with_default(&mob_arc.mob_entity, TargetMatch::WITHER_LIKE, true),
-            );
+            // Vanilla `InteractWithDoor`, until the brain opens doors itself.
+            goal_selector.add_goal(0, Box::new(OpenDoorGoal::new(true)));
         };
 
         mob_arc
@@ -140,6 +138,76 @@ impl PiglinBruteEntity {
 }
 
 impl Mob for PiglinBruteEntity {
+    /// Vanilla `PiglinBrute.makeBrain`.
+    fn make_brain(&self, packed: &PackedMemories) -> Brain {
+        BrainProvider {
+            memory_types: &MEMORIES,
+            sensor_types: &[
+                SensorType::NearestLivingEntities,
+                SensorType::NearestPlayers,
+                SensorType::NearestItems,
+                SensorType::HurtBy,
+                SensorType::PiglinBruteSpecific,
+            ],
+            activities: piglin_brain::brute_activities,
+        }
+        .make_brain(self, packed)
+    }
+
+    /// Vanilla `PiglinBrute.customServerAiStep` and `PiglinBruteAi.updateActivity`.
+    fn custom_server_ai_step(&self, _caller: &dyn EntityBase) {
+        self.mob_entity.tick_brain(self);
+        let (target, fighting, switched) = self.mob_entity.with_brain(self, |brain| {
+            let old = brain.get_active_non_core_activity();
+            piglin_brain::brute_update_activity(brain);
+            let new = brain.get_active_non_core_activity();
+            (
+                brain.get(types::ATTACK_TARGET).cloned(),
+                new == Some(Activity::Fight),
+                old != new,
+            )
+        });
+        self.mob_entity.set_attacking(target.is_some());
+        // Vanilla `getTarget` reads the brain.
+        self.mob_entity.set_target(target);
+        if fighting && (switched || rand::random::<f32>() < ACTIVITY_SOUND_LIKELIHOOD_PER_TICK) {
+            self.play_entity_sound(Sound::EntityPiglinBruteAngry, 1.0, 1.0);
+        }
+    }
+
+    /// Vanilla `PiglinBrute.finalizeSpawn`: where it was put is home.
+    fn finalize_spawn(
+        &self,
+        world: &Arc<World>,
+        group_data: Option<SpawnGroupData>,
+    ) -> Option<SpawnGroupData> {
+        let home = global_pos(world, self.get_entity().block_pos.load());
+        self.mob_entity.with_brain(self, |brain| {
+            brain.set(types::HOME, home);
+        });
+        self.finalize_spawn_super(group_data)
+    }
+
+    fn after_hurt(
+        &self,
+        _damage_type: pumpkin_data::damage::DamageType,
+        source: Option<&dyn EntityBase>,
+        cause: Option<&dyn EntityBase>,
+    ) {
+        let Some(id) = cause.or(source).map(|by| by.get_entity().entity_id) else {
+            return;
+        };
+        self.queue(Box::new(move |tick| {
+            if let Some(attacker) = tick
+                .world
+                .get_entity_by_id(id)
+                .filter(|attacker| attacker.get_living_entity().is_some())
+            {
+                piglin_anger::brute_was_hurt_by(tick, &attacker);
+            }
+        }));
+    }
+
     /// Vanilla `PiglinBrute.getAmbientSound`.
     fn get_ambient_sound(&self) -> Option<pumpkin_data::sound::Sound> {
         Some(pumpkin_data::sound::Sound::EntityPiglinBruteAmbient)
@@ -175,6 +243,9 @@ impl Mob for PiglinBruteEntity {
     }
 
     fn mob_read_nbt(&self, nbt: &NbtCompound) {
+        // Vanilla `AbstractPiglin.readAdditionalSaveData`: they do unless told otherwise.
+        self.mob_entity
+            .set_can_pick_up_loot(nbt.get_bool("CanPickUpLoot").unwrap_or(true));
         if let Some(immune) = nbt.get_bool("IsImmuneToZombification") {
             self.set_immune_to_zombification(immune);
         }
@@ -202,5 +273,23 @@ impl Mob for PiglinBruteEntity {
 
     fn get_base_experience_reward(&self) -> u32 {
         Self::XP_REWARD
+    }
+}
+
+impl AbstractPiglin for PiglinBruteEntity {
+    fn can_hunt(&self) -> bool {
+        false
+    }
+
+    fn is_adult(&self) -> bool {
+        true
+    }
+
+    fn queued_changes(&self) -> &Mutex<Vec<QueuedChange>> {
+        &self.queued
+    }
+
+    fn hunted_recently(&self) -> bool {
+        false
     }
 }

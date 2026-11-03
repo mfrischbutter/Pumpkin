@@ -5034,6 +5034,14 @@ impl World {
         self.entity_index
             .by_uuid(&self.entities.load_full(), id)
             .inspect(|entity| entity_islands::check_reached(entity.get_entity().entity_id))
+            // Vanilla `Level.getEntity` finds players as well.
+            .or_else(|| {
+                self.players
+                    .load()
+                    .iter()
+                    .find(|player| player.gameprofile.id == id)
+                    .map(|player| player.clone() as Arc<dyn EntityBase>)
+            })
     }
 
     /// Gets a list of players whose location equals the given position in the world.
@@ -6013,6 +6021,18 @@ impl World {
         );
     }
 
+    /// Vanilla `Block.playerWillDestroy`: gold they guard is not to be touched.
+    fn anger_piglins_guarding(&self, position: &BlockPos, cause: Option<&Arc<Player>>) {
+        if let Some(player) = cause
+            && pumpkin_data::tag::Taggable::has_tag(
+                self.get_block(position),
+                &pumpkin_data::tag::Block::MINECRAFT_GUARDED_BY_PIGLINS,
+            )
+        {
+            crate::entity::mob::piglin_anger::anger_nearby_piglins(self, player, false);
+        }
+    }
+
     pub fn break_block(
         self: &Arc<Self>,
         position: &BlockPos,
@@ -6029,6 +6049,7 @@ impl World {
             ));
             return None;
         }
+        self.anger_piglins_guarding(position, cause);
 
         let (broken_block, broken_block_state) = self.get_block_and_state(position);
         if broken_block_state.is_air() {

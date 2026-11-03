@@ -17,6 +17,7 @@ pub mod nearest_adult;
 pub mod nearest_items;
 pub mod nearest_living_entities;
 pub mod nearest_players;
+pub mod piglin;
 pub mod tempting;
 pub mod villager;
 pub mod warden;
@@ -44,6 +45,8 @@ pub enum SensorType {
     NearestAdult,
     NearestAdultAnyType,
     BreezeAttackEntity,
+    PiglinSpecific,
+    PiglinBruteSpecific,
     WardenEntity,
     ArmadilloScareDetected,
     AxolotlAttackables,
@@ -71,6 +74,8 @@ impl SensorType {
             Self::FoodTemptations => "minecraft:food_temptations",
             Self::NearestAdult => "minecraft:nearest_adult",
             Self::BreezeAttackEntity => "minecraft:breeze_attack_entity_sensor",
+            Self::PiglinSpecific => "minecraft:piglin_specific_sensor",
+            Self::PiglinBruteSpecific => "minecraft:piglin_brute_specific_sensor",
             Self::WardenEntity => "minecraft:warden_entity_sensor",
             Self::NearestAdultAnyType => "minecraft:nearest_adult_any_type",
             Self::ArmadilloScareDetected => "minecraft:armadillo_scare_detected",
@@ -99,6 +104,8 @@ impl SensorType {
             | Self::FoodTemptations
             | Self::NearestAdult
             | Self::BreezeAttackEntity
+            | Self::PiglinSpecific
+            | Self::PiglinBruteSpecific
             | Self::WardenEntity
             | Self::NearestAdultAnyType
             | Self::AxolotlAttackables
@@ -130,6 +137,8 @@ impl SensorType {
             Self::FoodTemptations => Box::new(tempting::TemptingSensor),
             Self::NearestAdult => Box::new(nearest_adult::AdultSensor),
             Self::BreezeAttackEntity => Box::new(breeze::BreezeAttackEntitySensor),
+            Self::PiglinSpecific => Box::new(piglin::PiglinSpecificSensor),
+            Self::PiglinBruteSpecific => Box::new(piglin::PiglinBruteSpecificSensor),
             Self::WardenEntity => Box::new(warden::WardenEntitySensor),
             Self::NearestAdultAnyType => Box::new(nearest_adult::AdultSensorAnyType),
             Self::ArmadilloScareDetected => Box::new(armadillo_scare::ArmadilloScareSensor),
