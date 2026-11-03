@@ -111,7 +111,7 @@ fn clamped_pack_difference(from: &BlockPos, to: &BlockPos, radius: i32) -> i32 {
 }
 
 /// Vanilla `BlockState.CODEC`: the block id for a default state, else the id and its properties.
-fn block_state_to_nbt(state_id: BlockStateId) -> NbtTag {
+pub(crate) fn block_state_to_nbt(state_id: BlockStateId) -> NbtTag {
     let block = Block::from_state_id(state_id);
     let id = format!("minecraft:{}", block.name);
     if state_id == block.default_state.id {
@@ -126,7 +126,7 @@ fn block_state_to_nbt(state_id: BlockStateId) -> NbtTag {
 }
 
 /// Reads [`block_state_to_nbt`], and the raw state id Pumpkin saved before.
-fn block_state_from_nbt(tag: &NbtTag) -> Option<BlockStateId> {
+pub(crate) fn block_state_from_nbt(tag: &NbtTag) -> Option<BlockStateId> {
     match tag {
         NbtTag::String(id) => Block::from_name(id).map(|block| block.default_state.id),
         NbtTag::Compound(compound) => {

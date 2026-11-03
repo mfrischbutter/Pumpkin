@@ -370,8 +370,8 @@ impl MobSpawnerBlockEntity {
     }
 
     /// Vanilla `BaseSpawner.delay`: the next delay, the next spawn data from the potentials,
-    /// and the block event clients animate on.
-    fn delay(&self, world: &World) {
+    /// and the event clients animate on.
+    fn delay(&self, broadcast_event: &dyn Fn(u8)) {
         let delay = if self.max_spawn_delay <= self.min_spawn_delay {
             self.min_spawn_delay
         } else {
@@ -385,11 +385,11 @@ impl MobSpawnerBlockEntity {
                 .lock()
                 .unwrap_or_else(PoisonError::into_inner) = Some(data);
         }
-        world.add_synced_block_event(self.position, EVENT_SPAWN, 0);
+        broadcast_event(EVENT_SPAWN);
     }
 
     /// The spawn attempts of vanilla `serverTick` once the delay ran out.
-    fn spawn_round(&self, world: &Arc<World>) {
+    fn spawn_round(&self, world: &Arc<World>, broadcast_event: &dyn Fn(u8)) {
         let data = self.get_or_create_next_spawn_data();
         let mut delay = false;
         for _ in 0..self.spawn_count {
@@ -397,14 +397,30 @@ impl MobSpawnerBlockEntity {
                 Attempt::Spawned => delay = true,
                 Attempt::Skipped => {}
                 Attempt::Reset => {
-                    self.delay(world);
+                    self.delay(broadcast_event);
                     return;
                 }
             }
         }
         if delay {
-            self.delay(world);
+            self.delay(broadcast_event);
         }
+    }
+
+    /// Vanilla `BaseSpawner.serverTick`. `broadcast_event` is vanilla's `broadcastEvent`: a block
+    /// event for the block, an entity event for the spawner minecart.
+    pub(crate) fn server_tick(&self, world: &Arc<World>, broadcast_event: &dyn Fn(u8)) {
+        if !self.is_near_player(world) || !world.level_info.load().game_rules.spawner_blocks_work {
+            return;
+        }
+        if self.spawn_delay.load(Ordering::Relaxed) == -1 {
+            self.delay(broadcast_event);
+        }
+        if self.spawn_delay.load(Ordering::Relaxed) > 0 {
+            self.spawn_delay.fetch_sub(1, Ordering::Relaxed);
+            return;
+        }
+        self.spawn_round(world, broadcast_event);
     }
 
     /// Vanilla's random spot: within the spawn range sideways, one block up or down.
@@ -610,19 +626,10 @@ impl BlockEntity for MobSpawnerBlockEntity {
         self.position
     }
 
-    /// Vanilla `BaseSpawner.serverTick`.
     fn tick(&self, world: &Arc<World>) {
-        if !self.is_near_player(world) || !world.level_info.load().game_rules.spawner_blocks_work {
-            return;
-        }
-        if self.spawn_delay.load(Ordering::Relaxed) == -1 {
-            self.delay(world);
-        }
-        if self.spawn_delay.load(Ordering::Relaxed) > 0 {
-            self.spawn_delay.fetch_sub(1, Ordering::Relaxed);
-            return;
-        }
-        self.spawn_round(world);
+        self.server_tick(world, &|id: u8| {
+            world.add_synced_block_event(self.position, id, 0);
+        });
     }
 
     fn from_nbt(nbt: &NbtCompound, position: BlockPos) -> Self

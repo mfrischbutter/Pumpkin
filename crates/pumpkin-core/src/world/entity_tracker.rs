@@ -21,9 +21,9 @@ use pumpkin_protocol::codec::var_int::VarInt;
 use pumpkin_protocol::codec::var_long::VarLong;
 use pumpkin_protocol::codec::var_ulong::VarULong;
 use pumpkin_protocol::java::client::play::{
-    CEntityPositionSync, CEntityVelocity, CHeadRot, CRemoveEntities, CSetEntityMetadata,
-    CSetEquipment, CSetPassengers, CUpdateEntityPos, CUpdateEntityPosRot, CUpdateEntityRot,
-    Metadata,
+    CEntityPositionSync, CEntityVelocity, CHeadRot, CMoveMinecartAlongTrack, CRemoveEntities,
+    CSetEntityMetadata, CSetEquipment, CSetPassengers, CUpdateEntityPos, CUpdateEntityPosRot,
+    CUpdateEntityRot, Metadata, MinecartStep,
 };
 use pumpkin_protocol::{BClientPacket, ClientPacket};
 use pumpkin_util::GameMode;
@@ -34,6 +34,7 @@ use rustc_hash::FxHashSet;
 use uuid::Uuid;
 
 use crate::entity::player::Player;
+use crate::entity::vehicle::minecart::MinecartEntity;
 use crate::entity::{Entity, EntityBase};
 use crate::net::ClientPlatform;
 use crate::net::java::JavaClient;
@@ -193,6 +194,15 @@ impl TrackedEntity {
                 entity.last_sent_pos.store(entity.pos.load());
                 entity.send_dirty_entity_data();
                 self.was_riding.store(true, Relaxed);
+            } else if let Some(minecart) = self
+                .entity
+                .cast_any()
+                .downcast_ref::<MinecartEntity>()
+                .filter(|minecart| minecart.uses_new_behavior())
+            {
+                self.handle_minecart_pos_rot(entity, minecart, tick, rot_changed, world);
+                entity.last_sent_yaw.store(yaw, Relaxed);
+                entity.last_sent_pitch.store(pitch, Relaxed);
             } else {
                 let pos = entity.pos.load();
                 let sync = self.pick_move(entity, pos, tick, rot_changed);
@@ -223,6 +233,42 @@ impl TrackedEntity {
             self.send_to_tracking_players(&CHeadRot::new(VarInt(self.entity_id), head_yaw), world);
             entity.last_sent_head_yaw.store(head_yaw, Relaxed);
         }
+    }
+
+    /// Vanilla `ServerEntity.handleMinecartPosRot`: a cart with the new behaviour moves by steps.
+    fn handle_minecart_pos_rot(
+        &self,
+        entity: &Entity,
+        minecart: &MinecartEntity,
+        tick: u32,
+        rot_changed: bool,
+        world: &World,
+    ) {
+        entity.send_dirty_entity_data();
+        let pos = entity.pos.load();
+        let movement = entity.velocity.load();
+        let mut steps = minecart.take_lerp_steps();
+        if steps.is_empty() {
+            let position_changed = (pos - entity.last_sent_pos.load()).length_squared()
+                >= f64::from(7.629_394_5e-6f32);
+            let diff = (movement - entity.last_sent_velocity.load()).length_squared();
+            if position_changed || tick.is_multiple_of(60) || rot_changed || diff > 1.0e-7 {
+                steps.push(MinecartStep {
+                    position: pos,
+                    movement,
+                    yaw: entity.yaw.load(),
+                    pitch: entity.pitch.load(),
+                    weight: 1.0,
+                });
+            }
+        }
+        if !steps.is_empty() {
+            self.send_to_tracking_players(
+                &CMoveMinecartAlongTrack::new(VarInt(self.entity_id), &steps),
+                world,
+            );
+        }
+        entity.last_sent_pos.store(pos);
     }
 
     fn pick_move(

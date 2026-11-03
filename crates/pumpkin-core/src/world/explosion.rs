@@ -13,7 +13,7 @@ use rustc_hash::FxHashMap;
 
 use crate::{
     block::{ExplodeArgs, drop_loot},
-    entity::{Entity, EntityBase},
+    entity::{Entity, EntityBase, vehicle::minecart::MinecartEntity},
     plugin::api::events::{
         block::block_explode::BlockExplodeEvent, entity::entity_explode::EntityExplodeEvent,
     },
@@ -430,8 +430,16 @@ impl Explosion {
             None => &default_calc,
         };
 
+        let source_entity = self
+            .source_entity_id
+            .and_then(|id| world.get_entity_by_id(id));
         for entity_base in entities {
-            if entity_base.is_immune_to_explosion() {
+            if entity_base.is_immune_to_explosion()
+                || entity_base
+                    .cast_any()
+                    .downcast_ref::<MinecartEntity>()
+                    .is_some_and(|minecart| minecart.ignores_explosion(source_entity.as_deref()))
+            {
                 continue;
             }
 

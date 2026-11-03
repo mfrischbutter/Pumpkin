@@ -728,7 +728,7 @@ impl DispenserBlock {
         };
 
         let entity_type = MinecartItem::item_to_entity(item.item);
-        let _ = item.split(1);
+        let dispensed = item.split(1);
 
         let normal = to_normal(ctx.facing);
         let center = ctx.position.to_centered_f64();
@@ -738,9 +738,9 @@ impl DispenserBlock {
             normal.z.mul_add(1.125, center.z),
         );
 
-        let entity = Entity::new(ctx.world.clone(), spawn_pos, entity_type);
-        ctx.world
-            .spawn_entity(Arc::new(MinecartEntity::new(entity)));
+        let minecart = MinecartEntity::new(Entity::new(ctx.world.clone(), spawn_pos, entity_type));
+        minecart.apply_item_stack(&dispensed);
+        ctx.world.spawn_entity(Arc::new(minecart));
 
         ctx.world
             .sync_world_event(WorldEvent::SoundDispenserDispense, *ctx.position, 0);

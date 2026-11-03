@@ -277,7 +277,8 @@ pub enum EntityReach {
 pub(crate) enum BlockWriteCheck {
     Unconditional,
     Contact,
-    DetectorRail(BlockPos),
+    /// Like `Contact`, on this area instead of the entity's whole reach.
+    ContactIn(BoundingBox),
 }
 
 impl EntityReach {
@@ -300,9 +301,10 @@ impl EntityReach {
                 }) {
                     return BlockWriteCheck::Unconditional;
                 }
-                // Chest carts only activate the rail inspected before movement. Their tick
-                // does not run Entity's general contact callbacks.
-                BlockWriteCheck::DetectorRail(BlockPos::floored_v(base.pos.load()))
+                // A chest cart changes blocks only through contact callbacks on what it touches
+                // this tick, like a detector rail it rolls over.
+                let reach = base.velocity.load().length() + 1.0;
+                BlockWriteCheck::ContactIn(base.bounding_box.load().expand(reach, reach, reach))
             }
             _ => BlockWriteCheck::Unconditional,
         }
@@ -341,7 +343,13 @@ impl EntityReach {
             || entity
                 .cast_any()
                 .downcast_ref::<TNTEntity>()
-                .is_some_and(TNTEntity::is_about_to_explode);
+                .is_some_and(TNTEntity::is_about_to_explode)
+            || entity
+                .cast_any()
+                .downcast_ref::<crate::entity::vehicle::minecart::MinecartEntity>()
+                .is_some_and(
+                    crate::entity::vehicle::minecart::MinecartEntity::has_global_tick_reach,
+                );
         Self::Conservative(reach)
     }
 }
@@ -489,30 +497,19 @@ pub(crate) fn prune_block_writes(
         if !active[slot] {
             continue;
         }
-        let contact = match checks[slot] {
+        let area = match checks[slot] {
             BlockWriteCheck::Unconditional => continue,
-            BlockWriteCheck::Contact => {
-                let area = reach.body.expand_towards(0.0, -1.0, 0.0);
-                let contact = BoundingBox::new(
-                    area.min_block_pos().0.to_f64(),
-                    area.max_block_pos().0.to_f64() + Vector3::new(1.0, 1.0, 1.0),
-                );
-                if contact_may_change_blocks(world, &contact, &mut sections) {
-                    continue;
-                }
-                contact
-            }
-            BlockWriteCheck::DetectorRail(pos) => {
-                if !world.level.is_chunk_loaded(&pos.chunk_position())
-                    || [pos, pos.down()]
-                        .iter()
-                        .any(|pos| world.get_block(pos).id == Block::DETECTOR_RAIL.id)
-                {
-                    continue;
-                }
-                BoundingBox::from_block(&pos).expand_towards(0.0, -1.0, 0.0)
-            }
-        };
+            BlockWriteCheck::Contact => reach.body,
+            BlockWriteCheck::ContactIn(area) => area,
+        }
+        .expand_towards(0.0, -1.0, 0.0);
+        let contact = BoundingBox::new(
+            area.min_block_pos().0.to_f64(),
+            area.max_block_pos().0.to_f64() + Vector3::new(1.0, 1.0, 1.0),
+        );
+        if contact_may_change_blocks(world, &contact, &mut sections) {
+            continue;
+        }
         active[slot] = false;
         contacts.insert(candidates.len(), contact, &mut budget)?;
         candidates.push(slot);

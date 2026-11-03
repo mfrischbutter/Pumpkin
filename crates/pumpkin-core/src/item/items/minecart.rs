@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
 use crate::block::registry::BlockActionResult;
-use crate::entity::Entity;
+use crate::entity::{Entity, EntityBase};
 use crate::entity::player::Player;
 use crate::entity::vehicle::minecart::MinecartEntity;
 use crate::item::{ItemBehaviour, ItemMetadata};
@@ -87,6 +87,16 @@ impl ItemBehaviour for MinecartItem {
             entity_type,
         );
         let minecart_entity = Arc::new(MinecartEntity::new(entity));
+        minecart_entity.apply_item_stack(item);
+        // Vanilla `MinecartItem.useOn`: the new behaviour keeps carts from stacking when placed.
+        if minecart_entity.uses_new_behavior()
+            && world
+                .get_entities_at_box(&minecart_entity.get_entity().bounding_box.load())
+                .iter()
+                .any(|other| other.cast_any().is::<MinecartEntity>())
+        {
+            return BlockActionResult::Fail;
+        }
         world.spawn_entity(minecart_entity);
         world.emit_game_event(GameEvent::EntityPlace.name(), pos);
         item.decrement_unless_creative(player.gamemode.load(), 1);

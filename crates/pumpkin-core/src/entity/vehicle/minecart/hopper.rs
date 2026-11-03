@@ -1,9 +1,15 @@
+//! Vanilla `MinecartHopper`, with the parts of `HopperBlockEntity` it runs as a `Hopper`.
+
 use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, Ordering};
 
-use crate::block::entities::hopper::HopperBlockEntity;
+use crate::block::entities::hopper::{HopperBlockEntity, entity_container_at};
+use crate::entity::item::ItemEntity;
 use crate::entity::{Entity, player::Player};
+use crate::world::World;
+use pumpkin_data::item_stack::ItemStack;
 use pumpkin_data::translation;
+use pumpkin_inventory::Inventory;
 use pumpkin_nbt::compound::NbtCompound;
 use pumpkin_util::math::boundingbox::BoundingBox;
 use pumpkin_util::math::position::BlockPos;
@@ -15,6 +21,7 @@ use super::container::{self, MinecartInventory};
 #[derive(Clone)]
 pub(super) struct HopperMinecart {
     enabled: Arc<AtomicBool>,
+    consumed_item_this_frame: Arc<AtomicBool>,
     inventory: Arc<MinecartInventory>,
 }
 
@@ -22,6 +29,7 @@ impl HopperMinecart {
     pub(super) fn new() -> Self {
         Self {
             enabled: Arc::new(AtomicBool::new(true)),
+            consumed_item_this_frame: Arc::new(AtomicBool::new(false)),
             inventory: Arc::new(MinecartInventory::new(5)),
         }
     }
@@ -30,91 +38,119 @@ impl HopperMinecart {
         &self.inventory
     }
 
-    pub(super) fn set_enabled(&self, enabled: bool) {
-        self.enabled.store(enabled, Ordering::Relaxed);
+    /// Vanilla `MinecartHopper.activateMinecart`.
+    pub(super) fn activate(&self, powered: bool) {
+        self.enabled.store(!powered, Ordering::Relaxed);
     }
 
-    pub(super) fn tick(&self, entity: &Entity) {
-        if !self.enabled.load(Ordering::Relaxed) {
-            return;
-        }
+    /// The start of vanilla `MinecartHopper.tick`.
+    pub(super) fn begin_tick(&self) {
+        self.consumed_item_this_frame
+            .store(false, Ordering::Relaxed);
+    }
 
+    /// Vanilla `MinecartHopper.tryConsumeItems`.
+    pub(super) fn try_consume_items(&self, entity: &Entity) {
+        if entity.is_alive()
+            && self.enabled.load(Ordering::Relaxed)
+            && !self.consumed_item_this_frame.load(Ordering::Relaxed)
+            && self.suck_in_items(entity)
+        {
+            self.consumed_item_this_frame.store(true, Ordering::Relaxed);
+        }
+    }
+
+    /// Vanilla `MinecartHopper.suckInItems`.
+    fn suck_in_items(&self, entity: &Entity) -> bool {
         let world = entity.world.load();
         let pos = entity.pos.load();
-        let source_pos = BlockPos::floored(pos.x, pos.y + 1.5, pos.z);
-        let inventory = &self.inventory;
-        let cart_box = entity.bounding_box.load().expand(0.25, 0.0, 0.25);
-
-        if let Some(block_entity) = world.get_block_entity(&source_pos)
-            && let Some(source) = block_entity.get_inventory()
-        {
-            for slot in 0..source.size() {
-                let stack = source.get_stack(slot);
-                if stack.is_empty() || !source.can_transfer_to(inventory.as_ref(), slot, &stack) {
-                    continue;
-                }
-                let backup = stack.clone();
-                let one = source.remove_stack_specific(slot, 1);
-                if HopperBlockEntity::add_one_item(source.as_ref(), inventory.as_ref(), &one) {
-                    return;
-                }
-                source.set_stack(slot, backup);
-            }
-            return;
+        // Vanilla `HopperBlockEntity.suckInItems`: `getLevelY()` is half a block above the cart.
+        let source_center = Vector3::new(pos.x, pos.y + 1.5, pos.z);
+        let source_pos = BlockPos::floored_v(source_center);
+        let source = world
+            .get_block_entity(&source_pos)
+            .and_then(|block_entity| block_entity.get_inventory())
+            .or_else(|| entity_container_at(&world, source_center));
+        if let Some(source) = source {
+            return self.take_one_from(source.as_ref());
         }
-
+        // Vanilla `Hopper.SUCK_AABB`, moved to the cart. It is not grid aligned, so nothing
+        // solid above blocks it.
         let suction_box = BoundingBox::new(
             Vector3::new(pos.x - 0.5, pos.y + 0.6875, pos.z - 0.5),
             Vector3::new(pos.x + 0.5, pos.y + 2.0, pos.z + 0.5),
         );
-        if Self::pick_up_item_internal(&world, inventory, &suction_box) {
-            return;
-        }
-        Self::pick_up_item_internal(&world, inventory, &cart_box);
+        self.pick_up_items_in(&world, &suction_box)
+            || self.pick_up_items_in(&world, &entity.bounding_box.load().expand(0.25, 0.0, 0.25))
     }
 
-    fn pick_up_item_internal(
-        world: &Arc<crate::world::World>,
-        inventory: &Arc<MinecartInventory>,
-        search_box: &BoundingBox,
-    ) -> bool {
-        for entity in world.get_entities_at_box(search_box) {
-            let Some(item) = entity.get_item_entity() else {
+    /// Vanilla `tryTakeInItemFromSlot` over the source's slots.
+    fn take_one_from(&self, source: &dyn Inventory) -> bool {
+        for slot in 0..source.size() {
+            let stack = source.get_stack(slot);
+            if stack.is_empty() || !source.can_transfer_to(self.inventory.as_ref(), slot, &stack) {
                 continue;
-            };
-            let (backup, one) = {
-                let mut stack = item
-                    .get_item_stack()
-                    .lock()
-                    .unwrap_or_else(std::sync::PoisonError::into_inner);
-                if stack.is_empty() {
-                    continue;
-                }
-                (stack.clone(), stack.split(1))
-            };
-            if HopperBlockEntity::add_one_item(inventory.as_ref(), inventory.as_ref(), &one) {
-                let is_empty = {
-                    let stack = item
-                        .get_item_stack()
-                        .lock()
-                        .unwrap_or_else(std::sync::PoisonError::into_inner);
-                    stack.is_empty()
-                };
-                if is_empty {
-                    item.get_entity().remove();
-                }
+            }
+            let one = source.remove_stack_specific(slot, 1);
+            if HopperBlockEntity::add_one_item(source, self.inventory.as_ref(), &one) {
+                source.mark_dirty();
                 return true;
             }
-            let mut stack = item
-                .get_item_stack()
-                .lock()
-                .unwrap_or_else(std::sync::PoisonError::into_inner);
-            *stack = backup;
+            source.set_stack(slot, stack);
         }
         false
     }
 
-    pub(super) fn interact(&self, entity: &crate::entity::Entity, player: &Arc<Player>) -> bool {
+    fn pick_up_items_in(&self, world: &Arc<World>, search_box: &BoundingBox) -> bool {
+        world
+            .get_entities_at_box(search_box)
+            .iter()
+            .filter(|entity| entity.get_entity().is_alive())
+            .filter_map(|entity| entity.get_item_entity())
+            .any(|item| self.add_item(item))
+    }
+
+    /// Vanilla `HopperBlockEntity.addItem(Container, ItemEntity)`: takes the whole stack, or as
+    /// much as fits, and only counts as done when the item entity is used up.
+    fn add_item(&self, item: &ItemEntity) -> bool {
+        let mut stack = item
+            .get_item_stack()
+            .lock()
+            .unwrap_or_else(std::sync::PoisonError::into_inner)
+            .clone();
+        if stack.is_empty() {
+            return false;
+        }
+        let inventory = self.inventory.as_ref();
+        for slot in 0..inventory.size() {
+            if stack.is_empty() {
+                break;
+            }
+            let mut current = inventory.get_stack(slot);
+            if current.is_empty() {
+                inventory.set_stack(
+                    slot,
+                    std::mem::replace(&mut stack, ItemStack::EMPTY.clone()),
+                );
+            } else if current.are_items_and_components_equal(&stack) {
+                let space = stack.get_max_stack_size().saturating_sub(current.item_count);
+                let count = stack.item_count.min(space);
+                if count > 0 {
+                    stack.item_count -= count;
+                    current.item_count += count;
+                    inventory.set_stack(slot, current);
+                }
+            }
+        }
+        let used_up = stack.is_empty();
+        item.set_item_stack(stack);
+        if used_up {
+            item.get_entity().remove();
+        }
+        used_up
+    }
+
+    pub(super) fn interact(&self, entity: &Entity, player: &Arc<Player>) -> bool {
         container::open(
             entity,
             player,

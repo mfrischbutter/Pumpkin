@@ -1,10 +1,16 @@
+//! Vanilla `MinecartChest`.
+
 use std::sync::Arc;
 
+use pumpkin_data::game_event::GameEvent;
 use pumpkin_data::translation;
 use pumpkin_nbt::compound::NbtCompound;
 use pumpkin_util::text::TextComponent;
 
+use crate::entity::Entity;
+use crate::entity::mob::piglin_anger::anger_nearby_piglins;
 use crate::entity::player::Player;
+use crate::world::game_event::GameEventContext;
 
 use super::container::{self, MinecartInventory};
 
@@ -24,7 +30,8 @@ impl ChestMinecart {
         &self.inventory
     }
 
-    pub(super) fn interact(&self, entity: &crate::entity::Entity, player: &Arc<Player>) -> bool {
+    /// Vanilla `MinecartChest.interact`.
+    pub(super) fn interact(&self, entity: &Entity, player: &Arc<Player>) -> bool {
         container::open(
             entity,
             player,
@@ -35,7 +42,18 @@ impl ChestMinecart {
                 [],
             ),
             false,
-        )
+        );
+        let world = entity.world.load();
+        let opener: &Player = player;
+        world.emit_game_event_with_context(
+            GameEvent::ContainerOpen.name(),
+            entity.pos.load(),
+            &GameEventContext {
+                source_entity: Some(opener),
+            },
+        );
+        anger_nearby_piglins(&world, player, true);
+        true
     }
 
     pub(super) fn write_nbt(&self, nbt: &mut NbtCompound) {

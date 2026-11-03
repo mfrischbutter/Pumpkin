@@ -2,7 +2,10 @@ use pumpkin_data::packet::clientbound::play::MOVE_MINECART_ALONG_TRACK;
 use pumpkin_macros::java_packet;
 
 use crate::{ClientPacket, codec::var_int::VarInt, ser::NetworkWriteExt};
-use pumpkin_util::{math::vector3::Vector3, version::JavaMinecraftVersion};
+use pumpkin_util::{
+    math::{pack_degrees, vector3::Vector3},
+    version::JavaMinecraftVersion,
+};
 
 pub struct MinecartStep {
     pub position: Vector3<f64>,
@@ -40,8 +43,9 @@ impl ClientPacket for CMoveMinecartAlongTrack<'_> {
             write.write_f64_be(step.movement.x)?;
             write.write_f64_be(step.movement.y)?;
             write.write_f64_be(step.movement.z)?;
-            write.write_f32_be(step.yaw)?;
-            write.write_f32_be(step.pitch)?;
+            // Vanilla `ByteBufCodecs.ROTATION_BYTE`.
+            write.write_u8(pack_degrees(step.yaw))?;
+            write.write_u8(pack_degrees(step.pitch))?;
             write.write_f32_be(step.weight)?;
         }
         Ok(())

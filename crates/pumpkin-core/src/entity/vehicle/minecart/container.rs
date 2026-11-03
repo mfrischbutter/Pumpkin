@@ -1,6 +1,5 @@
 use std::any::Any;
 use std::sync::Arc;
-use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Mutex, RwLock};
 
 use pumpkin_data::item_stack::ItemStack;
@@ -21,7 +20,6 @@ pub(in crate::entity::vehicle) struct MinecartInventory {
     items: RwLock<Vec<ItemStack>>,
     size: usize,
     loot_table: Mutex<Option<(String, i64)>>,
-    drops_claimed: AtomicBool,
 }
 
 impl MinecartInventory {
@@ -30,7 +28,6 @@ impl MinecartInventory {
             items: RwLock::new(vec![ItemStack::EMPTY.clone(); size]),
             size,
             loot_table: Mutex::new(None),
-            drops_claimed: AtomicBool::new(false),
         }
     }
 
@@ -284,48 +281,37 @@ pub(in crate::entity::vehicle) fn open(
         .is_some()
 }
 
-pub(super) fn velocity(
+/// Vanilla `AbstractContainerMenu.getRedstoneSignalFromContainer`.
+#[must_use]
+pub(crate) fn redstone_signal_from_container(container: &dyn Inventory) -> u8 {
+    let mut total_percent = 0.0f32;
+    for slot in 0..container.size() {
+        let stack = container.get_stack(slot);
+        if !stack.is_empty() {
+            total_percent += f32::from(stack.item_count) / f32::from(stack.get_max_stack_size());
+        }
+    }
+    total_percent /= container.size() as f32;
+    // Vanilla `Mth.lerpDiscrete(total_percent, 0, 15)`.
+    (total_percent * 14.0).floor() as u8 + u8::from(total_percent > 0.0)
+}
+
+/// Vanilla `AbstractMinecartContainer.applyNaturalSlowdown`: the fuller, the slower.
+pub(super) fn natural_slowdown(
     entity: &Entity,
     inventory: &MinecartInventory,
-    velocity: Vector3<f64>,
+    delta: Vector3<f64>,
 ) -> Vector3<f64> {
-    let has_loot = inventory
-        .loot_table
-        .try_lock()
-        .is_ok_and(|guard| guard.is_some());
-    let signal = if has_loot {
-        0
-    } else if let Ok(items) = inventory.items.try_read() {
-        let mut total_fill = 0.0;
-        let mut has_items = false;
-        for stack in items.iter() {
-            if !stack.is_empty() {
-                let max_count = stack.get_max_stack_size();
-                total_fill += f64::from(stack.item_count) / f64::from(max_count);
-                has_items = true;
-            }
-        }
-        if has_items {
-            let factor = total_fill / inventory.size as f64;
-            (factor * 14.0).floor() as u8 + 1
-        } else {
-            0
-        }
-    } else {
-        0
-    };
-    let mut friction = if has_loot {
-        0.98
-    } else {
-        0.98 + f64::from(15 - signal) * 0.001
-    };
-    if entity
-        .touching_water
-        .load(std::sync::atomic::Ordering::Relaxed)
-    {
-        friction *= 0.95;
+    let mut keep = 0.98f32;
+    if !inventory.has_loot_table() {
+        let emptiness = 15 - redstone_signal_from_container(inventory);
+        keep += f32::from(emptiness) * 0.001;
     }
-    velocity.multiply(friction, 0.0, friction)
+    if entity.is_in_water() {
+        keep *= 0.95;
+    }
+    let keep = f64::from(keep);
+    delta.multiply(keep, 0.0, keep)
 }
 
 #[cfg(test)]

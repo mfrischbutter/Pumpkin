@@ -1,5 +1,6 @@
 use crate::block::entities::BlockEntity;
 use crate::entity::experience_orb::ExperienceOrbEntity;
+use crate::entity::vehicle::minecart::MinecartEntity;
 use crate::world::World;
 use pumpkin_data::block_properties::{FacingHopper, HopperLikeProperties};
 use pumpkin_data::item_stack::ItemStack;
@@ -9,14 +10,37 @@ use pumpkin_data::{BlockId, BlockStateId};
 use pumpkin_inventory::{Clearable, Inventory, sync_write_items_to_nbt};
 use pumpkin_nbt::compound::NbtCompound;
 use pumpkin_nbt::tag::NbtTag;
+use pumpkin_util::math::boundingbox::BoundingBox;
 use pumpkin_util::math::position::BlockPos;
 use pumpkin_util::math::vector3::Vector3;
+use rand::seq::IndexedRandom;
 use std::any::Any;
 use std::array::from_fn;
 use std::sync::Arc;
 use std::sync::RwLock;
 use std::sync::atomic::Ordering;
 use std::sync::atomic::{AtomicBool, AtomicI32, AtomicI64};
+
+/// Vanilla `HopperBlockEntity.getEntityContainer`: a random container entity around `center`.
+#[must_use]
+pub fn entity_container_at(world: &World, center: Vector3<f64>) -> Option<Arc<dyn Inventory>> {
+    let search_box = BoundingBox::new(center.sub_raw(0.5, 0.5, 0.5), center.add_raw(0.5, 0.5, 0.5));
+    let containers: Vec<_> = world
+        .get_entities_at_box(&search_box)
+        .into_iter()
+        .filter(|entity| {
+            entity
+                .cast_any()
+                .downcast_ref::<MinecartEntity>()
+                .is_some_and(MinecartEntity::has_container)
+        })
+        .collect();
+    containers
+        .choose(&mut rand::rng())?
+        .cast_any()
+        .downcast_ref::<MinecartEntity>()?
+        .get_container()
+}
 
 pub struct HopperBlockEntity {
     pub position: BlockPos,
@@ -221,7 +245,6 @@ impl HopperBlockEntity {
 
     #[allow(clippy::too_many_lines)]
     fn suck_in_items(&self, world: &Arc<World>) -> bool {
-        // TODO getEntityContainer
         let pos_up = &self.position.up();
         let mut search_event = crate::plugin::api::events::inventory::hopper_inventory_search::HopperInventorySearchEvent::new(
             self.position,
@@ -236,8 +259,11 @@ impl HopperBlockEntity {
             return false;
         }
 
-        if let Some(entity) = world.get_block_entity(pos_up)
-            && let Some(container) = entity.clone().get_inventory()
+        let source_block_entity = world.get_block_entity(pos_up);
+        if let Some(container) = source_block_entity
+            .clone()
+            .and_then(|entity| entity.get_inventory())
+            .or_else(|| entity_container_at(world, pos_up.to_centered_f64()))
         {
             // TODO check WorldlyContainer
             for i in 0..container.size() {
@@ -251,8 +277,9 @@ impl HopperBlockEntity {
                         // If extracting from furnace output slot (index 2), drop XP as orbs
                         let furnace_output_slot: usize = 2;
                         if i == furnace_output_slot
-                            && let Some(experience_container) =
-                                entity.clone().to_experience_container()
+                            && let Some(experience_container) = source_block_entity
+                                .clone()
+                                .and_then(|entity| entity.to_experience_container())
                         {
                             let xp = experience_container.extract_experience();
                             if xp > 0 {
@@ -380,10 +407,11 @@ impl HopperBlockEntity {
     }
 
     fn eject_items(&self, world: &Arc<World>) -> bool {
-        // TODO getEntityContainer
-
-        if let Some(entity) = world.get_block_entity(&self.position.offset(to_offset(&self.facing)))
-            && let Some(container) = entity.get_inventory()
+        let target = self.position.offset(to_offset(&self.facing));
+        if let Some(container) = world
+            .get_block_entity(&target)
+            .and_then(|entity| entity.get_inventory())
+            .or_else(|| entity_container_at(world, target.to_centered_f64()))
         {
             // TODO check WorldlyContainer
             let mut is_full = true;

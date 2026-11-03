@@ -3,11 +3,8 @@ use std::sync::Arc;
 use pumpkin_data::block_properties::RailShapeStraight;
 use pumpkin_data::entity::EntityType;
 use pumpkin_data::fluid::Fluid;
-use pumpkin_data::item_stack::ItemStack;
 use pumpkin_data::{Block, BlockDirection, BlockStateId};
 use pumpkin_macros::pumpkin_block;
-use pumpkin_nbt::compound::NbtCompound;
-use pumpkin_nbt::tag::NbtTag;
 use pumpkin_util::math::boundingbox::BoundingBox;
 use pumpkin_util::math::position::BlockPos;
 use pumpkin_world::tick::TickPriority;
@@ -26,6 +23,7 @@ use crate::block::OnScheduledTickArgs;
 use crate::block::OnStateReplacedArgs;
 use crate::block::PlacedArgs;
 use crate::entity::EntityBase;
+use crate::entity::vehicle::minecart::{MinecartEntity, redstone_signal_from_container};
 use crate::world::World;
 
 use super::RailProperties;
@@ -214,40 +212,22 @@ impl BlockBehaviour for DetectorRailBlock {
         }
         let search_box =
             BoundingBox::new_array([0.2, 0.0, 0.2], [0.8, 0.8, 0.8]).at_pos(*args.position);
-        for entity in args.world.get_entities_at_box(&search_box) {
-            let entity_type = entity.get_entity().entity_type;
-            if entity_type == &EntityType::CHEST_MINECART
-                || entity_type == &EntityType::HOPPER_MINECART
-            {
-                let size = if entity_type == &EntityType::CHEST_MINECART {
-                    27
-                } else {
-                    5
-                };
-                let mut nbt = NbtCompound::new();
-                entity.write_custom_nbt(&mut nbt);
-                let mut total_weight = 0.0f32;
-                let mut has_items = false;
-                if let Some(items) = nbt.get_list("Items") {
-                    for tag in items {
-                        if let NbtTag::Compound(compound) = tag
-                            && let Some(stack) = ItemStack::read_item_stack(compound)
-                            && !stack.is_empty()
-                        {
-                            let max_stack = stack.get_max_stack_size().max(1);
-                            total_weight += f32::from(stack.item_count) / f32::from(max_stack);
-                            has_items = true;
-                        }
-                    }
-                }
-                let output = if has_items {
-                    ((total_weight / size as f32) * 14.0).floor() as u8 + 1
-                } else {
-                    0
-                };
-                return Some(output);
-            }
+        let entities = args.world.get_entities_at_box(&search_box);
+        let minecarts = || {
+            entities
+                .iter()
+                .filter_map(|entity| entity.cast_any().downcast_ref::<MinecartEntity>())
+        };
+        // Vanilla `getAnalogOutputSignal`: command block carts first, then containers.
+        if let Some(count) = minecarts().find_map(MinecartEntity::command_success_count) {
+            return Some(count.min(15) as u8);
         }
-        Some(0)
+        Some(
+            minecarts()
+                .find_map(MinecartEntity::get_container)
+                .map_or(0, |container| {
+                    redstone_signal_from_container(container.as_ref())
+                }),
+        )
     }
 }

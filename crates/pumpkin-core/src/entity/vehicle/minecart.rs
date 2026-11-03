@@ -1,64 +1,90 @@
+//! Vanilla `AbstractMinecart` and the seven minecart types.
+//!
+//! Vanilla's class hierarchy is the [`MinecartKind`] enum here. Which of vanilla's two
+//! `MinecartBehavior`s a cart uses is decided once, when it is created, by the
+//! `minecart_improvements` feature flag.
+
 mod chest;
+mod collision;
+mod command_block;
 pub(super) mod container;
+mod damage;
+mod dismount;
 mod furnace;
 mod hopper;
+mod movement;
+mod new_behavior;
+mod old_behavior;
+mod rails;
 mod rideable;
+mod spawner;
 mod tnt;
 
-use std::sync::Arc;
-use std::sync::atomic::Ordering;
+use std::sync::atomic::{AtomicBool, AtomicI32, Ordering};
+use std::sync::{Arc, Mutex};
 
-use pumpkin_protocol::java::server::play::SPlayerInput;
-use rand::RngExt;
-
-use crate::{
-    entity::{Entity, EntityBase, living::LivingEntity, player::Player},
-    server::Server,
-};
-use pumpkin_data::Block;
-use pumpkin_data::block_properties::PoweredRailLikeProperties;
+use crossbeam::atomic::AtomicCell;
+use pumpkin_data::BlockStateId;
 use pumpkin_data::damage::DamageType;
-use pumpkin_data::entity::EntityType;
+use pumpkin_data::data_component_impl::CustomNameImpl;
+use pumpkin_data::entity::{EntityType, MovementEmission};
 use pumpkin_data::item::Item;
 use pumpkin_data::item_stack::ItemStack;
+use pumpkin_data::sound::Sound;
 use pumpkin_data::tag::{self, Taggable};
+use pumpkin_data::tracked_data::abstract_minecart::{ID_CUSTOM_DISPLAY_BLOCK, ID_DISPLAY_OFFSET};
+use pumpkin_inventory::Inventory;
 use pumpkin_nbt::compound::NbtCompound;
-use pumpkin_util::GameMode;
-use pumpkin_util::math::position::BlockPos;
+use pumpkin_protocol::codec::var_int::VarInt;
+use pumpkin_protocol::java::client::play::MinecartStep;
 use pumpkin_util::math::vector3::Vector3;
+use rand::RngExt;
 
+use crate::entity::mob::enderman::{block_state_from_nbt, block_state_to_nbt};
 use crate::entity::vehicle::vehicle::VehicleEntity;
+use crate::entity::{Entity, EntityBase, living::LivingEntity, player::Player};
+use crate::server::Server;
+use crate::world::loot::LootContextParameters;
 use chest::ChestMinecart;
+use command_block::CommandBlockMinecart;
 use container::MinecartInventory;
 use furnace::FurnaceMinecart;
 use hopper::HopperMinecart;
 use rideable::RideableMinecart;
+use spawner::SpawnerMinecart;
 use tnt::TntMinecart;
 
-const fn get_exits(
-    shape: pumpkin_data::block_properties::RailShape,
-) -> (Vector3<f64>, Vector3<f64>) {
-    use pumpkin_data::block_properties::RailShape;
-    match shape {
-        RailShape::NorthSouth => (Vector3::new(0.0, 0.0, -1.0), Vector3::new(0.0, 0.0, 1.0)),
-        RailShape::EastWest => (Vector3::new(-1.0, 0.0, 0.0), Vector3::new(1.0, 0.0, 0.0)),
-        RailShape::AscendingEast => (Vector3::new(-1.0, 0.0, 0.0), Vector3::new(1.0, 1.0, 0.0)),
-        RailShape::AscendingWest => (Vector3::new(1.0, 0.0, 0.0), Vector3::new(-1.0, 1.0, 0.0)),
-        RailShape::AscendingNorth => (Vector3::new(0.0, 0.0, 1.0), Vector3::new(0.0, 1.0, -1.0)),
-        RailShape::AscendingSouth => (Vector3::new(0.0, 0.0, -1.0), Vector3::new(0.0, 1.0, 1.0)),
-        RailShape::SouthEast => (Vector3::new(0.0, 0.0, 1.0), Vector3::new(1.0, 0.0, 0.0)),
-        RailShape::SouthWest => (Vector3::new(0.0, 0.0, 1.0), Vector3::new(-1.0, 0.0, 0.0)),
-        RailShape::NorthWest => (Vector3::new(0.0, 0.0, -1.0), Vector3::new(-1.0, 0.0, 0.0)),
-        RailShape::NorthEast => (Vector3::new(0.0, 0.0, -1.0), Vector3::new(1.0, 0.0, 0.0)),
-    }
-}
+pub(crate) use container::redstone_signal_from_container;
 
+/// Vanilla `getDefaultGravity` in and out of water.
 const GRAVITY: f64 = 0.04;
-const RAIL_HEIGHT_OFFSET: f64 = 0.0625;
+const GRAVITY_IN_WATER: f64 = 0.005;
+/// Vanilla `WATER_SLOWDOWN_FACTOR`.
+const WATER_SLOWDOWN_FACTOR: f32 = 0.95;
+/// The minecart types' `passengerAttachments` in `EntityTypes`, not in the extracted entity data.
+const PASSENGER_ATTACHMENT_Y: f64 = 0.1875;
+/// Vanilla `getDefaultDisplayOffset`, with the chest and hopper overrides.
+const DEFAULT_DISPLAY_OFFSET: i32 = 6;
+const CHEST_DISPLAY_OFFSET: i32 = 8;
+const HOPPER_DISPLAY_OFFSET: i32 = 1;
+/// Vanilla `Entity.lavaHurt` and `lavaIgnite`.
+const LAVA_DAMAGE: f32 = 4.0;
+const LAVA_FIRE_SECONDS: f32 = 15.0;
 
 pub struct MinecartEntity {
     pub vehicle: VehicleEntity,
     kind: MinecartKind,
+    /// Vanilla `useExperimentalMovement`: this cart has a `NewMinecartBehavior`.
+    experimental_movement: bool,
+    /// Vanilla `NewMinecartBehavior.lerpSteps`, emptied by the entity tracker.
+    lerp_steps: Mutex<Vec<MinecartStep>>,
+    on_rails: AtomicBool,
+    /// Vanilla `flipped`.
+    flipped: AtomicBool,
+    /// Vanilla `Entity.fallDistance`, which only living entities have in Pumpkin.
+    fall_distance: AtomicCell<f64>,
+    custom_display_block: AtomicCell<Option<BlockStateId>>,
+    display_offset: AtomicI32,
 }
 
 enum MinecartKind {
@@ -67,14 +93,14 @@ enum MinecartKind {
     Furnace(FurnaceMinecart),
     Hopper(HopperMinecart),
     Tnt(TntMinecart),
-    Other,
+    Spawner(SpawnerMinecart),
+    CommandBlock(CommandBlockMinecart),
 }
 
 impl MinecartEntity {
     pub fn new(mut entity: Entity) -> Self {
         entity.blocks_building = true;
         let kind = match entity.entity_type.id {
-            id if id == EntityType::MINECART.id => MinecartKind::Rideable(RideableMinecart),
             id if id == EntityType::CHEST_MINECART.id => MinecartKind::Chest(ChestMinecart::new()),
             id if id == EntityType::FURNACE_MINECART.id => {
                 MinecartKind::Furnace(FurnaceMinecart::new())
@@ -83,11 +109,69 @@ impl MinecartEntity {
                 MinecartKind::Hopper(HopperMinecart::new())
             }
             id if id == EntityType::TNT_MINECART.id => MinecartKind::Tnt(TntMinecart::new()),
-            _ => MinecartKind::Other,
+            id if id == EntityType::SPAWNER_MINECART.id => {
+                MinecartKind::Spawner(SpawnerMinecart::new())
+            }
+            id if id == EntityType::COMMAND_BLOCK_MINECART.id => {
+                MinecartKind::CommandBlock(CommandBlockMinecart::new())
+            }
+            _ => MinecartKind::Rideable(RideableMinecart),
         };
+        let experimental_movement = entity
+            .world
+            .load()
+            .server
+            .upgrade()
+            .is_some_and(|server| server.is_feature_enabled("minecraft:minecart_improvements"));
+        let display_offset = Self::default_display_offset_of(&kind);
         Self {
             vehicle: VehicleEntity::new(entity),
             kind,
+            experimental_movement,
+            lerp_steps: Mutex::new(Vec::new()),
+            on_rails: AtomicBool::new(false),
+            flipped: AtomicBool::new(false),
+            fall_distance: AtomicCell::new(0.0),
+            custom_display_block: AtomicCell::new(None),
+            display_offset: AtomicI32::new(display_offset),
+        }
+    }
+
+    /// Vanilla `AbstractMinecart.createMinecart`'s setup from the item: its custom name, and for
+    /// the new behaviour the snap onto the rail.
+    pub fn apply_item_stack(&self, stack: &ItemStack) {
+        let entity = &self.vehicle.entity;
+        if let Some(custom_name) = stack.get_data_component::<CustomNameImpl>() {
+            entity.set_custom_name(custom_name.name.clone());
+        }
+        if self.experimental_movement {
+            let pos = self.current_block_pos_or_rail_below();
+            let (block, state_id) = entity.world.load().get_block_and_state_id(&pos);
+            self.adjust_to_rails(pos, block, state_id, true);
+        }
+    }
+
+    /// Whether this cart has vanilla's `NewMinecartBehavior`.
+    #[must_use]
+    pub const fn uses_new_behavior(&self) -> bool {
+        self.experimental_movement
+    }
+
+    /// The steps vanilla `ServerEntity.handleMinecartPosRot` sends and clears.
+    pub(crate) fn take_lerp_steps(&self) -> Vec<MinecartStep> {
+        std::mem::take(
+            &mut *self
+                .lerp_steps
+                .lock()
+                .unwrap_or_else(std::sync::PoisonError::into_inner),
+        )
+    }
+
+    const fn default_display_offset_of(kind: &MinecartKind) -> i32 {
+        match kind {
+            MinecartKind::Chest(_) => CHEST_DISPLAY_OFFSET,
+            MinecartKind::Hopper(_) => HOPPER_DISPLAY_OFFSET,
+            _ => DEFAULT_DISPLAY_OFFSET,
         }
     }
 
@@ -99,410 +183,351 @@ impl MinecartEntity {
         }
     }
 
-    const fn drop_item(&self) -> Option<&'static Item> {
+    /// Vanilla `getDropItem`.
+    const fn drop_item(&self) -> &'static Item {
         match &self.kind {
-            MinecartKind::Chest(_) => Some(&Item::CHEST_MINECART),
-            MinecartKind::Furnace(_) => Some(&Item::FURNACE_MINECART),
-            MinecartKind::Hopper(_) => Some(&Item::HOPPER_MINECART),
-            MinecartKind::Tnt(_) => Some(&Item::TNT_MINECART),
-            _ => None,
+            MinecartKind::Chest(_) => &Item::CHEST_MINECART,
+            MinecartKind::Furnace(_) => &Item::FURNACE_MINECART,
+            MinecartKind::Hopper(_) => &Item::HOPPER_MINECART,
+            MinecartKind::Tnt(_) => &Item::TNT_MINECART,
+            MinecartKind::Rideable(_) | MinecartKind::Spawner(_) | MinecartKind::CommandBlock(_) => {
+                &Item::MINECART
+            }
         }
+    }
+
+    /// Vanilla `isRideable`.
+    const fn is_rideable(&self) -> bool {
+        matches!(self.kind, MinecartKind::Rideable(_))
+    }
+
+    /// Vanilla `isFurnace`.
+    const fn is_furnace(&self) -> bool {
+        matches!(self.kind, MinecartKind::Furnace(_))
+    }
+
+    /// Vanilla `getMaxSpeed`, with the behaviours and `MinecartFurnace`'s override.
+    fn max_speed(&self) -> f64 {
+        let entity = &self.vehicle.entity;
+        let speed = if self.experimental_movement {
+            self.new_max_speed()
+        } else if entity.is_in_water() {
+            old_behavior::MAX_SPEED_IN_WATER
+        } else {
+            old_behavior::MAX_SPEED_ON_LAND
+        };
+        if self.is_furnace() {
+            speed * FurnaceMinecart::max_speed_factor(entity)
+        } else {
+            speed
+        }
+    }
+
+    /// Vanilla `AbstractMinecart.applyNaturalSlowdown`, with the furnace and container overrides.
+    fn apply_natural_slowdown(&self, delta: Vector3<f64>) -> Vector3<f64> {
+        let entity = &self.vehicle.entity;
+        match &self.kind {
+            MinecartKind::Furnace(minecart) => {
+                self.base_natural_slowdown(minecart.apply_push(entity, delta))
+            }
+            MinecartKind::Chest(_) | MinecartKind::Hopper(_) => self
+                .container()
+                .map_or(delta, |inventory| container::natural_slowdown(entity, inventory, delta)),
+            _ => self.base_natural_slowdown(delta),
+        }
+    }
+
+    fn base_natural_slowdown(&self, delta: Vector3<f64>) -> Vector3<f64> {
+        let entity = &self.vehicle.entity;
+        let factor = if entity.has_passengers() {
+            old_behavior::SLOWDOWN_WITH_PASSENGER
+        } else if self.experimental_movement {
+            new_behavior::SLOWDOWN_EMPTY
+        } else {
+            old_behavior::SLOWDOWN_EMPTY
+        };
+        let slowed = delta.multiply(factor, 0.0, factor);
+        if entity.is_in_water() {
+            slowed * f64::from(WATER_SLOWDOWN_FACTOR)
+        } else {
+            slowed
+        }
+    }
+
+    /// Vanilla `activateMinecart`.
+    fn activate_minecart(&self, powered: bool) {
+        let entity = &self.vehicle.entity;
+        match &self.kind {
+            MinecartKind::Rideable(_) => RideableMinecart::activate(self, powered),
+            MinecartKind::Hopper(minecart) => minecart.activate(powered),
+            MinecartKind::Tnt(minecart) => minecart.activate(entity, powered),
+            MinecartKind::CommandBlock(minecart) => minecart.activate(entity, powered),
+            MinecartKind::Chest(_) | MinecartKind::Furnace(_) | MinecartKind::Spawner(_) => {}
+        }
+    }
+
+    /// Vanilla `Entity.causeFallDamage` with `MinecartTNT`'s override: passengers take the fall.
+    fn cause_fall_damage(&self, fall_distance: f64) {
+        let entity = &self.vehicle.entity;
+        if let MinecartKind::Tnt(minecart) = &self.kind {
+            minecart.cause_fall_damage(entity, fall_distance);
+        }
+        if entity
+            .entity_type
+            .has_tag(&tag::EntityType::MINECRAFT_FALL_DAMAGE_IMMUNE)
+        {
+            return;
+        }
+        for passenger in self.passengers() {
+            if let Some(living) = passenger.get_living_entity() {
+                living.handle_fall_damage(passenger.as_ref(), fall_distance as f32, 1.0);
+            }
+        }
+    }
+
+    fn passengers(&self) -> Vec<Arc<dyn EntityBase>> {
+        self.vehicle
+            .entity
+            .passengers
+            .lock()
+            .unwrap_or_else(std::sync::PoisonError::into_inner)
+            .clone()
+    }
+
+    /// Vanilla `getFirstPassenger`.
+    fn first_passenger(&self) -> Option<Arc<dyn EntityBase>> {
+        self.vehicle
+            .entity
+            .passengers
+            .lock()
+            .unwrap_or_else(std::sync::PoisonError::into_inner)
+            .first()
+            .cloned()
+    }
+
+    /// Vanilla `Entity.ejectPassengers`, last passenger first.
+    fn eject_passengers(&self) {
+        let entity = &self.vehicle.entity;
+        for passenger in self.passengers().iter().rev() {
+            entity.remove_passenger(passenger.get_entity().entity_id);
+        }
+    }
+
+    /// Vanilla `ContainerEntity.unpackChestVehicleLootTable` without a player.
+    fn unpack_container_loot(&self, container: &Arc<MinecartInventory>) {
+        let entity = &self.vehicle.entity;
+        let world = entity.world.load();
+        container.unpack_loot(
+            Some(entity),
+            None,
+            &LootContextParameters {
+                world: Some(&world),
+                position: Some(entity.pos.load()),
+                ..Default::default()
+            },
+        );
+    }
+
+    /// Whether this cart is a vanilla `Container`.
+    #[must_use]
+    pub const fn has_container(&self) -> bool {
+        self.container().is_some()
+    }
+
+    /// This cart as a vanilla `Container`. Like vanilla's slot access, this rolls a pending loot
+    /// table first.
+    #[must_use]
+    pub fn get_container(&self) -> Option<Arc<dyn Inventory>> {
+        let container = self.container()?;
+        self.unpack_container_loot(container);
+        Some(container.clone() as Arc<dyn Inventory>)
+    }
+
+    /// Vanilla `BaseCommandBlock.getSuccessCount` of a command block cart.
+    #[must_use]
+    pub fn command_success_count(&self) -> Option<u32> {
+        if let MinecartKind::CommandBlock(minecart) = &self.kind {
+            Some(minecart.success_count())
+        } else {
+            None
+        }
+    }
+
+    /// Vanilla `handleSetCommandMinecart`'s writes. Whether this is a command block cart.
+    pub fn set_command(&self, command: &str, track_output: bool, sync: bool) -> bool {
+        let MinecartKind::CommandBlock(minecart) = &self.kind else {
+            return false;
+        };
+        minecart.set_command(command, track_output);
+        if sync {
+            minecart.sync_entity_data(&self.vehicle.entity);
+        }
+        true
+    }
+
+    /// Whether a tick of this cart can reach further than its surroundings: a blast, a command or
+    /// a spawn anywhere.
+    #[must_use]
+    pub fn has_global_tick_reach(&self) -> bool {
+        match &self.kind {
+            MinecartKind::Tnt(minecart) => {
+                minecart.may_explode_soon(&self.vehicle.entity, self.fall_distance.load())
+            }
+            MinecartKind::Spawner(_) | MinecartKind::CommandBlock(_) => true,
+            _ => false,
+        }
+    }
+
+    fn set_custom_display_block(&self, state: Option<BlockStateId>) {
+        self.custom_display_block.store(state);
+        self.vehicle.entity.set_synced_data(
+            ID_CUSTOM_DISPLAY_BLOCK,
+            state.map_or(VarInt(0), |id| VarInt(i32::from(id.as_u16()))),
+        );
+    }
+
+    fn set_display_offset(&self, offset: i32) {
+        self.display_offset.store(offset, Ordering::Relaxed);
+        self.vehicle
+            .entity
+            .set_synced_data(ID_DISPLAY_OFFSET, VarInt(offset));
+    }
+
+    /// Vanilla `Entity.lavaIgnite` and `lavaHurt`, which `AbstractMinecart.tick` runs itself.
+    fn tick_in_lava(&self, caller: &dyn EntityBase) {
+        let entity = &self.vehicle.entity;
+        if !entity.is_fire_immune() {
+            caller.set_on_fire_for(LAVA_FIRE_SECONDS);
+            if caller.damage(caller, LAVA_DAMAGE, DamageType::LAVA) {
+                caller.play_entity_sound(
+                    Sound::EntityGenericBurn,
+                    0.4,
+                    2.0 + rand::rng().random::<f32>() * 0.4,
+                );
+            }
+        }
+        self.fall_distance.store(self.fall_distance.load() * 0.5);
     }
 }
 
 impl EntityBase for MinecartEntity {
+    /// Vanilla `AbstractMinecart.addAdditionalSaveData` and its overrides.
     fn write_custom_nbt(&self, nbt: &mut NbtCompound) {
+        if let Some(state) = self.custom_display_block.load() {
+            nbt.put("DisplayState", block_state_to_nbt(state));
+        }
+        let display_offset = self.display_offset.load(Ordering::Relaxed);
+        if display_offset != Self::default_display_offset_of(&self.kind) {
+            nbt.put_int("DisplayOffset", display_offset);
+        }
+        nbt.put_bool("FlippedRotation", self.flipped.load(Ordering::Relaxed));
+        // Vanilla stores `firstTick` under this name.
+        nbt.put_bool(
+            "HasTicked",
+            self.vehicle.entity.first_tick.load(Ordering::Relaxed),
+        );
+        nbt.put_double("fall_distance", self.fall_distance.load());
         match &self.kind {
             MinecartKind::Chest(minecart) => minecart.write_nbt(nbt),
             MinecartKind::Furnace(minecart) => minecart.write_nbt(nbt),
             MinecartKind::Hopper(minecart) => minecart.write_nbt(nbt),
             MinecartKind::Tnt(minecart) => minecart.write_nbt(nbt),
-            MinecartKind::Rideable(_) | MinecartKind::Other => {}
+            MinecartKind::Spawner(minecart) => minecart.write_nbt(nbt),
+            MinecartKind::CommandBlock(minecart) => minecart.write_nbt(nbt),
+            MinecartKind::Rideable(_) => {}
         }
     }
 
+    /// Vanilla `AbstractMinecart.readAdditionalSaveData` and its overrides.
     fn read_custom_nbt(&self, nbt: &NbtCompound) {
+        if let Some(state) = nbt.get("DisplayState").and_then(block_state_from_nbt) {
+            self.set_custom_display_block(Some(state));
+        }
+        if let Some(offset) = nbt.get_int("DisplayOffset") {
+            self.set_display_offset(offset);
+        }
+        self.flipped.store(
+            nbt.get_bool("FlippedRotation").unwrap_or(false),
+            Ordering::Relaxed,
+        );
+        self.vehicle.entity.first_tick.store(
+            nbt.get_bool("HasTicked").unwrap_or(false),
+            Ordering::Relaxed,
+        );
+        self.fall_distance
+            .store(nbt.get_double("fall_distance").unwrap_or(0.0));
         match &self.kind {
             MinecartKind::Chest(minecart) => minecart.read_nbt(nbt),
             MinecartKind::Furnace(minecart) => minecart.read_nbt(nbt),
             MinecartKind::Hopper(minecart) => minecart.read_nbt(nbt),
             MinecartKind::Tnt(minecart) => minecart.read_nbt(nbt),
-            MinecartKind::Rideable(_) | MinecartKind::Other => {}
+            MinecartKind::Spawner(minecart) => minecart.read_nbt(nbt),
+            MinecartKind::CommandBlock(minecart) => {
+                minecart.read_nbt(&self.vehicle.entity, nbt);
+            }
+            MinecartKind::Rideable(_) => {}
         }
     }
 
-    // The minecart's own tick places its riders.
-    fn position_rider(&self, _passenger: &dyn EntityBase) {}
+    /// Vanilla `Entity.positionRider` with `AbstractMinecart.getPassengerAttachmentPoint`:
+    /// villagers and wandering traders sit lower.
+    fn position_rider(&self, passenger: &dyn EntityBase) {
+        let passenger_entity = passenger.get_entity();
+        let attachment_y = if passenger_entity.entity_type == &EntityType::VILLAGER
+            || passenger_entity.entity_type == &EntityType::WANDERING_TRADER
+        {
+            0.0
+        } else {
+            PASSENGER_ATTACHMENT_Y
+        };
+        let seat = self.vehicle.entity.pos.load() + Vector3::new(0.0, attachment_y, 0.0);
+        passenger_entity.set_pos(seat - passenger.vehicle_attachment_point());
+    }
 
-    #[allow(clippy::too_many_lines)]
+    /// Vanilla `AbstractMinecart.tick`, which replaces `Entity.baseTick`: a burning cart never
+    /// burns down, and it does not drown or freeze.
     fn tick(&self, caller: &dyn EntityBase, _server: &Server) {
-        self.vehicle.tick();
-        if let MinecartKind::Furnace(minecart) = &self.kind {
-            minecart.tick(&self.vehicle.entity);
-        }
-
-        let world = self.vehicle.entity.world.load();
-        let pos = self.vehicle.entity.pos.load();
-        let mut block_pos = BlockPos(Vector3::new(
-            pos.x.floor() as i32,
-            pos.y.floor() as i32,
-            pos.z.floor() as i32,
-        ));
-
-        let (mut block, mut state_id) = world.get_block_and_state_id(&block_pos);
-
-        let mut is_powered_rail = block.id == Block::POWERED_RAIL.id;
-        let mut is_activator_rail = block.id == Block::ACTIVATOR_RAIL.id;
-        let mut is_on_rails = is_powered_rail
-            || is_activator_rail
-            || block.id == Block::RAIL.id
-            || block.id == Block::DETECTOR_RAIL.id;
-
-        // If not on rails at current Y level, check the block directly below
-        if !is_on_rails {
-            let below_block_pos = BlockPos(Vector3::new(
-                block_pos.0.x,
-                block_pos.0.y - 1,
-                block_pos.0.z,
-            ));
-            let (below_block, below_state_id) = world.get_block_and_state_id(&below_block_pos);
-            if below_block.id == Block::RAIL.id
-                || below_block.id == Block::POWERED_RAIL.id
-                || below_block.id == Block::DETECTOR_RAIL.id
-                || below_block.id == Block::ACTIVATOR_RAIL.id
-            {
-                block_pos = below_block_pos;
-                block = below_block;
-                state_id = below_state_id;
-                is_powered_rail = block.id == Block::POWERED_RAIL.id;
-                is_activator_rail = block.id == Block::ACTIVATOR_RAIL.id;
-                is_on_rails = true;
-            }
-        }
-
-        if is_powered_rail || is_activator_rail {
-            let props = PoweredRailLikeProperties::from_state_id(state_id);
-            let powered = props.powered;
-
-            if is_activator_rail && let MinecartKind::Hopper(minecart) = &self.kind {
-                minecart.set_enabled(!powered);
-            }
-        } else if block.id == Block::DETECTOR_RAIL.id
-            && let Some(server) = world.server.upgrade()
-        {
-            world.block_registry.on_entity_collision(
-                block,
-                &world,
-                self,
-                &block_pos,
-                world.get_block_state(&block_pos),
-                &server,
-            );
-        }
-
-        if is_powered_rail || is_activator_rail {
-            let props = PoweredRailLikeProperties::from_state_id(state_id);
-            let powered = props.powered;
-
-            if powered {
-                if is_powered_rail {
-                    let mut velocity = self.vehicle.entity.velocity.load();
-                    let speed = velocity.length();
-                    if speed > 0.01 {
-                        let new_speed = (speed + 0.06).min(0.4);
-                        velocity = velocity
-                            .normalize()
-                            .multiply(new_speed, new_speed, new_speed);
-                        self.vehicle.entity.velocity.store(velocity);
-                    } else {
-                        let yaw = self.vehicle.entity.yaw.load();
-                        let push_dir = Vector3::new(
-                            -f64::from((yaw.to_radians()).sin()),
-                            0.0,
-                            f64::from((yaw.to_radians()).cos()),
-                        );
-                        self.vehicle
-                            .entity
-                            .velocity
-                            .store(push_dir.multiply(0.1, 0.1, 0.1));
-                    }
-                    self.vehicle.entity.send_velocity();
-                } else if is_activator_rail {
-                    match &self.kind {
-                        MinecartKind::Tnt(minecart) => {
-                            minecart.prime(&self.vehicle.entity, 80);
-                        }
-                        MinecartKind::Rideable(_) => {
-                            if let Ok(passengers) = self.vehicle.entity.passengers.try_lock() {
-                                let p_ids: Vec<i32> = passengers
-                                    .iter()
-                                    .map(|p| p.get_entity().entity_id)
-                                    .collect();
-                                if !p_ids.is_empty() {
-                                    let world = self.vehicle.entity.world.load();
-                                    let vid = self.vehicle.entity.entity_id;
-                                    if let Some(v) = world.get_entity_by_id(vid) {
-                                        for pid in p_ids {
-                                            v.get_entity().remove_passenger_sync(pid);
-                                        }
-                                    }
-                                }
-                            }
-                            if self.vehicle.get_hurt_time() == 0 {
-                                self.vehicle.set_hurt_dir(-self.vehicle.get_hurt_dir());
-                                self.vehicle.set_hurt_time(10);
-                                self.vehicle.set_damage(50.0);
-                                self.vehicle.send_wobble_metadata();
-                            }
-                        }
-                        _ => {}
-                    }
-                }
-            } else if is_powered_rail {
-                let mut velocity = self.vehicle.entity.velocity.load();
-                velocity = velocity.multiply(0.5, 0.5, 0.5);
-                if velocity.length() < 0.01 {
-                    velocity = Vector3::new(0.0, 0.0, 0.0);
-                }
-                self.vehicle.entity.velocity.store(velocity);
-                self.vehicle.entity.send_velocity();
-            }
-        }
-
-        if let MinecartKind::Tnt(minecart) = &self.kind
-            && minecart.tick(&self.vehicle.entity)
-        {
-            return;
-        }
-
-        let mut velocity = self.vehicle.entity.velocity.load();
-
-        let mut has_driver = false;
-        let mut driver_input = 0;
-        let mut driver_yaw = 0.0f32;
-
-        if let Ok(passengers) = self.vehicle.entity.passengers.try_lock()
-            && let Some(passenger) = passengers.first()
-            && let Some(player) = passenger.get_player()
-        {
-            driver_input = player.last_input.load(Ordering::Relaxed);
-            driver_yaw = player.get_entity().yaw.load();
-            has_driver = true;
-        }
-
-        if has_driver && is_on_rails {
-            let forward = driver_input & SPlayerInput::FORWARD != 0;
-            let backward = driver_input & SPlayerInput::BACKWARD != 0;
-
-            let mut force_dir = Vector3::new(0.0, 0.0, 0.0);
-            if forward {
-                let yaw_rad = f64::from(driver_yaw).to_radians();
-                force_dir.x = -yaw_rad.sin();
-                force_dir.z = yaw_rad.cos();
-            } else if backward {
-                let yaw_rad = f64::from(driver_yaw).to_radians();
-                force_dir.x = yaw_rad.sin();
-                force_dir.z = -yaw_rad.cos();
-            }
-
-            if forward || backward {
-                velocity.x += force_dir.x * 0.02;
-                velocity.z += force_dir.z * 0.02;
-
-                let speed = velocity.x.hypot(velocity.z);
-                if speed > 0.15 {
-                    #[allow(clippy::suboptimal_flops)]
-                    let old_speed = self
-                        .vehicle
-                        .entity
-                        .velocity
-                        .load()
-                        .x
-                        .hypot(self.vehicle.entity.velocity.load().z);
-
-                    let max_speed = old_speed.clamp(0.15, 0.4);
-                    if speed > max_speed {
-                        velocity.x = (velocity.x / speed) * max_speed;
-                        velocity.z = (velocity.z / speed) * max_speed;
-                    }
-                }
-                self.vehicle.entity.velocity.store(velocity);
-                self.vehicle.entity.send_velocity();
-            }
-        }
-
-        let mut velocity = self.vehicle.entity.velocity.load();
-
-        if is_on_rails {
-            use pumpkin_data::block_properties::RailLikeProperties;
-            use pumpkin_data::block_properties::{RailShape, RailShapeStraight};
-
-            let shape = if block.id == Block::RAIL.id {
-                let props = RailLikeProperties::from_state_id(state_id);
-                props.shape
-            } else {
-                let props = PoweredRailLikeProperties::from_state_id(state_id);
-                match props.shape {
-                    RailShapeStraight::NorthSouth => RailShape::NorthSouth,
-                    RailShapeStraight::EastWest => RailShape::EastWest,
-                    RailShapeStraight::AscendingEast => RailShape::AscendingEast,
-                    RailShapeStraight::AscendingWest => RailShape::AscendingWest,
-                    RailShapeStraight::AscendingNorth => RailShape::AscendingNorth,
-                    RailShapeStraight::AscendingSouth => RailShape::AscendingSouth,
-                }
-            };
-
-            let pos = self.vehicle.entity.pos.load();
-            let block_center_bottom = Vector3::new(
-                f64::from(block_pos.0.x) + 0.5,
-                f64::from(block_pos.0.y),
-                f64::from(block_pos.0.z) + 0.5,
-            );
-
-            let (exit0, exit1) = get_exits(shape);
-            let exit0 = exit0.multiply(0.5, 0.5, 0.5);
-            let exit1 = exit1.multiply(0.5, 0.5, 0.5);
-
-            let in_corner = exit0.x != exit1.x && exit0.z != exit1.z;
-            let mut target_position = pos;
-
-            if in_corner {
-                let from0to1 = exit1 - exit0;
-                let from0topos = pos - block_center_bottom - exit0;
-                let dot_num = from0to1.dot(&from0topos);
-                let dot_den = from0to1.dot(&from0to1);
-                if dot_den != 0.0 {
-                    let travel_vector_from0 =
-                        from0to1.multiply(dot_num / dot_den, dot_num / dot_den, dot_num / dot_den);
-                    target_position = block_center_bottom.add(&exit0).add(&travel_vector_from0);
-                }
-            } else {
-                let z_snap = (exit0.x - exit1.x).abs() > 1e-5;
-                let x_snap = (exit0.z - exit1.z).abs() > 1e-5;
-                if x_snap {
-                    target_position.x = block_center_bottom.x;
-                }
-                if z_snap {
-                    target_position.z = block_center_bottom.z;
-                }
-            }
-
-            target_position.y = match shape {
-                RailShape::AscendingEast
-                | RailShape::AscendingWest
-                | RailShape::AscendingNorth
-                | RailShape::AscendingSouth => pos.y,
-                _ => f64::from(block_pos.0.y) + RAIL_HEIGHT_OFFSET,
-            };
-            self.vehicle.entity.pos.store(target_position);
-
-            let horizontal_in_direction = Vector3::new(exit1.x, 0.0, exit1.z);
-            let mut horizontal_out_direction = Vector3::new(exit0.x, 0.0, exit0.z);
-
-            if velocity.dot(&horizontal_out_direction) < velocity.dot(&horizontal_in_direction) {
-                horizontal_out_direction = horizontal_in_direction;
-            }
-
-            let out_position = block_center_bottom.add(&horizontal_out_direction).add(
-                &horizontal_out_direction
-                    .normalize()
-                    .multiply(1e-5, 1e-5, 1e-5),
-            );
-
-            let mut towards_out = out_position - target_position;
-            towards_out.y = 0.0;
-            let towards_length = towards_out.length();
-            if towards_length > 1e-5 {
-                towards_out = towards_out.normalize();
-                let speed = velocity.length();
-                velocity = towards_out.multiply(speed, speed, speed);
-            }
-
-            velocity.y = 0.0;
-            self.vehicle.entity.velocity.store(velocity);
-        } else if !self.vehicle.entity.on_ground.load(Ordering::Relaxed) {
-            velocity.y -= GRAVITY;
-            self.vehicle.entity.velocity.store(velocity);
-        }
-
-        if velocity.length() > 0.001 {
-            self.move_entity(caller, velocity);
-
-            if let MinecartKind::Tnt(minecart) = &self.kind
-                && self
-                    .vehicle
-                    .entity
-                    .horizontal_collision
-                    .load(Ordering::Relaxed)
-                && velocity.x.mul_add(velocity.x, velocity.z * velocity.z) >= 0.01
-            {
-                minecart.explode(
-                    &self.vehicle.entity,
-                    velocity.x.mul_add(velocity.x, velocity.z * velocity.z),
-                );
-                return;
-            }
-
-            let new_pos = self.vehicle.entity.pos.load();
-
-            if let Ok(passengers) = self.vehicle.entity.passengers.try_lock() {
-                for passenger in passengers.iter() {
-                    passenger.get_entity().set_pos(new_pos);
-                }
-            }
-
-            #[allow(clippy::useless_let_if_seq)]
-            let mut friction = 0.95; // Vanilla minecart air drag
-
-            if is_on_rails {
-                let has_passengers = self
-                    .vehicle
-                    .entity
-                    .passengers
-                    .try_lock()
-                    .is_ok_and(|p| !p.is_empty());
-                friction = if has_passengers { 0.99 } else { 0.96 };
-            } else {
-                let below_block_pos = BlockPos(Vector3::new(
-                    block_pos.0.x,
-                    block_pos.0.y - 1,
-                    block_pos.0.z,
-                ));
-                let below_block = world.get_block(&below_block_pos);
-
-                let is_on_ground = self.vehicle.entity.on_ground.load(Ordering::Relaxed)
-                    || (below_block.id != Block::AIR.id
-                        && below_block.id != Block::WATER.id
-                        && below_block.id != Block::LAVA.id);
-                let is_in_water = self.vehicle.entity.touching_water.load(Ordering::Relaxed)
-                    || below_block.id == Block::WATER.id;
-
-                if is_on_ground {
-                    friction = 0.5;
-                } else if is_in_water {
-                    friction = 0.95;
-                }
-            }
-
-            let mut next_vel = if is_on_rails && let MinecartKind::Furnace(minecart) = &self.kind {
-                minecart.velocity(&self.vehicle.entity, velocity)
-            } else if is_on_rails && let Some(inventory) = self.container() {
-                container::velocity(&self.vehicle.entity, inventory, velocity)
-            } else {
-                velocity.multiply(friction, friction, friction)
-            };
-            if next_vel.length() < 0.005 {
-                next_vel = Vector3::new(0.0, 0.0, 0.0);
-            }
-            self.vehicle.entity.velocity.store(next_vel);
-            if next_vel.length_squared() == 0.0 {
-                self.vehicle.entity.send_velocity();
-            }
-        }
-
+        let entity = &self.vehicle.entity;
+        // Vanilla `ServerLevel.tickNonPassenger`'s `setOldPosAndRot`.
+        entity.update_last_pos();
+        let y_rot_o = entity.yaw.load();
         if let MinecartKind::Hopper(minecart) = &self.kind {
-            minecart.tick(&self.vehicle.entity);
+            minecart.begin_tick();
         }
+
+        self.vehicle.tick();
+        entity.check_out_of_world(caller);
+        entity.tick_portal(caller);
+        if self.experimental_movement {
+            self.new_tick(caller);
+        } else {
+            self.old_tick(caller, y_rot_o);
+        }
+        entity.update_fluid_interaction(caller);
+        if entity.is_in_water() {
+            self.fall_distance.store(0.0);
+        }
+        if !entity.first_tick.load(Ordering::Relaxed) && entity.touching_lava.load(Ordering::SeqCst)
+        {
+            self.tick_in_lava(caller);
+        }
+        entity.first_tick.store(false, Ordering::Relaxed);
+
+        match &self.kind {
+            MinecartKind::Furnace(minecart) => minecart.tick(entity),
+            MinecartKind::Hopper(minecart) => minecart.try_consume_items(entity),
+            MinecartKind::Tnt(minecart) => minecart.tick(entity),
+            MinecartKind::Spawner(minecart) => minecart.tick(entity),
+            MinecartKind::Rideable(_) | MinecartKind::Chest(_) | MinecartKind::CommandBlock(_) => {}
+        }
+    }
+
+    fn tick_in_void(&self, _dyn_self: &dyn EntityBase) {
+        self.discard();
+    }
+
+    fn kill(&self, _caller: &dyn EntityBase) {
+        self.kill_minecart();
     }
 
     fn get_entity(&self) -> &Entity {
@@ -517,153 +542,43 @@ impl EntityBase for MinecartEntity {
         true
     }
 
-    #[allow(clippy::too_many_lines)]
     fn push(&self, entity: &dyn EntityBase) {
-        let self_entity = self.get_entity();
-        let other_entity = entity.get_entity();
+        self.push_entity(entity);
+    }
 
-        if self_entity.no_physics.load(Ordering::Relaxed)
-            || other_entity.no_physics.load(Ordering::Relaxed)
-        {
-            return;
-        }
-
-        {
-            let passengers = self_entity
-                .passengers
-                .lock()
-                .unwrap_or_else(std::sync::PoisonError::into_inner);
-            if passengers
-                .iter()
-                .any(|p| p.get_entity().entity_id == other_entity.entity_id)
-            {
-                return;
-            }
-        }
-        {
-            let passengers = other_entity
-                .passengers
-                .lock()
-                .unwrap_or_else(std::sync::PoisonError::into_inner);
-            if passengers
-                .iter()
-                .any(|p| p.get_entity().entity_id == self_entity.entity_id)
-            {
-                return;
-            }
-        }
-
-        let mut xa = other_entity.pos.load().x - self_entity.pos.load().x;
-        let mut za = other_entity.pos.load().z - self_entity.pos.load().z;
-        let mut dd = xa * xa + za * za;
-        if dd >= 1.0E-4 {
-            dd = dd.sqrt();
-            xa /= dd;
-            za /= dd;
-            let mut pow = 1.0 / dd;
-            if pow > 1.0 {
-                pow = 1.0;
-            }
-            xa *= pow;
-            za *= pow;
-            xa *= 0.1;
-            za *= 0.1;
-            xa *= 0.5;
-            za *= 0.5;
-
-            let is_other_minecart = other_entity.entity_type.id == EntityType::MINECART.id
-                || other_entity.entity_type.id == EntityType::CHEST_MINECART.id
-                || other_entity.entity_type.id == EntityType::COMMAND_BLOCK_MINECART.id
-                || other_entity.entity_type.id == EntityType::FURNACE_MINECART.id
-                || other_entity.entity_type.id == EntityType::HOPPER_MINECART.id
-                || other_entity.entity_type.id == EntityType::SPAWNER_MINECART.id
-                || other_entity.entity_type.id == EntityType::TNT_MINECART.id;
-
-            if is_other_minecart {
-                let xo = self_entity.velocity.load().x;
-                let zo = self_entity.velocity.load().z;
-
-                let dir = Vector3::new(xo, 0.0, zo).normalize();
-                let facing = Vector3::new(
-                    f64::from(self_entity.yaw.load().to_radians().cos()),
-                    0.0,
-                    f64::from(self_entity.yaw.load().to_radians().sin()),
-                )
-                .normalize();
-
-                let dot = dir.dot(&facing).abs();
-                if dot >= 0.8 {
-                    let vel = self_entity.velocity.load();
-                    let ovel = other_entity.velocity.load();
-
-                    let is_self_furnace =
-                        self_entity.entity_type.id == EntityType::FURNACE_MINECART.id;
-                    let is_other_furnace =
-                        other_entity.entity_type.id == EntityType::FURNACE_MINECART.id;
-
-                    if is_other_furnace && !is_self_furnace {
-                        self_entity.velocity.store(vel.multiply(0.2, 1.0, 0.2));
-                        let mut new_self_vel = self_entity.velocity.load();
-                        new_self_vel.x += ovel.x - xa;
-                        new_self_vel.z += ovel.z - za;
-                        self_entity.velocity.store(new_self_vel);
-                        self_entity.send_velocity();
-
-                        other_entity.velocity.store(ovel.multiply(0.95, 1.0, 0.95));
-                        other_entity.send_velocity();
-                    } else if !is_other_furnace && is_self_furnace {
-                        other_entity.velocity.store(ovel.multiply(0.2, 1.0, 0.2));
-                        let mut new_other_vel = other_entity.velocity.load();
-                        new_other_vel.x += vel.x + xa;
-                        new_other_vel.z += vel.z + za;
-                        other_entity.velocity.store(new_other_vel);
-                        other_entity.send_velocity();
-
-                        self_entity.velocity.store(vel.multiply(0.95, 1.0, 0.95));
-                        self_entity.send_velocity();
-                    } else {
-                        #[allow(clippy::manual_midpoint)]
-                        let xdd = (ovel.x + vel.x) / 2.0;
-                        #[allow(clippy::manual_midpoint)]
-                        let zdd = (ovel.z + vel.z) / 2.0;
-
-                        self_entity.velocity.store(vel.multiply(0.2, 1.0, 0.2));
-                        let mut new_self_vel = self_entity.velocity.load();
-                        new_self_vel.x += xdd - xa;
-                        new_self_vel.z += zdd - za;
-                        self_entity.velocity.store(new_self_vel);
-                        self_entity.send_velocity();
-
-                        other_entity.velocity.store(ovel.multiply(0.2, 1.0, 0.2));
-                        let mut new_other_vel = other_entity.velocity.load();
-                        new_other_vel.x += xdd + xa;
-                        new_other_vel.z += zdd + za;
-                        other_entity.velocity.store(new_other_vel);
-                        other_entity.send_velocity();
-                    }
-                }
-            } else {
-                if !self_entity.has_passengers() && self.is_pushable() {
-                    let mut vel = self_entity.velocity.load();
-                    vel.x -= xa;
-                    vel.z -= za;
-                    self_entity.velocity.store(vel);
-                    self_entity.send_velocity();
-                }
-
-                if !other_entity.has_passengers() && entity.is_pushable() {
-                    let mut vel = other_entity.velocity.load();
-                    vel.x += xa / 4.0;
-                    vel.z += za / 4.0;
-                    other_entity.velocity.store(vel);
-                    other_entity.send_velocity();
-                }
-            }
+    fn get_gravity(&self) -> f64 {
+        let entity = &self.vehicle.entity;
+        if entity.has_no_gravity() {
+            0.0
+        } else if entity.is_in_water() {
+            GRAVITY_IN_WATER
+        } else {
+            GRAVITY
         }
     }
 
-    fn is_collidable(&self, _entity: Option<Box<dyn EntityBase>>) -> bool {
-        true
+    /// Vanilla `AbstractMinecart.getBlockSpeedFactor`.
+    fn get_block_speed_factor(&self) -> f32 {
+        let entity = &self.vehicle.entity;
+        if entity
+            .world
+            .load()
+            .get_block(&entity.block_pos.load())
+            .has_tag(&tag::Block::MINECRAFT_RAILS)
+        {
+            1.0
+        } else {
+            entity.get_block_speed_factor()
+        }
+    }
+
+    /// Vanilla `AbstractMinecart.getMovementEmission`.
+    fn movement_emission(&self) -> MovementEmission {
+        MovementEmission::Events
+    }
+
+    fn is_on_rails(&self) -> bool {
+        self.on_rails.load(Ordering::Relaxed)
     }
 
     fn init_data_tracker(&self) {
@@ -673,6 +588,7 @@ impl EntityBase for MinecartEntity {
         }
     }
 
+    /// Vanilla `AbstractMinecart.isPickable`.
     fn can_hit(&self) -> bool {
         self.vehicle.entity.is_alive()
     }
@@ -686,142 +602,27 @@ impl EntityBase for MinecartEntity {
         source: Option<&dyn EntityBase>,
         cause: Option<&dyn EntityBase>,
     ) -> bool {
-        let creative = source
-            .and_then(EntityBase::get_player)
-            .is_some_and(|player| player.gamemode.load() == GameMode::Creative);
-
-        if let MinecartKind::Tnt(minecart) = &self.kind
-            && damage_type == DamageType::ARROW
-            && self.vehicle.entity.fire_ticks.load(Ordering::Relaxed) > 0
-        {
-            let projectile_speed_squared = cause
-                .map(|entity| entity.get_entity().velocity.load().length_squared())
-                .unwrap_or_default();
-            minecart.explode(&self.vehicle.entity, projectile_speed_squared);
-            if self.vehicle.entity.is_removed() {
-                return true;
-            }
-        }
-
-        let will_break = self.vehicle.entity.is_alive()
-            && (creative || self.vehicle.get_damage() + amount * 10.0 > 40.0);
-
-        if let MinecartKind::Tnt(minecart) = &self.kind
-            && will_break
-            && !creative
-        {
-            let velocity = self.vehicle.entity.velocity.load();
-            let speed_squared = velocity.x.mul_add(velocity.x, velocity.z * velocity.z);
-            let ignites = damage_type.has_tag(&tag::DamageType::MINECRAFT_IS_FIRE)
-                || damage_type.has_tag(&tag::DamageType::MINECRAFT_IS_EXPLOSION)
-                || self.vehicle.entity.fire_ticks.load(Ordering::Relaxed) > 0;
-            if ignites || speed_squared >= 0.01 {
-                self.vehicle.apply_damage_wobble(amount);
-                let fuse = rand::rng().random_range(0..20) + rand::rng().random_range(0..20);
-                if self
-                    .vehicle
-                    .entity
-                    .world
-                    .load()
-                    .level_info
-                    .load()
-                    .game_rules
-                    .tnt_explodes
-                {
-                    minecart.prime(&self.vehicle.entity, fuse);
-                } else {
-                    minecart.set_fuse(fuse);
-                }
-                return true;
-            }
-        }
-
-        let damaged = self.vehicle.damage_with_context(amount, source);
-
-        if will_break && !creative && self.vehicle.entity.is_removed() {
-            let world = self.vehicle.entity.world.load();
-            if world.level_info.load().game_rules.entity_drops {
-                let position = self.vehicle.entity.block_pos.load();
-                if let Some(container) = self.container() {
-                    container::drop_contents(&self.vehicle.entity, container);
-                }
-                if let Some(item) = self.drop_item() {
-                    world.drop_stack(&position, ItemStack::new(1, item));
-                }
-            }
-        }
-
-        damaged
+        self.hurt_server(amount, damage_type, source, cause)
     }
 
     fn interact(&self, player: &Arc<Player>, item_stack: &mut ItemStack) -> bool {
+        let entity = &self.vehicle.entity;
         match &self.kind {
-            MinecartKind::Chest(minecart) => {
-                minecart.interact(&self.vehicle.entity, player);
-                true
-            }
-            MinecartKind::Furnace(minecart) => {
-                minecart.interact(&self.vehicle.entity, player, item_stack)
-            }
+            MinecartKind::Chest(minecart) => minecart.interact(entity, player),
+            MinecartKind::Furnace(minecart) => minecart.interact(entity, player, item_stack),
             MinecartKind::Hopper(minecart) => {
-                minecart.interact(&self.vehicle.entity, player);
+                minecart.interact(entity, player);
                 true
             }
-            MinecartKind::Rideable(_) => RideableMinecart::interact(&self.vehicle.entity, player),
-            MinecartKind::Tnt(_) | MinecartKind::Other => false,
-        }
-    }
-
-    fn on_player_collision(&self, player: &Arc<Player>) {
-        if self.vehicle.entity.has_passenger(player.entity_id()) {
-            return;
-        }
-
-        if player.is_spectator() {
-            return;
-        }
-
-        let player_pos = player.get_entity().pos.load();
-        let minecart_pos = self.vehicle.entity.pos.load();
-
-        let mut diff_x = minecart_pos.x - player_pos.x;
-        let mut diff_z = minecart_pos.z - player_pos.z;
-
-        let dist_sq = diff_x * diff_x + diff_z * diff_z;
-        if dist_sq > 0.0001 {
-            let dist = dist_sq.sqrt();
-            diff_x /= dist;
-            diff_z /= dist;
-
-            let push_force = 0.1;
-            let mut vel = self.vehicle.entity.velocity.load();
-            vel.x += diff_x * push_force;
-            vel.z += diff_z * push_force;
-
-            let horizontal_speed = vel.x.hypot(vel.z);
-            if horizontal_speed > 0.4 {
-                vel.x = (vel.x / horizontal_speed) * 0.4;
-                vel.z = (vel.z / horizontal_speed) * 0.4;
-            }
-
-            self.vehicle.entity.velocity.store(vel);
-            self.vehicle.entity.send_velocity();
+            MinecartKind::Rideable(_) => RideableMinecart::interact(self, player),
+            // Vanilla `MinecartCommandBlock.interact`: the client opens the screen itself.
+            MinecartKind::CommandBlock(_) => player.can_use_game_master_blocks(),
+            MinecartKind::Tnt(_) | MinecartKind::Spawner(_) => false,
         }
     }
 
     fn move_entity(&self, caller: &dyn EntityBase, motion: Vector3<f64>) {
-        let to_position = self.vehicle.entity.pos.load().add(&motion);
-        self.vehicle.entity.move_entity(caller, motion);
-        let entity_id = self.vehicle.entity.entity_id;
-        let world = self.vehicle.entity.world.load().clone();
-        if let Some(dyn_self) = world.get_entity_by_id(entity_id) {
-            let should_continue = dyn_self.push_entities(caller);
-            if should_continue {
-                let current_pos = dyn_self.get_entity().pos.load();
-                let back_motion = to_position.sub(&current_pos);
-                dyn_self.get_entity().move_entity(caller, back_motion);
-            }
-        }
+        self.cart_move(caller, motion);
     }
 
     fn cast_any(&self) -> &dyn std::any::Any {
