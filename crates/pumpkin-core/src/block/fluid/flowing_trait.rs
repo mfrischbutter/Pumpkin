@@ -10,6 +10,16 @@ use std::sync::Arc;
 pub type FlowingFluidProperties = pumpkin_data::fluid::FlowingWaterLikeFluidProperties;
 
 #[allow(async_fn_in_trait)]
+/// Blocks whose fluid state is always a water source in vanilla (their `getFluidState` returns
+/// `Fluids.WATER.getSource(false)`): water neither flows into them nor drains them.
+fn holds_water_source(block: &Block) -> bool {
+    block == &Block::BUBBLE_COLUMN
+        || block == &Block::KELP
+        || block == &Block::KELP_PLANT
+        || block == &Block::SEAGRASS
+        || block == &Block::TALL_SEAGRASS
+}
+
 pub trait FlowingFluid: Send + Sync {
     fn get_level_decrease_per_block(&self, world: &World) -> i32;
     fn get_flow_speed(&self, world: &World) -> u8;
@@ -57,7 +67,7 @@ pub trait FlowingFluid: Send + Sync {
         }
         if fluid.id == Fluid::FLOWING_WATER.id || fluid.id == Fluid::WATER.id {
             let block = Block::from_state_id(state_id);
-            if block.is_waterlogged(state_id) {
+            if block.is_waterlogged(state_id) || holds_water_source(block) {
                 return Some(self.get_source(fluid, false));
             }
         }
