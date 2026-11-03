@@ -202,10 +202,16 @@ impl SpearItem {
         let config = &server.advanced_config.pvp;
         if effects.knockback && config.knockback && target.get_living_entity().is_some() {
             let attacker = player.get_entity();
-            combat::handle_knockback(attacker, target.as_ref(), 0.8);
+            combat::handle_knockback_from_hit(attacker, target.as_ref(), 0.8, total_damage, false);
             let knockback_level = Self::knockback_level(stack);
             if knockback_level > 0 {
-                combat::handle_knockback(attacker, target.as_ref(), f64::from(knockback_level));
+                combat::handle_knockback_from_hit(
+                    attacker,
+                    target.as_ref(),
+                    f64::from(knockback_level),
+                    total_damage,
+                    true,
+                );
             }
             target_entity.send_velocity();
         }

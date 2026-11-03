@@ -14,6 +14,7 @@ use crate::block::{
 use crate::entity::decoration::armor_stand::ArmorStandEntity;
 use crate::entity::item::ItemEntity;
 use crate::entity::passive::copper_golem::CopperGolemEntity;
+use crate::entity::mob::sulfur_cube::{SulfurCubeEntity, is_swallowable_item};
 use crate::entity::passive::sheep::SheepEntity;
 use crate::entity::projectile::projectile_item::{
     DispenseConfig, DispensePosition, dispense_config, shoot_projectile_item, triangle,
@@ -358,6 +359,11 @@ impl DispenserBlock {
         } else if Self::dispense_equipment(ctx, item) {
             // Armor, elytra, heads, saddles, horse/wolf armor and llama carpets
             Self::play_dispense_effects(ctx, WorldEvent::SoundDispenserDispense);
+        } else if is_swallowable_item(item)
+            && SulfurCubeEntity::dispense_block(ctx.world, &Self::target_position(ctx), item)
+        {
+            // Blocks into the sulfur cube in front
+            Self::play_dispense_effects(ctx, WorldEvent::SoundDispenserDispense);
         } else {
             // TODO: Bone meal, chests onto llamas, brushes onto armadillos
             // Default / Drop
@@ -533,8 +539,12 @@ impl DispenserBlock {
             return;
         }
 
-        let _ = item.split(1);
         let target = Self::target_position(ctx);
+        if SulfurCubeEntity::dispense_block(ctx.world, &target, item) {
+            Self::play_dispense_effects(ctx, WorldEvent::SoundDispenserDispense);
+            return;
+        }
+        let _ = item.split(1);
 
         let tnt = TNTEntity::primed(ctx.world, &target, TNTEntity::DEFAULT_FUSE);
         let spawn_pos = tnt.get_entity().pos.load();
@@ -645,7 +655,9 @@ impl DispenserBlock {
         let front = Self::target_position(ctx);
         let front_block = ctx.world.get_block(&front);
 
-        let ignited = if front_block == &Block::TNT {
+        let ignited = if SulfurCubeEntity::ignite_explosive_at(ctx.world, &front) {
+            true
+        } else if front_block == &Block::TNT {
             TNTBlock::prime(ctx.world, &front)
         } else {
             Ignition::ignite_block(
@@ -785,6 +797,15 @@ impl DispenserBlock {
                 ctx.world
                     .emit_game_event(GameEvent::Shear.name(), target.to_centered_f64());
                 return true;
+            }
+            if let Some(cube) = entity.cast_any().downcast_ref::<SulfurCubeEntity>() {
+                if cube.ready_for_shearing() && entity.get_entity().is_alive() {
+                    cube.shear();
+                    ctx.world
+                        .emit_game_event(GameEvent::Shear.name(), target.to_centered_f64());
+                    return true;
+                }
+                continue;
             }
             let Some(sheep) = entity.cast_any().downcast_ref::<SheepEntity>() else {
                 continue;

@@ -16,6 +16,11 @@ pub trait Bucketable: Mob {
     fn bucket_item(&self) -> &'static Item;
     fn pickup_sound(&self) -> Sound;
 
+    /// Vanilla `Bucketable.canBePickedUpWithBucket`.
+    fn can_be_picked_up_with_bucket(&self, stack: &ItemStack) -> bool {
+        stack.item == &Item::WATER_BUCKET
+    }
+
     fn save_to_bucket_tag(&self, bucket: &mut ItemStack) {
         self.save_default_data_to_bucket_tag(bucket);
     }
@@ -103,7 +108,7 @@ pub fn bucket_mob_pickup(
     mob: &dyn Bucketable,
 ) -> Option<bool> {
     let entity = mob.get_entity();
-    if stack.item != &Item::WATER_BUCKET
+    if !mob.can_be_picked_up_with_bucket(stack)
         || !entity.is_alive()
         || mob.get_mob_entity().living_entity.is_dead_or_dying()
     {
@@ -133,22 +138,7 @@ pub fn bucket_mob_pickup(
     let mut bucket = ItemStack::new(1, mob.bucket_item());
     mob.save_to_bucket_tag(&mut bucket);
     crate::item::items::bucket::give_filled_mob_bucket(stack, player, bucket);
-    let leashed = entity
-        .leashed_to
-        .lock()
-        .unwrap_or_else(std::sync::PoisonError::into_inner)
-        .is_some();
-    if leashed {
-        entity.unleash();
-        if entity
-            .leashed_to
-            .lock()
-            .unwrap_or_else(std::sync::PoisonError::into_inner)
-            .is_none()
-        {
-            world.drop_stack(&entity.block_pos.load(), ItemStack::new(1, &Item::LEAD));
-        }
-    }
+    entity.drop_leash();
     entity.remove();
     Some(true)
 }

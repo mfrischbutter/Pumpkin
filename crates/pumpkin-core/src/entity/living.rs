@@ -1612,7 +1612,7 @@ impl LivingEntity {
             .has_tag(&tag::EntityType::MINECRAFT_FALL_DAMAGE_IMMUNE)
     }
 
-    fn get_effective_gravity(&self, caller: &dyn EntityBase) -> f64 {
+    pub(crate) fn get_effective_gravity(&self, caller: &dyn EntityBase) -> f64 {
         let final_gravity = if self.entity.has_no_gravity() {
             0.0
         } else {
@@ -2086,6 +2086,9 @@ impl LivingEntity {
             self.entity.velocity.store(velo);
             self.jump_out_of_fluid(old_y);
         }
+        if let Some(mob) = caller.get_mob() {
+            mob.after_travel_in_fluid();
+        }
     }
 
     fn jump_out_of_fluid(&self, old_y: f64) {
@@ -2216,6 +2219,9 @@ impl LivingEntity {
 
         if self.entity.entity_type == &EntityType::BREEZE {
             eye_height
+        } else if self.entity.entity_type == &EntityType::SULFUR_CUBE {
+            f64::from(self.entity.height())
+                * crate::entity::mob::sulfur_cube::FLUID_JUMP_THRESHOLD_SCALE
         } else if eye_height < 0.4 {
             0.0
         } else {
@@ -3228,7 +3234,8 @@ impl LivingEntity {
             let can_drown = !entity
                 .entity_type
                 .has_tag(&tag::EntityType::MINECRAFT_CAN_BREATHE_UNDER_WATER)
-                && !water_breathing;
+                && !water_breathing
+                && !mob.mob_can_breathe_underwater();
             if can_drown {
                 entity.set_air_supply(self.decrease_air_supply(air));
                 if self.should_take_drowning_damage() {
@@ -4026,9 +4033,21 @@ impl LivingEntity {
                 let target_pos = self.entity.pos.load();
                 let dx = source_pos.x - target_pos.x;
                 let dz = source_pos.z - target_pos.z;
-                let resistance = self.get_attribute_value(&Attributes::KNOCKBACK_RESISTANCE);
-                self.entity
-                    .apply_knockback(knockback_after_resistance(0.4, resistance), dx, dz);
+                let moved_itself = caller.get_mob().is_some_and(|mob| {
+                    mob.mob_knockback(
+                        0.4,
+                        dx,
+                        dz,
+                        cause.map(EntityBase::get_entity),
+                        damage_amount,
+                        false,
+                    )
+                });
+                if !moved_itself {
+                    let resistance = self.get_attribute_value(&Attributes::KNOCKBACK_RESISTANCE);
+                    self.entity
+                        .apply_knockback(knockback_after_resistance(0.4, resistance), dx, dz);
+                }
             }
         }
 

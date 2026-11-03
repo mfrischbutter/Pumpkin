@@ -170,6 +170,21 @@ pub fn block_receives_redstone_power(world: &World, pos: &BlockPos) -> bool {
     false
 }
 
+/// Vanilla `SignalGetter.getBestOwnOrNeighbourSignal` above zero: powered from a neighbour, or a
+/// signal source that is on itself.
+pub fn has_own_or_neighbour_signal(world: &World, pos: &BlockPos) -> bool {
+    if block_receives_redstone_power(world, pos) {
+        return true;
+    }
+    let (block, state) = world.get_block_and_state(pos);
+    for side in BlockDirection::all() {
+        if get_weak_power(block, state, world, pos, side, true) > 0 {
+            return true;
+        }
+    }
+    false
+}
+
 #[must_use]
 pub fn is_diode(block: &Block) -> bool {
     block == &Block::REPEATER || block == &Block::COMPARATOR

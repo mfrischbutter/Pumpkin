@@ -1888,13 +1888,25 @@ impl Player {
                             // Vanilla `Player.doSweepAttack` knocks every hurt victim
                             // back by 0.4 along the attacker's facing.
                             if hurt && let Some(living) = other_victim.get_living_entity() {
-                                let resistance =
-                                    living.get_attribute_value(&Attributes::KNOCKBACK_RESISTANCE);
-                                other_victim.get_entity().apply_knockback(
-                                    combat::knockback_after_resistance(0.4, resistance),
-                                    knockback_x,
-                                    knockback_z,
-                                );
+                                let moved_itself = other_victim.get_mob().is_some_and(|mob| {
+                                    mob.mob_knockback(
+                                        0.4,
+                                        knockback_x,
+                                        knockback_z,
+                                        Some(attacker_entity),
+                                        sweep_damage,
+                                        false,
+                                    )
+                                });
+                                if !moved_itself {
+                                    let resistance = living
+                                        .get_attribute_value(&Attributes::KNOCKBACK_RESISTANCE);
+                                    other_victim.get_entity().apply_knockback(
+                                        combat::knockback_after_resistance(0.4, resistance),
+                                        knockback_x,
+                                        knockback_z,
+                                    );
+                                }
                             }
                         }
                     }
@@ -1905,7 +1917,15 @@ impl Player {
             // `Entity::knockback` halves the current velocity, so calling it with 0.0
             // would still slow the victim down.
             if config.knockback && knockback_strength > 0.0 {
-                combat::handle_knockback(attacker_entity, victim.as_ref(), knockback_strength);
+                // Vanilla `Player.attack`: only the enchantment's part comes from an effect.
+                let comes_from_effect = !matches!(attack_type, AttackType::Knockback);
+                combat::handle_knockback_from_hit(
+                    attacker_entity,
+                    victim.as_ref(),
+                    knockback_strength,
+                    damage as f32,
+                    comes_from_effect,
+                );
                 // Vanilla `Player.causeExtraKnockback` ends the sprint.
                 self.living_entity.set_sprinting(false);
             }

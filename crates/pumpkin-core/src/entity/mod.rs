@@ -98,6 +98,7 @@ pub mod passive;
 pub mod player;
 pub mod projectile;
 pub mod projectile_deflection;
+mod restitution;
 pub mod spawn_util;
 pub mod synched_entity_data;
 pub mod tnt;
@@ -2314,6 +2315,9 @@ impl Entity {
         let Some(living) = caller.get_living_entity() else {
             return 0.0;
         };
+        if let Some(step_height) = caller.get_mob().and_then(mob::Mob::mob_max_up_step) {
+            return step_height;
+        }
         let step_height =
             living.get_attribute_value(&pumpkin_data::attributes::Attributes::STEP_HEIGHT) as f32;
         if caller
@@ -3043,6 +3047,7 @@ impl Entity {
 
         let velocity_multiplier = f64::from(caller.get_block_speed_factor());
 
+        let velocity_before_move = self.velocity.load();
         self.velocity.store(final_move * velocity_multiplier);
 
         if let Some(living) = caller.get_living_entity() {
@@ -3057,6 +3062,14 @@ impl Entity {
                 .block_registry
                 .update_entity_movement_after_fall_on(effect_block, caller);
         }
+        restitution::restitute_movement_after_collisions(
+            caller,
+            velocity_before_move,
+            motion,
+            final_move,
+            effect_block,
+            velocity_multiplier,
+        );
 
         if self.is_removed() {
             return;
@@ -4651,6 +4664,27 @@ impl Entity {
         );
     }
 
+    /// Vanilla `Leashable.dropLeash`: the leash comes off and its lead falls to the ground.
+    pub fn drop_leash(&self) {
+        let leashed = self
+            .leashed_to
+            .lock()
+            .unwrap_or_else(std::sync::PoisonError::into_inner)
+            .is_some();
+        if !leashed {
+            return;
+        }
+        self.unleash();
+        let still_leashed = self
+            .leashed_to
+            .lock()
+            .unwrap_or_else(std::sync::PoisonError::into_inner)
+            .is_some();
+        if !still_leashed {
+            self.spawn_at_location(ItemStack::new(1, &pumpkin_data::item::Item::LEAD));
+        }
+    }
+
     pub fn unleash(&self) {
         let world = self.world.load();
         if let Some(server) = world.server.upgrade() {
@@ -4964,12 +4998,21 @@ impl Entity {
     }
 
     pub fn spawn_at_location(&self, stack: ItemStack) {
+        self.spawn_at_location_with_offset(stack, 0.0);
+    }
+
+    /// Vanilla `spawnAtLocation` with an offset, which here only ever goes up.
+    pub fn spawn_at_location_with_offset(&self, stack: ItemStack, y_offset: f64) {
         if stack.is_empty() {
             return;
         }
         let world = self.world.load();
         let item_entity = ItemEntity::new(
-            Self::new(world.clone(), self.pos.load(), &EntityType::ITEM),
+            Self::new(
+                world.clone(),
+                self.pos.load().add_raw(0.0, y_offset, 0.0),
+                &EntityType::ITEM,
+            ),
             stack,
         );
         world.spawn_entity(Arc::new(item_entity));

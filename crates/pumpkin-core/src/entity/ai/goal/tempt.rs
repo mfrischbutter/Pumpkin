@@ -23,6 +23,13 @@ enum TemptItems {
     ForMob(fn(&dyn Mob, &pumpkin_data::item_stack::ItemStack) -> bool),
 }
 
+/// Vanilla `stopNavigation` and `navigateTowards` overrides of `TemptGoal.ForNonPathfinders`.
+#[derive(Clone, Copy)]
+pub struct TemptSteering {
+    pub stop: fn(&dyn Mob),
+    pub navigate_towards: fn(&dyn Mob, &Player),
+}
+
 pub struct TemptGoal {
     goal_control: Controls,
     speed: f64,
@@ -43,6 +50,8 @@ pub struct TemptGoal {
     while_running: Option<fn(&dyn Mob)>,
     /// Vanilla `TemptGoal.ForNonPathfinders`: it steers by the move control, no path.
     non_pathfinder: bool,
+    /// Steers by these instead of the move control.
+    steering: Option<TemptSteering>,
 }
 
 impl TemptGoal {
@@ -99,6 +108,7 @@ impl TemptGoal {
             not_scared_when: None,
             while_running: None,
             non_pathfinder: false,
+            steering: None,
         }
     }
 
@@ -140,6 +150,20 @@ impl TemptGoal {
                 stop_distance,
             )
         }
+    }
+
+    /// Vanilla `setFlags` of a `TemptGoal` subclass.
+    #[must_use]
+    pub const fn with_controls(mut self, controls: Controls) -> Self {
+        self.goal_control = controls;
+        self
+    }
+
+    /// The overrides of a `TemptGoal.ForNonPathfinders` subclass.
+    #[must_use]
+    pub const fn steered_by(mut self, steering: TemptSteering) -> Self {
+        self.steering = Some(steering);
+        self
     }
 
     #[must_use]
@@ -288,6 +312,16 @@ impl Goal for TemptGoal {
             );
 
         let mob_pos = mob_entity.living_entity.entity.pos.load();
+        if let Some(steering) = self.steering {
+            if mob_pos.squared_distance_to_vec(&player_pos)
+                < self.stop_distance * self.stop_distance
+            {
+                (steering.stop)(mob);
+            } else {
+                (steering.navigate_towards)(mob, player);
+            }
+            return;
+        }
         let steered = mob_entity.steered();
         if self.non_pathfinder {
             let mut move_control = steered.move_control();
@@ -313,7 +347,9 @@ impl Goal for TemptGoal {
 
     fn stop(&mut self, mob: &dyn Mob) {
         self.target_player = None;
-        if self.non_pathfinder {
+        if let Some(steering) = self.steering {
+            (steering.stop)(mob);
+        } else if self.non_pathfinder {
             mob.get_mob_entity().steered().move_control().set_wait();
         } else {
             mob.get_mob_entity().steered().navigator().stop();

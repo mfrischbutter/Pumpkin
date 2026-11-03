@@ -68,18 +68,38 @@ pub fn knockback_after_resistance(strength: f64, resistance: f64) -> f64 {
 }
 
 pub fn handle_knockback(attacker: &Entity, victim: &dyn EntityBase, strength: f64) {
-    let resistance = victim.get_living_entity().map_or(0.0, |living| {
-        living.get_attribute_value(&Attributes::KNOCKBACK_RESISTANCE)
-    });
-    let strength = knockback_after_resistance(strength * 0.5, resistance);
+    handle_knockback_from_hit(attacker, victim, strength, 0.0, false);
+}
 
-    if strength > 0.0 {
-        let yaw = attacker.yaw.load();
-        victim.get_entity().knockback(
-            strength,
-            f64::from((yaw.to_radians()).sin()),
-            f64::from(-(yaw.to_radians()).cos()),
-        );
+/// Vanilla `causeExtraKnockback`. `damage` and `comes_from_effect` are for species with their own
+/// `knockback` ([`Mob::mob_knockback`](crate::entity::mob::Mob::mob_knockback)).
+pub fn handle_knockback_from_hit(
+    attacker: &Entity,
+    victim: &dyn EntityBase,
+    strength: f64,
+    damage: f32,
+    comes_from_effect: bool,
+) {
+    let yaw = attacker.yaw.load().to_radians();
+    let (xd, zd) = (f64::from(yaw.sin()), f64::from(-yaw.cos()));
+    let moved_itself = victim.get_mob().is_some_and(|mob| {
+        mob.mob_knockback(
+            strength * 0.5,
+            xd,
+            zd,
+            Some(attacker),
+            damage,
+            comes_from_effect,
+        )
+    });
+    if !moved_itself {
+        let resistance = victim.get_living_entity().map_or(0.0, |living| {
+            living.get_attribute_value(&Attributes::KNOCKBACK_RESISTANCE)
+        });
+        let strength = knockback_after_resistance(strength * 0.5, resistance);
+        if strength > 0.0 {
+            victim.get_entity().knockback(strength, xd, zd);
+        }
     }
 
     let velocity = attacker.velocity.load();

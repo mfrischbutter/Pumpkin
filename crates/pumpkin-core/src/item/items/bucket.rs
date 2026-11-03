@@ -149,50 +149,16 @@ pub(crate) fn fill_bucket_stack(stack: &mut ItemStack, player: &Player, item: &'
     give_filled_bucket_stack(stack, player, ItemStack::new(1, item), true);
 }
 
-fn fill_mob_bucket_stack(
-    stack: &mut ItemStack,
-    player: &Player,
-    item: &'static Item,
-    entity: &dyn EntityBase,
-) {
-    let mut bucket_stack = ItemStack::new(1, item);
-    if let Some(custom_name) = entity.get_entity().custom_name.load().as_ref() {
-        bucket_stack.set_data_component(CustomNameImpl {
-            name: custom_name.clone(),
-        });
-    }
-    if entity.get_entity().entity_type == &EntityType::SULFUR_CUBE
-        && let Some(living) = entity.get_living_entity()
-    {
-        let body_stack = living
-            .entity_equipment
-            .lock()
-            .unwrap_or_else(std::sync::PoisonError::into_inner)
-            .get(&EquipmentSlot::BODY);
-        if !body_stack.is_empty() {
-            bucket_stack.set_data_component(SulfurCubeContentImpl { item: body_stack });
-        }
-    }
-    let mut nbt = NbtCompound::new();
-    entity.write_nbt(&mut nbt);
-    for key in [
-        "id",
-        "UUID",
-        "Pos",
-        "Motion",
-        "Rotation",
-        "FallDistance",
-        "Dimension",
-        "PortalCooldown",
-    ] {
-        nbt.child_tags.remove(key);
-    }
-    bucket_stack.set_data_component(BucketEntityDataImpl { nbt: Some(nbt) });
-    give_filled_bucket_stack(stack, player, bucket_stack, true);
-}
-
 fn apply_mob_bucket_components(bucket_stack: &ItemStack, mob: &dyn EntityBase, player: &Player) {
     crate::item::items::spawn_egg::apply_entity_variant(bucket_stack, mob, Some(player));
+    // Vanilla `SulfurCube.setSulfurCubeContent`.
+    if let Some(sulfur_content) = bucket_stack.get_data_component::<SulfurCubeContentImpl>()
+        && !sulfur_content.item.is_empty()
+        && let Some(mob) = mob.get_mob()
+    {
+        mob.get_mob_entity()
+            .set_item_slot_and_drop_when_killed(&EquipmentSlot::BODY, sulfur_content.item.clone());
+    }
     if let Some(bucketable) = mob.get_mob().and_then(|mob| mob.as_bucketable()) {
         if let Some(data) = bucket_stack.get_data_component::<BucketEntityDataImpl>()
             && let Some(nbt) = &data.nbt
@@ -219,16 +185,6 @@ fn apply_mob_bucket_components(bucket_stack: &ItemStack, mob: &dyn EntityBase, p
     }
     if let Some(custom_name) = bucket_stack.get_data_component::<CustomNameImpl>() {
         mob.get_entity().set_custom_name(custom_name.name.clone());
-    }
-    if let Some(sulfur_content) = bucket_stack.get_data_component::<SulfurCubeContentImpl>()
-        && !sulfur_content.item.is_empty()
-        && let Some(living) = mob.get_living_entity()
-    {
-        living
-            .entity_equipment
-            .lock()
-            .unwrap_or_else(std::sync::PoisonError::into_inner)
-            .put(&EquipmentSlot::BODY, sulfur_content.item.clone());
     }
     if let Some(mob_trait) = mob.get_mob() {
         mob_trait
@@ -522,16 +478,7 @@ impl ItemBehaviour for EmptyBucketItem {
     fn use_on_entity(&self, item: &mut ItemStack, player: &Player, entity: Arc<dyn EntityBase>) {
         let ent = entity.get_entity();
         let entity_type = ent.entity_type;
-        if entity_type == &EntityType::SULFUR_CUBE && ent.age.load(Ordering::Relaxed) >= 0 {
-            let world = ent.world.load();
-            world.play_sound(
-                Sound::ItemBucketFillSulfurCube,
-                SoundCategory::Neutral,
-                &ent.pos.load(),
-            );
-            fill_mob_bucket_stack(item, player, &Item::SULFUR_CUBE_BUCKET, entity.as_ref());
-            ent.remove();
-        } else if (entity_type == &EntityType::MOOSHROOM || entity_type == &EntityType::GOAT)
+        if (entity_type == &EntityType::MOOSHROOM || entity_type == &EntityType::GOAT)
             && ent.age.load(Ordering::Relaxed) >= 0
         {
             let world = ent.world.load();

@@ -46,6 +46,49 @@ pub enum BlockInteraction {
     TriggerBlock,
 }
 
+fn default_block_explosion_resistance(
+    block: &Block,
+    fluid: &pumpkin_data::fluid::FluidState,
+) -> Option<f32> {
+    if block.default_state.is_air() && fluid.is_empty {
+        None
+    } else {
+        Some(fluid.blast_resistance.max(block.blast_resistance))
+    }
+}
+
+/// Vanilla `PrimedTnt.USED_PORTAL_DAMAGE_CALCULATOR`: what came through a nether portal leaves
+/// the portal standing.
+pub struct UsedPortalDamageCalculator;
+
+impl ExplosionDamageCalculator for UsedPortalDamageCalculator {
+    fn get_block_explosion_resistance(
+        &self,
+        _explosion: &Explosion,
+        _world: &World,
+        _pos: &BlockPos,
+        block: &Block,
+        fluid: &pumpkin_data::fluid::FluidState,
+    ) -> Option<f32> {
+        if block == &Block::NETHER_PORTAL {
+            None
+        } else {
+            default_block_explosion_resistance(block, fluid)
+        }
+    }
+
+    fn should_block_explode(
+        &self,
+        _explosion: &Explosion,
+        _world: &World,
+        _pos: &BlockPos,
+        block: &Block,
+        _power: f32,
+    ) -> bool {
+        block != &Block::NETHER_PORTAL
+    }
+}
+
 /// Defines how damage and block destruction are calculated for an explosion.
 pub trait ExplosionDamageCalculator: Send + Sync {
     /// Returns the block's explosion resistance. If None, the block is treated as air/empty.
@@ -57,11 +100,7 @@ pub trait ExplosionDamageCalculator: Send + Sync {
         block: &Block,
         fluid: &pumpkin_data::fluid::FluidState,
     ) -> Option<f32> {
-        if block.default_state.is_air() && fluid.is_empty {
-            None
-        } else {
-            Some(fluid.blast_resistance.max(block.blast_resistance))
-        }
+        default_block_explosion_resistance(block, fluid)
     }
 
     /// Returns whether this block should be destroyed / affected by the explosion.
@@ -435,7 +474,16 @@ impl Explosion {
             };
             let direction = (dir_pos - self.pos).normalize();
 
-            let knockback_power = (1.0 - distance) * exposure * knockback_multiplier;
+            // Vanilla `ServerExplosion.hurtEntities`; the attribute's range is 0 to 1.
+            let knockback_resistance = entity_base.get_living_entity().map_or(0.0, |living| {
+                living
+                    .get_attribute_value(
+                        &pumpkin_data::attributes::Attributes::EXPLOSION_KNOCKBACK_RESISTANCE,
+                    )
+                    .clamp(0.0, 1.0)
+            });
+            let knockback_power =
+                (1.0 - distance) * exposure * knockback_multiplier * (1.0 - knockback_resistance);
             let knockback = direction * knockback_power;
             // Vanilla `ServerExplosion.hurtEntities`: creative flyers get no knockback.
             if entity_base

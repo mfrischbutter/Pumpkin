@@ -329,11 +329,10 @@ fn get_entity_equipment_stack(entity: &dyn EntityBase, slot: &str) -> ItemStack 
     ItemStack::EMPTY.clone()
 }
 
+/// Vanilla `CubeMobPredicate`: any `AbstractCubeMob`.
 fn get_cube_mob_size(entity: &dyn EntityBase) -> Option<i32> {
-    entity
-        .cast_any()
-        .downcast_ref::<crate::entity::mob::slime::SlimeEntity>()
-        .map(crate::entity::mob::slime::SlimeEntity::get_size)
+    let cube = entity.get_mob()?.as_cube_mob()?;
+    Some(cube.cube_state().get_size())
 }
 
 fn get_sheep_sheared(entity: &dyn EntityBase) -> Option<bool> {

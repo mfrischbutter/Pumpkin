@@ -25,7 +25,7 @@ impl ModifierOperation {
         }
     }
 
-    fn from_name(name: &str) -> Option<Self> {
+    pub(crate) fn from_name(name: &str) -> Option<Self> {
         match name {
             "add_value" => Some(Self::Add),
             "add_multiplied_base" => Some(Self::MultiplyBase),

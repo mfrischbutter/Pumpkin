@@ -59,6 +59,7 @@ pub mod creaking;
 pub mod creaking_ai;
 pub mod creeper;
 pub mod crossbow_attack_mob;
+pub mod cube_mob;
 pub mod enderman;
 pub mod endermite;
 pub mod equipment;
@@ -96,6 +97,7 @@ pub mod spawn;
 pub mod special_dates;
 pub mod spellcaster_illager;
 pub mod spider;
+pub mod sulfur_cube;
 pub mod sun_burn;
 pub mod vex;
 pub mod vindicator;
@@ -2082,6 +2084,50 @@ pub trait Mob: EntityBase + Send + Sync {
         self.get_entity().is_invulnerable_to(damage_type, cause)
     }
 
+    /// Vanilla `hurtServer` overrides that decide a hit themselves before anything else of it:
+    /// `Some` is the result of the hurt, `None` runs the usual one.
+    fn mob_intercept_hurt(
+        &self,
+        _amount: f32,
+        _damage_type: DamageType,
+        _position: Option<Vector3<f64>>,
+        _source: Option<&dyn EntityBase>,
+        _cause: Option<&dyn EntityBase>,
+    ) -> Option<bool> {
+        None
+    }
+
+    /// Vanilla `LivingEntity.knockback` overrides: `true` when the mob moved itself.
+    fn mob_knockback(
+        &self,
+        _power: f64,
+        _xd: f64,
+        _zd: f64,
+        _attacker: Option<&Entity>,
+        _damage: f32,
+        _comes_from_effect: bool,
+    ) -> bool {
+        false
+    }
+
+    /// Vanilla `maxUpStep` overrides: `Some` decides alone, `None` reads the attribute.
+    fn mob_max_up_step(&self) -> Option<f32> {
+        None
+    }
+
+    /// Vanilla `canBreatheUnderwater` overrides, past the entity tag and the effects.
+    fn mob_can_breathe_underwater(&self) -> bool {
+        false
+    }
+
+    /// The code after `super.travelInFluid` in a vanilla `travelInFluid` override.
+    fn after_travel_in_fluid(&self) {}
+
+    /// The species part of the shared cube mob code.
+    fn as_cube_mob(&self) -> Option<&dyn cube_mob::CubeMob> {
+        None
+    }
+
     fn can_attack_with_owner(&self, _target: &dyn EntityBase, _owner: &dyn EntityBase) -> bool {
         true
     }
@@ -2808,6 +2854,10 @@ impl<T: Mob + Send + 'static> EntityBase for T {
         source: Option<&dyn EntityBase>,
         cause: Option<&dyn EntityBase>,
     ) -> bool {
+        if let Some(result) = self.mob_intercept_hurt(amount, damage_type, position, source, cause)
+        {
+            return result;
+        }
         // pre_damage hook: allows mobs to dodge/cancel damage (e.g. enderman projectile dodge)
         if !self.pre_damage_with_context(damage_type, source, cause) {
             return false;
