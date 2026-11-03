@@ -313,8 +313,6 @@ impl Mob for VindicatorEntity {
         world: &Arc<World>,
         group_data: Option<SpawnGroupData>,
     ) -> Option<SpawnGroupData> {
-        // Vanilla `Raider.finalizeSpawn`: only a naturally spawned witch stays out of raids.
-        self.set_can_join_raid(true);
         let group_data = self.finalize_spawn_super(group_data);
         self.mob_entity
             .steered()

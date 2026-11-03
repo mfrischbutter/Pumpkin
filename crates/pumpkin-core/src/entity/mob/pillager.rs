@@ -209,8 +209,6 @@ impl Mob for PillagerEntity {
         let difficulty = RegionalDifficulty::at(world, self.get_entity().pos.load());
         self.populate_default_equipment_slots(world, &difficulty);
         self.populate_default_equipment_enchantments(&difficulty);
-        // Vanilla `Raider.finalizeSpawn`: only a naturally spawned witch stays out of raids.
-        self.set_can_join_raid(true);
         self.finalize_spawn_super(group_data)
     }
 

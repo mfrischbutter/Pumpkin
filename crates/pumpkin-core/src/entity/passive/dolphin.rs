@@ -3,6 +3,8 @@ use std::sync::{
     atomic::{AtomicBool, AtomicI32, Ordering},
 };
 
+use crate::entity::mob::spawn::SpawnGroupData;
+use crate::world::World;
 use pumpkin_data::damage::DamageType;
 use pumpkin_data::data_component_impl::EquipmentSlot;
 use pumpkin_data::effect::StatusEffect;
@@ -232,6 +234,19 @@ fn drop_item(mob: &dyn Mob) -> bool {
 }
 
 impl Mob for DolphinEntity {
+    /// Vanilla `Dolphin.finalizeSpawn`: full air and a level pitch. The group's one in ten
+    /// babies need an ageable dolphin, which this one is not yet.
+    fn finalize_spawn(
+        &self,
+        _world: &Arc<World>,
+        group_data: Option<SpawnGroupData>,
+    ) -> Option<SpawnGroupData> {
+        let entity = self.get_entity();
+        entity.set_air_supply(TOTAL_AIR_SUPPLY);
+        entity.set_rotation(entity.yaw.load(), 0.0);
+        self.finalize_spawn_super(group_data)
+    }
+
     /// Vanilla `AgeableWaterCreature.checkSpawnObstruction`: only entities obstruct, the
     /// water does not.
     fn check_spawn_obstruction(&self, level: &dyn LevelAccessor) -> bool {

@@ -1,11 +1,17 @@
 use std::sync::{Arc, Weak, atomic::Ordering};
 
+use crate::entity::mob::spawn::{EntitySpawnReason, SpawnGroupData, finalize_spawn};
+use crate::entity::r#type::from_type;
+use crate::world::World;
 use pumpkin_data::BlockState;
+use pumpkin_data::data_component_impl::EquipmentSlot;
 use pumpkin_data::entity::EntityType;
+use pumpkin_data::item::Item;
 use pumpkin_data::item_stack::ItemStack;
 use pumpkin_data::sound::Sound;
 use pumpkin_nbt::compound::NbtCompound;
 use pumpkin_util::math::position::BlockPos;
+use uuid::Uuid;
 
 use crate::entity::passive::abstract_horse::{self as horse_base, AbstractHorse, HorseData};
 use crate::entity::{
@@ -97,6 +103,35 @@ impl AbstractHorse for ZombieHorseEntity {
 }
 
 impl Mob for ZombieHorseEntity {
+    /// Vanilla `ZombieHorse.finalizeSpawn`: a natural zombie horse carries a zombie with an
+    /// iron spear.
+    fn after_finalize_spawn(
+        &self,
+        world: &Arc<World>,
+        reason: EntitySpawnReason,
+        group_data: Option<SpawnGroupData>,
+    ) -> Option<SpawnGroupData> {
+        if reason == EntitySpawnReason::Natural {
+            let entity = self.get_entity();
+            let zombie = from_type(
+                &EntityType::ZOMBIE,
+                entity.pos.load(),
+                world,
+                Uuid::new_v4(),
+            );
+            zombie.get_entity().set_rotation(entity.yaw.load(), 0.0);
+            finalize_spawn(&zombie, world, reason, None);
+            if let Some(mob) = zombie.get_mob() {
+                mob.get_mob_entity().set_item_slot(
+                    &EquipmentSlot::MAIN_HAND,
+                    ItemStack::new(1, &Item::IRON_SPEAR),
+                );
+            }
+            self.mob_entity.add_pending_rider(zombie);
+        }
+        group_data
+    }
+
     /// Vanilla `ZombieHorse.getAmbientSound`.
     fn get_ambient_sound(&self) -> Option<pumpkin_data::sound::Sound> {
         Some(pumpkin_data::sound::Sound::EntityZombieHorseAmbient)

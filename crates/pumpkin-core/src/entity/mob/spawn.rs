@@ -184,6 +184,12 @@ pub fn finalize_spawn(
     if let Some(patroller) = mob.as_patrolling_monster() {
         patroller.finalize_patrol_spawn(reason);
     }
+    // Vanilla `Raider.finalizeSpawn`: every raider may join a raid but a natural witch.
+    if let Some(raider) = mob.as_raider() {
+        let natural_witch = entity.get_entity().entity_type == &EntityType::WITCH
+            && reason == EntitySpawnReason::Natural;
+        raider.set_can_join_raid(!natural_witch);
+    }
     group_data
 }
 

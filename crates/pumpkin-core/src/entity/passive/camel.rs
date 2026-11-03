@@ -3,6 +3,8 @@ use std::sync::{
     atomic::{AtomicI32, AtomicI64, Ordering},
 };
 
+use crate::entity::mob::spawn::SpawnGroupData;
+use crate::world::World;
 use pumpkin_data::BlockState;
 use pumpkin_data::damage::DamageType;
 use pumpkin_data::entity::{EntityPose, EntityType};
@@ -308,6 +310,17 @@ impl CustomSound for CamelEntity {
 }
 
 impl Mob for CamelEntity {
+    /// Vanilla `Camel.finalizeSpawn`: the pose timer reads as a finished stand already
+    /// (`resetLastPoseChangeTickToFullStand`); `CamelAi.initMemories` sets nothing in 26.3.
+    fn finalize_spawn(
+        &self,
+        _world: &Arc<World>,
+        group_data: Option<SpawnGroupData>,
+    ) -> Option<SpawnGroupData> {
+        self.set_last_pose_tick((self.game_time() - STAND_UP_TICKS - 1).max(0));
+        self.finalize_spawn_super(group_data)
+    }
+
     fn get_ambient_sound(&self) -> Option<Sound> {
         Some(self.sound(Sound::EntityCamelAmbient, Sound::EntityCamelHuskAmbient))
     }
