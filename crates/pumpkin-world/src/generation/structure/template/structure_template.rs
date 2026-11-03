@@ -182,10 +182,19 @@ impl StructurePlaceSettings {
         {
             return &palettes[idx];
         }
-        let index = ((pos.x.wrapping_add(pos.y).wrapping_add(pos.z)).unsigned_abs() as usize)
-            % palettes.len();
-        &palettes[index]
+        &palettes[random_palette_index(palettes.len(), pos)]
     }
+}
+
+/// Vanilla's `StructurePlaceSettings.getRandomPalette` without a random of its own: a legacy random
+/// seeded with `Mth.getSeed` of the template position picks the palette (the wood of a shipwreck).
+#[must_use]
+pub fn random_palette_index(palette_count: usize, pos: Vector3<i32>) -> usize {
+    use pumpkin_util::random::RandomImpl;
+    let mut random = pumpkin_util::random::legacy_rand::LegacyRand::from_seed(
+        pumpkin_util::random::hash_block_pos(pos.x, pos.y, pos.z) as u64,
+    );
+    random.next_bounded_i32(palette_count as i32) as usize
 }
 
 /// Lazily-parsed jigsaw blocks for a template.

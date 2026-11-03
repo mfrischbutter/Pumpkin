@@ -52,7 +52,7 @@ pub use processor::{
 pub use pumpkin_data::{BlockState, Mirror as BlockMirror, Rotation as BlockRotation};
 pub use structure_template::{
     JigsawBlockInfo, Palette, PaletteEntry, SimplePalette, StructureBlockInfo, StructureEntityInfo,
-    StructurePlaceSettings, StructureTemplate, TemplateBlock, TemplateEntity,
+    StructurePlaceSettings, StructureTemplate, TemplateBlock, TemplateEntity, random_palette_index,
 };
 pub use template_piece::TemplatePiece;
 

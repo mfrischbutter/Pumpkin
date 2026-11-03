@@ -305,10 +305,20 @@ impl StructurePieceBase for ShipwreckPiece {
             self.adjust_position_height(target_y);
         }
 
+        // Vanilla's `StructureTemplate.placeInWorld` picks one of the template's palettes (the
+        // wreck's wood) from the final template position. The flat block list follows palette 0's
+        // order, which every palette shares.
+        let palette = self.template.palettes
+            [crate::generation::structure::template::random_palette_index(
+                self.template.palettes.len(),
+                self.template_position,
+            )]
+        .blocks();
+
         // Place non-marker blocks
         let box_limit = self.piece.bounding_box;
-        for block in &self.template.blocks {
-            let palette_entry = &self.template.palette[block.state as usize];
+        for (index, block) in self.template.blocks.iter().enumerate() {
+            let palette_entry = &palette[index].state;
 
             if palette_entry.name == "minecraft:structure_block"
                 || palette_entry.name == "minecraft:air"
