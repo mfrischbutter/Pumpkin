@@ -161,11 +161,8 @@ impl GeodeFeature {
             if fluid.id == Fluid::EMPTY.id {
                 continue;
             }
-            let Some(fluid) = Fluid::from_id(fluid.id) else {
-                continue;
-            };
-            if let Some(target) = chunk.get_chunk_mut(adjacent.0.x >> 4, adjacent.0.z >> 4) {
-                target.schedule_fluid_tick(adjacent.0.x, adjacent.0.y, adjacent.0.z, fluid);
+            if let Some(fluid) = Fluid::from_id(fluid.id) {
+                chunk.schedule_fluid_tick_at(&adjacent.0, fluid);
             }
         }
     }

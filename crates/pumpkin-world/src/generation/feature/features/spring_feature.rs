@@ -1,4 +1,4 @@
-use pumpkin_data::{BlockDirection, BlockState};
+use pumpkin_data::{BlockDirection, BlockState, fluid::Fluid};
 use pumpkin_util::{math::position::BlockPos, random::RandomGenerator};
 
 use crate::generation::proto_chunk::GenerationCache;
@@ -132,6 +132,10 @@ impl SpringFeatureFeature {
         }
         if valid == self.rock_count && air == self.hole_count {
             chunk.set_block_state(&pos.0, self.state);
+            // Vanilla schedules the spring's fluid tick, so it starts flowing once the chunk ticks.
+            if let Some(fluid) = Fluid::from_state_id(self.state.id) {
+                chunk.schedule_fluid_tick_at(&pos.0, fluid);
+            }
             return true;
         }
         false
