@@ -115,6 +115,16 @@ impl AbstractHorse for SkeletonHorseEntity {
 }
 
 impl Mob for SkeletonHorseEntity {
+    /// Vanilla `AbstractHorse.isPushable`.
+    fn mob_is_pushable(&self) -> bool {
+        !self.get_entity().has_passengers()
+    }
+
+    /// Vanilla `supportQuadLeash`.
+    fn mob_support_quad_leash(&self) -> bool {
+        true
+    }
+
     /// Vanilla `SkeletonHorse.getAmbientSound`.
     fn get_ambient_sound(&self) -> Option<pumpkin_data::sound::Sound> {
         Some(if self.get_entity().is_submerged_in_water() {

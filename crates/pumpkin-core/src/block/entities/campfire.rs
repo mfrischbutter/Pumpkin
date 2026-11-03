@@ -341,8 +341,8 @@ mod tests {
     #[test]
     fn campfire_actor_builder() {
         let pos = BlockPos::new(5, 65, 5);
-        let beef = ItemStack::new(1, &Item::BEEF);
-        let pork = ItemStack::new(1, &Item::PORKCHOP);
+        let beef = ItemStack::new(1, &pumpkin_data::item::Item::BEEF);
+        let pork = ItemStack::new(1, &pumpkin_data::item::Item::PORKCHOP);
         let items = [
             beef,
             ItemStack::EMPTY.clone(),

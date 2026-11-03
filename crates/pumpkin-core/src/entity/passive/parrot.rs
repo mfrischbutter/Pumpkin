@@ -185,6 +185,11 @@ impl TamableAnimal for ParrotEntity {
 }
 
 impl Mob for ParrotEntity {
+    /// Vanilla `Parrot.isPushable`.
+    fn mob_is_pushable(&self) -> bool {
+        true
+    }
+
     fn as_animal(&self) -> Option<&dyn Animal> {
         Some(self)
     }

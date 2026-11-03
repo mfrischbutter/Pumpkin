@@ -94,7 +94,7 @@ impl DolphinEntity {
             // FollowPlayerRiddenEntityGoal (8) needs a player's recent horizontal movement.
             let goal_selector = &mob_arc.mob_entity.goals_selector;
             goal_selector.add_goal(0, Box::new(BreathAirGoal));
-            goal_selector.add_goal(0, Box::new(TryFindWaterGoal));
+            goal_selector.add_goal(0, Box::new(TryFindWaterGoal::new()));
             goal_selector.add_goal(2, Box::new(DolphinSwimWithPlayerGoal { player: None }));
             goal_selector.add_goal(4, Box::new(RandomSwimmingGoal::new(1.0, 10)));
             goal_selector.add_goal(4, Box::new(RandomLookAroundGoal::default()));

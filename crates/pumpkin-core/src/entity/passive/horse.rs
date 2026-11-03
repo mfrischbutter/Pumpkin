@@ -196,6 +196,16 @@ impl CustomSound for HorseEntity {
 }
 
 impl Mob for HorseEntity {
+    /// Vanilla `AbstractHorse.isPushable`.
+    fn mob_is_pushable(&self) -> bool {
+        !self.get_entity().has_passengers()
+    }
+
+    /// Vanilla `supportQuadLeash`.
+    fn mob_support_quad_leash(&self) -> bool {
+        true
+    }
+
     /// Vanilla `Horse.getAmbientSound`.
     fn get_ambient_sound(&self) -> Option<Sound> {
         Some(if self.is_baby() {

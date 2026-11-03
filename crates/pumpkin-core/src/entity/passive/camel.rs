@@ -310,6 +310,16 @@ impl CustomSound for CamelEntity {
 }
 
 impl Mob for CamelEntity {
+    /// Vanilla `AbstractHorse.isPushable`.
+    fn mob_is_pushable(&self) -> bool {
+        !self.get_entity().has_passengers()
+    }
+
+    /// Vanilla `supportQuadLeash`.
+    fn mob_support_quad_leash(&self) -> bool {
+        true
+    }
+
     /// Vanilla `Camel.finalizeSpawn`: the pose timer reads as a finished stand already
     /// (`resetLastPoseChangeTickToFullStand`); `CamelAi.initMemories` sets nothing in 26.3.
     fn finalize_spawn(

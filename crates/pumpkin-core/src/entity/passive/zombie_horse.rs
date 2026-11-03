@@ -103,6 +103,16 @@ impl AbstractHorse for ZombieHorseEntity {
 }
 
 impl Mob for ZombieHorseEntity {
+    /// Vanilla `AbstractHorse.isPushable`.
+    fn mob_is_pushable(&self) -> bool {
+        !self.get_entity().has_passengers()
+    }
+
+    /// Vanilla `supportQuadLeash`.
+    fn mob_support_quad_leash(&self) -> bool {
+        true
+    }
+
     /// Vanilla `ZombieHorse.finalizeSpawn`: a natural zombie horse carries a zombie with an
     /// iron spear.
     fn after_finalize_spawn(

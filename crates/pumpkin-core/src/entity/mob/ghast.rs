@@ -113,6 +113,11 @@ fn is_reflected_fireball(source: Option<&dyn EntityBase>, cause: Option<&dyn Ent
 }
 
 impl Mob for GhastEntity {
+    /// Vanilla `supportQuadLeashAsHolder`.
+    fn mob_support_quad_leash_as_holder(&self) -> bool {
+        true
+    }
+
     fn get_mob_entity(&self) -> &MobEntity {
         &self.mob_entity
     }

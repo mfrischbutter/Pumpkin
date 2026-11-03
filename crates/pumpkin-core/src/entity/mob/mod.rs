@@ -139,6 +139,8 @@ impl SteeredMob<'_> {
 }
 
 pub struct MobEntity {
+    /// Vanilla `Mob` home restriction set by a leash: cleared when the leash is gone.
+    was_leashed: AtomicBool,
     pub living_entity: LivingEntity,
     pub goals_selector: GoalSelector,
     pub target_selector: GoalSelector,
@@ -285,6 +287,7 @@ impl MobEntity {
             jump_control: std::sync::Mutex::new(JumpControl::default()),
             body_rotation_control: std::sync::Mutex::new(BodyRotationControl::default()),
             brain: std::sync::Mutex::new(None),
+            was_leashed: AtomicBool::new(false),
             brain_memory_clear_requested: AtomicBool::new(false),
             removal_cleanup_done: AtomicBool::new(false),
             position_target: AtomicCell::new(BlockPos::ZERO),
@@ -706,6 +709,57 @@ impl MobEntity {
 
     /// Accesses the species' brain, building it on first use.
     /// Neither `make_brain` nor the callback may lock this brain again; Brain callbacks use `BrainTick`.
+    /// Runs the mob side of [`Entity::tick_leash`].
+    fn tick_leash(&self, mob: &dyn Mob) {
+        let entity = &self.living_entity.entity;
+        match entity.tick_leash(mob) {
+            crate::entity::LeashTick::NotLeashed => {}
+            crate::entity::LeashTick::Snapped => {
+                self.goals_selector.disable_control(Controls::MOVE);
+            }
+            crate::entity::LeashTick::Elastic(holder) => {
+                self.when_leashed_to(&*holder);
+                entity.check_fall_distance_accumulation(&self.living_entity);
+                mob.on_elastic_leash_pull();
+            }
+            crate::entity::LeashTick::CloseRange(holder) => {
+                self.when_leashed_to(&*holder);
+                self.close_range_leash_behaviour(mob, &*holder);
+            }
+        }
+        if !entity.is_leashed() && self.was_leashed.swap(false, Relaxed) {
+            self.clear_home();
+        }
+    }
+
+    fn when_leashed_to(&self, holder: &dyn EntityBase) {
+        self.was_leashed.store(true, Relaxed);
+        self.set_home_to(
+            holder.get_entity().block_pos.load(),
+            Entity::LEASH_ELASTIC_DISTANCE as i32 - 1,
+        );
+    }
+
+    fn close_range_leash_behaviour(&self, mob: &dyn Mob, holder: &dyn EntityBase) {
+        if !mob.should_stay_close_to_leash_holder() || mob.is_panicking() {
+            return;
+        }
+        self.goals_selector.enable_control(Controls::MOVE);
+        let pos = self.living_entity.entity.pos.load();
+        let holder_pos = holder.get_entity().pos.load();
+        let distance = pos.squared_distance_to_vec(&holder_pos).sqrt() as f32;
+        let delta = (holder_pos - pos).normalize()
+            * f64::from((distance - FOLLOW_LEASH_WANTED_DISTANCE).max(0.0));
+        let target = pos + delta;
+        self.steered().navigator().move_to_coords(
+            target.x,
+            target.y,
+            target.z,
+            mob.follow_leash_speed(),
+            &self.living_entity,
+        );
+    }
+
     pub fn with_brain<R>(&self, mob: &dyn Mob, callback: impl FnOnce(&mut Brain) -> R) -> R {
         let result = {
             let mut slot = self
@@ -1206,6 +1260,8 @@ impl MobEntity {
 
 /// Vanilla `Monster.updateNoActionTime`: the light-dependent magic value above which a
 /// monster idles faster.
+/// Vanilla `Leashable.LEASH_TOO_FAR_DISTANCE` side: the distance a leashed mob walks up to.
+const FOLLOW_LEASH_WANTED_DISTANCE: f32 = 2.0;
 const MONSTER_IDLE_LIGHT_THRESHOLD: f32 = 0.5;
 /// The idle ticks a monster in light, or a raider, adds per step on top of the one every mob counts.
 const MONSTER_IDLE_TICKS_PER_STEP: i32 = 2;
@@ -1434,6 +1490,44 @@ pub trait Mob: EntityBase + Send + Sync {
     /// Slot whose item shields the mob from the sun and takes the wear instead.
     fn sun_protection_slot(&self) -> EquipmentSlot {
         EquipmentSlot::HEAD
+    }
+
+    /// Vanilla `Mob.shouldStayCloseToLeashHolder`.
+    fn should_stay_close_to_leash_holder(&self) -> bool {
+        true
+    }
+
+    /// Vanilla `Leashable.supportQuadLeash`.
+    fn mob_support_quad_leash(&self) -> bool {
+        false
+    }
+
+    /// Vanilla `Leashable.supportQuadLeashAsHolder`.
+    fn mob_support_quad_leash_as_holder(&self) -> bool {
+        false
+    }
+
+    /// Vanilla `Leashable.whenLeashedTo`, past the elastic distance.
+    fn on_elastic_leash_pull(&self) {}
+
+    /// Vanilla `Mob.followLeashSpeed`.
+    fn follow_leash_speed(&self) -> f64 {
+        1.0
+    }
+
+    /// Retained entities accessed regardless of their distance from the mob.
+    fn tick_links(&self) -> Vec<i32> {
+        Vec::new()
+    }
+
+    /// Additional player search range for the conservative island bound.
+    fn player_tick_range(&self) -> f64 {
+        0.0
+    }
+
+    /// Movement before normal travel that the conservative island bound must include.
+    fn additional_tick_movement(&self) -> f64 {
+        0.0
     }
 
     fn can_be_leashed(&self) -> bool {
@@ -2560,6 +2654,14 @@ impl<T: Mob + Send + 'static> EntityBase for T {
         self.mob_push(entity);
     }
 
+    fn support_quad_leash(&self) -> bool {
+        self.mob_support_quad_leash()
+    }
+
+    fn support_quad_leash_as_holder(&self) -> bool {
+        self.mob_support_quad_leash_as_holder()
+    }
+
     fn on_lightning_strike(
         &self,
         caller: &dyn EntityBase,
@@ -2609,7 +2711,7 @@ impl<T: Mob + Send + 'static> EntityBase for T {
     fn tick(&self, caller: &dyn EntityBase, server: &Server) {
         let mob_entity = self.get_mob_entity();
         mob_entity.process_navigation_updates();
-        mob_entity.living_entity.entity.tick_leash();
+        mob_entity.tick_leash(self);
         sun_burn::tick(self);
 
         if mob_entity.breeding_cooldown.load(Relaxed) > 0 {
@@ -2846,22 +2948,6 @@ pub trait PathAwareEntity: Mob + Send + Sync {
     // TODO: implement
     fn is_panicking(&self) -> bool {
         false
-    }
-
-    fn should_follow_leash(&self) -> bool {
-        true
-    }
-
-    fn on_short_leash_tick(&self) {
-        // TODO: implement
-    }
-
-    fn before_leash_tick(&self) {
-        // TODO: implement
-    }
-
-    fn get_follow_leash_speed(&self) -> f32 {
-        1.0
     }
 }
 

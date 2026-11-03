@@ -2366,6 +2366,10 @@ impl LivingEntity {
         fall_distance: f32,
         damage_per_distance: f32,
     ) {
+        // Vanilla `Entity.causeFallDamage`: the passengers fall with it.
+        if !self.is_immune_to_fall_damage() {
+            self.propagate_fall_to_passengers(fall_distance, damage_per_distance);
+        }
         let may_fly = caller.get_player().is_some_and(|player| {
             player
                 .abilities

@@ -488,6 +488,11 @@ impl CustomSound for HappyGhastEntity {
 }
 
 impl Mob for HappyGhastEntity {
+    /// Vanilla `supportQuadLeashAsHolder`.
+    fn mob_support_quad_leash_as_holder(&self) -> bool {
+        true
+    }
+
     fn make_brain(&self, packed: &PackedMemories) -> Brain {
         BrainProvider {
             memory_types: &MEMORIES,

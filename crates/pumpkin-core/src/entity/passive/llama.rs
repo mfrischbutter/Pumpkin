@@ -17,6 +17,7 @@ use rand::RngExt;
 use uuid::Uuid;
 
 use crate::entity::ai::behavior::hunting::{self, Hunt};
+use crate::entity::ai::goal::llama_follow_caravan::LlamaFollowCaravanGoal;
 use crate::entity::ai::target_match::TargetMatch;
 use crate::entity::passive::tamable::is_untamed;
 use crate::entity::{
@@ -88,6 +89,11 @@ impl LlamaVariant {
     }
 }
 
+/// Vanilla `Llama.registerGoals`: the speed in a caravan.
+const FOLLOW_CARAVAN_SPEED: f64 = 2.1;
+/// Vanilla `Llama.getFollowLeashSpeed`.
+const FOLLOW_LEASH_SPEED: f64 = 2.0;
+
 /// Vanilla `Llama.setRandomStrength`: 1 to 3, or 1 to 5 with a 4% chance.
 fn random_strength() -> i32 {
     let mut rng = rand::rng();
@@ -122,6 +128,18 @@ pub struct LlamaEntity {
     pub owner: AtomicCell<Option<Uuid>>,
     /// Vanilla `TraderLlama.despawnDelay`.
     pub despawn_delay: AtomicI32,
+    /// Vanilla `Llama.didSpit`: a spit drops the revenge target once.
+    did_spit: AtomicBool,
+    /// Vanilla `Llama.caravanHead`, by entity id.
+    caravan_head: AtomicCell<Option<i32>>,
+    /// Vanilla `Llama.caravanTail`, by entity id.
+    caravan_tail: AtomicCell<Option<i32>>,
+}
+
+/// Vanilla `Llama`, also as a trader llama: this one entity type stands for both.
+#[must_use]
+pub fn as_llama(entity: &dyn EntityBase) -> Option<&LlamaEntity> {
+    entity.cast_any().downcast_ref::<LlamaEntity>()
 }
 
 impl LlamaEntity {
@@ -141,6 +159,9 @@ impl LlamaEntity {
             temper: AtomicI32::new(0),
             owner: AtomicCell::new(None),
             despawn_delay: AtomicI32::new(trader_llama::DEFAULT_DESPAWN_DELAY),
+            did_spit: AtomicBool::new(false),
+            caravan_head: AtomicCell::new(None),
+            caravan_tail: AtomicCell::new(None),
         };
         let mob_arc = Arc::new(llama);
         let mob_weak: Weak<dyn Mob> = {
@@ -156,9 +177,12 @@ impl LlamaEntity {
             let goal_selector = &mob_arc.mob_entity.goals_selector;
             let target_selector = &mob_arc.mob_entity.target_selector;
 
-            // Vanilla `Llama.registerGoals`, without RunAroundLikeCrazyGoal and
-            // LlamaFollowCaravanGoal yet.
+            // Vanilla `Llama.registerGoals`.
             goal_selector.add_goal(0, Box::new(SwimGoal::default()));
+            goal_selector.add_goal(
+                2,
+                Box::new(LlamaFollowCaravanGoal::new(FOLLOW_CARAVAN_SPEED)),
+            );
             goal_selector.add_goal(
                 3,
                 Box::new(RangedAttackGoal::new(ranged_weak, 1.25, 40, 20.0)),
@@ -181,7 +205,12 @@ impl LlamaEntity {
             );
             goal_selector.add_goal(9, Box::new(RandomLookAroundGoal::default()));
 
-            target_selector.add_goal(1, Box::new(RevengeGoal::new(true)));
+            target_selector.add_goal(
+                1,
+                Box::new(RevengeGoal::new(true).continuing_while(|mob| {
+                    as_llama(mob).is_none_or(|llama| !llama.did_spit.swap(false, Ordering::Relaxed))
+                })),
+            );
             hunting::apply(target_selector, &mob_arc.mob_entity, LLAMA_HUNTS);
             if mob_arc.is_trader() {
                 trader_llama::register_goals(&mob_arc.mob_entity);
@@ -262,6 +291,40 @@ impl LlamaEntity {
         entity.set_synced_data(pumpkin_data::tracked_data::llama::DATA_ID_CHEST, val);
     }
 
+    /// Vanilla `inCaravan`.
+    pub fn in_caravan(&self) -> bool {
+        self.caravan_head.load().is_some()
+    }
+
+    /// Vanilla `hasCaravanTail`.
+    #[must_use]
+    pub fn has_caravan_tail(&self) -> bool {
+        self.caravan_tail.load().is_some()
+    }
+
+    /// Vanilla `getCaravanHead`.
+    #[must_use]
+    pub fn get_caravan_head(&self) -> Option<Arc<dyn EntityBase>> {
+        let head = self.caravan_head.load()?;
+        self.get_entity().world.load().get_entity_by_id(head)
+    }
+
+    /// Vanilla `joinCaravan`.
+    pub fn join_caravan(&self, head: &Self) {
+        self.caravan_head.store(Some(head.get_entity().entity_id));
+        head.caravan_tail.store(Some(self.get_entity().entity_id));
+    }
+
+    /// Vanilla `leaveCaravan`.
+    pub fn leave_caravan(&self) {
+        if let Some(head) = self.get_caravan_head()
+            && let Some(head) = as_llama(head.as_ref())
+        {
+            head.caravan_tail.store(None);
+        }
+        self.caravan_head.store(None);
+    }
+
     pub fn spit(&self, target: &Arc<dyn EntityBase>) {
         let entity = self.get_entity();
         let world = entity.world.load_full();
@@ -288,6 +351,7 @@ impl LlamaEntity {
         let mut rng = self.get_random();
         let pitch = (rng.random::<f32>() - rng.random::<f32>()).mul_add(0.2, 1.0);
         self.play_entity_sound(Sound::EntityLlamaSpit, 1.0, pitch);
+        self.did_spit.store(true, Ordering::Relaxed);
     }
 }
 
@@ -356,6 +420,21 @@ impl LlamaEntity {
 }
 
 impl Mob for LlamaEntity {
+    /// Vanilla `AbstractHorse.isPushable`.
+    fn mob_is_pushable(&self) -> bool {
+        !self.get_entity().has_passengers()
+    }
+
+    /// Vanilla `Llama.getFollowLeashSpeed`.
+    fn follow_leash_speed(&self) -> f64 {
+        FOLLOW_LEASH_SPEED
+    }
+
+    /// Vanilla `Llama.tickLeash`: the caravan head stays in the same island.
+    fn tick_links(&self) -> Vec<i32> {
+        self.caravan_head.load().into_iter().collect()
+    }
+
     fn is_tamed(&self) -> bool {
         self.is_tame()
     }
