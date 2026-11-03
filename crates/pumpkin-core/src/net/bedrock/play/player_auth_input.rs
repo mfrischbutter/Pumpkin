@@ -259,12 +259,7 @@ impl BedrockClient {
         if entity.has_vehicle() {
             let paddling_left = input_data.get(InputData::PaddlingLeft as usize);
             let paddling_right = input_data.get(InputData::PaddlingRight as usize);
-            let vehicle = entity
-                .vehicle
-                .lock()
-                .unwrap_or_else(std::sync::PoisonError::into_inner)
-                .clone();
-            if let Some(vehicle) = vehicle {
+            if let Some(vehicle) = entity.get_controlled_vehicle() {
                 vehicle.set_paddle_state(paddling_left, paddling_right);
             }
         }

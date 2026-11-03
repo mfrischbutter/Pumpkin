@@ -491,11 +491,14 @@ impl DispenserBlock {
             return false;
         }
 
-        let _ = item.split(1);
         let facing = to_normal(ctx.facing);
         let entity = Entity::new(ctx.world.clone(), spawn_pos, entity_type);
         entity.set_rotation(facing.x.atan2(facing.z) as f32 * 57.295_776, 0.0);
-        ctx.world.spawn_entity(Arc::new(BoatEntity::new(entity)));
+        let boat = Arc::new(BoatEntity::new(entity));
+        // Vanilla `BoatDispenseItemBehavior`: `EntityType.createDefaultStackConfig`.
+        crate::item::items::spawn_egg::apply_entity_variant(item, boat.as_ref(), None);
+        let _ = item.split(1);
+        ctx.world.spawn_entity(boat);
 
         ctx.world
             .sync_world_event(WorldEvent::SoundDispenserDispense, *ctx.position, 0);

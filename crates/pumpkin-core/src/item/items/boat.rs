@@ -146,23 +146,8 @@ impl ItemBehaviour for BoatItem {
         let dimensions = Self::get_entity_dimensions(entity_type);
         let boat_box = BoundingBox::new_from_pos(hit_vec.x, hit_vec.y, hit_vec.z, &dimensions);
 
-        // Vanilla: if (!world.isSpaceEmpty(lv7, lv7.getBoundingBox())) return FAIL
-        if !world.is_space_empty(boat_box) {
-            return;
-        }
-
-        // Check no collidable entities or other players occupy the space
-        if world.get_entities_at_box(&boat_box).iter().any(|entity| {
-            let ent = entity.get_entity();
-            ent.entity_id != player.entity_id()
-                && ent.entity_type != &EntityType::ITEM
-                && ent.entity_type != &EntityType::EXPERIENCE_ORB
-                && (entity.is_pushable() || entity.can_hit())
-        }) || world
-            .get_players_at_box(&boat_box)
-            .iter()
-            .any(|p| p.entity_id() != player.entity_id() && !p.is_spectator())
-        {
+        // Vanilla: if (!level.noCollision(boat, boat.getBoundingBox())) return FAIL
+        if !BoatEntity::no_collision(&world, None, boat_box) {
             return;
         }
 
@@ -173,6 +158,12 @@ impl ItemBehaviour for BoatItem {
         entity.set_rotation(yaw, 0.0);
 
         let boat_entity = Arc::new(BoatEntity::new(entity));
+        // Vanilla `EntityType.createDefaultStackConfig`: the item's name goes on the boat.
+        crate::item::items::spawn_egg::apply_entity_variant(
+            &player.inventory.get_stack_in_hand(hand),
+            boat_entity.as_ref(),
+            Some(player),
+        );
         world.spawn_entity(boat_entity);
         world.emit_game_event(GameEvent::EntityPlace.name(), hit_vec);
 

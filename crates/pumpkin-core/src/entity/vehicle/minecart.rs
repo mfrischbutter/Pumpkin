@@ -1,5 +1,5 @@
 mod chest;
-mod container;
+pub(super) mod container;
 mod furnace;
 mod hopper;
 mod rideable;
@@ -22,7 +22,6 @@ use pumpkin_data::entity::EntityType;
 use pumpkin_data::item::Item;
 use pumpkin_data::item_stack::ItemStack;
 use pumpkin_data::tag::{self, Taggable};
-use pumpkin_inventory::Inventory;
 use pumpkin_nbt::compound::NbtCompound;
 use pumpkin_util::GameMode;
 use pumpkin_util::math::position::BlockPos;
@@ -743,20 +742,8 @@ impl EntityBase for MinecartEntity {
             let world = self.vehicle.entity.world.load();
             if world.level_info.load().game_rules.entity_drops {
                 let position = self.vehicle.entity.block_pos.load();
-                if let Some(container) = self.container()
-                    && container.claim_drops()
-                {
-                    container.unpack_loot(
-                        Some(&self.vehicle.entity),
-                        None,
-                        &crate::world::loot::LootContextParameters {
-                            world: Some(&world),
-                            position: Some(self.vehicle.entity.pos.load()),
-                            ..Default::default()
-                        },
-                    );
-                    let inventory: Arc<dyn Inventory> = container.clone();
-                    world.scatter_inventory(&position, &inventory);
+                if let Some(container) = self.container() {
+                    container::drop_contents(&self.vehicle.entity, container);
                 }
                 if let Some(item) = self.drop_item() {
                     world.drop_stack(&position, ItemStack::new(1, item));

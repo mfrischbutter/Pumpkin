@@ -659,6 +659,27 @@ pub trait EntityBase: Send + Sync + std::any::Any {
         Vector3::new(0.0, 0.0, 0.0)
     }
 
+    /// Vanilla `Entity.getDismountLocationForPassenger` of a vehicle with its own spot: `None`
+    /// searches around it as `DismountHelper` does.
+    fn dismount_location_for_passenger(&self, _passenger: &dyn EntityBase) -> Option<Vector3<f64>> {
+        None
+    }
+
+    /// Vanilla `Entity.modifyPassengerFluidInteractionBox`: the part of a passenger's box that
+    /// meets fluids, `None` for no part.
+    fn modify_passenger_fluid_interaction_box(
+        &self,
+        passenger_box: BoundingBox,
+    ) -> Option<BoundingBox> {
+        Some(passenger_box)
+    }
+
+    /// Vanilla `Entity.onAboveBubbleColumn` when an entity overrides it. Returns whether it did;
+    /// otherwise the block applies vanilla's default.
+    fn on_above_bubble_column(&self, _drag_down: bool) -> bool {
+        false
+    }
+
     fn is_flutterer(&self) -> bool {
         false
     }
@@ -2756,6 +2777,17 @@ impl Entity {
 
         let entity_box = self.bounding_box.load();
         let bounding_box = entity_box.expand(-0.001, -0.001, -0.001);
+        // Vanilla `getFluidInteractionBox`: the vehicle has a say, a boat keeps its riders dry.
+        let bounding_box = self.get_vehicle().map_or(Some(bounding_box), |vehicle| {
+            vehicle.modify_passenger_fluid_interaction_box(bounding_box)
+        });
+        let Some(bounding_box) = bounding_box else {
+            self.water_height.store(0.0);
+            self.touching_water.store(false, Ordering::SeqCst);
+            self.lava_height.store(0.0);
+            self.touching_lava.store(false, Ordering::SeqCst);
+            return Vec::new();
+        };
 
         let min = bounding_box.min_block_pos();
 
@@ -5048,6 +5080,16 @@ impl Entity {
             .clone()
     }
 
+    /// Vanilla `getControlledVehicle`: the vehicle, when this entity is the one controlling it.
+    #[must_use]
+    pub fn get_controlled_vehicle(&self) -> Option<Arc<dyn EntityBase>> {
+        self.get_vehicle().filter(|vehicle| {
+            vehicle
+                .get_controlling_passenger()
+                .is_some_and(|controller| controller.get_entity().entity_id == self.entity_id)
+        })
+    }
+
     /// Vanilla `getRootVehicle`, `None` when not riding.
     pub fn get_root_vehicle(&self) -> Option<Arc<dyn EntityBase>> {
         let mut root = self.get_vehicle()?;
@@ -5164,7 +5206,16 @@ impl Entity {
         );
         passenger_entity.send_bedrock_actor_data(&rider_meta);
 
-        passengers.push(passenger);
+        // Vanilla `addPassenger`: a player takes the first seat from anything but a player.
+        if passenger.get_player().is_some()
+            && passengers
+                .first()
+                .is_some_and(|first| first.get_player().is_none())
+        {
+            passengers.insert(0, passenger);
+        } else {
+            passengers.push(passenger);
+        }
         let link_type = if passengers.len() == 1 { 1 } else { 2 };
 
         let passenger_ids: Vec<VarInt> = passengers
@@ -5341,7 +5392,13 @@ impl Entity {
 
             // Vanilla: ridingCooldown = 60 (prevents immediate re-mount)
             passenger_entity.riding_cooldown.store(60, Relaxed);
-            // TODO: world.emitGameEvent(passenger, GameEvent.ENTITY_DISMOUNT, vehicle.pos)
+            self.world.load().emit_game_event_with_context(
+                GameEvent::EntityDismount.name(),
+                self.pos.load(),
+                &crate::world::game_event::GameEventContext {
+                    source_entity: Some(passenger.as_ref()),
+                },
+            );
 
             if !reposition {
                 let world = self.world.load();
@@ -5439,7 +5496,12 @@ impl Entity {
             let fallback_pos =
                 Vector3::new(self.pos.load().x, vehicle_box.max.y, self.pos.load().z);
 
-            let dismount_pos = if is_water {
+            let vehicle_spot = world
+                .get_entity_by_id(self.entity_id)
+                .and_then(|vehicle| vehicle.dismount_location_for_passenger(passenger.as_ref()));
+            let dismount_pos = if let Some(spot) = vehicle_spot {
+                spot
+            } else if is_water {
                 fallback_pos
             } else {
                 // Vanilla checks Standing, Crouching, Swimming poses and their respective height checks

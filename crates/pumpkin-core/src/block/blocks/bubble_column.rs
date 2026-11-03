@@ -168,7 +168,22 @@ impl BlockBehaviour for BubbleColumnBlock {
             }
 
             let kind = kind_from_state(args.state.id);
-            let at_surface = args.world.get_block(&args.position.up()) == &Block::AIR;
+            // Vanilla `BubbleColumnBlock.entityInside`: no collision and no fluid above.
+            let above = args.position.up();
+            let at_surface = args
+                .world
+                .get_block_state(&above)
+                .get_block_collision_shapes_at(&above)
+                .next()
+                .is_none()
+                && args.world.get_fluid(&above).id == Fluid::EMPTY.id;
+            if at_surface
+                && args
+                    .entity
+                    .on_above_bubble_column(kind == BubbleColumnKind::Downward)
+            {
+                return;
+            }
             let entity = args.entity.get_entity();
             entity.velocity.store(bubble_column_velocity(
                 entity.velocity.load(),

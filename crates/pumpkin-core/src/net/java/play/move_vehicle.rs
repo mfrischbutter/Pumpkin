@@ -3,6 +3,20 @@ use super::*;
 
 impl JavaClient {
     pub fn handle_move_vehicle(&self, player: &Arc<Player>, packet: &SMoveVehicle) {
+        // Vanilla `handleMoveVehicle`: `containsInvalidValues`.
+        if packet.x.is_nan()
+            || packet.y.is_nan()
+            || packet.z.is_nan()
+            || !packet.yaw.is_finite()
+            || !packet.pitch.is_finite()
+        {
+            self.try_kick(&TextComponent::translate_cross(
+                translation::java::MULTIPLAYER_DISCONNECT_INVALID_VEHICLE_MOVEMENT,
+                translation::java::MULTIPLAYER_DISCONNECT_INVALID_VEHICLE_MOVEMENT,
+                [],
+            ));
+            return;
+        }
         // A movement packet was received this tick — tracked for SClientTickEnd zeroing.
         self.received_movement_this_tick
             .store(true, Ordering::Relaxed);
@@ -14,6 +28,15 @@ impl JavaClient {
             .lock()
             .unwrap_or_else(std::sync::PoisonError::into_inner)
             .clone();
+        // Vanilla `handleMoveVehicle` only takes the move from the controlling passenger: the
+        // back seat of a boat does not drive it.
+        if vehicle.as_ref().is_some_and(|vehicle| {
+            vehicle
+                .get_controlling_passenger()
+                .is_some_and(|controller| controller.get_entity().entity_id != entity.entity_id)
+        }) {
+            return;
+        }
         if let Some(vehicle) = vehicle {
             let vehicle_entity = vehicle.get_entity();
             player.driven_vehicle.store(Some(vehicle_entity.entity_id));

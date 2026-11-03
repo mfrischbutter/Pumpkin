@@ -2,9 +2,10 @@ use crossbeam::atomic::AtomicCell;
 use std::sync::atomic::{AtomicI32, Ordering};
 
 use crate::entity::Entity;
-use pumpkin_protocol::java::client::play::Metadata;
 
 use crate::entity::EntityBase;
+use crate::world::game_event::GameEventContext;
+use pumpkin_data::game_event::GameEvent;
 use pumpkin_protocol::codec::var_int::VarInt;
 use pumpkin_util::GameMode;
 
@@ -144,26 +145,20 @@ impl VehicleEntity {
         self.hurt_dir.load(Ordering::Relaxed)
     }
 
+    /// Vanilla's `DATA_ID_HURT`, `DATA_ID_HURTDIR` and `DATA_ID_DAMAGE`: the tracker sends them at
+    /// the end of the tick and to whoever starts watching later.
     pub fn send_wobble_metadata(&self) {
-        self.entity.send_meta_data(
-            &[
-                Metadata::new(
-                    pumpkin_data::tracked_data::boat::ID_HURT,
-                    VarInt(self.get_hurt_time()),
-                ),
-                Metadata::new(
-                    pumpkin_data::tracked_data::boat::ID_HURTDIR,
-                    VarInt(self.get_hurt_dir()),
-                ),
-            ],
-            None,
+        self.entity.set_synced_data(
+            pumpkin_data::tracked_data::boat::ID_HURT,
+            VarInt(self.get_hurt_time()),
         );
-        self.entity.send_meta_data(
-            &[Metadata::new(
-                pumpkin_data::tracked_data::boat::ID_DAMAGE,
-                self.get_damage(),
-            )],
-            None,
+        self.entity.set_synced_data(
+            pumpkin_data::tracked_data::boat::ID_HURTDIR,
+            VarInt(self.get_hurt_dir()),
+        );
+        self.entity.set_synced_data(
+            pumpkin_data::tracked_data::boat::ID_DAMAGE,
+            self.get_damage(),
         );
     }
 
@@ -194,6 +189,23 @@ impl VehicleEntity {
     }
 
     pub fn damage_with_context(&self, amount: f32, source: Option<&dyn EntityBase>) -> bool {
+        self.hurt_server(
+            amount,
+            source,
+            || self.entity.remove(),
+            || self.kill_and_drop_self(),
+        )
+    }
+
+    /// Vanilla `VehicleEntity.hurtServer`. `discard` removes the vehicle for a creative player,
+    /// `destroy` breaks it.
+    pub fn hurt_server(
+        &self,
+        amount: f32,
+        source: Option<&dyn EntityBase>,
+        discard: impl FnOnce(),
+        destroy: impl FnOnce(),
+    ) -> bool {
         if !self.entity.is_alive() {
             return true;
         }
@@ -215,6 +227,13 @@ impl VehicleEntity {
         }
 
         let new_strength = self.apply_damage_wobble(amount);
+        self.entity.world.load().emit_game_event_with_context(
+            GameEvent::EntityDamage.name(),
+            self.entity.pos.load(),
+            &GameEventContext {
+                source_entity: source,
+            },
+        );
 
         let is_creative = source
             .and_then(|s| s.get_player())
@@ -236,9 +255,9 @@ impl VehicleEntity {
             }
 
             if is_creative {
-                self.entity.remove();
+                discard();
             } else {
-                self.kill_and_drop_self();
+                destroy();
             }
         }
 

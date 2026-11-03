@@ -16,7 +16,8 @@ use pumpkin_util::text::TextComponent;
 
 use crate::entity::{Entity, player::Player};
 
-pub(super) struct MinecartInventory {
+/// Vanilla `ContainerEntity`'s items and loot table, which chest boats share.
+pub(in crate::entity::vehicle) struct MinecartInventory {
     items: RwLock<Vec<ItemStack>>,
     size: usize,
     loot_table: Mutex<Option<(String, i64)>>,
@@ -24,7 +25,7 @@ pub(super) struct MinecartInventory {
 }
 
 impl MinecartInventory {
-    pub(super) fn new(size: usize) -> Self {
+    pub(in crate::entity::vehicle) fn new(size: usize) -> Self {
         Self {
             items: RwLock::new(vec![ItemStack::EMPTY.clone(); size]),
             size,
@@ -33,11 +34,11 @@ impl MinecartInventory {
         }
     }
 
-    pub(super) fn claim_drops(&self) -> bool {
+    fn claim_drops(&self) -> bool {
         !self.drops_claimed.swap(true, Ordering::AcqRel)
     }
 
-    pub(super) fn read_nbt(&self, nbt: &NbtCompound) {
+    pub(in crate::entity::vehicle) fn read_nbt(&self, nbt: &NbtCompound) {
         let loot_table = nbt.get_string("LootTable").map(|loot_table| {
             (
                 loot_table.to_owned(),
@@ -55,7 +56,7 @@ impl MinecartInventory {
         }
     }
 
-    pub(super) fn write_nbt(&self, nbt: &mut NbtCompound) {
+    pub(in crate::entity::vehicle) fn write_nbt(&self, nbt: &mut NbtCompound) {
         let loot_table = self
             .loot_table
             .try_lock()
@@ -223,7 +224,30 @@ impl ScreenHandlerFactory for MinecartScreenFactory {
     }
 }
 
-pub(super) fn open(
+/// Vanilla `ContainerEntity.chestVehicleDestroyed`'s `Containers.dropContents`, which unpacks a
+/// loot table first. Only the first call drops anything.
+pub(in crate::entity::vehicle) fn drop_contents(
+    entity: &Entity,
+    inventory: &Arc<MinecartInventory>,
+) {
+    if !inventory.claim_drops() {
+        return;
+    }
+    let world = entity.world.load();
+    inventory.unpack_loot(
+        Some(entity),
+        None,
+        &crate::world::loot::LootContextParameters {
+            world: Some(&world),
+            position: Some(entity.pos.load()),
+            ..Default::default()
+        },
+    );
+    let inventory: Arc<dyn Inventory> = inventory.clone();
+    world.scatter_inventory(&entity.block_pos.load(), &inventory);
+}
+
+pub(in crate::entity::vehicle) fn open(
     entity: &Entity,
     player: &Arc<Player>,
     inventory: &Arc<MinecartInventory>,
