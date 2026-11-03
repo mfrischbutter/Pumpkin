@@ -27,6 +27,8 @@ pub mod part {
     pub const STRONGHOLDS: &str = "strongholds";
     /// The population seed of features: ores, dungeons, trees, vegetation.
     pub const FEATURES: &str = "features";
+    /// The creature groups rolled for a freshly generated chunk.
+    pub const MOB_SPAWNS: &str = "mob_spawns";
     /// Cave and canyon carvers.
     pub const CARVERS: &str = "carvers";
     /// The positional randoms of surface rules: bedrock floor and roof, deepslate.

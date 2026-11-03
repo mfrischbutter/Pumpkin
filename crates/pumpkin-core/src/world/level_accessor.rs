@@ -162,6 +162,12 @@ impl<'a> GenerationRegion<'a> {
         Self { world, cache }
     }
 
+    /// The chunks being generated, which the region reads before the world.
+    #[must_use]
+    pub fn cache(&self) -> &'a dyn GenerationCache {
+        self.cache
+    }
+
     /// The light of `layer` at `pos` from the cache's chunk, `None` when the cache does not
     /// hold that chunk as one being generated; `above_world` above the top section.
     fn light(

@@ -179,6 +179,14 @@ impl Level {
             .seed_for(part::SLIME_CHUNKS, self.seed.0)
     }
 
+    /// The seed the creature groups of a fresh chunk are rolled with: the world seed, or the
+    /// one the generation secret derives, so that herds say nothing about the seed.
+    #[must_use]
+    pub fn mob_spawn_seed(&self) -> u64 {
+        self.generation_secret
+            .seed_for(part::MOB_SPAWNS, self.seed.0)
+    }
+
     #[must_use]
     #[expect(clippy::too_many_lines)]
     pub fn from_root_folder(

@@ -25,6 +25,7 @@ use pumpkin_util::math::get_section_cord;
 use pumpkin_util::math::position::BlockPos;
 use pumpkin_util::math::vector2::Vector2;
 use pumpkin_util::math::vector3::Vector3;
+use pumpkin_util::random::legacy_rand::LegacyRand;
 use pumpkin_util::random::xoroshiro128::Xoroshiro;
 use pumpkin_util::random::{RandomImpl, get_seed};
 use pumpkin_world::chunk::{ChunkData, ChunkHeightmapType};
@@ -522,24 +523,39 @@ pub fn spawn_mobs_for_chunk_generation(
     // Vanilla spawns into the `WorldGenRegion`: the rules, the collision test and the mob's
     // own checks read the chunk being generated, which the world does not hold yet.
     let region = GenerationRegion::new(world, cache);
+    // Vanilla `NoiseBasedChunkGenerator.spawnOriginalMobs`: a `WorldgenRandom` over a legacy
+    // source with the chunk's decoration seed draws every roll below; the placement rules and
+    // the mobs' own finalization keep the level's random. The seed is the secret's for this part.
+    let mut rng = LegacyRand::from_seed(LegacyRand::get_population_seed(
+        world.level.mob_spawn_seed(),
+        xo,
+        zo,
+    ));
 
-    while rand::random::<f32>() < biome.creature_spawn_probability {
-        let Some(spawner_data) = choose_spawner(creatures, &mut rand::rng()) else {
+    while rng.next_f32() < biome.creature_spawn_probability {
+        let Some(spawner_data) = choose_spawner(creatures, |total| rng.next_bounded_i32(total))
+        else {
             continue;
         };
 
-        let count = spawner_data.min_count
-            + rand::random_range(0..=(spawner_data.max_count - spawner_data.min_count).max(0));
+        // Vanilla `IntProvider.sample`: a plain count draws nothing, a range draws one number.
+        let count = if spawner_data.max_count > spawner_data.min_count {
+            spawner_data.min_count
+                + rng.next_bounded_i32(spawner_data.max_count - spawner_data.min_count + 1)
+        } else {
+            spawner_data.min_count
+        };
         let name = spawner_data
             .r#type
             .strip_prefix("minecraft:")
             .unwrap_or(spawner_data.r#type);
+        // Vanilla's `create` fails every attempt of the group without a draw.
         let Some(entity_type) = EntityType::from_name(name) else {
-            return;
+            continue;
         };
 
-        let mut x = xo + rand::random_range(0..16);
-        let mut z = zo + rand::random_range(0..16);
+        let mut x = xo + rng.next_bounded_i32(16);
+        let mut z = zo + rng.next_bounded_i32(16);
         let start_x = x;
         let start_z = z;
 
@@ -551,12 +567,12 @@ pub fn spawn_mobs_for_chunk_generation(
                 attempts += 1;
                 match chunk_generation_attempt(
                     world,
-                    cache,
                     &region,
                     entity_type,
                     (x, z),
                     (xo, zo),
                     &mut group_data,
+                    &mut rng,
                 ) {
                     Attempt::Spawned => success = true,
                     // Vanilla skips the shuffle below when the spot is blocked or the
@@ -565,11 +581,11 @@ pub fn spawn_mobs_for_chunk_generation(
                     Attempt::Failed => {}
                 }
 
-                x += rand::random_range(0..5) - rand::random_range(0..5);
-                z += rand::random_range(0..5) - rand::random_range(0..5);
+                x += rng.next_bounded_i32(5) - rng.next_bounded_i32(5);
+                z += rng.next_bounded_i32(5) - rng.next_bounded_i32(5);
                 while x < xo || x >= xo + 16 || z < zo || z >= zo + 16 {
-                    x = start_x + rand::random_range(0..5) - rand::random_range(0..5);
-                    z = start_z + rand::random_range(0..5) - rand::random_range(0..5);
+                    x = start_x + rng.next_bounded_i32(5) - rng.next_bounded_i32(5);
+                    z = start_z + rng.next_bounded_i32(5) - rng.next_bounded_i32(5);
                 }
             }
         }
@@ -589,14 +605,14 @@ enum Attempt {
 /// obstruction test before it joins the group.
 fn chunk_generation_attempt(
     world: &Arc<World>,
-    cache: &dyn GenerationCache,
     region: &GenerationRegion<'_>,
     entity_type: &'static EntityType,
     (x, z): (i32, i32),
     (xo, zo): (i32, i32),
     group_data: &mut Option<SpawnGroupData>,
+    rng: &mut LegacyRand,
 ) -> Attempt {
-    let pos = get_top_non_colliding_pos(world, cache, entity_type, x, z);
+    let pos = get_top_non_colliding_pos(world, region.cache(), entity_type, x, z);
     if !entity_type.summonable || !is_spawn_position_ok(region, &pos, entity_type) {
         return Attempt::Failed;
     }
@@ -619,7 +635,7 @@ fn chunk_generation_attempt(
     let entity = from_type(entity_type, Vector3::new(fx, y, fz), world, Uuid::new_v4());
     entity
         .get_entity()
-        .set_rotation(rand::random::<f32>() * 360.0, 0.0);
+        .set_rotation(rng.next_f32() * 360.0, 0.0);
     if !mob_may_spawn(region, entity.as_ref()) {
         return Attempt::Failed;
     }
@@ -963,9 +979,8 @@ impl SpawnList {
                 .choose_weighted(rng, |entry| entry.weight)
                 .ok()
                 .and_then(SpawnerData::from_structure),
-            Self::Biome(spawners) => {
-                choose_spawner(spawners, rng).and_then(SpawnerData::from_biome)
-            }
+            Self::Biome(spawners) => choose_spawner(spawners, |total| rng.random_range(0..total))
+                .and_then(SpawnerData::from_biome),
         }
     }
 
@@ -1064,13 +1079,19 @@ pub fn get_random_spawn_mob_at(
     }
 }
 
-/// Picks a spawner in proportion to its weight, like vanilla `WeightedList::getRandom`.
-/// Returns `None` for an empty list or when every weight is zero.
-fn choose_spawner<'a, R: rand::Rng + ?Sized>(
-    spawners: &'a [Spawner],
-    rng: &mut R,
-) -> Option<&'a Spawner> {
-    spawners.choose_weighted(rng, |s| s.weight).ok()
+/// Picks a spawner like vanilla `WeightedList.getRandom`: `roll` draws a number below the total
+/// weight, and the list is walked until the weights outgrow it. `None` for an empty list or
+/// when every weight is zero.
+fn choose_spawner(spawners: &[Spawner], roll: impl FnOnce(i32) -> i32) -> Option<&Spawner> {
+    let total: i32 = spawners.iter().map(|spawner| spawner.weight).sum();
+    if total <= 0 {
+        return None;
+    }
+    let mut left = roll(total);
+    spawners.iter().find(|spawner| {
+        left -= spawner.weight;
+        left < 0
+    })
 }
 
 #[must_use]
@@ -1312,7 +1333,8 @@ mod tests {
         ];
         let rare = (0..10_000)
             .filter(|_| {
-                choose_spawner(&spawners, &mut rng).map(|s| s.r#type) == Some("minecraft:rare")
+                choose_spawner(&spawners, |total| rng.random_range(0..total)).map(|s| s.r#type)
+                    == Some("minecraft:rare")
             })
             .count();
         // Expect about 100; a uniform pick would give about 5000.
@@ -1327,11 +1349,11 @@ mod tests {
         ];
         for _ in 0..1_000 {
             assert_eq!(
-                choose_spawner(&spawners, &mut rng).map(|s| s.r#type),
+                choose_spawner(&spawners, |total| rng.random_range(0..total)).map(|s| s.r#type),
                 Some("minecraft:always")
             );
         }
-        assert!(choose_spawner(&spawners[..1], &mut rng).is_none());
-        assert!(choose_spawner(&[], &mut rng).is_none());
+        assert!(choose_spawner(&spawners[..1], |total| rng.random_range(0..total)).is_none());
+        assert!(choose_spawner(&[], |total| rng.random_range(0..total)).is_none());
     }
 }
