@@ -289,6 +289,7 @@ impl Chunk {
                 dirty: AtomicBool::new(false),
                 inhabited_time: AtomicU64::new(0),
                 custom_data: Mutex::new(NbtCompound::new()),
+                post_processing: Mutex::default(),
             })),
         ) {
             Self::Proto(proto) => proto,
@@ -336,6 +337,7 @@ impl Chunk {
             blending_data: proto_chunk.blending_data,
             inhabited_time: AtomicU64::new(0),
             custom_data: Mutex::new(NbtCompound::new()),
+            post_processing: Mutex::new(proto_chunk.post_processing),
         };
 
         *self = Self::Level(Arc::new(chunk));

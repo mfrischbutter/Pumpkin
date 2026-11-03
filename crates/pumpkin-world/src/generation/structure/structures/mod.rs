@@ -10,6 +10,26 @@ use pumpkin_util::{
 };
 use tracing::trace;
 
+use crate::generation::proto_chunk::{GenerationCache, post_process_pos};
+use pumpkin_data::fluid::Fluid;
+
+/// Vanilla's `StructurePiece.SHAPE_CHECK_BLOCKS`: blocks a piece places without their connections,
+/// fixed by post-processing.
+const SHAPE_CHECK_BLOCKS: [BlockId; 12] = [
+    BlockId::NETHER_BRICK_FENCE,
+    BlockId::TORCH,
+    BlockId::WALL_TORCH,
+    BlockId::OAK_FENCE,
+    BlockId::SPRUCE_FENCE,
+    BlockId::DARK_OAK_FENCE,
+    BlockId::PALE_OAK_FENCE,
+    BlockId::ACACIA_FENCE,
+    BlockId::BIRCH_FENCE,
+    BlockId::JUNGLE_FENCE,
+    BlockId::LADDER,
+    BlockId::IRON_BARS,
+];
+
 use crate::generation::structure::structures::stronghold::StrongholdPieceType;
 pub use crate::world::WorldPortalExt;
 use crate::{
@@ -437,15 +457,21 @@ impl StructurePiece {
 
         // World interaction
         world.set_block_state(block_pos.x, block_pos.y, block_pos.z, block);
+        if let Some(mark) = post_process_pos(block, &block_pos) {
+            world.mark_pos_for_post_processing(mark.x, mark.y, mark.z);
+        }
 
-        // let fluid_state = world.get_fluid_state(&block_pos);
-        // if !fluid_state.is_empty() {
-        //     world.schedule_fluid_tick(&block_pos, fluid_state.fluid(), 0);
-        // }
-
-        // if block.needs_post_processing() {
-        //     world.mark_block_for_post_processing(&block_pos);
-        // }
+        // Vanilla's `StructurePiece.placeBlock`: a placed fluid ticks right away, and the blocks
+        // whose shape follows their neighbours are updated once the chunk starts ticking.
+        let (fluid, _) = GenerationCache::get_fluid_and_fluid_state(world, &block_pos);
+        if fluid.id != Fluid::EMPTY.id
+            && let Some(fluid) = Fluid::from_id(fluid.id)
+        {
+            world.schedule_fluid_tick(block_pos.x, block_pos.y, block_pos.z, fluid);
+        }
+        if SHAPE_CHECK_BLOCKS.contains(&block.id.to_block_id()) {
+            world.mark_pos_for_post_processing(block_pos.x, block_pos.y, block_pos.z);
+        }
     }
 
     #[inline]

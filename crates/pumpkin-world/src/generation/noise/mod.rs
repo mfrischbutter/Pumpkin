@@ -67,24 +67,31 @@ impl BlockStateSampler {
         density: f32,
         veins: Option<&VeinSample>,
         height_estimator: &mut SurfaceHeightEstimateSampler,
-    ) -> Option<&'static BlockState> {
+    ) -> (Option<&'static BlockState>, bool) {
         match self {
-            Self::Aquifer(aquifer) => aquifer.apply(router, pos, density, height_estimator).0,
-            Self::Ore(ore) => {
-                veins.and_then(|veins| ore.sample(router, ore_random_deriver, pos, veins))
-            }
+            Self::Aquifer(aquifer) => aquifer.apply(router, pos, density, height_estimator),
+            Self::Ore(ore) => (
+                veins.and_then(|veins| ore.sample(router, ore_random_deriver, pos, veins)),
+                false,
+            ),
         }
     }
 }
 
 pub struct ChainedBlockStateSampler {
     pub(crate) samplers: Box<[BlockStateSampler]>,
+    /// Whether the aquifer asked for a fluid update at the last sampled block (vanilla
+    /// `Aquifer.shouldScheduleFluidUpdate`).
+    schedule_fluid_update: bool,
 }
 
 impl ChainedBlockStateSampler {
     #[must_use]
     pub const fn new(samplers: Box<[BlockStateSampler]>) -> Self {
-        Self { samplers }
+        Self {
+            samplers,
+            schedule_fluid_update: false,
+        }
     }
 
     fn sample(
@@ -96,16 +103,21 @@ impl ChainedBlockStateSampler {
         veins: Option<&VeinSample>,
         height_estimator: &mut SurfaceHeightEstimateSampler,
     ) -> Option<&'static BlockState> {
+        self.schedule_fluid_update = false;
         for sampler in &mut self.samplers {
-            if let Some(state) = sampler.sample(
+            let (state, schedule_fluid_update) = sampler.sample(
                 router,
                 ore_random_deriver,
                 pos,
                 density,
                 veins,
                 height_estimator,
-            ) {
-                return Some(state);
+            );
+            if matches!(sampler, BlockStateSampler::Aquifer(_)) {
+                self.schedule_fluid_update = schedule_fluid_update;
+            }
+            if state.is_some() {
+                return state;
             }
         }
         None
@@ -219,6 +231,12 @@ impl<'a> ChunkNoiseGenerator<'a> {
             veins,
             height_estimator,
         )
+    }
+
+    /// Whether the aquifer asked for a fluid update at the block sampled last.
+    #[must_use]
+    pub const fn should_schedule_fluid_update(&self) -> bool {
+        self.state_sampler.schedule_fluid_update
     }
 
     #[inline]

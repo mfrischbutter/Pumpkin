@@ -99,6 +99,9 @@ impl LakeFeature {
                                 &place_pos.0,
                                 if place_air { air_state } else { fluid_state },
                             );
+                            if place_air {
+                                chunk.mark_above_for_post_processing(&place_pos.0);
+                            }
                         }
                     }
                 }
@@ -131,6 +134,7 @@ impl LakeFeature {
                                     .has_tag(tag::Block::MINECRAFT_LAVA_POOL_STONE_CANNOT_REPLACE)
                             {
                                 chunk.set_block_state(&barrier_pos.0, barrier_state);
+                                chunk.mark_above_for_post_processing(&barrier_pos.0);
                             }
                         }
                     }

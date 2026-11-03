@@ -422,7 +422,7 @@ impl crate::generation::proto_chunk::GenerationCache for TestGridCache {
         let state = fluid.states[0].clone();
         (fluid.clone(), state)
     }
-    fn set_block_state(
+    fn set_block_state_raw(
         &mut self,
         pos: &pumpkin_util::math::vector3::Vector3<i32>,
         block_state: &pumpkin_data::BlockState,

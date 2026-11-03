@@ -362,12 +362,16 @@ mod tests {
             let (x, y, z, expected_state) =
                 find_aquifer_carve_state(run, |state, schedule| state.is_liquid() && schedule)
                     .expect("expected scheduled aquifer fluid in test chunk");
-            let old_tick_count = run.chunk.fluid_ticks.len();
+            let section = ((y - run.chunk.bottom_y() as i32) >> 4) as usize;
+            let old_mark_count = run.chunk.post_processing[section].len();
 
             carve_at(run, x, y, z, Block::STONE.default_state, expected_state.id);
-            assert_eq!(run.chunk.fluid_ticks.len(), old_tick_count + 1);
-            let pos = run.chunk.fluid_ticks.last().unwrap().position.0;
-            assert_eq!((pos.x, pos.y, pos.z), (x, y, z));
+            assert_eq!(run.chunk.post_processing[section].len(), old_mark_count + 1);
+            let packed = *run.chunk.post_processing[section].last().unwrap();
+            assert_eq!(
+                packed,
+                ((x & 15) | ((y & 15) << 4) | ((z & 15) << 8)) as u16
+            );
         });
     }
 

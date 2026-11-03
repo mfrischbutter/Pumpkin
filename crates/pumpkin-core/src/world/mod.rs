@@ -35,6 +35,7 @@ pub mod loot;
 pub mod map;
 mod neighbor_updater;
 pub mod portal;
+mod post_process;
 pub mod raid;
 pub mod random_sequences;
 pub mod stopwatches;
@@ -355,6 +356,9 @@ pub struct World {
     /// active chunks instead of scanning every loaded block entity each tick.
     pub block_entities: DashMap<Vector2<i32>, FxHashMap<BlockPos, Arc<dyn BlockEntity>>>,
     pending_block_entity_migrations: crossbeam::queue::SegQueue<Vector2<i32>>,
+    /// Chunks that started ticking since the last tick; their generation post-processing runs at
+    /// the start of the next tick (vanilla `ChunkMap.prepareTickingChunk`).
+    pending_post_processing: crossbeam::queue::SegQueue<Vector2<i32>>,
     /// Persistent custom data for the world (matching Bukkit's `PersistentDataHolder`)
     pub custom_data: std::sync::Mutex<NbtCompound>,
     /// Persistent custom data for block entities at specific positions
@@ -533,6 +537,7 @@ impl World {
             server,
             block_entities: DashMap::new(),
             pending_block_entity_migrations: crossbeam::queue::SegQueue::new(),
+            pending_post_processing: crossbeam::queue::SegQueue::new(),
             custom_data: std::sync::Mutex::new(custom_data),
             custom_block_entity_data: DashMap::new(),
             entity_tracker: entity_tracker::EntityTracker::new(),
@@ -633,6 +638,7 @@ impl World {
         drop(active_chunks);
         drop(tracker);
         for pos in migrations {
+            self.pending_post_processing.push(pos);
             self.migrate_pending_block_entities(pos);
         }
 
@@ -1777,6 +1783,9 @@ impl World {
         self.flush_block_updates();
         self.flush_synced_block_events();
         self.update_active_chunks();
+        while let Some(chunk) = self.pending_post_processing.pop() {
+            self.post_process_generation(chunk);
+        }
         self.fire_chunk_lifecycle_events(server);
         self.tick_environment();
         let mut raids = {

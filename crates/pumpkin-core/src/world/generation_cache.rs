@@ -140,7 +140,7 @@ impl GenerationCache for WorldGenerationCache {
         (fluid.clone(), state)
     }
 
-    fn set_block_state(&mut self, pos: &Vector3<i32>, block_state: &BlockState) {
+    fn set_block_state_raw(&mut self, pos: &Vector3<i32>, block_state: &BlockState) {
         let position = BlockPos(*pos);
         self.overlay.insert(position, block_state.id);
         self.pending.push((position, block_state.id));

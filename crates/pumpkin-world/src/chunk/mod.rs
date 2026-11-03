@@ -84,6 +84,9 @@ pub struct ChunkData {
     pub dirty: AtomicBool,
     pub inhabited_time: AtomicU64,
     pub custom_data: std::sync::Mutex<NbtCompound>,
+    /// Blocks generation marked for post-processing, per section from the bottom, packed like
+    /// vanilla (`x | y << 4 | z << 8` within the section); run when the chunk starts ticking.
+    pub post_processing: std::sync::Mutex<Vec<Vec<u16>>>,
 }
 
 pub struct ChunkEntityData {
@@ -771,6 +774,7 @@ impl ChunkData {
             dirty: std::sync::atomic::AtomicBool::new(false),
             inhabited_time: std::sync::atomic::AtomicU64::new(0),
             custom_data: std::sync::Mutex::new(NbtCompound::new()),
+            post_processing: std::sync::Mutex::default(),
         }
     }
 

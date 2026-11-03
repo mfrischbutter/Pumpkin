@@ -191,7 +191,9 @@ impl OreFeature {
                                 target,
                                 &mutable_pos,
                             ) {
-                                chunk.set_block_state(&pos_vec, target.state);
+                                // Vanilla writes ore veins through `BulkSectionAccess`, which marks
+                                // nothing for post-processing.
+                                chunk.set_block_state_raw(&pos_vec, target.state);
                                 placed_blocks_count += 1;
                                 break; // Equivalent to 'continue block11;'
                             }

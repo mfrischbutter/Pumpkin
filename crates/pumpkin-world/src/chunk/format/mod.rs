@@ -193,6 +193,80 @@ fn extract_u8_array(tag: &pumpkin_nbt::tag::NbtTag) -> Option<Box<[u8]>> {
     }
 }
 
+/// Vanilla's `PostProcessing` tag: one list of packed positions (shorts) per section.
+fn read_post_processing(root_tag: &NbtCompound) -> Vec<Vec<u16>> {
+    root_tag
+        .get_list("PostProcessing")
+        .map(|sections| {
+            sections
+                .iter()
+                .map(|section| match section {
+                    pumpkin_nbt::tag::NbtTag::List(offsets) => offsets
+                        .iter()
+                        .filter_map(|offset| match offset {
+                            pumpkin_nbt::tag::NbtTag::Short(packed) => Some(*packed as u16),
+                            _ => None,
+                        })
+                        .collect(),
+                    _ => Vec::new(),
+                })
+                .collect()
+        })
+        .unwrap_or_default()
+}
+
+fn write_post_processing(post_processing: &[Vec<u16>]) -> Option<Vec<pumpkin_nbt::tag::NbtTag>> {
+    if post_processing.iter().all(Vec::is_empty) {
+        return None;
+    }
+    Some(
+        post_processing
+            .iter()
+            .map(|offsets| {
+                pumpkin_nbt::tag::NbtTag::List(
+                    offsets
+                        .iter()
+                        .map(|&packed| pumpkin_nbt::tag::NbtTag::Short(packed as i16))
+                        .collect(),
+                )
+            })
+            .collect(),
+    )
+}
+
+/// The post-processing block of a pump chunk: section count, then per section the packed
+/// positions; every length bounded before it is read.
+fn read_pump_post_processing(
+    buf: &mut &[u8],
+    max_sections: usize,
+) -> Result<Vec<Vec<u16>>, ChunkParsingError> {
+    const MAX_OFFSETS: usize = 65_536;
+    let eof = || {
+        ChunkParsingError::ErrorDeserializingChunk("Unexpected EOF reading post-processing".into())
+    };
+    if buf.remaining() < 4 {
+        return Err(eof());
+    }
+    let sections = buf.get_u32() as usize;
+    if sections > max_sections {
+        return Err(ChunkParsingError::ErrorDeserializingChunk(
+            "Invalid post-processing section count".into(),
+        ));
+    }
+    let mut post_processing = Vec::with_capacity(sections);
+    for _ in 0..sections {
+        if buf.remaining() < 4 {
+            return Err(eof());
+        }
+        let count = buf.get_u32() as usize;
+        if count > MAX_OFFSETS || buf.remaining() < count * 2 {
+            return Err(eof());
+        }
+        post_processing.push((0..count).map(|_| buf.get_u16()).collect());
+    }
+    Ok(post_processing)
+}
+
 fn parse_scheduled_tick<T>(nbt: &pumpkin_nbt::compound::NbtCompound) -> Option<ScheduledTick<T>>
 where
     T: FromResourceLocation,
@@ -437,6 +511,8 @@ impl ChunkData {
             }
         }
 
+        let post_processing = read_post_processing(&root_tag);
+
         let mut block_entities = FxHashMap::default();
         if let Some(list) = root_tag.get_list("block_entities") {
             for tag in list {
@@ -490,6 +566,7 @@ impl ChunkData {
             blending_data: None,
             inhabited_time: AtomicU64::new(root_tag.get_long("InhabitedTime").unwrap_or(0) as u64),
             custom_data: std::sync::Mutex::new(custom_data),
+            post_processing: std::sync::Mutex::new(post_processing),
         })
     }
 
@@ -674,6 +751,15 @@ impl ChunkData {
         }
         root_compound.put_list("fluid_ticks", fluid_ticks_list);
 
+        if let Some(post_processing) = write_post_processing(
+            &self
+                .post_processing
+                .lock()
+                .unwrap_or_else(std::sync::PoisonError::into_inner),
+        ) {
+            root_compound.put_list("PostProcessing", post_processing);
+        }
+
         let mut block_entities_list = Vec::new();
         for entity_comp in block_entities_nbt {
             block_entities_list.push(NbtTag::Compound(entity_comp));
@@ -760,6 +846,15 @@ impl ChunkData {
         }
         if has_custom {
             flags |= 1 << 4;
+        }
+        let post_processing = self
+            .post_processing
+            .lock()
+            .unwrap_or_else(std::sync::PoisonError::into_inner)
+            .clone();
+        let has_post_processing = post_processing.iter().any(|offsets| !offsets.is_empty());
+        if has_post_processing {
+            flags |= 1 << 5;
         }
 
         let status_u8 = match self.status {
@@ -858,6 +953,16 @@ impl ChunkData {
             let bytes = pumpkin_nbt::Nbt::new(String::new(), custom_data.clone()).write_unnamed();
             out.put_u32(bytes.len() as u32);
             out.extend_from_slice(&bytes);
+        }
+
+        if has_post_processing {
+            out.put_u32(post_processing.len() as u32);
+            for offsets in &post_processing {
+                out.put_u32(offsets.len() as u32);
+                for &packed in offsets {
+                    out.put_u16(packed);
+                }
+            }
         }
 
         out.into()
@@ -1133,6 +1238,12 @@ impl ChunkData {
             NbtCompound::default()
         };
 
+        let post_processing = if (flags & (1 << 5)) != 0 {
+            read_pump_post_processing(&mut buf, MAX_SECTIONS)?
+        } else {
+            Vec::new()
+        };
+
         Ok(Self {
             section,
             heightmap: std::sync::Mutex::new(heightmaps),
@@ -1148,6 +1259,7 @@ impl ChunkData {
             blending_data: None,
             inhabited_time: AtomicU64::new(inhabited_time),
             custom_data: std::sync::Mutex::new(custom_data),
+            post_processing: std::sync::Mutex::new(post_processing),
         })
     }
 

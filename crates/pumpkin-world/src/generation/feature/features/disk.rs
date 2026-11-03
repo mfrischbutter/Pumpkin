@@ -63,16 +63,25 @@ impl DiskFeature {
         column_z: i32,
     ) -> bool {
         let mut placed_any = false;
+        let mut placed_above = false;
 
         let mut y = top;
         while y > bottom {
             let cur_pos = BlockPos::new(column_x, y, column_z);
             if self.target.test(block_registry, chunk, &cur_pos) {
-                let state =
+                if let Some(state) =
                     self.state_provider
-                        .get_with_context(block_registry, chunk, random, cur_pos);
-                chunk.set_block_state(&cur_pos.0, state);
-                placed_any = true;
+                        .get_optional(block_registry, chunk, random, cur_pos)
+                {
+                    chunk.set_block_state(&cur_pos.0, state);
+                    if !placed_above {
+                        chunk.mark_above_for_post_processing(&cur_pos.0);
+                    }
+                    placed_any = true;
+                    placed_above = true;
+                }
+            } else {
+                placed_above = false;
             }
             y -= 1;
         }

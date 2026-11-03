@@ -70,7 +70,45 @@ pub trait GenerationCache: HeightLimitView + BlockAccessor {
 
     fn get_block_state(&self, pos: &Vector3<i32>) -> BlockStateId;
     fn get_fluid_and_fluid_state(&self, position: &Vector3<i32>) -> (Fluid, FluidState);
-    fn set_block_state(&mut self, pos: &Vector3<i32>, block_state: &BlockState);
+    /// Sets the block and nothing else (vanilla's ore veins write this way, through
+    /// `BulkSectionAccess`).
+    fn set_block_state_raw(&mut self, pos: &Vector3<i32>, block_state: &BlockState);
+    /// Vanilla's `WorldGenRegion.setBlock`: sets the block and marks the position the block asks
+    /// post-processing for (`BlockBehaviour.getPostProcessPos`).
+    fn set_block_state(&mut self, pos: &Vector3<i32>, block_state: &BlockState) {
+        self.set_block_state_raw(pos, block_state);
+        if let Some(mark) = post_process_pos(block_state, pos) {
+            self.mark_pos_for_post_processing(&mark);
+        }
+    }
+    /// Marks a block of a chunk that is still generating for post-processing (vanilla
+    /// `ChunkAccess.markPosForPostProcessing`); a full chunk ignores it, as in vanilla.
+    fn mark_pos_for_post_processing(&mut self, pos: &Vector3<i32>) {
+        if let Some(chunk) = self.get_chunk_mut(pos.x >> 4, pos.z >> 4) {
+            chunk.mark_pos_for_post_processing(pos.x, pos.y, pos.z);
+        }
+    }
+    /// Vanilla's `WorldGenRegion.scheduleTick` for a fluid: the tick waits in the chunk of the
+    /// position until that chunk ticks.
+    fn schedule_fluid_tick_at(&mut self, pos: &Vector3<i32>, fluid: &'static Fluid) {
+        if let Some(chunk) = self.get_chunk_mut(pos.x >> 4, pos.z >> 4) {
+            chunk.schedule_fluid_tick(pos.x, pos.y, pos.z, fluid);
+        }
+    }
+    /// Vanilla's `Feature.markAboveForPostProcessing`: the up to two blocks above that are not
+    /// air, so what stands on a replaced block checks it can stay.
+    fn mark_above_for_post_processing(&mut self, pos: &Vector3<i32>) {
+        for dy in 1..=2 {
+            let above = Vector3::new(pos.x, pos.y + dy, pos.z);
+            if GenerationCache::get_block_state(self, &above)
+                .to_state()
+                .is_air()
+            {
+                return;
+            }
+            self.mark_pos_for_post_processing(&above);
+        }
+    }
     fn add_block_entity(&mut self, pos: &Vector3<i32>, nbt: NbtCompound);
     fn top_motion_blocking_block_height_exclusive(&self, x: i32, z: i32) -> i32;
     fn top_motion_blocking_block_no_leaves_height_exclusive(&self, x: i32, z: i32) -> i32;
@@ -96,6 +134,19 @@ pub trait GenerationCache: HeightLimitView + BlockAccessor {
 }
 
 const AIR_BLOCK: Block = Block::AIR;
+
+/// Vanilla's `BlockBehaviour.getPostProcessPos`: a mushroom checks it can stay where it was put,
+/// magma and soul sand mark the block above, where a bubble column may start.
+#[must_use]
+pub fn post_process_pos(state: &BlockState, pos: &Vector3<i32>) -> Option<Vector3<i32>> {
+    match state.id.to_block_id() {
+        pumpkin_data::BlockId::BROWN_MUSHROOM | pumpkin_data::BlockId::RED_MUSHROOM => Some(*pos),
+        pumpkin_data::BlockId::MAGMA_BLOCK | pumpkin_data::BlockId::SOUL_SAND => {
+            Some(Vector3::new(pos.x, pos.y + 1, pos.z))
+        }
+        _ => None,
+    }
+}
 
 pub struct StandardChunkFluidLevelSampler {
     top_fluid: FluidLevel,
@@ -154,6 +205,9 @@ pub struct ProtoChunk {
     pub pending_block_entities: Vec<NbtCompound>,
     pending_structure_entities: Vec<StructureEntity>,
     pub fluid_ticks: Vec<ScheduledTick<&'static Fluid>>,
+    /// Blocks marked for post-processing, per section from the bottom, packed like vanilla
+    /// (`x | y << 4 | z << 8` within the section).
+    pub post_processing: Vec<Vec<u16>>,
     pub(crate) surface_height_cache: FxHashMap<u64, i32>,
     pub(crate) aquifer_sampler:
         Option<Box<crate::generation::noise::aquifer_sampler::WorldAquiferSampler>>,
@@ -283,6 +337,7 @@ impl ProtoChunk {
             pending_block_entities: Vec::new(),
             pending_structure_entities: Vec::new(),
             fluid_ticks: Vec::new(),
+            post_processing: vec![Vec::new(); section_count],
             surface_height_cache: FxHashMap::default(),
             aquifer_sampler: None,
         }
@@ -315,6 +370,17 @@ impl ProtoChunk {
             .values()
             .cloned()
             .collect();
+        for (section, offsets) in chunk_data
+            .post_processing
+            .lock()
+            .unwrap_or_else(std::sync::PoisonError::into_inner)
+            .iter()
+            .enumerate()
+        {
+            if let Some(target) = proto_chunk.post_processing.get_mut(section) {
+                target.extend_from_slice(offsets);
+            }
+        }
 
         let section_data = &chunk_data.section;
         let heightmap_data = chunk_data
@@ -458,6 +524,18 @@ impl ProtoChunk {
 
     pub fn take_pending_structure_entities(&mut self) -> Vec<StructureEntity> {
         std::mem::take(&mut self.pending_structure_entities)
+    }
+
+    /// Vanilla's `ProtoChunk.markPosForPostProcessing`: the block runs its fluid tick and its shape
+    /// update once the chunk starts ticking. Positions outside the build height are ignored.
+    pub fn mark_pos_for_post_processing(&mut self, x: i32, y: i32, z: i32) {
+        let relative_y = y - i32::from(self.bottom_y);
+        if relative_y < 0 || relative_y >= i32::from(self.height) {
+            return;
+        }
+        if let Some(offsets) = self.post_processing.get_mut((relative_y >> 4) as usize) {
+            offsets.push(((x & 15) | ((y & 15) << 4) | ((z & 15) << 8)) as u16);
+        }
     }
 
     pub fn schedule_fluid_tick(&mut self, x: i32, y: i32, z: i32, fluid: &'static Fluid) {
@@ -1104,6 +1182,9 @@ impl ProtoChunk {
                         )
                         .unwrap_or(generator.default_block);
                     self.set_block_state(block_x, block_y, block_z, block_state);
+                    if noise_sampler.should_schedule_fluid_update() && block_state.is_liquid() {
+                        self.mark_pos_for_post_processing(block_x, block_y, block_z);
+                    }
                 }
             }
         }
@@ -1322,6 +1403,11 @@ impl ProtoChunk {
 
                     if let Some(state) = new_state {
                         self.set_block_state(x, y, z, state);
+                        // Vanilla's surface column marks a fluid it places (swamp puddles, holes
+                        // in frozen oceans, Nether lava) for post-processing.
+                        if state.is_liquid() {
+                            self.mark_pos_for_post_processing(x, y, z);
+                        }
                     }
                 }
                 if let Some(this_biome) = this_biome
@@ -1709,7 +1795,7 @@ impl GenerationCache for ProtoChunk {
         let state = fluid.states[0].clone();
         (fluid.clone(), state)
     }
-    fn set_block_state(&mut self, pos: &Vector3<i32>, block_state: &BlockState) {
+    fn set_block_state_raw(&mut self, pos: &Vector3<i32>, block_state: &BlockState) {
         Self::set_block_state(self, pos.x, pos.y, pos.z, block_state);
     }
     fn add_block_entity(&mut self, _pos: &Vector3<i32>, nbt: NbtCompound) {

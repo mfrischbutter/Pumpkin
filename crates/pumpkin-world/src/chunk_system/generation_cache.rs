@@ -313,7 +313,7 @@ impl GenerationCache for Cache {
             Chunk::Proto(data) => data.get_block_state(pos),
         }
     }
-    fn set_block_state(&mut self, pos: &Vector3<i32>, block_state: &BlockState) {
+    fn set_block_state_raw(&mut self, pos: &Vector3<i32>, block_state: &BlockState) {
         let dx = (pos.x >> 4) - self.x;
         let dz = (pos.z >> 4) - self.z;
         // debug_assert!(dx < self.size && dz < self.size);

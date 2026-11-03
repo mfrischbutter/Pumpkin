@@ -126,6 +126,49 @@ fn reconcile_action(
     }
 }
 
+/// Vanilla's `BubbleColumnBlock.updateColumn`: from `occupy_at` up through every source water
+/// and bubble column block, the column the block below `occupy_at` asks for, at once.
+pub fn update_column(world: &Arc<World>, occupy_at: BlockPos) {
+    let occupy_state = world.get_block_state_id(&occupy_at);
+    if !can_occupy(occupy_state) {
+        return;
+    }
+    let below_state = world.get_block_state_id(&occupy_at.down());
+    let column_state = column_state(below_state, occupy_state);
+    world.set_block_state(&occupy_at, column_state, BlockFlags::NOTIFY_LISTENERS);
+    let mut position = occupy_at.up();
+    while can_occupy(world.get_block_state_id(&position)) {
+        // `Level.setBlock` reports no change when the block already is the column: stop there.
+        if world.set_block_state(&position, column_state, BlockFlags::NOTIFY_LISTENERS)
+            == column_state
+        {
+            return;
+        }
+        position = position.up();
+    }
+}
+
+/// `BubbleColumnBlock.canOccupy`: a bubble column, or a full source water block.
+fn can_occupy(state: BlockStateId) -> bool {
+    Block::from_state_id(state) == &Block::BUBBLE_COLUMN || is_source_water_state(state)
+}
+
+/// `BubbleColumnBlock.getColumnState`.
+fn column_state(below_state: BlockStateId, occupy_state: BlockStateId) -> BlockStateId {
+    let below = Block::from_state_id(below_state);
+    if below == &Block::BUBBLE_COLUMN {
+        return below_state;
+    }
+    if let Some(kind) = kind_from_support(below) {
+        return bubble_column_state(kind);
+    }
+    if Block::from_state_id(occupy_state) == &Block::BUBBLE_COLUMN {
+        source_water_state()
+    } else {
+        occupy_state
+    }
+}
+
 fn schedule_reconcile(world: &Arc<World>, position: BlockPos, delay: u8) {
     world.schedule_block_tick(&Block::BUBBLE_COLUMN, position, delay, TickPriority::Normal);
 }

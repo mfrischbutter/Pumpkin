@@ -195,6 +195,7 @@ impl FallenTreeFeature {
             }
         }
         chunk.set_block_state(&block_pos.0, state);
+        chunk.mark_above_for_post_processing(&block_pos.0);
         block_pos
     }
 
