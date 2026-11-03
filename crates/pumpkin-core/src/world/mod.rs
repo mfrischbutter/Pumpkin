@@ -4933,7 +4933,13 @@ impl World {
                 return Some(player.clone() as Arc<dyn EntityBase>);
             }
         }
-        None
+        // Vanilla `Level.getEntity` also knows a dragon's parts, which clients hit instead of it.
+        self.entities.load().iter().find_map(|entity| {
+            entity
+                .cast_any()
+                .downcast_ref::<crate::entity::boss::ender_dragon::EnderDragonEntity>()?
+                .part_by_id(id)
+        })
     }
 
     /// Gets a `Player` by a username

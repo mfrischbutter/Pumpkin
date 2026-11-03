@@ -1,9 +1,11 @@
 use std::sync::Mutex;
 use std::sync::atomic::{AtomicBool, Ordering};
 
+use crate::entity::boss::ender_dragon::EnderDragonEntity;
 use crate::entity::{Entity, EntityBase, living::LivingEntity};
 use pumpkin_data::{
     damage::DamageType,
+    entity::EntityType,
     tag::{self, Taggable},
 };
 use pumpkin_util::math::{position::BlockPos, vector3::Vector3};
@@ -81,10 +83,17 @@ impl EntityBase for EndCrystalEntity {
         _amount: f32,
         damage_type: DamageType,
         _position: Option<Vector3<f64>>,
-        _source: Option<&dyn EntityBase>,
-        _cause: Option<&dyn EntityBase>,
+        source: Option<&dyn EntityBase>,
+        cause: Option<&dyn EntityBase>,
     ) -> bool {
         if self.is_invulnerable() {
+            return false;
+        }
+        // Vanilla: the dragon cannot blow up its own crystals.
+        if cause
+            .or(source)
+            .is_some_and(|by| by.get_entity().entity_type == &EntityType::ENDER_DRAGON)
+        {
             return false;
         }
 
@@ -100,10 +109,24 @@ impl EntityBase for EndCrystalEntity {
             );
         }
 
-        if let Some(ref fight_mutex) = world.dragon_fight
-            && let Ok(mut fight) = fight_mutex.lock()
-        {
+        let dragon = world.dragon_fight.as_ref().and_then(|fight_mutex| {
+            let mut fight = fight_mutex
+                .lock()
+                .unwrap_or_else(std::sync::PoisonError::into_inner);
+            let for_respawn = fight.is_respawning();
             fight.on_crystal_destroyed(&world, self.entity.entity_uuid);
+            (!for_respawn).then_some(fight.dragon_uuid).flatten()
+        });
+        if let Some(dragon) = dragon.and_then(|uuid| {
+            world
+                .entities
+                .load()
+                .iter()
+                .find(|entity| entity.get_entity().entity_uuid == uuid)
+                .cloned()
+        }) && let Some(dragon) = dragon.cast_any().downcast_ref::<EnderDragonEntity>()
+        {
+            dragon.on_crystal_destroyed(self, cause.or(source));
         }
 
         true

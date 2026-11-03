@@ -954,7 +954,7 @@ impl ChunkData {
             ChunkHeightmapType::MotionBlocking,
             ChunkHeightmapType::MotionBlockingNoLeaves,
         ] {
-            heightmap.update(hm_type, x, z, y, block_state, min_y, |y_at| {
+            heightmap.update(hm_type, x, y, z, block_state, min_y, |y_at| {
                 let id = self
                     .section
                     .get_block_absolute_y(relative_x, y_at, relative_z)
@@ -1107,9 +1107,45 @@ pub enum ChunkSerializingError {
 
 #[cfg(test)]
 mod tests {
-    use super::ChunkSections;
+    use super::{ChunkData, ChunkHeightmapType, ChunkSections};
     use crate::chunk::palette::BlockPalette;
     use pumpkin_data::{Block, block_properties::has_random_ticks};
+
+    #[test]
+    fn heightmaps_follow_the_blocks_set_in_a_column() {
+        let chunk = ChunkData::empty(0, 0);
+        let height = || {
+            chunk.heightmap.lock().unwrap().get(
+                ChunkHeightmapType::MotionBlocking,
+                5,
+                7,
+                chunk.section.min_y,
+            )
+        };
+        let stone = Block::STONE.default_state.id;
+        for y in [60, 61, 62] {
+            chunk.set_block_absolute_y(5, y, 7, stone);
+        }
+        assert_eq!(height(), 62, "the top block counts");
+
+        chunk.set_block_absolute_y(5, 62, 7, Block::AIR.default_state.id);
+        assert_eq!(height(), 61, "removing the top falls to the block below");
+
+        chunk.set_block_absolute_y(5, 70, 7, stone);
+        assert_eq!(height(), 70, "a block higher up raises it");
+
+        let other_column = chunk.heightmap.lock().unwrap().get(
+            ChunkHeightmapType::MotionBlocking,
+            7,
+            5,
+            chunk.section.min_y,
+        );
+        assert_eq!(
+            other_column,
+            chunk.section.min_y - 1,
+            "no other column moved"
+        );
+    }
 
     #[test]
     fn random_tick_cache_initializes_from_palette_contents() {

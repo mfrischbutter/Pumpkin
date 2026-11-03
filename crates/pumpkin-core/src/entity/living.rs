@@ -1203,6 +1203,10 @@ impl LivingEntity {
     // canBeAffected, with the mob overrides folded in
     fn can_be_affected(&self, effect: &Effect) -> bool {
         let entity_type = self.entity.entity_type;
+        // Vanilla `EnderDragon.addEffect` refuses everything.
+        if entity_type == &EntityType::ENDER_DRAGON {
+            return false;
+        }
         if (entity_type == &EntityType::WITHER_SKELETON || entity_type == &EntityType::WITHER)
             && effect.effect_type == &StatusEffect::WITHER
         {
@@ -2484,6 +2488,14 @@ impl LivingEntity {
         let Some(dyn_self) = world.get_entity_by_id(self.entity.entity_id) else {
             return;
         };
+        if dyn_self
+            .get_mob()
+            .is_some_and(|mob| mob.mob_handle_killing_blow(damage_type))
+        {
+            let kill_credit = self.get_kill_credit();
+            self.update_death_stats(&*dyn_self, kill_credit.as_deref());
+            return;
+        }
         if self
             .dead
             .compare_exchange(false, true, Relaxed, Relaxed)
@@ -4099,7 +4111,9 @@ impl EntityBase for LivingEntity {
         let in_death_animation = self.health.load() <= 0.0 && self.death_time.load(Relaxed) < 20;
         let is_player = self.entity.entity_type == &EntityType::PLAYER;
         if (is_alive || in_death_animation) && !is_player {
-            self.tick_movement(caller);
+            if caller.get_mob().is_none_or(|mob| !mob.has_own_ai_step()) {
+                self.tick_movement(caller);
+            }
             // Vanilla-like order: freeze logic runs after movement/collisions.
             self.entity.tick_frozen(caller);
         } else if is_alive {
@@ -4352,6 +4366,12 @@ impl EntityBase for LivingEntity {
         self.refresh_dirty_attributes(caller);
 
         if self.health.load() <= 0.0 {
+            if caller
+                .get_mob()
+                .is_some_and(crate::entity::mob::Mob::mob_tick_death)
+            {
+                return;
+            }
             let time = self
                 .death_time
                 .fetch_update(Relaxed, Relaxed, |time| Some(time.saturating_add(1)))

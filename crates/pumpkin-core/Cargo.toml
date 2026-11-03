@@ -105,7 +105,6 @@ subtle.workspace = true
 webrtc.workspace = true
 async-trait.workspace = true
 
-ordered-float.workspace = true
 
 
 bitflags = { workspace = true }

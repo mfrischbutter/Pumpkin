@@ -1723,6 +1723,23 @@ pub trait Mob: EntityBase + Send + Sync {
         false
     }
 
+    /// Whether the mob overrides vanilla's `LivingEntity.aiStep` from `mob_tick`, so that nothing
+    /// of the living entity's own movement runs.
+    fn has_own_ai_step(&self) -> bool {
+        false
+    }
+
+    /// Vanilla `tickDeath` for a mob that overrides it; `false` runs the usual death animation.
+    fn mob_tick_death(&self) -> bool {
+        false
+    }
+
+    /// Vanilla `handleKillingBlow` for a mob that overrides it, which then is not dead yet; `true`
+    /// keeps the rest of the usual death from happening.
+    fn mob_handle_killing_blow(&self, _damage_type: DamageType) -> bool {
+        false
+    }
+
     fn wants_to_pick_up(&self, _stack: &ItemStack) -> bool {
         false
     }

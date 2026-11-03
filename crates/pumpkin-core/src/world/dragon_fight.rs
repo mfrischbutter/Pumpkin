@@ -438,6 +438,9 @@ impl DragonFight {
             .downcast_ref::<crate::entity::boss::ender_dragon::EnderDragonEntity>(
         ) {
             dragon_entity.set_fight_origin(self.exit_portal_location.unwrap_or(self.origin));
+            dragon_entity.set_phase(
+                crate::entity::boss::ender_dragon::phase::EnderDragonPhase::HoldingPattern,
+            );
         }
 
         world.spawn_entity_non_save(dragon);

@@ -112,6 +112,44 @@ impl AreaEffectCloudEntity {
     }
 }
 
+impl AreaEffectCloudEntity {
+    /// A cloud of dragon's breath: instant damage, a bottle can catch it, and clients draw its
+    /// own particle. `radius_per_tick` is what vanilla's `setRadiusPerTick` sets.
+    pub fn dragon_breath(
+        entity: Entity,
+        radius: f32,
+        duration: i32,
+        radius_per_tick: f32,
+        amplifier: u8,
+    ) -> Arc<dyn EntityBase> {
+        let cloud = Self::create(
+            entity,
+            ItemStack::new(0, &pumpkin_data::item::Item::DRAGON_BREATH),
+            vec![(
+                &pumpkin_data::effect::StatusEffect::INSTANT_DAMAGE,
+                1,
+                amplifier,
+                false,
+                true,
+                true,
+            )],
+            duration,
+            radius,
+            20,
+            20,
+            0.0,
+            0,
+        );
+        if let Some(this) = cloud.cast_any().downcast_ref::<Self>() {
+            *this
+                .radius_on_tick
+                .lock()
+                .unwrap_or_else(std::sync::PoisonError::into_inner) = radius_per_tick;
+        }
+        cloud
+    }
+}
+
 impl EntityBase for AreaEffectCloudEntity {
     fn init_data_tracker(&self) {
         // Send initial radius and particle (color) so clients render correctly
@@ -176,11 +214,21 @@ impl EntityBase for AreaEffectCloudEntity {
         // Build raw particle option bytes for ENTITY_EFFECT
         let data_bytes = color.to_be_bytes();
 
-        let meta = ParticleMeta {
-            particle_id: pumpkin_protocol::codec::var_int::VarInt(
-                pumpkin_data::particle::Particle::EntityEffect as i32,
-            ),
-            data: Box::new(data_bytes),
+        let meta = if stack.item.id == pumpkin_data::item::Item::DRAGON_BREATH.id {
+            // Vanilla's `PowerParticleOption` of power 1.
+            ParticleMeta {
+                particle_id: pumpkin_protocol::codec::var_int::VarInt(
+                    pumpkin_data::particle::Particle::DragonBreath as i32,
+                ),
+                data: Box::new(1.0f32.to_be_bytes()),
+            }
+        } else {
+            ParticleMeta {
+                particle_id: pumpkin_protocol::codec::var_int::VarInt(
+                    pumpkin_data::particle::Particle::EntityEffect as i32,
+                ),
+                data: Box::new(data_bytes),
+            }
         };
 
         self.entity.set_synced_data(

@@ -11,6 +11,7 @@ use std::{
     sync::atomic::{AtomicBool, Ordering},
 };
 pub mod arrow;
+pub mod dragon_fireball;
 pub mod egg;
 pub mod ender_pearl;
 pub mod evoker_fangs;
@@ -241,7 +242,10 @@ impl ThrownItemEntity {
         }
 
         // Entity collisions
-        let candidates = world.get_all_at_box(&search_box);
+        let candidates = world
+            .get_all_at_box(&search_box)
+            .into_iter()
+            .flat_map(|entity| crate::entity::boss::ender_dragon::projectile_targets(&entity));
         for cand in candidates {
             if self.should_skip_collision(&world, entity, &cand) {
                 continue;
@@ -304,6 +308,18 @@ impl ThrownItemEntity {
         }
 
         if !self.owner.can_hit(world, other_ent) {
+            return true;
+        }
+
+        // Its own dragon's parts: they are no owner to the check above.
+        if let Some(part) = other
+            .cast_any()
+            .downcast_ref::<crate::entity::boss::ender_dragon::part::EnderDragonPart>()
+            && self
+                .owner
+                .get(world)
+                .is_some_and(|owner| owner.get_entity().entity_uuid == part.dragon_uuid)
+        {
             return true;
         }
 
