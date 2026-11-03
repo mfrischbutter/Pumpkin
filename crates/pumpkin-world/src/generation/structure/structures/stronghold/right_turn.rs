@@ -97,7 +97,7 @@ impl StructurePieceBase for RightTurnPiece {
         p.generate_entrance(chunk, &box_limit, self.piece.entry_door, 1, 1, 0);
 
         // 3. Exit logic based on Facing
-        let air = Block::AIR.default_state;
+        let air = Block::CAVE_AIR.default_state;
         let facing = inner.facing.unwrap_or(BlockDirection::North);
 
         if facing == BlockDirection::North || facing == BlockDirection::East {

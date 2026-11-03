@@ -76,7 +76,7 @@ impl StructurePieceBase for LeftTurnPiece {
         let box_limit = *chunk_box;
         let p = &self.piece;
         let inner = &p.piece;
-        let air = Block::AIR.default_state;
+        let air = Block::CAVE_AIR.default_state;
 
         inner.fill_outline_random(
             0,

@@ -89,7 +89,7 @@ impl StructurePieceBase for SquareRoomPiece {
         let box_limit = *chunk_box;
         let p = &self.piece;
         let inner = &p.piece;
-        let air = Block::AIR.default_state;
+        let air = Block::CAVE_AIR.default_state;
 
         // 1. Main Outline (10x6x10) - Matches Java: fillWithOutline(..., 0,0,0, 10,6,10, ...)
         inner.fill_outline_random(
@@ -111,13 +111,13 @@ impl StructurePieceBase for SquareRoomPiece {
         p.generate_entrance(chunk, &box_limit, self.piece.entry_door, 4, 1, 0);
 
         // 3. Clear Exits
-        // Forward Exit (Z=10) -> fillWithOutline(..., 4,1,10, 6,3,10, AIR, AIR, false)
+        // Forward Exit (Z=10) -> fillWithOutline(..., 4,1,10, 6,3,10, CAVE_AIR, CAVE_AIR, false)
         inner.fill_with_outline(chunk, &box_limit, false, 4, 1, 10, 6, 3, 10, air, air);
 
-        // Left Side Exit (X=0) -> fillWithOutline(..., 0,1,4, 0,3,6, AIR, AIR, false)
+        // Left Side Exit (X=0) -> fillWithOutline(..., 0,1,4, 0,3,6, CAVE_AIR, CAVE_AIR, false)
         inner.fill_with_outline(chunk, &box_limit, false, 0, 1, 4, 0, 3, 6, air, air);
 
-        // Right Side Exit (X=10) -> fillWithOutline(..., 10,1,4, 10,3,6, AIR, AIR, false)
+        // Right Side Exit (X=10) -> fillWithOutline(..., 10,1,4, 10,3,6, CAVE_AIR, CAVE_AIR, false)
         inner.fill_with_outline(chunk, &box_limit, false, 10, 1, 4, 10, 3, 6, air, air);
 
         // 4. Room Specific Decorations

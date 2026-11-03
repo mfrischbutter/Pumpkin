@@ -332,7 +332,7 @@ impl StructurePieceBase for LibraryPiece {
             "minecraft:chests/stronghold_library",
         );
         if self.tall {
-            inner.add_block(chunk, Block::AIR.default_state, 12, 9, 1, &box_limit); // Clear space above top chest
+            inner.add_block(chunk, Block::CAVE_AIR.default_state, 12, 9, 1, &box_limit); // Clear space above top chest
             inner.add_chest(
                 chunk,
                 &box_limit,

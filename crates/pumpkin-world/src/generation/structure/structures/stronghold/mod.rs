@@ -151,7 +151,7 @@ struct StoneBrickRandomizer;
 impl BlockRandomizer for StoneBrickRandomizer {
     fn get_block(&self, rng: &mut RandomGenerator, is_border: bool) -> &BlockState {
         if !is_border {
-            return Block::AIR.default_state;
+            return Block::CAVE_AIR.default_state;
         }
 
         let roll = rng.next_f32();
@@ -159,6 +159,8 @@ impl BlockRandomizer for StoneBrickRandomizer {
             Block::CRACKED_STONE_BRICKS.default_state
         } else if roll < 0.5 {
             Block::MOSSY_STONE_BRICKS.default_state
+        } else if roll < 0.55 {
+            Block::INFESTED_STONE_BRICKS.default_state
         } else {
             Block::STONE_BRICKS.default_state
         }
@@ -276,7 +278,7 @@ impl StrongholdPiece {
     ) {
         match entrance_type {
             EntranceType::Opening => {
-                let air = Block::AIR.default_state;
+                let air = Block::CAVE_AIR.default_state;
                 self.piece.fill_with_outline(
                     chunk,
                     box_limit,

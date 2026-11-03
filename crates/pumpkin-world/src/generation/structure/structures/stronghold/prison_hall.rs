@@ -83,7 +83,7 @@ impl StructurePieceBase for PrisonHallPiece {
         let box_limit = *chunk_box;
         let p = &self.piece;
         let inner = &p.piece;
-        let air = Block::AIR.default_state;
+        let air = Block::CAVE_AIR.default_state;
 
         // 1. Main Shell 9x5x11
         inner.fill_outline_random(
