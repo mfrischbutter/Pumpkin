@@ -130,7 +130,7 @@ impl EndSpikeFeature {
     pub fn generate<T: GenerationCache>(
         &self,
         chunk: &mut T,
-        _block_registry: &dyn WorldPortalExt,
+        block_registry: &dyn WorldPortalExt,
         _min_y: i8,
         _height: u16,
         _feature: pumpkin_data::placed_feature::PlacedFeature,
@@ -138,7 +138,7 @@ impl EndSpikeFeature {
         pos: BlockPos,
     ) -> bool {
         let spikes = if self.spikes.is_empty() {
-            Self::get_spikes_for_seed(0).to_vec()
+            Self::get_spikes_for_seed(block_registry.feature_seed()).to_vec()
         } else {
             self.spikes.clone()
         };
