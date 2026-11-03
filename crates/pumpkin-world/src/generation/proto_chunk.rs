@@ -77,6 +77,11 @@ pub trait GenerationCache: HeightLimitView + BlockAccessor {
     /// post-processing for (`BlockBehaviour.getPostProcessPos`).
     fn set_block_state(&mut self, pos: &Vector3<i32>, block_state: &BlockState) {
         self.set_block_state_raw(pos, block_state);
+        if let Some(nbt) =
+            crate::generation::structure::template::dummy_block_entity(block_state, pos)
+        {
+            self.add_block_entity(pos, nbt);
+        }
         if let Some(mark) = post_process_pos(block_state, pos) {
             self.mark_pos_for_post_processing(&mark);
         }

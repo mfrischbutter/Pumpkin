@@ -457,6 +457,11 @@ impl StructurePiece {
 
         // World interaction
         world.set_block_state(block_pos.x, block_pos.y, block_pos.z, block);
+        if let Some(nbt) =
+            crate::generation::structure::template::dummy_block_entity(block, &block_pos)
+        {
+            world.add_block_entity(nbt);
+        }
         if let Some(mark) = post_process_pos(block, &block_pos) {
             world.mark_pos_for_post_processing(mark.x, mark.y, mark.z);
         }

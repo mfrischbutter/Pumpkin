@@ -323,67 +323,44 @@ pub(crate) fn place_template_entities(
     }
 }
 
-/// Returns the block entity ID for blocks that require one, or None if not needed.
+/// The block entity a block owns, as the id its NBT carries (`minecraft:<type>`): from the block's
+/// state data like the server's `block_entity_name`, beds by their tag.
 pub(crate) fn get_block_entity_id(block_name: &str) -> Option<&'static str> {
     let name = block_name.strip_prefix("minecraft:").unwrap_or(block_name);
-    match name {
-        "furnace" => Some("minecraft:furnace"),
-        "chest" => Some("minecraft:chest"),
-        "trapped_chest" => Some("minecraft:trapped_chest"),
-        "barrel" => Some("minecraft:barrel"),
-        "hopper" => Some("minecraft:hopper"),
-        "dropper" => Some("minecraft:dropper"),
-        "dispenser" => Some("minecraft:dispenser"),
-        "brewing_stand" => Some("minecraft:brewing_stand"),
-        "blast_furnace" => Some("minecraft:blast_furnace"),
-        "smoker" => Some("minecraft:smoker"),
-        "shulker_box" => Some("minecraft:shulker_box"),
-        "bed" => Some("minecraft:bed"),
-        "suspicious_sand" | "suspicious_gravel" => Some("minecraft:brushable_block"),
-        "decorated_pot" => Some("minecraft:decorated_pot"),
-        "spawner" => Some("minecraft:mob_spawner"),
-        "trial_spawner" => Some("minecraft:trial_spawner"),
-        "vault" => Some("minecraft:vault"),
-        "crafter" => Some("minecraft:crafter"),
-        "creaking_heart" => Some("minecraft:creaking_heart"),
-        "chiseled_bookshelf" => Some("minecraft:chiseled_bookshelf"),
-        "beehive" | "bee_nest" => Some("minecraft:beehive"),
-        "campfire" | "soul_campfire" => Some("minecraft:campfire"),
-        "sculk_sensor" | "calibrated_sculk_sensor" => Some("minecraft:sculk_sensor"),
-        "sculk_catalyst" => Some("minecraft:sculk_catalyst"),
-        "sculk_shrieker" => Some("minecraft:sculk_shrieker"),
-        "dragon_head"
-        | "dragon_wall_head"
-        | "skeleton_skull"
-        | "skeleton_wall_skull"
-        | "wither_skeleton_skull"
-        | "wither_skeleton_wall_skull"
-        | "zombie_head"
-        | "zombie_wall_head"
-        | "player_head"
-        | "player_wall_head"
-        | "creeper_head"
-        | "creeper_wall_head"
-        | "piglin_head"
-        | "piglin_wall_head" => Some("minecraft:skull"),
-        "sign" | "oak_sign" | "spruce_sign" | "birch_sign" | "jungle_sign" | "acacia_sign"
-        | "dark_oak_sign" | "mangrove_sign" | "cherry_sign" | "bamboo_sign" | "crimson_sign"
-        | "warped_sign" | "pale_oak_sign" => Some("minecraft:sign"),
-        "hanging_sign"
-        | "oak_hanging_sign"
-        | "spruce_hanging_sign"
-        | "birch_hanging_sign"
-        | "jungle_hanging_sign"
-        | "acacia_hanging_sign"
-        | "dark_oak_hanging_sign"
-        | "mangrove_hanging_sign"
-        | "cherry_hanging_sign"
-        | "bamboo_hanging_sign"
-        | "crimson_hanging_sign"
-        | "warped_hanging_sign"
-        | "pale_oak_hanging_sign" => Some("minecraft:hanging_sign"),
-        _ => None,
+    block_entity_id(pumpkin_data::Block::from_name(name)?)
+}
+
+/// [`get_block_entity_id`] for a block.
+pub(crate) fn block_entity_id(block: &pumpkin_data::Block) -> Option<&'static str> {
+    static IDS: std::sync::LazyLock<Box<[String]>> = std::sync::LazyLock::new(|| {
+        pumpkin_data::block_properties::BLOCK_ENTITY_TYPES
+            .iter()
+            .map(|name| format!("minecraft:{name}"))
+            .collect()
+    });
+    if let Some(id) = IDS.get(usize::from(block.default_state.block_entity_type)) {
+        return Some(id);
     }
+    (pumpkin_data::tag::Taggable::has_tag(block, &pumpkin_data::tag::Block::MINECRAFT_BEDS)
+        || block == &pumpkin_data::Block::STRAW_BED)
+        .then_some("minecraft:bed")
+}
+
+/// Vanilla's `DUMMY` block entity: a block entity block set during generation gets an empty
+/// block entity, which the chunk turns into the block's default one. A caller with real data
+/// adds it afterwards, and the last entry for a position wins.
+#[must_use]
+pub(crate) fn dummy_block_entity(
+    state: &pumpkin_data::BlockState,
+    pos: &Vector3<i32>,
+) -> Option<NbtCompound> {
+    let id = block_entity_id(pumpkin_data::Block::from_state_id(state.id))?;
+    let mut nbt = NbtCompound::new();
+    nbt.put_string("id", id.to_string());
+    nbt.put_int("x", pos.x);
+    nbt.put_int("y", pos.y);
+    nbt.put_int("z", pos.z);
+    Some(nbt)
 }
 
 #[cfg(test)]
