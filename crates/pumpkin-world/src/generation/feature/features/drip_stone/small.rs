@@ -1,90 +1,113 @@
-use crate::generation::proto_chunk::GenerationCache;
 use pumpkin_data::BlockDirection;
 use pumpkin_util::{
     math::position::BlockPos,
     random::{RandomGenerator, RandomImpl},
 };
 
-pub struct SmallDripstoneFeature {
-    pub taller_dripstone: f32,
-    pub directional_spread: f32,
-    pub spread_radius2: f32,
-    pub spread_radius3: f32,
+use super::{grow_speleothem, is_base, is_empty_or_water, place_base_block_if_possible};
+use crate::{block::BlockStateCodec, generation::proto_chunk::GenerationCache};
+
+/// Vanilla's `SpeleothemFeature`: a single pointed dripstone or sulfur spike of one or two
+/// blocks on a small patch of its base block.
+pub struct SpeleothemFeature {
+    pub base_block: BlockStateCodec,
+    pub pointed_block: BlockStateCodec,
+    pub replaceable_blocks: &'static [u16],
+    pub chance_of_taller_generation: f32,
+    pub chance_of_directional_spread: f32,
+    pub chance_of_spread_radius2: f32,
+    pub chance_of_spread_radius3: f32,
 }
 
-impl SmallDripstoneFeature {
+impl SpeleothemFeature {
     pub fn generate<T: GenerationCache>(
         &self,
         chunk: &mut T,
         random: &mut RandomGenerator,
-        pos: BlockPos,
+        origin: BlockPos,
     ) -> bool {
-        if let Some(dir) = Self::get_direction(chunk, pos, random) {
-            let root_pos = pos.offset(dir.opposite().to_offset());
-            self.gen_dripstone_blocks(chunk, root_pos, random);
-            let next_pos = pos.offset(dir.to_offset());
-            let height = if random.next_f32() < self.taller_dripstone
-                && super::is_empty_or_water(chunk, next_pos)
-            {
-                2
-            } else {
-                1
-            };
-            super::grow_pointed_dripstone(chunk, pos, dir, height, false);
-            return true;
-        }
-        false
+        let Some(tip_direction) = self.get_tip_direction(chunk, origin, random) else {
+            return false;
+        };
+        let root_pos = origin.offset(tip_direction.opposite().to_offset());
+        self.create_patch_of_base_blocks(chunk, random, root_pos);
+        let beyond_tip = origin.offset(tip_direction.to_offset());
+        let height = if random.next_f32() < self.chance_of_taller_generation
+            && is_empty_or_water(GenerationCache::get_block_state(chunk, &beyond_tip.0))
+        {
+            2
+        } else {
+            1
+        };
+        grow_speleothem(
+            chunk,
+            origin,
+            tip_direction,
+            height,
+            false,
+            self.base_block.get_block(),
+            self.pointed_block.get_block(),
+            self.replaceable_blocks,
+        );
+        true
     }
 
-    fn get_direction<T: GenerationCache>(
+    fn get_tip_direction<T: GenerationCache>(
+        &self,
         chunk: &T,
         pos: BlockPos,
         random: &mut RandomGenerator,
     ) -> Option<BlockDirection> {
-        let up =
-            super::can_replace(GenerationCache::get_block_state(chunk, &pos.up().0).to_block_id());
-        let down: bool = super::can_replace(
-            GenerationCache::get_block_state(chunk, &pos.down().0).to_block_id(),
+        let base_block = self.base_block.get_block();
+        let can_place_above = is_base(
+            GenerationCache::get_block_state(chunk, &pos.up().0),
+            base_block,
+            self.replaceable_blocks,
         );
-        if up && down {
-            return if random.next_bool() {
-                Some(BlockDirection::Down)
+        let can_place_below = is_base(
+            GenerationCache::get_block_state(chunk, &pos.down().0),
+            base_block,
+            self.replaceable_blocks,
+        );
+        if can_place_above && can_place_below {
+            Some(if random.next_bool() {
+                BlockDirection::Down
             } else {
-                Some(BlockDirection::Up)
-            };
+                BlockDirection::Up
+            })
+        } else if can_place_above {
+            Some(BlockDirection::Down)
+        } else if can_place_below {
+            Some(BlockDirection::Up)
+        } else {
+            None
         }
-        if up {
-            return Some(BlockDirection::Down);
-        }
-        if down {
-            return Some(BlockDirection::Up);
-        }
-        None
     }
 
-    fn gen_dripstone_blocks<T: GenerationCache>(
+    fn create_patch_of_base_blocks<T: GenerationCache>(
         &self,
         chunk: &mut T,
-        pos: BlockPos,
         random: &mut RandomGenerator,
+        pos: BlockPos,
     ) {
-        super::gen_dripstone(chunk, pos);
-        for dir in BlockDirection::horizontal_worldgen() {
-            if random.next_f32() > self.directional_spread {
+        let base_block = self.base_block.get_block();
+        place_base_block_if_possible(chunk, pos, base_block, self.replaceable_blocks);
+        for direction in BlockDirection::horizontal_worldgen() {
+            if random.next_f32() > self.chance_of_directional_spread {
                 continue;
             }
-            let pos = pos.offset(dir.to_offset());
-            super::gen_dripstone(chunk, pos);
-            if random.next_f32() > self.spread_radius2 {
+            let pos1 = pos.offset(direction.to_offset());
+            place_base_block_if_possible(chunk, pos1, base_block, self.replaceable_blocks);
+            if random.next_f32() > self.chance_of_spread_radius2 {
                 continue;
             }
-            let pos = pos.offset(BlockDirection::random(random).to_offset());
-            super::gen_dripstone(chunk, pos);
-            if random.next_f32() > self.spread_radius3 {
+            let pos2 = pos1.offset(BlockDirection::random(random).to_offset());
+            place_base_block_if_possible(chunk, pos2, base_block, self.replaceable_blocks);
+            if random.next_f32() > self.chance_of_spread_radius3 {
                 continue;
             }
-            let pos = pos.offset(BlockDirection::random(random).to_offset());
-            super::gen_dripstone(chunk, pos);
+            let pos3 = pos2.offset(BlockDirection::random(random).to_offset());
+            place_base_block_if_possible(chunk, pos3, base_block, self.replaceable_blocks);
         }
     }
 }

@@ -23,10 +23,13 @@ fn build_configured_features()
         RandomizedIntBlockStateProvider, RuleBasedBlockStateProvider, SimpleStateProvider,
         WeightedBlockStateProvider,
     };
-    use crate::generation::feature::features::drip_stone::small::SmallDripstoneFeature;
     use crate::generation::feature::features::{
         bamboo::BambooFeature,
         block_column::{BlockColumnFeature, Layer},
+        drip_stone::{
+            cluster::SpeleothemClusterFeature, large::LargeDripstoneFeature,
+            small::SpeleothemFeature,
+        },
         end_spike::{EndSpikeFeature, Spike},
         fallen_tree::FallenTreeFeature,
         geode::GeodeFeature,
@@ -99,6 +102,10 @@ fn build_configured_features()
     use pumpkin_data::{Block, BlockDirection};
     use pumpkin_util::DoublePerlinNoiseParametersCodec;
     use pumpkin_util::HeightMap;
+    use pumpkin_util::math::float_provider::{
+        ClampedNormalFloatProvider, FloatProvider, NormalFloatProvider, TrapezoidFloatProvider,
+        UniformFloatProvider,
+    };
     use pumpkin_util::math::int_provider::{
         BiasedToBottomIntProvider, ClampedIntProvider, ClampedNormalIntProvider,
         ConstantIntProvider, IntProvider, NormalIntProvider, TrapezoidIntProvider,
@@ -1586,9 +1593,43 @@ fn build_configured_features()
     );
     map.insert(
         pumpkin_data::configured_feature::ConfiguredFeature::DripstoneCluster,
-        ConfiguredFeature::DripstoneCluster(
-            crate::generation::feature::features::drip_stone::cluster::DripstoneClusterFeature {},
-        ),
+        ConfiguredFeature::SpeleothemCluster(SpeleothemClusterFeature {
+            base_block: BlockStateCodec {
+                name: &pumpkin_data::Block::DRIPSTONE_BLOCK,
+                properties: None,
+            },
+            pointed_block: BlockStateCodec {
+                name: &pumpkin_data::Block::POINTED_DRIPSTONE,
+                properties: None,
+            },
+            replaceable_blocks: &pumpkin_data::tag::Block::MINECRAFT_DRIPSTONE_REPLACEABLE_BLOCKS.1,
+            floor_to_ceiling_search_range: 12i32,
+            height: IntProvider::Object(NormalIntProvider::Uniform(UniformIntProvider {
+                min_inclusive: 3i32,
+                max_inclusive: 6i32,
+            })),
+            radius: IntProvider::Object(NormalIntProvider::Uniform(UniformIntProvider {
+                min_inclusive: 2i32,
+                max_inclusive: 8i32,
+            })),
+            max_stalagmite_stalactite_height_diff: 1i32,
+            height_deviation: 3i32,
+            speleothem_block_layer_thickness: IntProvider::Object(NormalIntProvider::Uniform(
+                UniformIntProvider {
+                    min_inclusive: 2i32,
+                    max_inclusive: 4i32,
+                },
+            )),
+            density: FloatProvider::Object(NormalFloatProvider::Uniform(
+                UniformFloatProvider::new(0.3f32, 0.7f32),
+            )),
+            wetness: FloatProvider::Object(NormalFloatProvider::ClampedNormal(
+                ClampedNormalFloatProvider::new(0.1f32, 0.3f32, 0.1f32, 0.9f32),
+            )),
+            chance_of_speleothem_at_max_distance_from_center: 0.1f32,
+            max_distance_from_edge_affecting_chance_of_speleothem: 3i32,
+            max_distance_from_center_affecting_height_bias: 8i32,
+        }),
     );
     map.insert(
         pumpkin_data::configured_feature::ConfiguredFeature::DryGrass,
@@ -2717,9 +2758,35 @@ fn build_configured_features()
     map . insert (pumpkin_data :: configured_feature :: ConfiguredFeature :: LargeBasaltColumns , ConfiguredFeature :: WeightedRandomSelector (WeightedRandomFeature { features : vec ! [WeightedRandomFeatureEntry { feature : PlacedFeatureWrapper :: Direct (PlacedFeature { feature : Feature :: Inlined (Box :: new (ConfiguredFeature :: SteppedColumnCluster (crate :: generation :: feature :: features :: stepped_column_cluster :: SteppedColumnClusterFeature { block : BlockStateProvider :: Simple (SimpleStateProvider { state : { let mut props = std :: collections :: HashMap :: new () ; props . insert ("axis" . to_string () , "y" . to_string ()) ; BlockStateCodec { name : & pumpkin_data :: Block :: BASALT , properties : Some (props) , } . get_state () } }) , continue_through : BlockPredicate :: MatchingBlocks (MatchingBlocksBlockPredicate { offset : OffsetBlocksBlockPredicate { offset : None } , blocks : MatchingBlocksWrapper :: Single ("minecraft:basalt" . to_string ()) , }) , can_replace : BlockPredicate :: AnyOf (AnyOfBlockPredicate { predicates : vec ! [BlockPredicate :: MatchingBlockTag (MatchingBlockTagPredicate { offset : OffsetBlocksBlockPredicate { offset : None } , tag : pumpkin_data :: tag :: Block :: MINECRAFT_AIR , }) , BlockPredicate :: AllOf (AllOfBlockPredicate { predicates : vec ! [BlockPredicate :: MatchingBlocks (MatchingBlocksBlockPredicate { offset : OffsetBlocksBlockPredicate { offset : None } , blocks : MatchingBlocksWrapper :: Single ("minecraft:lava" . to_string ()) , }) , BlockPredicate :: HeightRange (HeightRangeBlockPredicate { min_inclusive : YOffset :: AboveBottom (AboveBottom { above_bottom : 0i8 }) , max_inclusive : YOffset :: RelativeToSeaLevel (RelativeToSeaLevel { relative_to_sea_level : 0i16 }) , })] , })] , }) , cannot_place_on : pumpkin_data :: tag :: Block :: MINECRAFT_CANNOT_PLACE_BASALT_PILLAR_ON , cluster_reach : IntProvider :: Constant (5i32) , column_count : IntProvider :: Constant (50i32) , column_reach : IntProvider :: Object (NormalIntProvider :: Uniform (UniformIntProvider { min_inclusive : 2i32 , max_inclusive : 3i32 })) , height : IntProvider :: Object (NormalIntProvider :: Uniform (UniformIntProvider { min_inclusive : 5i32 , max_inclusive : 10i32 })) , }))) , placement : vec ! [] , }) , weight : 9i32 } , WeightedRandomFeatureEntry { feature : PlacedFeatureWrapper :: Direct (PlacedFeature { feature : Feature :: Inlined (Box :: new (ConfiguredFeature :: SteppedColumnCluster (crate :: generation :: feature :: features :: stepped_column_cluster :: SteppedColumnClusterFeature { block : BlockStateProvider :: Simple (SimpleStateProvider { state : { let mut props = std :: collections :: HashMap :: new () ; props . insert ("axis" . to_string () , "y" . to_string ()) ; BlockStateCodec { name : & pumpkin_data :: Block :: BASALT , properties : Some (props) , } . get_state () } }) , continue_through : BlockPredicate :: MatchingBlocks (MatchingBlocksBlockPredicate { offset : OffsetBlocksBlockPredicate { offset : None } , blocks : MatchingBlocksWrapper :: Single ("minecraft:basalt" . to_string ()) , }) , can_replace : BlockPredicate :: AnyOf (AnyOfBlockPredicate { predicates : vec ! [BlockPredicate :: MatchingBlockTag (MatchingBlockTagPredicate { offset : OffsetBlocksBlockPredicate { offset : None } , tag : pumpkin_data :: tag :: Block :: MINECRAFT_AIR , }) , BlockPredicate :: AllOf (AllOfBlockPredicate { predicates : vec ! [BlockPredicate :: MatchingBlocks (MatchingBlocksBlockPredicate { offset : OffsetBlocksBlockPredicate { offset : None } , blocks : MatchingBlocksWrapper :: Single ("minecraft:lava" . to_string ()) , }) , BlockPredicate :: HeightRange (HeightRangeBlockPredicate { min_inclusive : YOffset :: AboveBottom (AboveBottom { above_bottom : 0i8 }) , max_inclusive : YOffset :: RelativeToSeaLevel (RelativeToSeaLevel { relative_to_sea_level : 0i16 }) , })] , })] , }) , cannot_place_on : pumpkin_data :: tag :: Block :: MINECRAFT_CANNOT_PLACE_BASALT_PILLAR_ON , cluster_reach : IntProvider :: Constant (8i32) , column_count : IntProvider :: Constant (15i32) , column_reach : IntProvider :: Object (NormalIntProvider :: Uniform (UniformIntProvider { min_inclusive : 2i32 , max_inclusive : 3i32 })) , height : IntProvider :: Object (NormalIntProvider :: Uniform (UniformIntProvider { min_inclusive : 5i32 , max_inclusive : 10i32 })) , }))) , placement : vec ! [] , }) , weight : 1i32 }] , total_weight : 10i32 , })) ;
     map.insert(
         pumpkin_data::configured_feature::ConfiguredFeature::LargeDripstone,
-        ConfiguredFeature::LargeDripstone(
-            crate::generation::feature::features::drip_stone::large::LargeDripstoneFeature {},
-        ),
+        ConfiguredFeature::LargeDripstone(LargeDripstoneFeature {
+            replaceable_blocks: &pumpkin_data::tag::Block::MINECRAFT_DRIPSTONE_REPLACEABLE_BLOCKS.1,
+            floor_to_ceiling_search_range: 30i32,
+            column_radius: IntProvider::Object(NormalIntProvider::Clamped(ClampedIntProvider {
+                source: Box::new(IntProvider::Object(NormalIntProvider::Uniform(
+                    UniformIntProvider {
+                        min_inclusive: 3i32,
+                        max_inclusive: 19i32,
+                    },
+                ))),
+                min_inclusive: 3i32,
+                max_inclusive: 16i32,
+            })),
+            height_scale: FloatProvider::Object(NormalFloatProvider::Uniform(
+                UniformFloatProvider::new(0.4f32, 2f32),
+            )),
+            max_column_radius_to_cave_height_ratio: 0.33f32,
+            stalactite_bluntness: FloatProvider::Object(NormalFloatProvider::Uniform(
+                UniformFloatProvider::new(0.3f32, 0.9f32),
+            )),
+            stalagmite_bluntness: FloatProvider::Object(NormalFloatProvider::Uniform(
+                UniformFloatProvider::new(0.4f32, 1f32),
+            )),
+            wind_speed: FloatProvider::Object(NormalFloatProvider::Uniform(
+                UniformFloatProvider::new(0f32, 0.3f32),
+            )),
+            min_radius_for_wind: 4i32,
+            min_bluntness_for_wind: 0.6f32,
+        }),
     );
     map.insert(
         pumpkin_data::configured_feature::ConfiguredFeature::LargeFern,
@@ -3559,12 +3626,22 @@ fn build_configured_features()
         ConfiguredFeature::SimpleRandomSelector(SimpleRandomFeature {
             features: vec![
                 PlacedFeature {
-                    feature: Feature::Inlined(Box::new(ConfiguredFeature::PointedDripstone(
-                        SmallDripstoneFeature {
-                            taller_dripstone: 0.2f32,
-                            directional_spread: 0.7f32,
-                            spread_radius2: 0.5f32,
-                            spread_radius3: 0.5f32,
+                    feature: Feature::Inlined(Box::new(ConfiguredFeature::Speleothem(
+                        SpeleothemFeature {
+                            base_block: BlockStateCodec {
+                                name: &pumpkin_data::Block::DRIPSTONE_BLOCK,
+                                properties: None,
+                            },
+                            pointed_block: BlockStateCodec {
+                                name: &pumpkin_data::Block::POINTED_DRIPSTONE,
+                                properties: None,
+                            },
+                            replaceable_blocks:
+                                &pumpkin_data::tag::Block::MINECRAFT_DRIPSTONE_REPLACEABLE_BLOCKS.1,
+                            chance_of_taller_generation: 0.2f32,
+                            chance_of_directional_spread: 0.7f32,
+                            chance_of_spread_radius2: 0.5f32,
+                            chance_of_spread_radius3: 0.5f32,
                         },
                     ))),
                     placement: vec![
@@ -3603,12 +3680,22 @@ fn build_configured_features()
                     ],
                 },
                 PlacedFeature {
-                    feature: Feature::Inlined(Box::new(ConfiguredFeature::PointedDripstone(
-                        SmallDripstoneFeature {
-                            taller_dripstone: 0.2f32,
-                            directional_spread: 0.7f32,
-                            spread_radius2: 0.5f32,
-                            spread_radius3: 0.5f32,
+                    feature: Feature::Inlined(Box::new(ConfiguredFeature::Speleothem(
+                        SpeleothemFeature {
+                            base_block: BlockStateCodec {
+                                name: &pumpkin_data::Block::DRIPSTONE_BLOCK,
+                                properties: None,
+                            },
+                            pointed_block: BlockStateCodec {
+                                name: &pumpkin_data::Block::POINTED_DRIPSTONE,
+                                properties: None,
+                            },
+                            replaceable_blocks:
+                                &pumpkin_data::tag::Block::MINECRAFT_DRIPSTONE_REPLACEABLE_BLOCKS.1,
+                            chance_of_taller_generation: 0.2f32,
+                            chance_of_directional_spread: 0.7f32,
+                            chance_of_spread_radius2: 0.5f32,
+                            chance_of_spread_radius3: 0.5f32,
                         },
                     ))),
                     placement: vec![
@@ -4249,12 +4336,23 @@ fn build_configured_features()
         ConfiguredFeature::SimpleRandomSelector(SimpleRandomFeature {
             features: vec![
                 PlacedFeature {
-                    feature: Feature::Inlined(Box::new(ConfiguredFeature::PointedDripstone(
-                        SmallDripstoneFeature {
-                            taller_dripstone: 0.2f32,
-                            directional_spread: 0.7f32,
-                            spread_radius2: 0.5f32,
-                            spread_radius3: 0.5f32,
+                    feature: Feature::Inlined(Box::new(ConfiguredFeature::Speleothem(
+                        SpeleothemFeature {
+                            base_block: BlockStateCodec {
+                                name: &pumpkin_data::Block::SULFUR,
+                                properties: None,
+                            },
+                            pointed_block: BlockStateCodec {
+                                name: &pumpkin_data::Block::SULFUR_SPIKE,
+                                properties: None,
+                            },
+                            replaceable_blocks:
+                                &pumpkin_data::tag::Block::MINECRAFT_SULFUR_SPIKE_REPLACEABLE_BLOCKS
+                                    .1,
+                            chance_of_taller_generation: 0.2f32,
+                            chance_of_directional_spread: 0.7f32,
+                            chance_of_spread_radius2: 0.5f32,
+                            chance_of_spread_radius3: 0.5f32,
                         },
                     ))),
                     placement: vec![
@@ -4293,12 +4391,23 @@ fn build_configured_features()
                     ],
                 },
                 PlacedFeature {
-                    feature: Feature::Inlined(Box::new(ConfiguredFeature::PointedDripstone(
-                        SmallDripstoneFeature {
-                            taller_dripstone: 0.2f32,
-                            directional_spread: 0.7f32,
-                            spread_radius2: 0.5f32,
-                            spread_radius3: 0.5f32,
+                    feature: Feature::Inlined(Box::new(ConfiguredFeature::Speleothem(
+                        SpeleothemFeature {
+                            base_block: BlockStateCodec {
+                                name: &pumpkin_data::Block::SULFUR,
+                                properties: None,
+                            },
+                            pointed_block: BlockStateCodec {
+                                name: &pumpkin_data::Block::SULFUR_SPIKE,
+                                properties: None,
+                            },
+                            replaceable_blocks:
+                                &pumpkin_data::tag::Block::MINECRAFT_SULFUR_SPIKE_REPLACEABLE_BLOCKS
+                                    .1,
+                            chance_of_taller_generation: 0.2f32,
+                            chance_of_directional_spread: 0.7f32,
+                            chance_of_spread_radius2: 0.5f32,
+                            chance_of_spread_radius3: 0.5f32,
                         },
                     ))),
                     placement: vec![
@@ -4341,9 +4450,42 @@ fn build_configured_features()
     );
     map.insert(
         pumpkin_data::configured_feature::ConfiguredFeature::SulfurSpikeCluster,
-        ConfiguredFeature::DripstoneCluster(
-            crate::generation::feature::features::drip_stone::cluster::DripstoneClusterFeature {},
-        ),
+        ConfiguredFeature::SpeleothemCluster(SpeleothemClusterFeature {
+            base_block: BlockStateCodec {
+                name: &pumpkin_data::Block::SULFUR,
+                properties: None,
+            },
+            pointed_block: BlockStateCodec {
+                name: &pumpkin_data::Block::SULFUR_SPIKE,
+                properties: None,
+            },
+            replaceable_blocks:
+                &pumpkin_data::tag::Block::MINECRAFT_SULFUR_SPIKE_REPLACEABLE_BLOCKS.1,
+            floor_to_ceiling_search_range: 12i32,
+            height: IntProvider::Object(NormalIntProvider::Uniform(UniformIntProvider {
+                min_inclusive: 1i32,
+                max_inclusive: 4i32,
+            })),
+            radius: IntProvider::Object(NormalIntProvider::Uniform(UniformIntProvider {
+                min_inclusive: 2i32,
+                max_inclusive: 8i32,
+            })),
+            max_stalagmite_stalactite_height_diff: 1i32,
+            height_deviation: 3i32,
+            speleothem_block_layer_thickness: IntProvider::Object(NormalIntProvider::Uniform(
+                UniformIntProvider {
+                    min_inclusive: 2i32,
+                    max_inclusive: 4i32,
+                },
+            )),
+            density: FloatProvider::Object(NormalFloatProvider::Uniform(
+                UniformFloatProvider::new(0.3f32, 0.7f32),
+            )),
+            wetness: FloatProvider::Constant(0f32),
+            chance_of_speleothem_at_max_distance_from_center: 0.1f32,
+            max_distance_from_edge_affecting_chance_of_speleothem: 3i32,
+            max_distance_from_center_affecting_height_bias: 8i32,
+        }),
     );
     map.insert(
         pumpkin_data::configured_feature::ConfiguredFeature::SulfurSpring,

@@ -677,6 +677,50 @@ pub fn value_to_int_provider(v: &Value) -> TokenStream {
     }
 }
 
+/// Converts a float provider JSON value into a `FloatProvider` token stream.
+///
+/// # Arguments
+/// - `v` – Either a bare JSON number (constant) or an object with a `"type"` discriminant.
+///
+/// # Returns
+/// A `FloatProvider` variant token stream.
+pub fn value_to_float_provider(v: &Value) -> TokenStream {
+    if v.is_number() {
+        let f = v.as_f64().unwrap_or(0.0) as f32;
+        quote! { FloatProvider::Constant(#f) }
+    } else {
+        let type_str = v["type"].as_str().unwrap_or("");
+        match type_str {
+            "minecraft:uniform" => {
+                let min = v["min_inclusive"].as_f64().unwrap_or(0.0) as f32;
+                let max = v["max_exclusive"].as_f64().unwrap_or(0.0) as f32;
+                quote! { FloatProvider::Object(NormalFloatProvider::Uniform(UniformFloatProvider::new(#min, #max))) }
+            }
+            "minecraft:constant" => {
+                let val = v["value"].as_f64().unwrap_or(0.0) as f32;
+                quote! { FloatProvider::Constant(#val) }
+            }
+            "minecraft:clamped_normal" => {
+                let mean = v["mean"].as_f64().unwrap_or(0.0) as f32;
+                let deviation = v["deviation"].as_f64().unwrap_or(0.0) as f32;
+                let min = v["min"].as_f64().unwrap_or(0.0) as f32;
+                let max = v["max"].as_f64().unwrap_or(0.0) as f32;
+                quote! { FloatProvider::Object(NormalFloatProvider::ClampedNormal(ClampedNormalFloatProvider::new(#mean, #deviation, #min, #max))) }
+            }
+            "minecraft:trapezoid" => {
+                let min = v["min"].as_f64().unwrap_or(0.0) as f32;
+                let max = v["max"].as_f64().unwrap_or(0.0) as f32;
+                let plateau = v["plateau"].as_f64().unwrap_or(0.0) as f32;
+                quote! { FloatProvider::Object(NormalFloatProvider::Trapezoid(TrapezoidFloatProvider::new(#min, #max, #plateau))) }
+            }
+            _ => panic!(
+                "Unknown Float Provider, Seems like Mojang added a new one: {:?}",
+                v
+            ),
+        }
+    }
+}
+
 /// Converts a SCREAMING_SNAKE_CASE heightmap name into its `HeightMap` token stream.
 ///
 /// # Arguments

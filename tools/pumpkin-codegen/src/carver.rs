@@ -4,6 +4,8 @@ use serde_json::Value;
 use std::collections::BTreeMap;
 use std::fs;
 
+use crate::placed_feature::value_to_float_provider;
+
 pub fn build() -> TokenStream {
     let dir = std::path::Path::new("../../assets/datapack/data/minecraft/worldgen/carver");
     let mut carvers: BTreeMap<String, Value> = BTreeMap::new();
@@ -236,35 +238,6 @@ fn value_to_int_provider(v: &Value) -> TokenStream {
             }
             _ => {
                 quote! { IntProvider::Constant(0) }
-            }
-        }
-    }
-}
-
-fn value_to_float_provider(v: &Value) -> TokenStream {
-    if v.is_number() {
-        let f = v.as_f64().unwrap_or(0.0) as f32;
-        quote! { FloatProvider::Constant(#f) }
-    } else {
-        let type_str = v["type"].as_str().unwrap_or("");
-        match type_str {
-            "minecraft:uniform" => {
-                let min = v["min_inclusive"].as_f64().unwrap_or(0.0) as f32;
-                let max = v["max_exclusive"].as_f64().unwrap_or(0.0) as f32;
-                quote! { FloatProvider::Object(NormalFloatProvider::Uniform(UniformFloatProvider::new(#min, #max))) }
-            }
-            "minecraft:constant" => {
-                let val = v["value"].as_f64().unwrap_or(0.0) as f32;
-                quote! { FloatProvider::Constant(#val) }
-            }
-            "minecraft:trapezoid" => {
-                let min = v["min"].as_f64().unwrap_or(0.0) as f32;
-                let max = v["max"].as_f64().unwrap_or(0.0) as f32;
-                let plateau = v["plateau"].as_f64().unwrap_or(0.0) as f32;
-                quote! { FloatProvider::Object(NormalFloatProvider::Trapezoid(TrapezoidFloatProvider::new(#min, #max, #plateau))) }
-            }
-            _ => {
-                quote! { FloatProvider::Constant(0.0) }
             }
         }
     }
