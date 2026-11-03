@@ -581,12 +581,10 @@ pub fn check_spawn_rules(
         return mob::MobEntity::check_mob_spawn_rules(entity_type, level, reason, pos);
     }
 
-    // Magma Cube
+    // Magma Cube: vanilla `checkMagmaCubeSpawnRules` is the difficulty alone, no floor test.
     if id == EntityType::MAGMA_CUBE.id {
-        if level.get_level().level_info.load().difficulty == pumpkin_util::Difficulty::Peaceful {
-            return false;
-        }
-        return mob::MobEntity::check_mob_spawn_rules(entity_type, level, reason, pos);
+        return level.get_level().level_info.load().difficulty
+            != pumpkin_util::Difficulty::Peaceful;
     }
 
     // Sulfur Cube
@@ -621,9 +619,10 @@ pub fn check_spawn_rules(
         return level.get_block(&check_pos).is_air();
     }
 
-    // Bat
+    // Bat: vanilla `checkBatSpawnRules` ends with `checkMobSpawnRules`.
     if id == EntityType::BAT.id {
-        return bat::BatEntity::check_bat_spawn_rules(level, pos);
+        return bat::BatEntity::check_bat_spawn_rules(level, pos)
+            && mob::MobEntity::check_mob_spawn_rules(entity_type, level, reason, pos);
     }
 
     // Animals (General)
