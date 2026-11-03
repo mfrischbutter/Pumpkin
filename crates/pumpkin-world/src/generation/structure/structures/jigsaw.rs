@@ -848,7 +848,7 @@ impl StructurePieceBase for PoolElementStructurePiece {
         chunk: &mut crate::ProtoChunk,
         block_registry: &dyn crate::world::WorldPortalExt,
         random: &mut pumpkin_util::random::RandomGenerator,
-        _seed: i64,
+        seed: i64,
         chunk_box: &pumpkin_util::math::block_box::BlockBox,
     ) {
         let origin =
@@ -866,7 +866,7 @@ impl StructurePieceBase for PoolElementStructurePiece {
                     origin.z + corner.1.min(0),
                 );
                 let processors = self.element.template_processors(processor_list);
-                crate::generation::structure::template::place_template(
+                crate::generation::structure::template::place_template_with_options(
                     chunk,
                     &template,
                     placement_origin,
@@ -876,6 +876,11 @@ impl StructurePieceBase for PoolElementStructurePiece {
                     self.liquid_settings == LiquidSettings::ApplyWaterlog,
                     processors.as_ref(),
                     Some(chunk_box),
+                    false,
+                    crate::generation::structure::template::TemplatePlacement {
+                        position: origin,
+                        level_seed: seed,
+                    },
                 );
                 crate::generation::structure::template::place_template_entities(
                     chunk,
@@ -908,6 +913,7 @@ pub fn place_pool_element_templates(
     placer: &mut impl BlockPlacer,
     chunk_box: Option<&BlockBox>,
     keep_jigsaws: bool,
+    level_seed: i64,
 ) {
     let origin = Vector3::new(piece.pos.0.x, piece.pos.0.y, piece.pos.0.z);
 
@@ -935,6 +941,10 @@ pub fn place_pool_element_templates(
                 processors.as_ref(),
                 chunk_box,
                 keep_jigsaws,
+                crate::generation::structure::template::TemplatePlacement {
+                    position: origin,
+                    level_seed,
+                },
             );
         });
 }

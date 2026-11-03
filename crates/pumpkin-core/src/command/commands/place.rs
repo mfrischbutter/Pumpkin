@@ -252,7 +252,13 @@ impl CommandExecutor for PlaceJigsawExecutor {
                 if let Some(jigsaw_piece) =
                     piece.as_any().downcast_ref::<PoolElementStructurePiece>()
                 {
-                    place_pool_element_templates(jigsaw_piece, &mut placer, None, false);
+                    place_pool_element_templates(
+                        jigsaw_piece,
+                        &mut placer,
+                        None,
+                        false,
+                        context.world().level.seed.0 as i64,
+                    );
                 }
             }
 
@@ -361,7 +367,13 @@ impl CommandExecutor for PlaceStructureExecutor {
                     if let Some(jigsaw_piece) =
                         piece.as_any().downcast_ref::<PoolElementStructurePiece>()
                     {
-                        place_pool_element_templates(jigsaw_piece, &mut placer, None, false);
+                        place_pool_element_templates(
+                            jigsaw_piece,
+                            &mut placer,
+                            None,
+                            false,
+                            context.world().level.seed.0 as i64,
+                        );
                     }
                 }
 
@@ -404,7 +416,13 @@ impl CommandExecutor for PlaceStructureExecutor {
                     if let Some(jigsaw_piece) =
                         piece.as_any().downcast_ref::<PoolElementStructurePiece>()
                     {
-                        place_pool_element_templates(jigsaw_piece, &mut placer, None, false);
+                        place_pool_element_templates(
+                            jigsaw_piece,
+                            &mut placer,
+                            None,
+                            false,
+                            context.world().level.seed.0 as i64,
+                        );
                     }
                 }
 

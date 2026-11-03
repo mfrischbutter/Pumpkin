@@ -100,7 +100,26 @@ pub fn place_template(
         processors,
         chunk_box,
         false,
+        TemplatePlacement {
+            position: origin,
+            level_seed: 0,
+        },
     );
+}
+
+/// Where vanilla's `StructureTemplate.placeInWorld` happens: its `position`, at which a capped
+/// processor's random is forked, and the level seed that random starts from.
+#[derive(Clone, Copy, Debug)]
+pub struct TemplatePlacement {
+    pub position: Vector3<i32>,
+    pub level_seed: i64,
+}
+
+/// One template block after the processors (vanilla's processed `StructureBlockInfo`).
+struct ProcessedBlock {
+    pos: Vector3<i32>,
+    state: &'static BlockState,
+    nbt: Option<NbtCompound>,
 }
 
 #[allow(clippy::too_many_arguments, clippy::too_many_lines)]
@@ -115,28 +134,20 @@ pub fn place_template_with_options(
     processors: &[StructureProcessor],
     chunk_box: Option<&pumpkin_util::math::block_box::BlockBox>,
     keep_jigsaws: bool,
+    placement: TemplatePlacement,
 ) {
     let (rotated_ox, rotated_oz) = rotation.rotate_offset(offset.0, offset.1);
     let world_x = origin.x + rotated_ox;
     let world_z = origin.z + rotated_oz;
 
-    let mut context_rng = LegacyRand::from_seed(hash_block_pos(world_x, origin.y, world_z) as u64);
-    let mut context = processor::ProcessorContext::new(origin, processors, &mut context_rng);
+    let mut context = processor::ProcessorContext::new(origin);
 
+    // Vanilla `StructureTemplate.processBlockInfos`: every block of the template runs through the
+    // processors, not only this chunk's, because a capped processor then picks among all of them.
+    let mut processed = Vec::with_capacity(template.blocks.len());
     for block in &template.blocks {
         // Rotate block position within template bounds
         let local_pos = rotation.transform_pos(block.pos, template.size);
-
-        let wx = world_x + local_pos.x;
-        let wy = origin.y + local_pos.y;
-        let wz = world_z + local_pos.z;
-
-        // The y is checked after the processors, since gravity can move the block.
-        if let Some(bbox) = chunk_box
-            && (wx < bbox.min.x || wx > bbox.max.x || wz < bbox.min.z || wz > bbox.max.z)
-        {
-            continue;
-        }
 
         let palette_entry = &template.palette[block.state as usize];
 
@@ -174,7 +185,11 @@ pub fn place_template_with_options(
             continue;
         };
 
-        let mut world_pos = Vector3::new(wx, wy, wz);
+        let mut world_pos = Vector3::new(
+            world_x + local_pos.x,
+            origin.y + local_pos.y,
+            world_z + local_pos.z,
+        );
 
         if apply_waterlogging
             && placer.get_block_state(&world_pos).to_block_id() == pumpkin_data::Block::WATER.id
@@ -183,26 +198,30 @@ pub fn place_template_with_options(
             state = waterlogged_state;
         }
 
-        // Apply processors
+        // Apply processors; each one seeds its own random from the block's position, like
+        // vanilla's processors (`RandomSource.create(Mth.getSeed(pos))`).
         let mut should_place = true;
-        let mut capped_idx = 0;
-        let mut rng =
-            LegacyRand::from_seed(hash_block_pos(world_pos.x, world_pos.y, world_pos.z) as u64);
         for processor in processors {
-            // Mirrors `GravityProcessor`: the block keeps its template y on top of the column.
-            if let StructureProcessor::Gravity { heightmap, offset } = processor {
-                if let Some(height) = placer.get_height(*heightmap, world_pos.x, world_pos.z) {
-                    world_pos.y = height + offset + block.pos.y;
+            match processor {
+                // Mirrors `GravityProcessor`: the block keeps its template y on top of the column.
+                StructureProcessor::Gravity { heightmap, offset } => {
+                    if let Some(height) = placer.get_height(*heightmap, world_pos.x, world_pos.z) {
+                        world_pos.y = height + offset + block.pos.y;
+                    }
+                    continue;
                 }
-                continue;
+                // Vanilla runs a capped processor's delegate in `finalizeProcessing`, below.
+                StructureProcessor::Capped { .. } => continue,
+                _ => {}
             }
+            let mut rng =
+                LegacyRand::from_seed(hash_block_pos(world_pos.x, world_pos.y, world_pos.z) as u64);
             let Some(processed_state) = processor.process_with_context(
                 placer,
                 world_pos,
                 state,
                 &mut block_entity_nbt,
                 &mut context,
-                &mut capped_idx,
                 &mut rng,
             ) else {
                 should_place = false;
@@ -210,9 +229,35 @@ pub fn place_template_with_options(
             };
             state = processed_state;
         }
-        if !should_place
-            || chunk_box.is_some_and(|bbox| world_pos.y < bbox.min.y || world_pos.y > bbox.max.y)
-        {
+        if should_place {
+            processed.push(ProcessedBlock {
+                pos: world_pos,
+                state,
+                nbt: block_entity_nbt,
+            });
+        }
+    }
+
+    for processor in processors {
+        if let StructureProcessor::Capped { limit, delegate } = processor {
+            finalize_capped(
+                placer,
+                &mut processed,
+                limit,
+                delegate,
+                &mut context,
+                placement,
+            );
+        }
+    }
+
+    for ProcessedBlock {
+        pos: world_pos,
+        state,
+        nbt: block_entity_nbt,
+    } in processed
+    {
+        if chunk_box.is_some_and(|bbox| !bbox.contains_pos(&world_pos)) {
             continue;
         }
         // Legacy pool elements ignore air after jigsaw replacement and custom processors.
@@ -253,6 +298,60 @@ pub fn place_template_with_options(
             }
 
             placer.add_block_entity(placed_nbt);
+        }
+    }
+}
+
+/// Vanilla's `CappedProcessor.finalizeProcessing`: a random forked from the level seed at the
+/// template's position draws the limit and shuffles every processed block; the delegate runs on
+/// them in that order until it changed `limit` of them.
+fn finalize_capped(
+    placer: &impl BlockPlacer,
+    processed: &mut [ProcessedBlock],
+    limit: &pumpkin_util::math::int_provider::IntProvider,
+    delegate: &StructureProcessor,
+    context: &mut processor::ProcessorContext,
+    placement: TemplatePlacement,
+) {
+    if limit.get_max() == 0 || processed.is_empty() {
+        return;
+    }
+    let mut random = pumpkin_util::random::RandomDeriverImpl::split_pos(
+        &LegacyRand::from_seed(placement.level_seed as u64).next_splitter(),
+        placement.position.x,
+        placement.position.y,
+        placement.position.z,
+    );
+    let max_to_replace = limit.get(&mut random).min(processed.len() as i32);
+    if max_to_replace < 1 {
+        return;
+    }
+    let mut indices: Vec<usize> = (0..processed.len()).collect();
+    for i in (2..=indices.len()).rev() {
+        let swap_to = random.next_bounded_i32(i as i32) as usize;
+        indices.swap(i - 1, swap_to);
+    }
+    let mut replaced = 0;
+    for index in indices {
+        if replaced >= max_to_replace {
+            break;
+        }
+        let block = &mut processed[index];
+        let mut nbt = block.nbt.clone();
+        let mut rng =
+            LegacyRand::from_seed(hash_block_pos(block.pos.x, block.pos.y, block.pos.z) as u64);
+        if let Some(state) = delegate.process_with_context(
+            placer,
+            block.pos,
+            block.state,
+            &mut nbt,
+            context,
+            &mut rng,
+        ) && (state.id != block.state.id || nbt != block.nbt)
+        {
+            replaced += 1;
+            block.state = state;
+            block.nbt = nbt;
         }
     }
 }

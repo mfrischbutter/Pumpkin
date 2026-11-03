@@ -443,16 +443,7 @@ impl RuinedPortalPiece {
         let mirror = self.place_settings.get_mirror();
         let pivot = self.place_settings.get_rotation_pivot();
 
-        let mut context_rng = LegacyRand::from_seed(hash_block_pos(
-            self.template_position.x,
-            self.template_position.y,
-            self.template_position.z,
-        ) as u64);
-        let mut context = ProcessorContext::new(
-            self.template_position,
-            self.place_settings.get_processors(),
-            &mut context_rng,
-        );
+        let mut context = ProcessorContext::new(self.template_position);
 
         for block in &self.template.blocks {
             let palette_entry = &self.template.palette[block.state as usize];
@@ -474,19 +465,23 @@ impl RuinedPortalPiece {
             }
 
             let mut processed_state = Some(state);
-            let mut capped_idx = 0;
             for processor in self.place_settings.get_processors() {
                 let Some(current_state) = processed_state else {
                     break;
                 };
+                // Each processor seeds its own random from the block, like vanilla's
+                // `StructurePlaceSettings.getRandom(pos)` without a random of its own.
+                let mut rng =
+                    LegacyRand::from_seed(
+                        hash_block_pos(world_pos.x, world_pos.y, world_pos.z) as u64
+                    );
                 processed_state = processor.process_with_context(
                     chunk,
                     world_pos,
                     current_state,
                     &mut block_entity_nbt,
                     &mut context,
-                    &mut capped_idx,
-                    &mut context_rng,
+                    &mut rng,
                 );
             }
 

@@ -362,40 +362,12 @@ pub fn check_block_has_tag(block_id: BlockId, tag: &str) -> bool {
 #[derive(Clone, Debug, Default)]
 pub struct ProcessorContext {
     pub structure_start: Vector3<i32>,
-    pub capped_limits: Vec<i32>,
-    pub capped_counts: Vec<i32>,
 }
 
 impl ProcessorContext {
     #[must_use]
-    pub fn new(
-        structure_start: Vector3<i32>,
-        processors: &[StructureProcessor],
-        rng: &mut impl RandomImpl,
-    ) -> Self {
-        let mut capped_limits = Vec::new();
-        let mut capped_counts = Vec::new();
-        collect_capped_limits(processors, &mut capped_limits, &mut capped_counts, rng);
-        Self {
-            structure_start,
-            capped_limits,
-            capped_counts,
-        }
-    }
-}
-
-fn collect_capped_limits(
-    processors: &[StructureProcessor],
-    limits: &mut Vec<i32>,
-    counts: &mut Vec<i32>,
-    rng: &mut impl RandomImpl,
-) {
-    for processor in processors {
-        if let StructureProcessor::Capped { limit, delegate } = processor {
-            limits.push(limit.get(rng));
-            counts.push(0);
-            collect_capped_limits(std::slice::from_ref(delegate.as_ref()), limits, counts, rng);
-        }
+    pub const fn new(structure_start: Vector3<i32>) -> Self {
+        Self { structure_start }
     }
 }
 
@@ -409,18 +381,9 @@ impl StructureProcessor {
     ) -> Option<&'static BlockState> {
         let mut nbt = None;
         let mut context = ProcessorContext::default();
-        let mut capped_idx = 0;
         let mut rng =
             LegacyRand::from_seed(hash_block_pos(world_pos.x, world_pos.y, world_pos.z) as u64);
-        self.process_with_context(
-            placer,
-            world_pos,
-            state,
-            &mut nbt,
-            &mut context,
-            &mut capped_idx,
-            &mut rng,
-        )
+        self.process_with_context(placer, world_pos, state, &mut nbt, &mut context, &mut rng)
     }
 
     #[must_use]
@@ -432,7 +395,6 @@ impl StructureProcessor {
         state: &'static BlockState,
         nbt: &mut Option<NbtCompound>,
         context: &mut ProcessorContext,
-        capped_idx: &mut usize,
         rng: &mut impl RandomImpl,
     ) -> Option<&'static BlockState> {
         match self {
@@ -440,11 +402,12 @@ impl StructureProcessor {
                 let world_state_id = placer.get_block_state(&world_pos);
                 let world_state = BlockState::from_id(world_state_id);
                 for rule in rules {
-                    if rule
-                        .position_predicate
-                        .test(world_pos, context.structure_start, rng)
-                        && rule.input_predicate.test(state, rng)
+                    // Vanilla's `ProcessorRule.test` order: input, location, then position.
+                    if rule.input_predicate.test(state, rng)
                         && rule.location_predicate.test(world_state, rng)
+                        && rule
+                            .position_predicate
+                            .test(world_pos, context.structure_start, rng)
                     {
                         if let Some(modifier) = &rule.block_entity_modifier {
                             modifier.apply(nbt, world_pos, rng);
@@ -507,30 +470,9 @@ impl StructureProcessor {
                 }
                 Some(state)
             }
-            Self::Capped { delegate, .. } => {
-                let idx = *capped_idx;
-                *capped_idx += 1;
-                if idx < context.capped_limits.len() {
-                    let limit = context.capped_limits[idx];
-                    let count = context.capped_counts[idx];
-                    if count < limit {
-                        let prev_state = state;
-                        let prev_nbt = nbt.clone();
-                        let res = delegate.process_with_context(
-                            placer, world_pos, state, nbt, context, capped_idx, rng,
-                        );
-                        if res != Some(prev_state) || *nbt != prev_nbt {
-                            context.capped_counts[idx] += 1;
-                        }
-                        return res;
-                    }
-                    Some(state)
-                } else {
-                    delegate.process_with_context(
-                        placer, world_pos, state, nbt, context, capped_idx, rng,
-                    )
-                }
-            }
+            // Vanilla's `CappedProcessor.processBlock` changes nothing; its delegate runs over the
+            // whole template in `finalizeProcessing` (see `place_template_with_options`).
+            Self::Capped { .. } => Some(state),
         }
     }
 }

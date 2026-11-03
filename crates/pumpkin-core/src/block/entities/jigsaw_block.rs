@@ -141,6 +141,7 @@ impl JigsawBlockEntity {
                     &mut placer,
                     None,
                     keep_jigsaws,
+                    world.level.seed.0 as i64,
                 );
             }
         }
