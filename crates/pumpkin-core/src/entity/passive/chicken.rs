@@ -207,6 +207,10 @@ impl Animal for ChickenEntity {
 }
 
 impl Mob for ChickenEntity {
+    fn as_chicken(&self) -> Option<&ChickenEntity> {
+        Some(self)
+    }
+
     /// Vanilla `Chicken.getAmbientSound`: the ambient sound of its sound variant.
     fn get_ambient_sound(&self) -> Option<Sound> {
         let sound_variant =

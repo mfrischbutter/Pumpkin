@@ -5,8 +5,11 @@ use crate::entity::ai::goal::look_around::RandomLookAroundGoal;
 use crate::entity::ai::goal::revenge::RevengeGoal;
 use crate::entity::ai::goal::wander_around::WanderAroundGoal;
 use crate::entity::ai::goal::zombie_attack::ZombieAttackGoal;
+use crate::entity::attributes::{AttributeInstance, Modifier, ModifierOperation};
 use crate::entity::mob::conversion::ConversionTracker;
 use crate::entity::mob::equipment::RegionalDifficulty;
+use crate::entity::mob::spawn::{self, EntitySpawnReason, SpawnGroupData, finalize_spawn};
+use crate::entity::r#type::from_type;
 use crate::entity::{
     Entity, EntityBase,
     ai::behavior::hunting::{self, Hunt},
@@ -14,6 +17,8 @@ use crate::entity::{
     ai::target_match::TargetMatch,
 };
 use crate::world::World;
+use crossbeam::atomic::AtomicCell;
+use pumpkin_data::attributes::Attributes;
 use pumpkin_data::data_component_impl::EquipmentSlot;
 use pumpkin_data::entity::EntityType;
 use pumpkin_data::item::Item;
@@ -21,8 +26,10 @@ use pumpkin_data::item_stack::ItemStack;
 use pumpkin_data::world::WorldEvent;
 use pumpkin_nbt::compound::NbtCompound;
 use pumpkin_util::Difficulty;
+use rand::RngExt;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, Weak};
+use uuid::Uuid;
 
 pub mod drowned;
 pub mod husk;
@@ -37,10 +44,41 @@ const ZOMBIE_HUNTS: &[Hunt] = &[
     hunting::baby_turtles(5, true),
 ];
 
+/// Vanilla `Zombie.getSpawnAsBabyOdds`.
+const BABY_CHANCE: f32 = 0.05;
+/// Vanilla `Zombie.finalizeSpawn`: a baby's chance of riding a chicken nearby, else of one
+/// spawned for it; how far sideways and up the box around it reaches for one.
+const CHICKEN_JOCKEY_CHANCE: f32 = 0.05;
+const CHICKEN_SEARCH_RANGE: (f64, f64) = (5.0, 3.0);
+/// Vanilla `Zombie.finalizeSpawn`: the door breaking chance per special difficulty.
+const CAN_BREAK_DOORS_CHANCE: f32 = 0.1;
+/// Vanilla `Zombie.handleAttributes`: the reinforcement chance's range, the knockback
+/// resistance bonus's range, the follow range factor, the leader chance per special difficulty,
+/// a leader's reinforcement bonus (base, range) and health multiplier (base, range).
+const REINFORCEMENTS_CHANCE_RANGE: f64 = 0.1;
+const KNOCKBACK_RESISTANCE_BONUS_RANGE: f64 = 0.05;
+const FOLLOW_RANGE_BONUS_FACTOR: f64 = 1.5;
+const LEADER_CHANCE: f32 = 0.05;
+const LEADER_REINFORCEMENTS_BONUS: (f64, f64) = (0.5, 0.25);
+const LEADER_HEALTH_BONUS: (f64, f64) = (1.0, 3.0);
+const LEADER_ZOMBIE_BONUS_ID: &str = "minecraft:leader_zombie_bonus";
+const ZOMBIE_RANDOM_SPAWN_BONUS_ID: &str = "minecraft:zombie_random_spawn_bonus";
+
+/// Vanilla `Zombie.finalizeSpawn`'s chicken jockey roll, carried to the first tick, where the
+/// zombie is in the world and can ride.
+#[derive(Clone, Copy)]
+enum ChickenJockey {
+    /// An unridden chicken within `CHICKEN_SEARCH_RANGE`.
+    Existing,
+    /// A chicken spawned for it.
+    New,
+}
+
 pub struct ZombieEntityBase {
     pub mob_entity: MobEntity,
     pub can_break_doors: AtomicBool,
     pub is_baby: AtomicBool,
+    chicken_jockey: AtomicCell<Option<ChickenJockey>>,
     /// Vanilla `Zombie.drowningTracker`, for the kinds that `convertsInWater`.
     drowning: Option<ConversionTracker>,
 }
@@ -93,6 +131,7 @@ impl ZombieEntityBase {
             mob_entity,
             can_break_doors: AtomicBool::new(false),
             is_baby: AtomicBool::new(false),
+            chicken_jockey: AtomicCell::new(None),
             drowning,
         };
         let mob_arc = Arc::new(zombie);
@@ -182,7 +221,173 @@ impl ZombieEntityBase {
     }
 }
 
+impl ZombieEntityBase {
+    /// Vanilla `Zombie.finalizeSpawn`'s jockey roll for a baby: one in twenty rides a chicken
+    /// nearby, else one in twenty gets a chicken of its own.
+    fn roll_chicken_jockey<R: rand::Rng + ?Sized>(&self, rng: &mut R) {
+        let rides_one_nearby = rng.random::<f32>() < CHICKEN_JOCKEY_CHANCE;
+        let jockey = if rides_one_nearby {
+            ChickenJockey::Existing
+        } else if rng.random::<f32>() < CHICKEN_JOCKEY_CHANCE {
+            ChickenJockey::New
+        } else {
+            return;
+        };
+        self.chicken_jockey.store(Some(jockey));
+    }
+
+    /// The rest of the jockey roll once the zombie is in the world: the chicken found or made,
+    /// marked as a jockey's and ridden.
+    fn mount_chicken(&self, jockey: ChickenJockey) {
+        let entity = self.get_entity();
+        let world = entity.world.load_full();
+        let Some(this) = world.get_entity_by_id(entity.entity_id) else {
+            return;
+        };
+        let chicken = match jockey {
+            ChickenJockey::Existing => {
+                let (sideways, up) = CHICKEN_SEARCH_RANGE;
+                let search = entity.bounding_box.load().expand(sideways, up, sideways);
+                world
+                    .get_entities_at_box(&search)
+                    .into_iter()
+                    .find(|nearby| {
+                        let nearby = nearby.get_entity();
+                        nearby.entity_type == &EntityType::CHICKEN && !nearby.has_passengers()
+                    })
+            }
+            ChickenJockey::New => {
+                let chicken = from_type(
+                    &EntityType::CHICKEN,
+                    entity.pos.load(),
+                    &world,
+                    Uuid::new_v4(),
+                );
+                chicken.get_entity().set_rotation(entity.yaw.load(), 0.0);
+                finalize_spawn(&chicken, &world, EntitySpawnReason::Jockey, None);
+                world.spawn_entity(chicken.clone()).then_some(chicken)
+            }
+        };
+        let Some(chicken) = chicken else {
+            return;
+        };
+        if let Some(chicken_mob) = chicken.get_mob().and_then(|mob| mob.as_chicken()) {
+            chicken_mob.set_chicken_jockey(true);
+        }
+        chicken.get_entity().add_passenger(chicken.clone(), this);
+    }
+
+    /// Vanilla `Zombie.handleAttributes`: a random reinforcement chance, a knockback resistance
+    /// bonus, a follow range bonus above one, and the leader roll: more reinforcements, more
+    /// health (full unless converted, loaded or travelled) and door breaking.
+    fn handle_attributes<R: rand::Rng + ?Sized>(&self, multiplier: f32, rng: &mut R) {
+        let living = &self.mob_entity.living_entity;
+        let leader = {
+            let mut attributes = living
+                .attributes
+                .write()
+                .unwrap_or_else(std::sync::PoisonError::into_inner);
+            // Vanilla `randomizeReinforcementsChance`.
+            let reinforcements = attributes
+                .entry(Attributes::SPAWN_REINFORCEMENTS.id)
+                .or_insert_with(|| AttributeInstance::new(0.0));
+            reinforcements.base_value = rng.random::<f64>() * REINFORCEMENTS_CHANCE_RANGE;
+            reinforcements.mark_dirty();
+            if let Some(resistance) = attributes.get_mut(&Attributes::KNOCKBACK_RESISTANCE.id) {
+                resistance.add_or_replace_permanent_modifier(Modifier {
+                    id: spawn::RANDOM_SPAWN_BONUS_ID.to_string(),
+                    amount: rng.random::<f64>() * KNOCKBACK_RESISTANCE_BONUS_RANGE,
+                    operation: ModifierOperation::Add,
+                });
+            }
+            let follow_range_bonus =
+                rng.random::<f64>() * FOLLOW_RANGE_BONUS_FACTOR * f64::from(multiplier);
+            if follow_range_bonus > 1.0
+                && let Some(follow_range) = attributes.get_mut(&Attributes::FOLLOW_RANGE.id)
+            {
+                follow_range.add_or_replace_permanent_modifier(Modifier {
+                    id: ZOMBIE_RANDOM_SPAWN_BONUS_ID.to_string(),
+                    amount: follow_range_bonus,
+                    operation: ModifierOperation::MultiplyTotal,
+                });
+            }
+            let leader = rng.random::<f32>() < multiplier * LEADER_CHANCE;
+            if leader {
+                let (base, range) = LEADER_REINFORCEMENTS_BONUS;
+                if let Some(reinforcements) =
+                    attributes.get_mut(&Attributes::SPAWN_REINFORCEMENTS.id)
+                {
+                    reinforcements.add_or_replace_permanent_modifier(Modifier {
+                        id: LEADER_ZOMBIE_BONUS_ID.to_string(),
+                        amount: rng.random::<f64>() * range + base,
+                        operation: ModifierOperation::Add,
+                    });
+                }
+                let (base, range) = LEADER_HEALTH_BONUS;
+                if let Some(max_health) = attributes.get_mut(&Attributes::MAX_HEALTH.id) {
+                    max_health.add_or_replace_permanent_modifier(Modifier {
+                        id: LEADER_ZOMBIE_BONUS_ID.to_string(),
+                        amount: rng.random::<f64>() * range + base,
+                        operation: ModifierOperation::MultiplyTotal,
+                    });
+                }
+            }
+            leader
+        };
+        if leader {
+            if !matches!(
+                self.mob_entity.spawn_reason(),
+                Some(
+                    EntitySpawnReason::Conversion
+                        | EntitySpawnReason::Load
+                        | EntitySpawnReason::DimensionTravel
+                )
+            ) {
+                living.set_health(living.get_max_health());
+            }
+            self.set_can_break_doors(true, self);
+        }
+    }
+}
+
 impl Mob for ZombieEntityBase {
+    /// Vanilla `Zombie.finalizeSpawn`: the group's baby roll with a baby's chicken jockey, door
+    /// breaking, the Halloween head and the random attribute bonuses. Loot pickup and the
+    /// equipment are the base's, skipped on a conversion.
+    fn finalize_spawn(
+        &self,
+        world: &Arc<World>,
+        group_data: Option<SpawnGroupData>,
+    ) -> Option<SpawnGroupData> {
+        let group_data = self.finalize_spawn_super(group_data);
+        let mut rng = rand::rng();
+        let multiplier =
+            RegionalDifficulty::at(world, self.get_entity().pos.load()).special_multiplier;
+        let group_data = group_data.unwrap_or_else(|| SpawnGroupData::Zombie {
+            is_baby: rng.random::<f32>() < BABY_CHANCE,
+            can_spawn_jockey: true,
+        });
+        if let SpawnGroupData::Zombie {
+            is_baby,
+            can_spawn_jockey,
+        } = group_data
+        {
+            if is_baby {
+                self.set_baby(true);
+                if can_spawn_jockey {
+                    self.roll_chicken_jockey(&mut rng);
+                }
+            }
+            self.set_can_break_doors(
+                rng.random::<f32>() < multiplier * CAN_BREAK_DOORS_CHANCE,
+                self,
+            );
+        }
+        spawn::roll_halloween_head(&self.mob_entity, &mut rng);
+        self.handle_attributes(multiplier, &mut rng);
+        Some(group_data)
+    }
+
     fn mob_metadata(&self) -> Option<MobMetadata> {
         self.is_baby().then(|| MobMetadata::new().baby(true))
     }
@@ -261,6 +466,9 @@ impl Mob for ZombieEntityBase {
     }
 
     fn mob_tick(&self, _caller: &dyn EntityBase) {
+        if let Some(jockey) = self.chicken_jockey.take() {
+            self.mount_chicken(jockey);
+        }
         if let Some(drowning) = &self.drowning {
             drowning.tick(self);
         }

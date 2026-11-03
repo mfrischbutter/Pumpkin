@@ -1,6 +1,7 @@
 use crate::entity::Entity;
 use crate::entity::EntityBase;
 use crate::entity::mob::equipment::RegionalDifficulty;
+use crate::entity::mob::spawn::SpawnGroupData;
 use crate::entity::mob::zombie::ZombieEntityBase;
 use crate::entity::mob::{Mob, MobEntity};
 use crate::world::World;
@@ -45,6 +46,14 @@ impl Mob for ZombieEntity {
 
     fn spawn_as_baby(&self) -> bool {
         self.entity.spawn_as_baby()
+    }
+
+    fn finalize_spawn(
+        &self,
+        world: &Arc<World>,
+        group_data: Option<SpawnGroupData>,
+    ) -> Option<SpawnGroupData> {
+        self.entity.finalize_spawn(world, group_data)
     }
 
     fn populate_default_equipment_slots(

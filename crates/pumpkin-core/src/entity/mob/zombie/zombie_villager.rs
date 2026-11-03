@@ -1,6 +1,8 @@
 use std::sync::Arc;
 use std::sync::atomic::{AtomicI32, Ordering};
 
+use crate::entity::mob::spawn::SpawnGroupData;
+use crate::world::World;
 use crossbeam::atomic::AtomicCell;
 use pumpkin_data::Block;
 use pumpkin_data::BlockState;
@@ -259,6 +261,19 @@ impl ZombieVillagerEntity {
 }
 
 impl Mob for ZombieVillagerEntity {
+    /// Vanilla `ZombieVillager.finalizeSpawn`: the biome's villager type, then the zombie's.
+    fn finalize_spawn(
+        &self,
+        world: &Arc<World>,
+        group_data: Option<SpawnGroupData>,
+    ) -> Option<SpawnGroupData> {
+        let biome = world.get_biome(&self.get_entity().block_pos.load());
+        let mut data = self.get_villager_data();
+        data.r#type = VarInt(VillagerData::type_for_biome(biome) as i32);
+        self.set_villager_data(data);
+        self.mob_entity.finalize_spawn(world, group_data)
+    }
+
     /// Vanilla `ZombieVillager.getAmbientSound`.
     fn get_ambient_sound(&self) -> Option<pumpkin_data::sound::Sound> {
         Some(pumpkin_data::sound::Sound::EntityZombieVillagerAmbient)
@@ -314,7 +329,8 @@ impl Mob for ZombieVillagerEntity {
         self.mob_entity.mob_interact(player, item_stack)
     }
 
-    fn mob_tick(&self, _caller: &dyn EntityBase) {
+    fn mob_tick(&self, caller: &dyn EntityBase) {
+        self.mob_entity.mob_tick(caller);
         if !self.get_entity().is_alive() || !self.is_converting() {
             return;
         }

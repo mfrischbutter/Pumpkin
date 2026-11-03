@@ -87,6 +87,7 @@ pub mod silverfish;
 pub mod skeleton;
 pub mod slime;
 pub mod spawn;
+pub mod special_dates;
 pub mod spellcaster_illager;
 pub mod spider;
 pub mod sun_burn;
@@ -157,6 +158,9 @@ pub struct MobEntity {
     pub death_loot_table_seed: AtomicI64,
     pub ambient_sound_time: AtomicI32,
     pending_riders: std::sync::Mutex<Vec<Arc<dyn EntityBase>>>,
+    /// The reason of the spawn being finalized (vanilla `finalizeSpawn`'s `spawnReason`), set
+    /// by `spawn::finalize_spawn` before the species runs; `None` for a loaded mob.
+    spawn_reason: AtomicCell<Option<spawn::EntitySpawnReason>>,
     mob_flags: AtomicU8,
 }
 impl MobEntity {
@@ -287,6 +291,7 @@ impl MobEntity {
             death_loot_table_seed: AtomicI64::new(0),
             ambient_sound_time: AtomicI32::new(0),
             pending_riders: std::sync::Mutex::new(Vec::new()),
+            spawn_reason: AtomicCell::new(None),
             mob_flags: AtomicU8::new(0),
         }
     }
@@ -2080,6 +2085,10 @@ pub trait Mob: EntityBase + Send + Sync {
     }
 
     fn as_iron_golem(&self) -> Option<&crate::entity::passive::iron_golem::IronGolemEntity> {
+        None
+    }
+
+    fn as_chicken(&self) -> Option<&crate::entity::passive::chicken::ChickenEntity> {
         None
     }
 

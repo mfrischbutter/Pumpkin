@@ -223,10 +223,10 @@ impl Mob for DrownedEntity {
     // TODO: the zombie nautilus jockey needs the spawn reason.
     fn finalize_spawn(
         &self,
-        _world: &Arc<World>,
+        world: &Arc<World>,
         group_data: Option<SpawnGroupData>,
     ) -> Option<SpawnGroupData> {
-        let group_data = self.finalize_spawn_super(group_data);
+        let group_data = self.entity.finalize_spawn(world, group_data);
         let mob_entity = &self.entity.mob_entity;
         let offhand_empty = mob_entity
             .living_entity

@@ -97,6 +97,14 @@ impl Mob for HuskEntity {
         self.entity.spawn_as_baby()
     }
 
+    fn finalize_spawn(
+        &self,
+        world: &Arc<World>,
+        group_data: Option<SpawnGroupData>,
+    ) -> Option<SpawnGroupData> {
+        self.entity.finalize_spawn(world, group_data)
+    }
+
     /// Vanilla `Husk.finalizeSpawn`: one natural group may come mounted.
     fn after_finalize_spawn(
         &self,

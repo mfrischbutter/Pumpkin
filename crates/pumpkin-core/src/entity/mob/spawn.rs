@@ -11,19 +11,27 @@ use crate::entity::EntityBase;
 use crate::entity::attributes::{Modifier, ModifierOperation};
 use crate::entity::mob::MobEntity;
 use crate::entity::mob::equipment::{EQUIPMENT_REGISTRY, RegionalDifficulty, equip_mob_on_spawn};
+use crate::entity::mob::special_dates;
 use crate::entity::passive::fox::FoxVariant;
 use crate::entity::passive::llama::LlamaVariant;
 use crate::entity::r#type::from_type;
 use crate::world::World;
 use crate::world::level_accessor::LevelAccessor;
+use pumpkin_data::data_component_impl::EquipmentSlot;
 use pumpkin_data::entity::EntityType;
+use pumpkin_data::item::Item;
+use pumpkin_data::item_stack::ItemStack;
 use pumpkin_util::math::boundingbox::{BoundingBox, EntityDimensions};
 use pumpkin_util::math::position::BlockPos;
 use pumpkin_util::math::vector3::Vector3;
 use pumpkin_util::math::wrap_degrees;
 use uuid::Uuid;
 
-const RANDOM_SPAWN_BONUS_ID: &str = "minecraft:random_spawn_bonus";
+pub(crate) const RANDOM_SPAWN_BONUS_ID: &str = "minecraft:random_spawn_bonus";
+/// Vanilla `Zombie.finalizeSpawn` and `AbstractSkeleton.finalizeSpawn`: the chance of a pumpkin
+/// head on Halloween, and of it being a jack o'lantern.
+const HALLOWEEN_HEAD_CHANCE: f32 = 0.25;
+const JACK_O_LANTERN_CHANCE: f32 = 0.1;
 
 /// Why a mob is being created (vanilla `EntitySpawnReason`). The placement rules relax
 /// their floor and light tests for spawner blocks and trial spawners.
@@ -78,6 +86,11 @@ pub enum SpawnGroupData {
     },
     /// Vanilla `HuskGroupData.triedToSpawnCamelHusk`: this group had its chance of a camel.
     HuskTriedCamel,
+    /// Vanilla `ZombieGroupData`: whether the group spawns as babies and may ride chickens.
+    Zombie {
+        is_baby: bool,
+        can_spawn_jockey: bool,
+    },
     /// The effect the first spider of a group rolled on hard difficulty.
     SpiderEffects(Option<&'static StatusEffect>),
     /// Vanilla `FoxGroupData`: the group's variant and how many joined so far.
@@ -103,6 +116,16 @@ pub enum SpawnGroupData {
 }
 
 impl MobEntity {
+    /// The reason of the spawn being finalized, vanilla `finalizeSpawn`'s `spawnReason`.
+    #[must_use]
+    pub fn spawn_reason(&self) -> Option<EntitySpawnReason> {
+        self.spawn_reason.load()
+    }
+
+    pub(crate) fn set_spawn_reason(&self, reason: EntitySpawnReason) {
+        self.spawn_reason.store(Some(reason));
+    }
+
     /// Vanilla `Mob.finalizeSpawn`: random follow range bonus and left-handedness.
     pub fn finalize_spawn_base(&self) {
         let mut rng = rand::rng();
@@ -136,6 +159,11 @@ impl MobEntity {
     /// when a saved mob is loaded.
     fn populate_spawn_equipment(&self) {
         let entity = &self.living_entity.entity;
+        // Vanilla `Zombie.finalizeSpawn` keeps a converted mob's loot pickup and equipment; no
+        // other mob with spawn equipment is finalized on a conversion.
+        if self.spawn_reason() == Some(EntitySpawnReason::Conversion) {
+            return;
+        }
         let Some(def) = EQUIPMENT_REGISTRY.get(entity.entity_type.resource_name) else {
             return;
         };
@@ -165,6 +193,29 @@ impl MobEntity {
     }
 }
 
+/// Vanilla `Zombie.finalizeSpawn` and `AbstractSkeleton.finalizeSpawn`: on Halloween a bare head
+/// gets a carved pumpkin, one in ten a jack o'lantern, which never drops.
+pub fn roll_halloween_head<R: rand::Rng + ?Sized>(mob: &MobEntity, rng: &mut R) {
+    let head_empty = mob
+        .living_entity
+        .entity_equipment
+        .lock()
+        .unwrap_or_else(std::sync::PoisonError::into_inner)
+        .get(&EquipmentSlot::HEAD)
+        .is_empty();
+    if !head_empty || !special_dates::is_halloween() || rng.random::<f32>() >= HALLOWEEN_HEAD_CHANCE
+    {
+        return;
+    }
+    let head = if rng.random::<f32>() < JACK_O_LANTERN_CHANCE {
+        &Item::JACK_O_LANTERN
+    } else {
+        &Item::CARVED_PUMPKIN
+    };
+    mob.set_item_slot(&EquipmentSlot::HEAD, ItemStack::new(1, head));
+    mob.set_drop_chance(&EquipmentSlot::HEAD, 0.0);
+}
+
 /// Finalizes `entity` if it is a mob, and returns the group data for the next mob of the group.
 ///
 /// `reason` is vanilla `finalizeSpawn`'s spawn reason: the shared `PatrollingMonster` step
@@ -178,6 +229,7 @@ pub fn finalize_spawn(
     let Some(mob) = entity.get_mob() else {
         return group_data;
     };
+    mob.get_mob_entity().set_spawn_reason(reason);
     let group_data = mob.finalize_spawn(world, group_data);
     let group_data = mob.after_finalize_spawn(world, reason, group_data);
     // Vanilla `PatrollingMonster.finalizeSpawn`, part of every patrolling monster's chain.

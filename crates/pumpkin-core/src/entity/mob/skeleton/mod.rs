@@ -20,7 +20,11 @@ use crate::entity::{
         wander_around::WanderAroundGoal,
     },
     ai::target_match::TargetMatch,
-    mob::{Mob, MobEntity, conversion::ConversionTracker, spawn::SpawnGroupData},
+    mob::{
+        Mob, MobEntity,
+        conversion::ConversionTracker,
+        spawn::{self, SpawnGroupData},
+    },
     player::Player,
     projectile::arrow::ArrowEntity,
 };
@@ -185,6 +189,8 @@ impl Mob for SkeletonEntityBase {
         if self.is(&EntityType::WITHER_SKELETON) {
             wither::finalize_spawn(self);
         }
+        // Vanilla `AbstractSkeleton.finalizeSpawn`, after the equipment and the loot pickup.
+        spawn::roll_halloween_head(self.get_mob_entity(), &mut rand::rng());
         group_data
     }
 
