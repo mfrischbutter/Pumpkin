@@ -40,6 +40,7 @@ pub mod random_sequences;
 pub mod stopwatches;
 pub mod time;
 pub mod villager_poi;
+pub mod wandering_trader_spawner;
 
 use crate::block::RandomTickArgs;
 use crate::world::chunker::is_within_chebyshev_distance;
@@ -200,7 +201,6 @@ pub mod scoreboard;
 pub mod structures;
 pub mod thunder;
 pub mod village_siege;
-pub mod wandering_trader_spawner;
 pub mod weather;
 
 pub use environment::EnvironmentAttributes;
@@ -223,7 +223,7 @@ const RAIN_LEVEL_THRESHOLD: f32 = 0.2;
 const THUNDER_LEVEL_THRESHOLD: f32 = 0.9;
 
 fn bedrock_chest_block_actor(state_id: BlockStateId, position: BlockPos) -> Option<NbtCompound> {
-    crate::block::entities::bedrock::build_chest_actor(position, state_id, None)
+    crate::block::entities::chest_like_block_entity::build_chest_actor(position, state_id, None)
 }
 
 fn remove_invalid_pending_block_entities(chunk: &ChunkData) -> Vec<BlockPos> {
@@ -3697,6 +3697,11 @@ impl World {
         let Some(client) = player.client.java() else {
             return;
         };
+        let last_death_location = player
+            .last_death_location
+            .lock()
+            .unwrap_or_else(std::sync::PoisonError::into_inner)
+            .clone();
         // Send the login packet for our new player
         client
             .send_packet(&CLogin::new(
@@ -3737,7 +3742,7 @@ impl World {
                         .map_or(-1, |gamemode| gamemode as i8),
                     false,
                     self.is_flat(),
-                    None,
+                    last_death_location,
                     VarInt(player.get_entity().portal_cooldown.load(Ordering::Relaxed) as i32),
                     self.sea_level.into(),
                 ),
@@ -4241,8 +4246,21 @@ impl World {
             selected_slot: 0,
             container_id: 0,
         };
+        let be_offhand_equipment = pumpkin_protocol::bedrock::client::CMobEquipment {
+            target_runtime_id: (from.entity_id() as u64).into(),
+            item: (&from.inventory.get_slot(
+                pumpkin_inventory::player::player_inventory::PlayerInventory::OFF_HAND_SLOT,
+            ))
+                .into(),
+            slot: 0,
+            selected_slot: 0,
+            container_id: 119,
+        };
+        let be_armor_equipment = from.living_entity.bedrock_armor_packet(&[]);
 
         self.send_to_tracking_players_editioned(from.get_entity(), &je_packet, &be_mob_equipment);
+        self.send_to_tracking_players_bedrock(from.get_entity(), &be_offhand_equipment);
+        self.send_to_tracking_players_bedrock(from.get_entity(), &be_armor_equipment);
     }
 
     pub fn send_world_info(&self, player: &Arc<Player>) {
@@ -4406,13 +4424,11 @@ impl World {
 
     #[allow(clippy::too_many_lines)]
     pub async fn respawn_player(self: &Arc<Self>, player: &Arc<Player>, alive: bool) {
-        let last_pos = player.get_entity().last_pos.load();
-        let death_dimension = ResourceLocation::from(player.world().dimension.minecraft_name);
-        let death_location = BlockPos(Vector3::new(
-            last_pos.x.round() as i32,
-            last_pos.y.round() as i32,
-            last_pos.z.round() as i32,
-        ));
+        let last_death_location = player
+            .last_death_location
+            .lock()
+            .unwrap_or_else(std::sync::PoisonError::into_inner)
+            .clone();
 
         let data_kept = u8::from(alive);
 
@@ -4622,7 +4638,7 @@ impl World {
                     player.gamemode.load() as i8,
                     false,
                     target_world.is_flat(),
-                    Some((death_dimension, death_location)),
+                    last_death_location,
                     VarInt(player.get_entity().portal_cooldown.load(Ordering::Relaxed) as i32),
                     target_world.sea_level.into(),
                 ),

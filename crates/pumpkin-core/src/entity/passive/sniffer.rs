@@ -382,6 +382,11 @@ impl Animal for SnifferEntity {
 }
 
 impl Mob for SnifferEntity {
+    /// Vanilla `supportQuadLeash`.
+    fn mob_support_quad_leash(&self) -> bool {
+        true
+    }
+
     fn make_brain(&self, packed: &PackedMemories) -> Brain {
         BrainProvider {
             memory_types: &MEMORIES,

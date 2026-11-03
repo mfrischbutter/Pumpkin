@@ -307,6 +307,10 @@ impl ThrownItemEntity {
             return true;
         }
 
+        if other.is_spectator() {
+            return true;
+        }
+
         if !self.owner.can_hit(world, other_ent) {
             return true;
         }
