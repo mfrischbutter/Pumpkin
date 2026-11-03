@@ -13,8 +13,8 @@ use crate::block::{
 };
 use crate::entity::decoration::armor_stand::ArmorStandEntity;
 use crate::entity::item::ItemEntity;
-use crate::entity::passive::copper_golem::CopperGolemEntity;
 use crate::entity::mob::sulfur_cube::{SulfurCubeEntity, is_swallowable_item};
+use crate::entity::passive::copper_golem::CopperGolemEntity;
 use crate::entity::passive::sheep::SheepEntity;
 use crate::entity::projectile::projectile_item::{
     DispenseConfig, DispensePosition, dispense_config, shoot_projectile_item, triangle,

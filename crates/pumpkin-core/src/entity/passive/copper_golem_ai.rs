@@ -101,8 +101,7 @@ fn on_travelling(mob: &dyn Mob) {
 /// Vanilla `CopperGolemAi.shouldQueueForTarget`, with the opener count standing in for
 /// `getEntitiesWithContainerOpen`: both count the players and golems at the chest.
 fn should_queue_for_target(target: &TransportItemTarget) -> bool {
-    chest_container::chest_opener_count(target.block_entity.as_ref())
-        .is_some_and(|count| count > 0)
+    chest_container::chest_opener_count(target.block_entity.as_ref()).is_some_and(|count| count > 0)
 }
 
 fn transport_items() -> TransportItemsBetweenContainers {
@@ -121,7 +120,9 @@ fn transport_items() -> TransportItemsBetweenContainers {
 /// Vanilla `CopperGolemAi.initCoreActivity`.
 fn core_activity() -> ActivityData {
     let behaviors: Vec<Box<dyn BehaviorControl>> = vec![
-        Box::new(Timed::new(AnimalPanic::new(SPEED_MULTIPLIER_WHEN_PANICKING))),
+        Box::new(Timed::new(AnimalPanic::new(
+            SPEED_MULTIPLIER_WHEN_PANICKING,
+        ))),
         Box::new(Timed::new(LookAtTargetSink::new(45, 90))),
         Box::new(Timed::new(MoveToTargetSink::default())),
         Box::new(interact_with_door::create()),

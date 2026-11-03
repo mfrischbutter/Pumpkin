@@ -47,7 +47,10 @@ const BLOCKS_PER_CHUNK: i32 = 16;
 const NEVER_TIMES_OUT: i32 = i32::MAX - 1;
 
 const ENTRY_CONDITIONS: [(MemoryModuleId, MemoryStatus); 4] = [
-    (types::VISITED_BLOCK_POSITIONS.id(), MemoryStatus::Registered),
+    (
+        types::VISITED_BLOCK_POSITIONS.id(),
+        MemoryStatus::Registered,
+    ),
     (
         types::UNREACHABLE_TRANSPORT_BLOCK_POSITIONS.id(),
         MemoryStatus::Registered,

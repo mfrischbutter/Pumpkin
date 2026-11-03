@@ -167,7 +167,7 @@ impl BlockBehaviour for DropperBlock {
                 if let Some(container) = args
                     .world
                     .get_block_entity(&target_pos)
-                    .and_then(|entity| entity.get_inventory())
+                    .and_then(crate::block::entities::BlockEntity::get_inventory)
                     .or_else(|| entity_container_at(args.world, target_pos.to_centered_f64()))
                 {
                     let backup = item.clone();

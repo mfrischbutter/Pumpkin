@@ -149,7 +149,11 @@ impl MinecartEntity {
 
         let position = entity.pos.load();
         let vehicle_top = entity.bounding_box.load().max.y;
-        let target = BlockPos::floored(f64::from(vehicle_pos.x), vehicle_top, f64::from(vehicle_pos.z));
+        let target = BlockPos::floored(
+            f64::from(vehicle_pos.x),
+            vehicle_top,
+            f64::from(vehicle_pos.z),
+        );
         for &pose in dismount_poses(passenger) {
             let height = f64::from(passenger_entity.get_dimensions(pose).height);
             let block_coverage = (vehicle_top - f64::from(target.0.y) + height).ceil() as i32;

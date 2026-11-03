@@ -190,9 +190,9 @@ impl MinecartEntity {
             MinecartKind::Furnace(_) => &Item::FURNACE_MINECART,
             MinecartKind::Hopper(_) => &Item::HOPPER_MINECART,
             MinecartKind::Tnt(_) => &Item::TNT_MINECART,
-            MinecartKind::Rideable(_) | MinecartKind::Spawner(_) | MinecartKind::CommandBlock(_) => {
-                &Item::MINECART
-            }
+            MinecartKind::Rideable(_)
+            | MinecartKind::Spawner(_)
+            | MinecartKind::CommandBlock(_) => &Item::MINECART,
         }
     }
 
@@ -230,9 +230,11 @@ impl MinecartEntity {
             MinecartKind::Furnace(minecart) => {
                 self.base_natural_slowdown(minecart.apply_push(entity, delta))
             }
-            MinecartKind::Chest(_) | MinecartKind::Hopper(_) => self
-                .container()
-                .map_or(delta, |inventory| container::natural_slowdown(entity, inventory, delta)),
+            MinecartKind::Chest(_) | MinecartKind::Hopper(_) => {
+                self.container().map_or(delta, |inventory| {
+                    container::natural_slowdown(entity, inventory, delta)
+                })
+            }
             _ => self.base_natural_slowdown(delta),
         }
     }

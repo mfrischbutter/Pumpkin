@@ -1,9 +1,9 @@
 use std::sync::Arc;
 
 use crate::block::registry::BlockActionResult;
-use crate::entity::{Entity, EntityBase};
 use crate::entity::player::Player;
 use crate::entity::vehicle::minecart::MinecartEntity;
+use crate::entity::{Entity, EntityBase};
 use crate::item::{ItemBehaviour, ItemMetadata};
 use crate::server::Server;
 use pumpkin_data::BlockDirection;

@@ -390,7 +390,7 @@ impl EntityBase for BoatEntity {
         let sneaking = player.get_entity().is_sneaking();
         if !sneaking
             && self.out_of_control_ticks.load() < TIME_TO_EJECT
-            && self.start_riding(player.clone() as Arc<dyn EntityBase>)
+            && self.start_riding(&(player.clone() as Arc<dyn EntityBase>))
         {
             return true;
         }

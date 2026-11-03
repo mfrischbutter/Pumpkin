@@ -1,5 +1,6 @@
 use std::any::Any;
 use std::sync::Arc;
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Mutex, RwLock};
 
 use pumpkin_data::item_stack::ItemStack;
@@ -20,6 +21,8 @@ pub(in crate::entity::vehicle) struct MinecartInventory {
     items: RwLock<Vec<ItemStack>>,
     size: usize,
     loot_table: Mutex<Option<(String, i64)>>,
+    /// The contents drop once, however often a removal reaches them.
+    drops_claimed: AtomicBool,
 }
 
 impl MinecartInventory {
@@ -28,6 +31,7 @@ impl MinecartInventory {
             items: RwLock::new(vec![ItemStack::EMPTY.clone(); size]),
             size,
             loot_table: Mutex::new(None),
+            drops_claimed: AtomicBool::new(false),
         }
     }
 
@@ -283,7 +287,7 @@ pub(in crate::entity::vehicle) fn open(
 
 /// Vanilla `AbstractContainerMenu.getRedstoneSignalFromContainer`.
 #[must_use]
-pub(crate) fn redstone_signal_from_container(container: &dyn Inventory) -> u8 {
+pub fn redstone_signal_from_container(container: &dyn Inventory) -> u8 {
     let mut total_percent = 0.0f32;
     for slot in 0..container.size() {
         let stack = container.get_stack(slot);

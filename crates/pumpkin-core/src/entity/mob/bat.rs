@@ -2,12 +2,12 @@ use std::sync::Arc;
 use std::sync::Mutex;
 use std::sync::atomic::{AtomicBool, Ordering::Relaxed};
 
-use pumpkin_data::damage::DamageType;
 use pumpkin_data::BlockState;
+use pumpkin_data::damage::DamageType;
 use pumpkin_data::sound::Sound;
-use pumpkin_data::world::WorldEvent;
 use pumpkin_data::tag::{self, Taggable};
 use pumpkin_data::tracked_data;
+use pumpkin_data::world::WorldEvent;
 use pumpkin_nbt::compound::NbtCompound;
 use pumpkin_util::math::position::BlockPos;
 use pumpkin_util::math::vector3::Vector3;
@@ -132,8 +132,9 @@ impl BatEntity {
             .hanging_position
             .lock()
             .unwrap_or_else(std::sync::PoisonError::into_inner);
-        if target.is_some_and(|hp| !world.get_block_state(&hp).is_air() || hp.0.y <= world.dimension.min_y)
-        {
+        if target.is_some_and(|hp| {
+            !world.get_block_state(&hp).is_air() || hp.0.y <= world.dimension.min_y
+        }) {
             *target = None;
         }
         let mut rng = rand::rng();
@@ -158,9 +159,21 @@ impl BatEntity {
         let velocity = entity.velocity.load();
         let step = |wanted: f64, current: f64| (wanted - current) * 0.1;
         let new_velocity = Vector3::new(
-            velocity.x + step((f64::from(target.0.x) + 0.5 - pos.x).signum() * 0.5, velocity.x),
-            velocity.y + step((f64::from(target.0.y) + 0.1 - pos.y).signum() * 0.7, velocity.y),
-            velocity.z + step((f64::from(target.0.z) + 0.5 - pos.z).signum() * 0.5, velocity.z),
+            velocity.x
+                + step(
+                    (f64::from(target.0.x) + 0.5 - pos.x).signum() * 0.5,
+                    velocity.x,
+                ),
+            velocity.y
+                + step(
+                    (f64::from(target.0.y) + 0.1 - pos.y).signum() * 0.7,
+                    velocity.y,
+                ),
+            velocity.z
+                + step(
+                    (f64::from(target.0.z) + 0.5 - pos.z).signum() * 0.5,
+                    velocity.z,
+                ),
         );
         entity.velocity.store(new_velocity);
         let yaw = (new_velocity.z.atan2(new_velocity.x) as f32).to_degrees() - 90.0;
@@ -246,7 +259,8 @@ impl Mob for BatEntity {
 
     /// Vanilla `Bat.getAmbientSound`.
     fn get_ambient_sound(&self) -> Option<Sound> {
-        (!self.is_roosting() || rand::rng().random_range(0..4) == 0).then_some(Sound::EntityBatAmbient)
+        (!self.is_roosting() || rand::rng().random_range(0..4) == 0)
+            .then_some(Sound::EntityBatAmbient)
     }
 
     /// Vanilla `getSoundVolume` and `getVoicePitch` of the bat.

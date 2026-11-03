@@ -80,7 +80,9 @@ impl MinecartEntity {
         let server = world.server.upgrade();
         let mut damage_event = VehicleDamageEvent::new(entity.entity_id, amount, attacker_id);
         if let Some(server) = &server {
-            server.plugin_manager.fire_blocking(server, &mut damage_event);
+            server
+                .plugin_manager
+                .fire_blocking(server, &mut damage_event);
         }
         if damage_event.cancelled {
             return false;
@@ -163,7 +165,14 @@ impl MinecartEntity {
     fn destroy_with_drop(&self) {
         let entity = &self.vehicle.entity;
         self.kill_minecart();
-        if !entity.world.load().level_info.load().game_rules.entity_drops {
+        if !entity
+            .world
+            .load()
+            .level_info
+            .load()
+            .game_rules
+            .entity_drops
+        {
             return;
         }
         let mut stack = ItemStack::new(1, self.drop_item());

@@ -4,7 +4,6 @@ use std::sync::{
 };
 
 use crossbeam::atomic::AtomicCell;
-use pumpkin_data::{Block, BlockState};
 use pumpkin_data::block_properties::{CopperGolemPose, CopperGolemStatueLikeProperties};
 use pumpkin_data::damage::DamageType;
 use pumpkin_data::data_component_impl::EquipmentSlot;
@@ -14,6 +13,7 @@ use pumpkin_data::item_stack::ItemStack;
 use pumpkin_data::sound::{Sound, SoundCategory};
 use pumpkin_data::tag::{self, Taggable};
 use pumpkin_data::world::WorldEvent;
+use pumpkin_data::{Block, BlockState};
 use pumpkin_inventory::Inventory;
 use pumpkin_nbt::compound::NbtCompound;
 use pumpkin_protocol::codec::var_int::VarInt;
@@ -247,8 +247,10 @@ impl CopperGolemEntity {
         let world = self.get_entity().world.load_full();
         let game_time = world.get_world_age();
         if next_weathering_tick == UNSET_WEATHERING_TICK {
-            self.next_weathering_tick
-                .store(game_time + self.random_weathering_delay(), Ordering::Relaxed);
+            self.next_weathering_tick.store(
+                game_time + self.random_weathering_delay(),
+                Ordering::Relaxed,
+            );
             return;
         }
         let weather_state = self.get_weather_state();

@@ -8,8 +8,8 @@ use pumpkin_data::fluid::Fluid;
 use pumpkin_data::game_event::GameEvent;
 use pumpkin_data::tag::{self, Taggable};
 use pumpkin_util::math::boundingbox::BoundingBox;
-use pumpkin_util::math::position::BlockPos;
 use pumpkin_util::math::clamp_angle;
+use pumpkin_util::math::position::BlockPos;
 use pumpkin_util::math::vector3::Vector3;
 
 use super::{BoatEntity, is_raft_variant, leash};
@@ -103,7 +103,7 @@ impl BoatEntity {
     }
 
     /// Vanilla `Entity.startRiding` with a boat to ride, and the leash `Mob.startRiding` drops.
-    pub(super) fn start_riding(&self, passenger: Arc<dyn EntityBase>) -> bool {
+    pub(super) fn start_riding(&self, passenger: &Arc<dyn EntityBase>) -> bool {
         let entity = &self.vehicle.entity;
         let rider = passenger.get_entity();
         let current = rider.get_vehicle();
@@ -187,7 +187,7 @@ impl BoatEntity {
                     .entity_type
                     .has_tag(&tag::EntityType::MINECRAFT_CANNOT_BE_PUSHED_ONTO_BOATS)
             {
-                self.start_riding(other);
+                self.start_riding(&other);
             } else {
                 self.push(other.as_ref());
             }

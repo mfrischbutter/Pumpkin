@@ -142,10 +142,7 @@ impl SulfurCubeEntity {
         }
         let (modifier, hit_sound) = {
             let effects = self.effects();
-            (
-                effects.knockback_modifier,
-                effects.sound_settings.hit_sound,
-            )
+            (effects.knockback_modifier, effects.sound_settings.hit_sound)
         };
         let original_power = Vec2 {
             x: modifier.horizontal_power,
@@ -222,6 +219,7 @@ impl SulfurCubeEntity {
                 .entity_type
                 .has_tag(&tag::EntityType::MINECRAFT_IMPACT_PROJECTILES)
         });
+        #[allow(clippy::option_if_let_else)]
         let (xd, zd) = if let Some(projectile) = projectile {
             // Vanilla `Projectile.calculateHorizontalHurtKnockbackDirection`.
             let velocity = projectile.get_entity().velocity.load();
@@ -233,7 +231,7 @@ impl SulfurCubeEntity {
         } else {
             (0.0, 0.0)
         };
-        let attacker = cause.map(|attacker| attacker.get_entity());
+        let attacker = cause.map(crate::entity::EntityBase::get_entity);
         if !self.body_knockback(DEFAULT_KNOCKBACK_POWER, xd, zd, attacker, damage, false) {
             let resistance = living.get_attribute_value(&Attributes::KNOCKBACK_RESISTANCE);
             living.entity.apply_knockback(

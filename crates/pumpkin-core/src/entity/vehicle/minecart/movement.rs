@@ -196,9 +196,12 @@ impl MinecartEntity {
         entity.emit_movement(caller, movement, &effect_pos, effect_state);
 
         let speed_factor = f64::from(caller.get_block_speed_factor());
-        entity
-            .velocity
-            .store(entity.velocity.load().multiply(speed_factor, 1.0, speed_factor));
+        entity.velocity.store(
+            entity
+                .velocity
+                .load()
+                .multiply(speed_factor, 1.0, speed_factor),
+        );
     }
 
     /// Vanilla `Entity.checkFallDamage`.

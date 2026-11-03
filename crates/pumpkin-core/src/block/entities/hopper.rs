@@ -262,7 +262,7 @@ impl HopperBlockEntity {
         let source_block_entity = world.get_block_entity(pos_up);
         if let Some(container) = source_block_entity
             .clone()
-            .and_then(|entity| entity.get_inventory())
+            .and_then(super::BlockEntity::get_inventory)
             .or_else(|| entity_container_at(world, pos_up.to_centered_f64()))
         {
             // TODO check WorldlyContainer
@@ -279,7 +279,7 @@ impl HopperBlockEntity {
                         if i == furnace_output_slot
                             && let Some(experience_container) = source_block_entity
                                 .clone()
-                                .and_then(|entity| entity.to_experience_container())
+                                .and_then(super::BlockEntity::to_experience_container)
                         {
                             let xp = experience_container.extract_experience();
                             if xp > 0 {
@@ -410,7 +410,7 @@ impl HopperBlockEntity {
         let target = self.position.offset(to_offset(&self.facing));
         if let Some(container) = world
             .get_block_entity(&target)
-            .and_then(|entity| entity.get_inventory())
+            .and_then(super::BlockEntity::get_inventory)
             .or_else(|| entity_container_at(world, target.to_centered_f64()))
         {
             // TODO check WorldlyContainer

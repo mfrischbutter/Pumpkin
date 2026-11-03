@@ -83,11 +83,11 @@ fn is_allowed_item(item: &ItemEntity) -> bool {
 
 fn nearest_allowed_item(entity: &Entity) -> Option<Arc<dyn EntityBase>> {
     let pos = entity.pos.load();
-    let area = entity.bounding_box.load().expand(
-        ITEM_SEARCH_RANGE,
-        ITEM_SEARCH_RANGE,
-        ITEM_SEARCH_RANGE,
-    );
+    let area =
+        entity
+            .bounding_box
+            .load()
+            .expand(ITEM_SEARCH_RANGE, ITEM_SEARCH_RANGE, ITEM_SEARCH_RANGE);
     entity
         .world
         .load()

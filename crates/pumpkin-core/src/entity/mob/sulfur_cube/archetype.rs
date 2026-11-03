@@ -64,7 +64,10 @@ pub struct ExplosionData {
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub enum ContactAmount {
     Constant(f32),
-    Uniform { min_inclusive: f32, max_exclusive: f32 },
+    Uniform {
+        min_inclusive: f32,
+        max_exclusive: f32,
+    },
 }
 
 impl ContactAmount {
@@ -231,7 +234,12 @@ fn numeric_float(compound: &NbtCompound, name: &str) -> Option<f32> {
 /// `RegistryCodecs.holderSet`: a tag, an id or a list of ids.
 fn parse_holder_set(tag: &NbtTag) -> Vec<String> {
     tag.extract_list().map_or_else(
-        || tag.extract_string().map(str::to_string).into_iter().collect(),
+        || {
+            tag.extract_string()
+                .map(str::to_string)
+                .into_iter()
+                .collect()
+        },
         |list| {
             list.iter()
                 .filter_map(NbtTag::extract_string)

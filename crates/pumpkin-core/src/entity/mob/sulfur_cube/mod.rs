@@ -5,7 +5,9 @@ use std::sync::{Arc, Mutex, PoisonError};
 
 use pumpkin_data::BlockState;
 use pumpkin_data::damage::DamageType;
-use pumpkin_data::data_component_impl::{BucketEntityDataImpl, EquipmentSlot, SulfurCubeContentImpl};
+use pumpkin_data::data_component_impl::{
+    BucketEntityDataImpl, EquipmentSlot, SulfurCubeContentImpl,
+};
 use pumpkin_data::item::Item;
 use pumpkin_data::item_stack::ItemStack;
 use pumpkin_data::sound::{Sound, SoundCategory};
@@ -286,7 +288,10 @@ impl Mob for SulfurCubeEntity {
         if entity.age.load(Relaxed) < 0 {
             entity.set_synced_data(tracked_data::ageable_mob::DATA_BABY_ID, true);
         }
-        entity.set_synced_data(tracked_data::sulfur_cube::FROM_BUCKET, self.is_from_bucket());
+        entity.set_synced_data(
+            tracked_data::sulfur_cube::FROM_BUCKET,
+            self.is_from_bucket(),
+        );
         entity.set_synced_data(tracked_data::sulfur_cube::MAX_FUSE, self.get_fuse());
     }
 

@@ -506,7 +506,7 @@ impl Behavior for RamTarget {
         } else if Self::hit_horn_breaking_block(tick) {
             Self::play_impact(tick);
             if as_goat(tick.mob).is_some_and(GoatEntity::drop_horn) {
-                play_sound(tick, Sound::ItemGoatHornBreak);
+                play_sound(tick, Sound::EntityGoatHornBreak);
             }
             Self::finish(tick);
         } else {
@@ -515,7 +515,7 @@ impl Behavior for RamTarget {
                 tick.state.get(types::RAM_TARGET),
             ) {
                 (Some(walk), Some(ram)) => {
-                    (walk.target().position() - *ram).length_squared() < 0.25 * 0.25
+                    (walk.target().current_position() - *ram).length_squared() < 0.25 * 0.25
                 }
                 _ => true,
             };
@@ -565,7 +565,7 @@ fn idle_activity() -> ActivityData {
                         Box::new(set_walk_target_from_look_target::create(1.0, 3)),
                         2,
                     ),
-                    (Box::new(Timed::new(DoNothing::new(30, 60))), 1),
+                    (Box::new(DoNothing::new(30, 60)), 1),
                 ])),
             ),
         ],

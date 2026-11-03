@@ -186,17 +186,16 @@ impl SulfurCubeEntity {
 
         let knockback =
             (1.0 - living.get_attribute_value(&Attributes::KNOCKBACK_RESISTANCE)).max(0.0);
-        let direction = Vector3::new(cube_to_pusher.x, 0.0, cube_to_pusher.z).normalize()
-            * knockback;
+        let direction =
+            Vector3::new(cube_to_pusher.x, 0.0, cube_to_pusher.z).normalize() * knockback;
         let scale = if root_vehicle.is_some() {
             VEHICLE_PUSH_SPEED_SCALE_MULTIPLIER
         } else {
             PLAYER_PUSH_SPEED_SCALE_MULTIPLIER
         };
-        let player_speed = (player_entity.movement.load().length()
-            * PLAYER_SPEED_FACTOR
-            * f64::from(scale))
-        .clamp(0.0, MAX_PLAYER_PUSH_SPEED);
+        let player_speed =
+            (player_entity.movement.load().length() * PLAYER_SPEED_FACTOR * f64::from(scale))
+                .clamp(0.0, MAX_PLAYER_PUSH_SPEED);
         let vertical = if entity.on_ground.load(Relaxed) {
             knockback * f64::from(VERTICAL_PUSH_MULTIPLIER)
         } else {

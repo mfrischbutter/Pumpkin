@@ -33,7 +33,7 @@ fn bottom_center(pos: BlockPos) -> Vector3<f64> {
     )
 }
 
-/// Vanilla `isDecending`.
+/// Vanilla's check whether the track runs downhill.
 const fn is_descending(movement: &Vector3<f64>, shape: RailShape) -> bool {
     match shape {
         RailShape::AscendingEast => movement.x < 0.0,
@@ -152,16 +152,16 @@ impl MinecartEntity {
             center + exit0 + travel
         } else {
             Vector3::new(
-                if exit0.z != exit1.z {
-                    center.x
-                } else {
+                if exit0.z == exit1.z {
                     previous.x
+                } else {
+                    center.x
                 },
                 f64::from(target.0.y),
-                if exit0.x != exit1.x {
-                    center.z
-                } else {
+                if exit0.x == exit1.x {
                     previous.z
+                } else {
+                    center.z
                 },
             )
         };
@@ -321,8 +321,8 @@ impl MinecartEntity {
                 new_delta = player_input;
             }
         }
-        let powered =
-            block == &Block::POWERED_RAIL && PoweredRailLikeProperties::from_state_id(state_id).powered;
+        let powered = block == &Block::POWERED_RAIL
+            && PoweredRailLikeProperties::from_state_id(state_id).powered;
         if !iteration.has_halted && block == &Block::POWERED_RAIL && !powered {
             let halted = if new_delta.length() < 0.03 {
                 Vector3::default()
@@ -396,7 +396,12 @@ impl MinecartEntity {
 
     /// Vanilla `AbstractMinecart.getRedstoneDirection`, for a powered rail.
     fn redstone_direction(&self, pos: BlockPos) -> Vector3<f64> {
-        let (block, state_id) = self.vehicle.entity.world.load().get_block_and_state_id(&pos);
+        let (block, state_id) = self
+            .vehicle
+            .entity
+            .world
+            .load()
+            .get_block_and_state_id(&pos);
         match rail_shape(block, state_id) {
             RailShape::EastWest => {
                 if self.is_redstone_conductor(&pos.west()) {
@@ -465,7 +470,7 @@ impl MinecartEntity {
             + Vector3::new(0.0, ON_RAIL_Y_OFFSET, 0.0)
             + out_direction.normalize() * f64::from(SMALL);
         if in_hill && !is_descending(&movement, shape) {
-            out_position = out_position + Vector3::new(0.0, 1.0, 0.0);
+            out_position += Vector3::new(0.0, 1.0, 0.0);
         }
         let towards_out = (out_position - old_position).normalize();
         movement = towards_out * (movement.length() / towards_out.horizontal_length());

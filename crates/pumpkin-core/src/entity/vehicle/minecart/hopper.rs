@@ -69,7 +69,7 @@ impl HopperMinecart {
         let source_pos = BlockPos::floored_v(source_center);
         let source = world
             .get_block_entity(&source_pos)
-            .and_then(|block_entity| block_entity.get_inventory())
+            .and_then(crate::block::entities::BlockEntity::get_inventory)
             .or_else(|| entity_container_at(&world, source_center));
         if let Some(source) = source {
             return self.take_one_from(source.as_ref());
@@ -133,7 +133,9 @@ impl HopperMinecart {
                     std::mem::replace(&mut stack, ItemStack::EMPTY.clone()),
                 );
             } else if current.are_items_and_components_equal(&stack) {
-                let space = stack.get_max_stack_size().saturating_sub(current.item_count);
+                let space = stack
+                    .get_max_stack_size()
+                    .saturating_sub(current.item_count);
                 let count = stack.item_count.min(space);
                 if count > 0 {
                     stack.item_count -= count;

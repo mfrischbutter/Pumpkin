@@ -5387,6 +5387,7 @@ impl Entity {
             let vehicle_spot = world
                 .get_entity_by_id(self.entity_id)
                 .and_then(|vehicle| vehicle.dismount_location_for_passenger(passenger.as_ref()));
+            #[allow(clippy::option_if_let_else)]
             let dismount_pos = if let Some(spot) = vehicle_spot {
                 spot
             } else if is_water {

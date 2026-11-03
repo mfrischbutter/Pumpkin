@@ -88,11 +88,12 @@ impl BoatEntity {
     fn shear_off_all_leash_connections(&self, player: &Arc<Player>) -> bool {
         let entity = &self.vehicle.entity;
         let attached = self.leashed_nearby(entity.entity_id);
-        let mut dropped = !attached.is_empty();
-        if entity.is_leashed() {
+        let dropped = if entity.is_leashed() {
             drop_leash(entity);
-            dropped = true;
-        }
+            true
+        } else {
+            !attached.is_empty()
+        };
         for other in attached {
             drop_leash(other.get_entity());
         }

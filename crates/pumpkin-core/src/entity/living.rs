@@ -4045,8 +4045,11 @@ impl LivingEntity {
                 });
                 if !moved_itself {
                     let resistance = self.get_attribute_value(&Attributes::KNOCKBACK_RESISTANCE);
-                    self.entity
-                        .apply_knockback(knockback_after_resistance(0.4, resistance), dx, dz);
+                    self.entity.apply_knockback(
+                        knockback_after_resistance(0.4, resistance),
+                        dx,
+                        dz,
+                    );
                 }
             }
         }
@@ -4906,9 +4909,10 @@ pub(crate) fn prevents_armor_change(stack: &ItemStack) -> bool {
     stack
         .get_data_component::<EnchantmentsImpl>()
         .is_some_and(|enchantments| {
-            enchantments.enchantment.iter().any(|(enchantment, level)| {
-                *level > 0 && enchantment.effects.prevent_armor_change
-            })
+            enchantments
+                .enchantment
+                .iter()
+                .any(|(enchantment, level)| *level > 0 && enchantment.effects.prevent_armor_change)
         })
 }
 

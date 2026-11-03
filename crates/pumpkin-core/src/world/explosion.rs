@@ -46,7 +46,7 @@ pub enum BlockInteraction {
     TriggerBlock,
 }
 
-fn default_block_explosion_resistance(
+const fn default_block_explosion_resistance(
     block: &Block,
     fluid: &pumpkin_data::fluid::FluidState,
 ) -> Option<f32> {

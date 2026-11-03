@@ -561,7 +561,8 @@ impl Goal for CubeMobKeepOnJumpingGoal {
 
     fn tick(&mut self, mob: &dyn Mob) {
         if let Some(cube) = mob.as_cube_mob() {
-            cube.cube_state().set_wanted_movement(JUMPING_SPEED_MODIFIER);
+            cube.cube_state()
+                .set_wanted_movement(JUMPING_SPEED_MODIFIER);
         }
     }
 

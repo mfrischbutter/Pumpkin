@@ -237,7 +237,12 @@ fn can_see_any_target_side(
             0.5 * f64::from(step.y),
             0.5 * f64::from(step.z),
         );
-        let hit = world.clip(&ClipContext::new(from, side, ClipBlock::Collider, ClipFluid::None));
+        let hit = world.clip(&ClipContext::new(
+            from,
+            side,
+            ClipBlock::Collider,
+            ClipFluid::None,
+        ));
         !hit.is_miss && hit.block_pos == target.pos
     })
 }

@@ -32,11 +32,11 @@ pub(super) enum BoatStatus {
     InAir,
 }
 
-fn floor(value: f64) -> i32 {
+const fn floor(value: f64) -> i32 {
     value.floor() as i32
 }
 
-fn ceil(value: f64) -> i32 {
+const fn ceil(value: f64) -> i32 {
     value.ceil() as i32
 }
 

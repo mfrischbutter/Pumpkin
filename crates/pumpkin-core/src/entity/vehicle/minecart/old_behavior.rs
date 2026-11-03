@@ -90,11 +90,13 @@ impl MinecartEntity {
         let halt_track = self.old_follow_rail_direction(shape, halt_track);
         if halt_track {
             let velocity = entity.velocity.load();
-            entity.velocity.store(if velocity.horizontal_length() < 0.03 {
-                Vector3::default()
-            } else {
-                velocity.multiply(0.5, 0.0, 0.5)
-            });
+            entity
+                .velocity
+                .store(if velocity.horizontal_length() < 0.03 {
+                    Vector3::default()
+                } else {
+                    velocity.multiply(0.5, 0.0, 0.5)
+                });
         }
 
         // Snap onto the rail's line, then move along it.
@@ -222,7 +224,9 @@ impl MinecartEntity {
         let other_pow = velocity.horizontal_length();
         if other_pow > 0.0 {
             let factor = (other_pow + speed) / other_pow;
-            entity.velocity.store(velocity.multiply(factor, 1.0, factor));
+            entity
+                .velocity
+                .store(velocity.multiply(factor, 1.0, factor));
         }
         entity.set_pos(Vector3::new(now.x, new_pos.y, now.z));
     }
