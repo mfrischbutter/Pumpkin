@@ -62,8 +62,25 @@ pub fn stop_attacking_if_target_invalid(on_erased: fn(&dyn Mob, &Arc<dyn EntityB
 /// `stop` says so.
 #[must_use]
 pub fn stop_attacking_if(
+    stop: impl FnMut(&BrainTick<'_>, &dyn EntityBase) -> bool + Send + Sync + 'static,
+    on_erased: fn(&dyn Mob, &Arc<dyn EntityBase>),
+) -> OneShot {
+    stop_attacking(stop, on_erased, true)
+}
+
+/// The same with `canGrowTiredOfTryingToReachTarget` false: a target out of reach stays one.
+#[must_use]
+pub fn stop_attacking_if_never_tired(
+    stop: impl FnMut(&BrainTick<'_>, &dyn EntityBase) -> bool + Send + Sync + 'static,
+    on_erased: fn(&dyn Mob, &Arc<dyn EntityBase>),
+) -> OneShot {
+    stop_attacking(stop, on_erased, false)
+}
+
+fn stop_attacking(
     mut stop: impl FnMut(&BrainTick<'_>, &dyn EntityBase) -> bool + Send + Sync + 'static,
     on_erased: fn(&dyn Mob, &Arc<dyn EntityBase>),
+    can_grow_tired: bool,
 ) -> OneShot {
     OneShot::new(
         "StopAttackingIfTargetInvalid",
@@ -78,10 +95,11 @@ pub fn stop_attacking_if(
             let Some(target) = tick.state.get(types::ATTACK_TARGET).cloned() else {
                 return false;
             };
-            let tired = tick
-                .state
-                .get(types::CANT_REACH_WALK_TARGET_SINCE)
-                .is_some_and(|since| tick.time - since > TIMEOUT_TO_GET_WITHIN_ATTACK_RANGE);
+            let tired = can_grow_tired
+                && tick
+                    .state
+                    .get(types::CANT_REACH_WALK_TARGET_SINCE)
+                    .is_some_and(|since| tick.time - since > TIMEOUT_TO_GET_WITHIN_ATTACK_RANGE);
             let entity = target.get_entity();
             let valid = !stop(tick, target.as_ref())
                 && tick.mob.can_attack(target.as_ref())
