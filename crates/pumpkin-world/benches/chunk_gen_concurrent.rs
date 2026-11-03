@@ -54,6 +54,10 @@ impl WorldPortalExt for BlockRegistry {
         _chunk_z: i32,
     ) {
     }
+
+    fn feature_seed(&self) -> u64 {
+        0
+    }
 }
 
 /// Benchmarks the full pipeline for a `GRID_SIZE^2` chunks grid running in parallel

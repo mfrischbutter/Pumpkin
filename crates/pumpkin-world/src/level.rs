@@ -187,6 +187,13 @@ impl Level {
             .seed_for(part::MOB_SPAWNS, self.seed.0)
     }
 
+    /// The seed features read in place of the world seed (geode noise, end spikes): the world
+    /// seed, or the features seed the generation secret derives.
+    #[must_use]
+    pub fn feature_seed(&self) -> u64 {
+        self.generation_secret.seed_for(part::FEATURES, self.seed.0)
+    }
+
     #[must_use]
     #[expect(clippy::too_many_lines)]
     pub fn from_root_folder(

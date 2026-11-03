@@ -82,6 +82,10 @@ pub trait WorldPortalExt: Send + Sync {
     );
 
     fn spawn_structure_entities(&self, _entities: Vec<StructureEntity>) {}
+
+    /// The seed features read where vanilla reads the level's seed (the geode noise and the
+    /// end spikes): the world seed, or the features seed a generation secret derives from it.
+    fn feature_seed(&self) -> u64;
 }
 
 pub trait BlockAccessor: Send + Sync {

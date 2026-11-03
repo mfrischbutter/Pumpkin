@@ -50,6 +50,10 @@ impl WorldPortalExt for BlockRegistry {
         _chunk_z: i32,
     ) {
     }
+
+    fn feature_seed(&self) -> u64 {
+        0
+    }
 }
 
 fn bench_chunk_deserialization(c: &mut Criterion) {

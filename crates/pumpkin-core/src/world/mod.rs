@@ -8353,6 +8353,10 @@ impl WorldPortalExt for WorldPortal {
         natural_spawner::spawn_mobs_for_chunk_generation(&self.0, cache, biome, chunk_x, chunk_z);
     }
 
+    fn feature_seed(&self) -> u64 {
+        self.0.level.feature_seed()
+    }
+
     fn spawn_structure_entities(&self, entities: Vec<StructureEntity>) {
         for StructureEntity { mut nbt, finalize } in entities {
             nbt.child_tags.remove("UUID");

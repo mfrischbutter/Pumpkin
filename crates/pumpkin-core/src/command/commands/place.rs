@@ -76,7 +76,9 @@ const fn chunk_population_seed(cx: i32, cz: i32, world_seed: u64) -> u64 {
 }
 
 /// Minimal `WorldPortalExt` implementation for synthetic chunk placement.
-struct CommandBlockRegistry;
+struct CommandBlockRegistry {
+    feature_seed: u64,
+}
 
 impl WorldPortalExt for CommandBlockRegistry {
     fn can_place_at(
@@ -124,6 +126,10 @@ impl WorldPortalExt for CommandBlockRegistry {
         _chunk_x: i32,
         _chunk_z: i32,
     ) {
+    }
+
+    fn feature_seed(&self) -> u64 {
+        self.feature_seed
     }
 }
 
@@ -409,7 +415,9 @@ impl CommandExecutor for PlaceStructureExecutor {
                 });
 
                 if has_non_jigsaw {
-                    let reg = CommandBlockRegistry;
+                    let reg = CommandBlockRegistry {
+                        feature_seed: context.world().level.feature_seed(),
+                    };
 
                     let mut min_x = i32::MAX;
                     let mut min_z = i32::MAX;
@@ -592,7 +600,9 @@ impl CommandExecutor for PlaceFeatureExecutor {
 
         let snapshot = snapshot_blocks(&chunk, cx, cz, chunk_min_y, chunk_height);
 
-        let reg = CommandBlockRegistry;
+        let reg = CommandBlockRegistry {
+            feature_seed: context.world().level.feature_seed(),
+        };
         let seed = hash_block_pos(block_pos.0.x, block_pos.0.y, block_pos.0.z) as u64;
         let mut random = RandomGenerator::Legacy(LegacyRand::from_seed(seed));
 

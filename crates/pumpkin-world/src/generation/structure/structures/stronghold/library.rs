@@ -395,6 +395,10 @@ mod tests {
             _chunk_z: i32,
         ) {
         }
+
+        fn feature_seed(&self) -> u64 {
+            0
+        }
     }
 
     #[test]
