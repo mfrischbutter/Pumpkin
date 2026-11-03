@@ -331,11 +331,9 @@ impl ClampedNormalFloatProvider {
     /// # Returns
     /// A random float from a normal distribution, clamped to [min, max].
     pub fn get(&self, random: &mut impl RandomImpl) -> f32 {
-        // NOTE: Generate normal distribution value
-        let gaussian = random.next_gaussian() as f32;
-        let value = gaussian.mul_add(self.deviation, self.mean);
-
-        // NOTE: Clamp to min/max range
+        // Vanilla's `Mth.normal` rounds the product before adding the mean; a fused
+        // multiply-add rounds once and can land on a neighbouring float.
+        let value = self.mean + random.next_gaussian() as f32 * self.deviation;
         value.clamp(self.min, self.max)
     }
 
