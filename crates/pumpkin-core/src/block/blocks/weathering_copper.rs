@@ -12,7 +12,6 @@ use pumpkin_data::fluid::Fluid;
 use pumpkin_data::item::Item;
 use pumpkin_data::sound::{Sound, SoundCategory};
 use pumpkin_data::tag::{self, Taggable};
-use pumpkin_data::world::WorldEvent;
 use pumpkin_data::{Block, BlockId, BlockState, BlockStateId, Mirror, Rotation};
 use pumpkin_macros::pumpkin_block_from_tag;
 use pumpkin_util::GameMode;
@@ -1223,24 +1222,16 @@ impl BlockBehaviour for CopperGolemStatueBlock {
                     Uuid::new_v4(),
                 );
                 let entity = golem.get_entity();
-                entity.set_rotation(Self::horizontal_facing_to_yaw(props.facing), 0.0);
+                let yaw = Self::horizontal_facing_to_yaw(props.facing);
+                entity.set_rotation(yaw, 0.0);
+                entity.head_yaw.store(yaw);
+                entity.body_yaw.store(yaw);
                 if let Some(name) = custom_name {
                     entity.set_custom_name(TextComponent::text(name));
                 }
+                // Vanilla `CopperGolemStatueBlockEntity.initCopperGolem`.
+                golem.play_entity_sound(Sound::EntityCopperGolemSpawn, 1.0, 1.0);
                 args.world.spawn_entity(golem);
-
-                args.world.play_sound(
-                    Sound::BlockCopperBreak,
-                    SoundCategory::Blocks,
-                    &args.position.to_f64(),
-                );
-                args.world.play_sound(
-                    Sound::ItemAxeScrape,
-                    SoundCategory::Blocks,
-                    &args.position.to_f64(),
-                );
-                args.world
-                    .sync_world_event(WorldEvent::ParticlesScrape, *args.position, 0);
 
                 if args.player.gamemode.load() != GameMode::Creative {
                     let _ = args.item_stack.damage_item(1);

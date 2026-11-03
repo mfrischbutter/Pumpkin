@@ -608,6 +608,16 @@ impl MobEntity {
             .insert(slot.clone(), Self::GUARANTEED_DROP_CHANCE);
     }
 
+    /// Vanilla `LivingEntity.getItemBySlot`.
+    #[must_use]
+    pub fn get_item_by_slot(&self, slot: &EquipmentSlot) -> ItemStack {
+        self.living_entity
+            .entity_equipment
+            .lock()
+            .unwrap_or_else(std::sync::PoisonError::into_inner)
+            .get(slot)
+    }
+
     /// Equips `stack` and tells tracking clients, returning what was in the slot.
     pub fn set_item_slot(&self, slot: &EquipmentSlot, stack: ItemStack) -> ItemStack {
         let previous = self

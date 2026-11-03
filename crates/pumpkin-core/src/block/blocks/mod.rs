@@ -7,6 +7,7 @@ pub mod nether_portal;
 
 // Storage & containers
 pub mod barrel;
+pub mod chest_container;
 pub mod chests;
 pub mod ender_chest;
 pub mod hopper;

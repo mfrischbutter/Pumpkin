@@ -1,12 +1,15 @@
 use std::ops::BitOr;
 
 use pumpkin_data::entity::EntityStatus;
+use pumpkin_data::item::Item;
+use pumpkin_data::item_stack::ItemStack;
 use pumpkin_data::tag::{self, Taggable};
 use pumpkin_protocol::bedrock::server::actor_event::ActorEventID;
 use rand::RngExt;
 
 use super::{Controls, Goal};
 use crate::entity::mob::Mob;
+use crate::entity::passive::copper_golem::EQUIPMENT_SLOT_ANTENNA;
 
 pub const OFFER_TICKS: i32 = 400;
 
@@ -136,8 +139,19 @@ impl Goal for OfferFlowerGoal {
                     .entity_type
                     .has_tag(&tag::EntityType::MINECRAFT_ACCEPTS_IRON_GOLEM_GIFT)
                     && bb.intersects(&target_entity.bounding_box.load())
+                    && let Some(target_mob) = target.get_mob()
                 {
-                    // TODO: hand the poppy over once mobs can hold equipment gifts.
+                    let target_mob = target_mob.get_mob_entity();
+                    if target_mob
+                        .get_item_by_slot(&EQUIPMENT_SLOT_ANTENNA)
+                        .is_empty()
+                    {
+                        target_mob.set_item_slot(
+                            &EQUIPMENT_SLOT_ANTENNA,
+                            ItemStack::new(1, &Item::POPPY),
+                        );
+                        target_mob.set_guaranteed_drop(&EQUIPMENT_SLOT_ANTENNA);
+                    }
                 }
             }
         }

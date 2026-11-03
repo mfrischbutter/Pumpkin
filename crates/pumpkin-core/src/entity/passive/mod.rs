@@ -13,6 +13,7 @@ pub mod chested_horse;
 pub mod chicken;
 pub mod cod;
 pub mod copper_golem;
+pub mod copper_golem_ai;
 pub mod cow;
 pub mod dolphin;
 pub mod fox;

@@ -13,6 +13,7 @@ use crate::block::{
 };
 use crate::entity::decoration::armor_stand::ArmorStandEntity;
 use crate::entity::item::ItemEntity;
+use crate::entity::passive::copper_golem::CopperGolemEntity;
 use crate::entity::passive::sheep::SheepEntity;
 use crate::entity::projectile::projectile_item::{
     DispenseConfig, DispensePosition, dispense_config, shoot_projectile_item, triangle,
@@ -776,6 +777,15 @@ impl DispenserBlock {
         let target_box = BoundingBox::from_block(&target);
 
         for entity in ctx.world.get_entities_at_box(&target_box) {
+            if let Some(golem) = entity.cast_any().downcast_ref::<CopperGolemEntity>()
+                && golem.ready_for_shearing()
+                && entity.get_entity().is_alive()
+            {
+                golem.shear(SoundCategory::Blocks);
+                ctx.world
+                    .emit_game_event(GameEvent::Shear.name(), target.to_centered_f64());
+                return true;
+            }
             let Some(sheep) = entity.cast_any().downcast_ref::<SheepEntity>() else {
                 continue;
             };

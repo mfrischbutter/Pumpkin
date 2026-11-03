@@ -64,4 +64,12 @@ impl CopperGolemStatueBlockEntity {
             custom_name: Mutex::new(None),
         }
     }
+
+    /// Vanilla `CopperGolemStatueBlockEntity.createStatue`: keeps the golem's custom name.
+    pub fn create_statue(&self, custom_name: Option<String>) {
+        *self
+            .custom_name
+            .lock()
+            .unwrap_or_else(std::sync::PoisonError::into_inner) = custom_name;
+    }
 }

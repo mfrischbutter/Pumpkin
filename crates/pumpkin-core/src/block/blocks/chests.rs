@@ -1,11 +1,11 @@
 use std::sync::Arc;
 
+use super::chest_container::{is_chest_blocked, unpack_loot};
 use crate::block::entities::BlockEntity;
 use crate::block::entities::chest::ChestBlockEntity;
 use pumpkin_data::BlockStateId;
 use pumpkin_data::block_properties::{ChestLikeProperties, ChestType, HorizontalFacing};
 use pumpkin_data::entity::EntityPose;
-use pumpkin_data::loot_table::get_loot_table;
 use pumpkin_data::sound::Sound;
 use pumpkin_data::{Block, BlockDirection, translation};
 use pumpkin_inventory::Inventory;
@@ -22,6 +22,7 @@ use pumpkin_util::text::TextComponent;
 use pumpkin_world::world::BlockFlags;
 use std::sync::Mutex;
 
+use crate::block::entities::trapped_chest::TrappedChestBlockEntity;
 use crate::block::{
     BlockBehaviour, BrokenArgs, EmitsRedstonePowerArgs, GetComparatorOutputArgs,
     GetRedstonePowerArgs, GetScreenHandlerFactoryArgs, NormalUseArgs, OnPlaceArgs,
@@ -31,7 +32,6 @@ use crate::block::{
 use crate::entity::EntityBase;
 use crate::entity::player::Player;
 use crate::world::World;
-use crate::world::loot::{LootContextParameters, fill_chest_inventory_handle};
 use pumpkin_data::BlockState;
 
 struct ChestScreenFactory {
@@ -195,42 +195,7 @@ fn get_chest_screen_handler_factory(
     };
 
     let unpack = |entity: &Arc<dyn BlockEntity>| {
-        if let Some((loot_key, seed)) = entity.take_loot_table()
-            && let Some(table) = get_loot_table(&loot_key)
-            && let Some(inv) = entity.clone().get_inventory()
-        {
-            args.player.trigger_advancement(
-                crate::entity::player::advancement::trigger::AdvancementTrigger::PlayerGeneratesContainerLoot {
-                    loot_table_id: loot_key.clone(),
-                },
-            );
-            fill_chest_inventory_handle(
-                &inv,
-                &crate::world::loot::LootTableHandle::Static(table),
-                seed,
-                &LootContextParameters {
-                    world: Some(args.world),
-                    position: Some(args.position.to_f64()),
-                    this_entity: Some(args.player.as_ref()),
-                    luck: args
-                        .player
-                        .living_entity
-                        .get_attribute_value(&pumpkin_data::attributes::Attributes::LUCK)
-                        as f32,
-                    ..Default::default()
-                },
-                |items| {
-                    args.world.fire_loot_generate(
-                        &loot_key,
-                        Some(entity.get_position()),
-                        None,
-                        Some(args.player.as_ref()),
-                        items,
-                    )
-                },
-            );
-            inv.mark_dirty();
-        }
+        unpack_loot(args.world, args.position, entity, Some(args.player));
     };
 
     // Unpack deferred loot table on first open (non-spectator only).
@@ -412,6 +377,37 @@ impl CopperChestBlock {
 
         if open { open_sound } else { close_sound }
     }
+
+    /// Vanilla `CopperChestBlock.getFromCopperBlock` once `chest` is looked up: pairs with a
+    /// free chest of the same block beside it.
+    pub(crate) fn get_from_copper_block(
+        world: &World,
+        chest: &Block,
+        facing: HorizontalFacing,
+        position: &BlockPos,
+    ) -> BlockStateId {
+        let connects_to = |direction| {
+            get_chest_properties_if_can_connect(
+                world,
+                chest,
+                position,
+                facing,
+                direction,
+                ChestType::Single,
+            )
+            .is_some()
+        };
+        let mut props = ChestLikeProperties::default(chest);
+        props.facing = facing;
+        props.r#type = if connects_to(facing.rotate_clockwise()) {
+            ChestType::Left
+        } else if connects_to(facing.rotate_counter_clockwise()) {
+            ChestType::Right
+        } else {
+            ChestType::Single
+        };
+        props.to_state_id(chest)
+    }
 }
 
 impl
@@ -523,7 +519,6 @@ impl BlockBehaviour for TrappedChestBlock {
     }
 
     fn placed(&self, args: PlacedArgs<'_>) {
-        use crate::block::entities::trapped_chest::TrappedChestBlockEntity;
         placed_chest_impl(&args, TrappedChestBlockEntity::new);
     }
 
@@ -547,8 +542,6 @@ impl BlockBehaviour for TrappedChestBlock {
     }
 
     fn get_weak_redstone_power(&self, args: GetRedstonePowerArgs<'_>) -> u8 {
-        use crate::block::entities::trapped_chest::TrappedChestBlockEntity;
-
         // Get viewer count from this chest
         let viewer_count = if let Some(block_entity) = args.world.get_block_entity(args.position)
             && let Some(trapped_chest) = block_entity
@@ -665,16 +658,6 @@ fn get_chest_properties_if_can_connect(
     }
 
     None
-}
-
-fn is_chest_blocked(world: &World, block_pos: &BlockPos) -> bool {
-    // TODO: Block opening when a cat is sitting on top.
-    has_block_on_top(world, block_pos)
-}
-fn has_block_on_top(world: &World, block_pos: &BlockPos) -> bool {
-    let above_pos = block_pos.up();
-    let above_state = world.get_block_state(&above_pos);
-    above_state.is_solid_block()
 }
 
 trait ChestTypeExt {
