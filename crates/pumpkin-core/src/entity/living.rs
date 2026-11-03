@@ -4883,6 +4883,16 @@ pub(crate) fn prevents_equipment_drop(stack: &ItemStack) -> bool {
         })
 }
 
+pub(crate) fn prevents_armor_change(stack: &ItemStack) -> bool {
+    stack
+        .get_data_component::<EnchantmentsImpl>()
+        .is_some_and(|enchantments| {
+            enchantments.enchantment.iter().any(|(enchantment, level)| {
+                *level > 0 && enchantment.effects.prevent_armor_change
+            })
+        })
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

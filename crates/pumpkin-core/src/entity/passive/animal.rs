@@ -171,29 +171,6 @@ pub fn get_dye_color_from_item(item: &pumpkin_data::item::Item) -> Option<u8> {
     None
 }
 
-#[must_use]
-pub fn get_carpet_color_from_item(item: &pumpkin_data::item::Item) -> Option<u8> {
-    match item.registry_key {
-        "white_carpet" => Some(0),
-        "orange_carpet" => Some(1),
-        "magenta_carpet" => Some(2),
-        "light_blue_carpet" => Some(3),
-        "yellow_carpet" => Some(4),
-        "lime_carpet" => Some(5),
-        "pink_carpet" => Some(6),
-        "gray_carpet" => Some(7),
-        "light_gray_carpet" => Some(8),
-        "cyan_carpet" => Some(9),
-        "purple_carpet" => Some(10),
-        "blue_carpet" => Some(11),
-        "brown_carpet" => Some(12),
-        "green_carpet" => Some(13),
-        "red_carpet" => Some(14),
-        "black_carpet" => Some(15),
-        _ => None,
-    }
-}
-
 fn find_color_mix_in_recipes(
     world: &World,
     color1: DyeColor,

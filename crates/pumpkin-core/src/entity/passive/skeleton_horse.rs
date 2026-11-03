@@ -236,6 +236,9 @@ impl Mob for SkeletonHorseEntity {
     }
 
     fn mob_interact(&self, player: &Arc<Player>, item_stack: &mut ItemStack) -> bool {
+        if horse_base::try_open_inventory(self, player) {
+            return true;
+        }
         if crate::entity::mob::saddle::try_equip_saddle(self, player, item_stack) {
             return true;
         }

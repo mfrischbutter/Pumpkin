@@ -23,6 +23,8 @@ pub mod goat;
 pub mod happy_ghast;
 pub mod happy_ghast_ai;
 pub mod horse;
+pub mod horse_food;
+pub mod horse_inventory;
 pub mod iron_golem;
 pub mod llama;
 pub mod mooshroom;

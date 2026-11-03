@@ -237,6 +237,9 @@ impl Mob for ZombieHorseEntity {
         self.mob_entity
             .persistence_required
             .store(true, std::sync::atomic::Ordering::Relaxed);
+        if horse_base::try_open_inventory(self, player) {
+            return true;
+        }
         if crate::entity::mob::saddle::try_equip_saddle(self, player, item_stack) {
             return true;
         }

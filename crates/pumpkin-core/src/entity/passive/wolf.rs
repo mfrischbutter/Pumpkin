@@ -487,6 +487,11 @@ impl Mob for WolfEntity {
         );
     }
 
+    /// Vanilla `Wolf.canShearEquipment`: only its owner.
+    fn can_shear_equipment(&self, player: &Player) -> bool {
+        self.is_owned_by(&player.gameprofile.id)
+    }
+
     fn mob_interact(&self, player: &Arc<Player>, item_stack: &mut ItemStack) -> bool {
         let item = item_stack.get_item();
         let sound_variant = self.sound_variant();
@@ -501,15 +506,6 @@ impl Mob for WolfEntity {
             }
 
             if self.is_owned_by(&player.gameprofile.id) {
-                if item == &Item::SHEARS {
-                    player.trigger_advancement(
-                        crate::entity::player::advancement::trigger::AdvancementTrigger::PlayerShearedEquipment {
-                            entity_type: "minecraft:wolf".to_string(),
-                            item_id: "minecraft:wolf_armor".to_string(),
-                        },
-                    );
-                }
-
                 if let Some(dye) =
                     item_stack.get_data_component::<pumpkin_data::data_component_impl::DyeImpl>()
                     && dye.color.id() != self.get_collar_color()

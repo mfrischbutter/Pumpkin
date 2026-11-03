@@ -1,4 +1,5 @@
 pub mod advancement;
+mod mount_screen;
 pub mod statistics;
 
 use core::f32;
@@ -6716,10 +6717,7 @@ impl Player {
         }
     }
 
-    /// Opens a plugin screen. For Java clients a screen that is already open
-    /// is closed on the server only: the client replaces it on the open
-    /// packet, while a close packet in between makes it grab the mouse and
-    /// recentre the cursor on every menu switch.
+    /// The Java slot shown in the single Bedrock equipment slot, if `window_id` is a mount screen.
     fn bedrock_mount_equip_slot(&self, window_id: u32) -> Option<usize> {
         self.bedrock_mount_screen
             .load()
@@ -6727,6 +6725,10 @@ impl Player {
             .map(|(_, equip_slot)| equip_slot)
     }
 
+    /// Opens a plugin screen. For Java clients a screen that is already open
+    /// is closed on the server only: the client replaces it on the open
+    /// packet, while a close packet in between makes it grab the mouse and
+    /// recentre the cursor on every menu switch.
     pub fn open_handled_screen_direct(
         &self,
         screen_handler: Arc<std::sync::Mutex<dyn ScreenHandler>>,

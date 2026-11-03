@@ -31,6 +31,7 @@ use crate::entity::ai::brain::{
 };
 use crate::entity::custom_sound::CustomSound;
 use crate::entity::passive::abstract_horse::{self as horse_base, AbstractHorse, HorseData};
+use crate::entity::passive::horse_inventory;
 use crate::entity::{
     Entity, EntityBase,
     ageable::{AgeableData, AgeableMob},
@@ -297,6 +298,11 @@ impl AbstractHorse for CamelEntity {
     fn can_perform_rearing(&self) -> bool {
         false
     }
+
+    /// Vanilla `Camel.openCustomInventoryScreen` asks nothing.
+    fn may_open_inventory(&self, _player: &Player) -> bool {
+        true
+    }
 }
 
 impl CustomSound for CamelEntity {
@@ -483,7 +489,7 @@ impl Mob for CamelEntity {
         );
     }
 
-    /// Vanilla `Camel.mobInteract`: saddle, food, then up to two riders.
+    /// Vanilla `Camel.mobInteract`: the inventory, saddle, food, then up to two riders.
     fn mob_interact(&self, player: &Arc<Player>, item_stack: &mut ItemStack) -> bool {
         if self.is_husk() {
             // Vanilla `CamelHusk.interact`: every click keeps it loaded.
@@ -492,8 +498,8 @@ impl Mob for CamelEntity {
                 .store(true, Ordering::Relaxed);
         }
         if player.get_entity().is_sneaking() && !self.is_baby() {
-            // TODO: the camel inventory screen (`openCustomInventoryScreen`).
-            return false;
+            horse_inventory::open_custom_inventory_screen(self, player);
+            return true;
         }
         if saddle::try_equip_saddle(self, player, item_stack) || self.feed(player, item_stack) {
             return true;

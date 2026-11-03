@@ -1,6 +1,6 @@
 use std::sync::{
     Arc, Weak,
-    atomic::{AtomicBool, AtomicI32, AtomicU8, Ordering},
+    atomic::{AtomicBool, AtomicI32, Ordering},
 };
 
 use crossbeam::atomic::AtomicCell;
@@ -8,16 +8,17 @@ use pumpkin_data::BlockState;
 use pumpkin_data::entity::EntityType;
 use pumpkin_data::item::Item;
 use pumpkin_data::item_stack::ItemStack;
-use pumpkin_data::sound::{Sound, SoundCategory};
+use pumpkin_data::sound::Sound;
 use pumpkin_data::tag::{self, Taggable};
+use pumpkin_inventory::mount_screen_handler::MountScreenHandler;
 use pumpkin_nbt::compound::NbtCompound;
 use pumpkin_protocol::codec::var_int::VarInt;
 use pumpkin_util::math::position::BlockPos;
 use rand::RngExt;
-use uuid::Uuid;
 
 use crate::entity::ai::behavior::hunting::{self, Hunt};
 use crate::entity::ai::goal::llama_follow_caravan::LlamaFollowCaravanGoal;
+use crate::entity::ai::goal::run_around_like_crazy::RunAroundLikeCrazyGoal;
 use crate::entity::ai::target_match::TargetMatch;
 use crate::entity::passive::tamable::is_untamed;
 use crate::entity::{
@@ -34,8 +35,10 @@ use crate::entity::{
         spawn::{EntitySpawnReason, SpawnGroupData},
     },
     passive::{
-        animal::{Animal, get_carpet_color_from_item},
-        trader_llama,
+        abstract_horse::{self as horse_base, AbstractHorse, HorseData},
+        animal::Animal,
+        horse_food::FoodEffect,
+        horse_inventory, trader_llama,
     },
     player::Player,
     projectile::llama_spit::LlamaSpitEntity,
@@ -44,12 +47,8 @@ use crate::world::World;
 
 /// Vanilla `Llama.setStrength`: strength stays within 1 to 5.
 const MAX_STRENGTH: i32 = 5;
-
-pub const FLAG_TAME: u8 = 2;
-pub const FLAG_BRED: u8 = 8;
-pub const FLAG_EATING: u8 = 16;
-pub const FLAG_STANDING: u8 = 32;
-pub const FLAG_OPEN_MOUTH: u8 = 64;
+/// Vanilla `Llama.getMaxTemper`.
+const LLAMA_MAX_TEMPER: i32 = 30;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 #[repr(i32)]
@@ -121,11 +120,8 @@ pub struct LlamaEntity {
     pub ageable_data: AgeableData,
     pub variant: AtomicI32,
     pub strength: AtomicI32,
-    pub carpet_color: AtomicCell<Option<u8>>,
-    pub flags: AtomicU8,
     pub has_chest: AtomicBool,
-    pub temper: AtomicI32,
-    pub owner: AtomicCell<Option<Uuid>>,
+    horse: HorseData,
     /// Vanilla `TraderLlama.despawnDelay`.
     pub despawn_delay: AtomicI32,
     /// Vanilla `Llama.didSpit`: a spit drops the revenge target once.
@@ -153,11 +149,8 @@ impl LlamaEntity {
             ageable_data: AgeableData::default(),
             variant: AtomicI32::new(variant.id()),
             strength: AtomicI32::new(strength),
-            carpet_color: AtomicCell::new(None),
-            flags: AtomicU8::new(0),
             has_chest: AtomicBool::new(false),
-            temper: AtomicI32::new(0),
-            owner: AtomicCell::new(None),
+            horse: HorseData::default(),
             despawn_delay: AtomicI32::new(trader_llama::DEFAULT_DESPAWN_DELAY),
             did_spit: AtomicBool::new(false),
             caravan_head: AtomicCell::new(None),
@@ -179,6 +172,7 @@ impl LlamaEntity {
 
             // Vanilla `Llama.registerGoals`.
             goal_selector.add_goal(0, Box::new(SwimGoal::default()));
+            goal_selector.add_goal(1, Box::new(RunAroundLikeCrazyGoal::new(1.2)));
             goal_selector.add_goal(
                 2,
                 Box::new(LlamaFollowCaravanGoal::new(FOLLOW_CARAVAN_SPEED)),
@@ -256,39 +250,30 @@ impl LlamaEntity {
     }
 
     #[must_use]
-    pub fn has_flag(&self, flag: u8) -> bool {
-        (self.flags.load(Ordering::Relaxed) & flag) != 0
-    }
-
-    pub fn set_flag(&self, flag: u8, val: bool) {
-        let current = self.flags.load(Ordering::Relaxed);
-        let new_flags = if val { current | flag } else { current & !flag };
-        self.flags.store(new_flags, Ordering::Relaxed);
-        let entity = self.get_entity();
-        entity.set_synced_data(
-            pumpkin_data::tracked_data::llama::DATA_ID_FLAGS,
-            new_flags as i8,
-        );
-    }
-
-    #[must_use]
     pub fn is_tame(&self) -> bool {
-        self.has_flag(FLAG_TAME)
+        horse_base::is_tamed(self)
     }
 
     pub fn set_tame(&self, val: bool) {
-        self.set_flag(FLAG_TAME, val);
-    }
-
-    #[must_use]
-    pub fn has_chest(&self) -> bool {
-        self.has_chest.load(Ordering::Relaxed)
+        horse_base::set_flag(self, horse_base::FLAG_TAME, val);
     }
 
     pub fn set_has_chest(&self, val: bool) {
         self.has_chest.store(val, Ordering::Relaxed);
         let entity = self.get_entity();
         entity.set_synced_data(pumpkin_data::tracked_data::llama::DATA_ID_CHEST, val);
+    }
+
+    /// Vanilla `equipChest` with `Llama.playChestEquipsSound`.
+    fn equip_chest(&self, player: &Player, stack: &mut ItemStack) {
+        self.set_has_chest(true);
+        let pitch = {
+            let mut rng = self.get_random();
+            (rng.random::<f32>() - rng.random::<f32>()).mul_add(0.2, 1.0)
+        };
+        self.play_entity_sound(Sound::EntityLlamaChest, 1.0, pitch);
+        stack.decrement_unless_creative(player.gamemode.load(), 1);
+        horse_inventory::create_inventory(self);
     }
 
     /// Vanilla `inCaravan`.
@@ -372,7 +357,7 @@ impl Animal for LlamaEntity {
         partner
             .cast_any()
             .downcast_ref::<Self>()
-            .is_some_and(|llama| self.can_parent() && llama.can_parent())
+            .is_some_and(|llama| horse_base::can_parent(self) && horse_base::can_parent(llama))
     }
 
     /// Vanilla `Llama.getBreedOffspring`: up to the stronger parent's strength (one more
@@ -405,17 +390,82 @@ impl Animal for LlamaEntity {
     }
 }
 
-impl LlamaEntity {
-    /// Vanilla `AbstractHorse.canParent`.
-    fn can_parent(&self) -> bool {
-        let entity = self.get_entity();
-        let living = &self.mob_entity.living_entity;
-        !entity.has_passengers()
-            && !entity.has_vehicle()
-            && self.is_tame()
-            && !self.is_baby()
-            && living.health.load() >= living.get_max_health()
-            && self.mob_entity.is_in_love()
+impl AbstractHorse for LlamaEntity {
+    fn horse_data(&self) -> &HorseData {
+        &self.horse
+    }
+
+    fn horse_eating_sound(&self) -> Option<Sound> {
+        Some(Sound::EntityLlamaEat)
+    }
+
+    fn horse_angry_sound(&self) -> Option<Sound> {
+        Some(Sound::EntityLlamaAngry)
+    }
+
+    fn can_perform_rearing(&self) -> bool {
+        false
+    }
+
+    fn max_temper(&self) -> i32 {
+        LLAMA_MAX_TEMPER
+    }
+
+    fn can_eat_grass(&self) -> bool {
+        false
+    }
+
+    /// Vanilla `Llama.handleEating`'s table.
+    fn food_effect(&self, item: &Item) -> FoodEffect {
+        if item == &Item::WHEAT {
+            FoodEffect {
+                heal: 2.0,
+                age_up: 10,
+                temper: 3,
+                love: false,
+            }
+        } else if item == &Item::HAY_BLOCK {
+            FoodEffect {
+                heal: 10.0,
+                age_up: 90,
+                temper: 6,
+                love: true,
+            }
+        } else {
+            FoodEffect::default()
+        }
+    }
+
+    fn opens_mouth_to_eat(&self) -> bool {
+        false
+    }
+
+    /// Vanilla `Llama.followMommy`.
+    fn can_follow_mommy(&self) -> bool {
+        !self.in_caravan()
+    }
+
+    /// Vanilla `TraderLlama.doPlayerRide` refuses a llama leashed to its trader.
+    fn can_player_ride(&self) -> bool {
+        !self.is_trader() || trader_llama::leashing_trader(self.get_entity()).is_none()
+    }
+
+    fn has_chest(&self) -> bool {
+        self.has_chest.load(Ordering::Relaxed)
+    }
+
+    /// Vanilla `Llama.getInventoryColumns`.
+    fn inventory_columns(&self) -> i32 {
+        if self.has_chest() {
+            self.get_strength()
+        } else {
+            0
+        }
+    }
+
+    /// A llama's slot is the carpet's; it takes no saddle.
+    fn bedrock_equip_slot(&self) -> usize {
+        MountScreenHandler::SLOT_BODY_ARMOR
     }
 }
 
@@ -483,18 +533,23 @@ impl Mob for LlamaEntity {
         Some(self)
     }
 
+    fn as_abstract_horse(&self) -> Option<&dyn AbstractHorse> {
+        Some(self)
+    }
+
+    /// Vanilla `AbstractChestedHorse.dropEquipment`.
+    fn custom_death_loot(&self) -> Vec<ItemStack> {
+        horse_inventory::inventory_drops(self)
+    }
+
     fn mob_write_nbt(&self, nbt: &mut NbtCompound) {
         self.write_ageable_nbt(nbt);
         nbt.put_int("Variant", self.get_variant().id());
         nbt.put_int("Strength", self.get_strength());
-        nbt.put_bool("ChestedHorse", self.has_chest());
-        nbt.put_bool("Tame", self.is_tame());
-        nbt.put_int("Temper", self.temper.load(Ordering::Relaxed));
+        horse_base::write_horse_nbt(self, nbt);
+        horse_inventory::write_chest_nbt(self, nbt);
         if self.is_trader() {
             nbt.put_int("DespawnDelay", self.despawn_delay.load(Ordering::Relaxed));
-        }
-        if let Some(owner) = self.owner.load() {
-            nbt.put_uuid("Owner", owner);
         }
     }
 
@@ -506,20 +561,11 @@ impl Mob for LlamaEntity {
         if let Some(strength) = nbt.get_int("Strength") {
             self.set_strength(strength);
         }
-        if let Some(chested) = nbt.get_bool("ChestedHorse") {
-            self.set_has_chest(chested);
-        }
-        if let Some(tame) = nbt.get_bool("Tame") {
-            self.set_tame(tame);
-        }
-        if let Some(temper) = nbt.get_int("Temper") {
-            self.temper.store(temper, Ordering::Relaxed);
-        }
+        horse_base::read_horse_nbt(self, nbt);
+        self.set_has_chest(nbt.get_bool("ChestedHorse").unwrap_or(false));
+        horse_inventory::read_chest_items(self, nbt);
         if let Some(delay) = nbt.get_int("DespawnDelay") {
             self.despawn_delay.store(delay, Ordering::Relaxed);
-        }
-        if let Some(owner) = nbt.get_uuid("Owner") {
-            self.owner.store(Some(owner));
         }
     }
 
@@ -527,8 +573,10 @@ impl Mob for LlamaEntity {
         &self.mob_entity
     }
 
-    /// Vanilla `TraderLlama.aiStep`.
+    /// Vanilla `AbstractHorse.tick` and `aiStep` with `TraderLlama.aiStep`.
     fn mob_tick(&self, _caller: &dyn EntityBase) {
+        horse_base::horse_tick(self);
+        horse_base::horse_ai_step(self);
         if self.is_trader() {
             trader_llama::maybe_despawn(self);
         }
@@ -567,58 +615,20 @@ impl Mob for LlamaEntity {
         );
         entity.set_synced_data(
             pumpkin_data::tracked_data::llama::DATA_ID_FLAGS,
-            self.flags.load(Ordering::Relaxed) as i8,
+            horse_base::flags(self) as i8,
         );
     }
 
+    /// Vanilla `AbstractChestedHorse.mobInteract`: a wild llama can be mounted to tame it, a tame
+    /// one takes a chest and a carpet.
     fn mob_interact(&self, player: &Arc<Player>, item_stack: &mut ItemStack) -> bool {
-        let item = item_stack.get_item();
-
-        if self.is_tame() && item == &Item::CHEST && !self.has_chest() && !self.is_baby() {
-            self.set_has_chest(true);
-            item_stack.decrement_unless_creative(player.gamemode.load(), 1);
-            let entity = self.get_entity();
-            let world = entity.world.load();
-            world.play_sound(
-                Sound::EntityDonkeyChest,
-                SoundCategory::Neutral,
-                &entity.pos.load(),
-            );
-            return true;
-        }
-
-        if self.is_tame()
-            && !self.is_baby()
-            && let Some(color) = get_carpet_color_from_item(item)
-        {
-            self.carpet_color.store(Some(color));
-            item_stack.decrement_unless_creative(player.gamemode.load(), 1);
-            let entity = self.get_entity();
-            let world = entity.world.load();
-            world.play_sound(
-                Sound::EntityLlamaSwag,
-                SoundCategory::Neutral,
-                &entity.pos.load(),
-            );
-            return true;
-        }
-
-        if !self.is_baby() && !self.is_food(item_stack) {
-            // Vanilla `TraderLlama.doPlayerRide` refuses a llama leashed to its trader.
-            if trader_llama::leashing_trader(self.get_entity()).is_some() {
+        horse_base::horse_interact(self, player, item_stack, |stack| {
+            if !self.has_chest() && stack.item == &Item::CHEST {
+                self.equip_chest(player, stack);
                 return true;
             }
-            let world = player.world();
-            let ent = &self.mob_entity.living_entity.entity;
-            if let Some(vehicle) = world.get_entity_by_id(ent.entity_id)
-                && let Some(passenger) = world.get_player_by_id(player.entity_id())
-            {
-                ent.add_passenger(vehicle, passenger as Arc<dyn EntityBase>);
-                return true;
-            }
-        }
-
-        self.animal_interact(player, item_stack, Sound::EntityLlamaAmbient)
+            horse_base::try_equip_body_armor(self, player, stack)
+        })
     }
 }
 

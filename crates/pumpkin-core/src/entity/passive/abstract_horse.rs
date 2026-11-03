@@ -1,8 +1,8 @@
 //! Vanilla `AbstractHorse`: what horses, donkeys, mules and skeleton and zombie horses share,
 //! from taming by riding to rearing, grazing and the stats a foal inherits.
 
-use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, AtomicI32, AtomicU8, Ordering};
+use std::sync::{Arc, Mutex};
 
 use crossbeam::atomic::AtomicCell;
 use pumpkin_data::attributes::Attributes;
@@ -13,6 +13,8 @@ use pumpkin_data::item::Item;
 use pumpkin_data::item_stack::ItemStack;
 use pumpkin_data::sound::Sound;
 use pumpkin_data::{Block, BlockState};
+use pumpkin_inventory::SimpleInventory;
+use pumpkin_inventory::mount_screen_handler::MountScreenHandler;
 use pumpkin_nbt::compound::NbtCompound;
 use pumpkin_protocol::bedrock::server::actor_event::ActorEventID;
 use pumpkin_util::math::position::BlockPos;
@@ -20,11 +22,12 @@ use rand::RngExt;
 use uuid::Uuid;
 
 use crate::entity::ageable::AgeableMob;
-use crate::entity::ai::goal::{Controls, Goal, to_goal_ticks};
-use crate::entity::ai::pathfinder::NavigatorGoal;
-use crate::entity::ai::util::default_random_pos;
+use crate::entity::ai::goal::Goal;
+use crate::entity::ai::target_predicate::TargetPredicate;
 use crate::entity::mob::Mob;
 use crate::entity::passive::animal::Animal;
+use crate::entity::passive::horse_food::{self, FoodEffect};
+use crate::entity::passive::horse_inventory;
 use crate::entity::player::Player;
 use crate::entity::player::advancement::trigger::AdvancementTrigger;
 use crate::entity::{EntityBase, mob::saddle};
@@ -34,9 +37,11 @@ pub const FLAG_BRED: u8 = 8;
 pub const FLAG_EATING: u8 = 16;
 pub const FLAG_STANDING: u8 = 32;
 pub const FLAG_OPEN_MOUTH: u8 = 64;
+/// Vanilla `MOMMY_TARGETING`'s range.
+const MOMMY_RANGE: f64 = 16.0;
+const MOMMY_MIN_DISTANCE_SQ: f64 = 4.0;
 
 /// The state vanilla `AbstractHorse` keeps beside its synced flags.
-#[derive(Default)]
 pub struct HorseData {
     flags: AtomicU8,
     temper: AtomicI32,
@@ -46,6 +51,24 @@ pub struct HorseData {
     stand_counter: AtomicI32,
     allow_stand_sliding: AtomicBool,
     gallop_sound_counter: AtomicI32,
+    /// Vanilla `inventory`: the chest, replaced as a whole when its size changes.
+    pub(super) inventory: Mutex<Arc<SimpleInventory>>,
+}
+
+impl Default for HorseData {
+    fn default() -> Self {
+        Self {
+            flags: AtomicU8::new(0),
+            temper: AtomicI32::new(0),
+            owner: AtomicCell::new(None),
+            eating_counter: AtomicI32::new(0),
+            mouth_counter: AtomicI32::new(0),
+            stand_counter: AtomicI32::new(0),
+            allow_stand_sliding: AtomicBool::new(false),
+            gallop_sound_counter: AtomicI32::new(0),
+            inventory: Mutex::new(Arc::new(SimpleInventory::new(0))),
+        }
+    }
 }
 
 /// A member of the horse family. Species fill in what differs; the free functions below are
@@ -86,6 +109,47 @@ pub trait AbstractHorse: Animal + AgeableMob {
     /// Vanilla `isMobControlled`: ridden by a mob, like a skeleton trap's horses.
     fn is_mob_controlled(&self) -> bool {
         false
+    }
+
+    /// Vanilla `handleEating`'s table.
+    fn food_effect(&self, item: &Item) -> FoodEffect {
+        horse_food::horse_food_effect(item)
+    }
+
+    /// Vanilla `eating`; `Llama.handleEating` only plays the sound.
+    fn opens_mouth_to_eat(&self) -> bool {
+        true
+    }
+
+    /// Vanilla `followMommy`'s own overrides, past the bred baby check.
+    fn can_follow_mommy(&self) -> bool {
+        true
+    }
+
+    /// Vanilla `doPlayerRide`'s own overrides.
+    fn can_player_ride(&self) -> bool {
+        true
+    }
+
+    /// Vanilla `AbstractChestedHorse.hasChest`.
+    fn has_chest(&self) -> bool {
+        false
+    }
+
+    /// Vanilla `getInventoryColumns`.
+    fn inventory_columns(&self) -> i32 {
+        0
+    }
+
+    /// Vanilla `openCustomInventoryScreen`'s check, which a camel leaves out.
+    fn may_open_inventory(&self, player: &Player) -> bool {
+        let entity = self.get_entity();
+        (!entity.has_passengers() || entity.has_passenger(player.entity_id())) && self.is_tamed()
+    }
+
+    /// The mount screen slot Bedrock shows as its one equipment slot.
+    fn bedrock_equip_slot(&self) -> usize {
+        MountScreenHandler::SLOT_SADDLE
     }
 }
 
@@ -135,7 +199,7 @@ pub fn owner(horse: &dyn AbstractHorse) -> Option<Uuid> {
 }
 
 /// Vanilla `modifyTemper`.
-fn modify_temper(horse: &dyn AbstractHorse, amount: i32) {
+pub fn modify_temper(horse: &dyn AbstractHorse, amount: i32) {
     let temper = (temper(horse) + amount).clamp(0, horse.max_temper());
     horse.horse_data().temper.store(temper, Ordering::Relaxed);
 }
@@ -175,13 +239,13 @@ pub fn make_mad(horse: &dyn AbstractHorse) {
 }
 
 /// Vanilla `openMouth`.
-fn open_mouth(horse: &dyn AbstractHorse) {
+pub(super) fn open_mouth(horse: &dyn AbstractHorse) {
     horse.horse_data().mouth_counter.store(1, Ordering::Relaxed);
     set_flag(horse, FLAG_OPEN_MOUTH, true);
 }
 
 /// Vanilla `tameWithName`: the rider becomes the owner.
-fn tame_with_name(horse: &dyn AbstractHorse, player: &Player) {
+pub fn tame_with_name(horse: &dyn AbstractHorse, player: &Player) {
     horse.horse_data().owner.store(Some(player.gameprofile.id));
     set_flag(horse, FLAG_TAME, true);
     let entity = horse.get_entity();
@@ -253,17 +317,28 @@ pub fn horse_ai_step(horse: &dyn AbstractHorse) {
     follow_mommy(horse);
 }
 
-/// Vanilla `followMommy`: a bred foal walks to the nearest bred horse 16 blocks around.
+/// Vanilla `followMommy`: a bred foal plans a path to the nearest bred horse of the family 16
+/// blocks around. It only plans (`createPath`, no `moveTo`); `FollowParentGoal` does the walking.
 fn follow_mommy(horse: &dyn AbstractHorse) {
-    if !has_flag(horse, FLAG_BRED) || !horse.is_baby() || is_eating(horse) {
+    if !horse.can_follow_mommy()
+        || !has_flag(horse, FLAG_BRED)
+        || !horse.is_baby()
+        || is_eating(horse)
+    {
         return;
     }
     let entity = horse.get_entity();
+    let world = entity.world.load();
     let pos = entity.pos.load();
-    let area = entity.bounding_box.load().expand(16.0, 16.0, 16.0);
-    let mommy = entity
-        .world
+    let tester: &dyn EntityBase = horse;
+    let mommy_targeting = TargetPredicate::create_non_attackable()
+        .set_base_max_distance(MOMMY_RANGE)
+        .ignore_visibility();
+    let area = entity
+        .bounding_box
         .load()
+        .expand(MOMMY_RANGE, MOMMY_RANGE, MOMMY_RANGE);
+    let mommy = world
         .get_entities_at_box(&area)
         .into_iter()
         .filter(|other| other.get_entity().entity_id != entity.entity_id)
@@ -272,6 +347,7 @@ fn follow_mommy(horse: &dyn AbstractHorse) {
                 .get_mob()
                 .and_then(|mob| mob.as_abstract_horse())
                 .is_some_and(|other| has_flag(other, FLAG_BRED))
+                && mommy_targeting.test(&world, Some(tester), other.as_ref())
         })
         .min_by(|a, b| {
             let da = a.get_entity().pos.load().squared_distance_to_vec(&pos);
@@ -280,87 +356,19 @@ fn follow_mommy(horse: &dyn AbstractHorse) {
         });
     if let Some(mommy) = mommy {
         let target = mommy.get_entity().pos.load();
-        if target.squared_distance_to_vec(&pos) > 4.0 {
-            horse
-                .get_mob_entity()
-                .steered()
-                .navigator()
-                .set_progress(NavigatorGoal::new(pos, target, 1.0));
+        if target.squared_distance_to_vec(&pos) > MOMMY_MIN_DISTANCE_SQ {
+            let steered = horse.get_mob_entity().steered();
+            let owner = &steered.mob_entity().living_entity;
+            steered.navigator().create_path(owner, target, 0);
         }
     }
 }
 
-/// Vanilla `handleEating`: heals, ages up and calms a horse, golden food makes a tame adult
-/// fall in love. `true` when it ate.
-pub fn handle_eating(horse: &dyn AbstractHorse, player: &Player, stack: &ItemStack) -> bool {
-    let item = stack.item;
-    let golden = item == &Item::GOLDEN_CARROT
-        || item == &Item::GOLDEN_APPLE
-        || item == &Item::ENCHANTED_GOLDEN_APPLE;
-    let (heal, age_up, temper) = match item {
-        i if i == &Item::WHEAT => (2.0, 20, 3),
-        i if i == &Item::SUGAR => (1.0, 30, 3),
-        i if i == &Item::HAY_BLOCK => (20.0, 180, 0),
-        i if i == &Item::APPLE || i == &Item::CARROT => (3.0, 60, 3),
-        i if i == &Item::RED_MUSHROOM => (3.0, 0, 3),
-        i if i == &Item::GOLDEN_CARROT => (4.0, 60, 5),
-        i if i == &Item::GOLDEN_APPLE || i == &Item::ENCHANTED_GOLDEN_APPLE => (10.0, 240, 10),
-        _ => (0.0, 0, 0),
-    };
-    let mob_entity = horse.get_mob_entity();
-    let living = &mob_entity.living_entity;
-    let entity = &living.entity;
-    let mut used = false;
-    if golden
-        && is_tamed(horse)
-        && entity.age.load(Ordering::Relaxed) == 0
-        && !mob_entity.is_in_love()
-    {
-        used = true;
-        mob_entity.set_love_ticks(600, Some(player.gameprofile.id));
-        entity.world.load().send_entity_status(
-            entity,
-            EntityStatus::InLoveHearts,
-            ActorEventID::InLoveHearts,
-        );
-    }
-    if living.health.load() < living.get_max_health() && heal > 0.0 {
-        living.heal(heal);
-        used = true;
-    }
-    if horse.is_baby() && age_up > 0 && !horse.is_age_locked() {
-        horse.age_up(age_up, false);
-        used = true;
-    }
-    if temper > 0 && (used || !is_tamed(horse)) && self::temper(horse) < horse.max_temper() {
-        modify_temper(horse, temper);
-        used = true;
-    }
-    if used {
-        eating(horse);
-    }
-    used
-}
-
-/// Vanilla `eating`: the mouth opens and the eating sound plays.
-fn eating(horse: &dyn AbstractHorse) {
-    open_mouth(horse);
-    if let Some(sound) = horse.horse_eating_sound() {
-        let pitch = {
-            let mut rng = horse.get_random();
-            (rng.random::<f32>() - rng.random::<f32>()).mul_add(0.2, 1.0)
-        };
-        horse.play_entity_sound(sound, 1.0, pitch);
-    }
-    let entity = horse.get_entity();
-    entity.world.load().emit_game_event(
-        pumpkin_data::game_event::GameEvent::Eat.name(),
-        entity.pos.load(),
-    );
-}
-
 /// Vanilla `doPlayerRide`.
 fn do_player_ride(horse: &dyn AbstractHorse, player: &Arc<Player>) {
+    if !horse.can_player_ride() {
+        return;
+    }
     set_flag(horse, FLAG_EATING, false);
     clear_standing(horse);
     let entity = horse.get_entity();
@@ -375,6 +383,31 @@ fn do_player_ride(horse: &dyn AbstractHorse, player: &Arc<Player>) {
     }
 }
 
+/// Vanilla `Entity.interact`: the rope's holder lets go, a lead in hand ties up unless another
+/// player holds the rope.
+fn is_leash_click(horse: &dyn AbstractHorse, player: &Player, stack: &ItemStack) -> bool {
+    let holder = horse.get_entity().get_leash_holder();
+    let held_by_player = holder
+        .as_ref()
+        .is_some_and(|holder| holder.get_player().is_some());
+    holder.is_some_and(|holder| holder.get_entity().entity_id == player.entity_id())
+        || (stack.item == &Item::LEAD && !held_by_player)
+}
+
+/// Vanilla `AbstractHorse.mobInteract`: a sneaking click on a free tamed adult opens its
+/// inventory. `true` when the click was that.
+pub fn try_open_inventory(horse: &dyn AbstractHorse, player: &Arc<Player>) -> bool {
+    if horse.get_entity().has_passengers()
+        || horse.is_baby()
+        || !is_tamed(horse)
+        || !player.get_entity().is_sneaking()
+    {
+        return false;
+    }
+    horse_inventory::open_custom_inventory_screen(horse, player);
+    true
+}
+
 /// Vanilla `Horse.mobInteract` and `AbstractChestedHorse.mobInteract`.
 ///
 /// With `AbstractHorse.mobInteract`: feeding, a wild horse rearing at items, `extra` (armour
@@ -385,20 +418,29 @@ pub fn horse_interact(
     stack: &mut ItemStack,
     extra: impl FnOnce(&mut ItemStack) -> bool,
 ) -> bool {
+    // Vanilla `Mob.interact`: name tags and spawn eggs come before the mob's own handling.
+    if stack.item == &Item::NAME_TAG || stack.item.registry_key.ends_with("_spawn_egg") {
+        return false;
+    }
+    if is_leash_click(horse, player, stack)
+        && horse
+            .get_mob_entity()
+            .mob_interact(player, stack, horse.can_be_leashed())
+    {
+        return true;
+    }
     let entity = horse.get_entity();
-    let sneaking = player.get_entity().is_sneaking();
     let baby = horse.is_baby();
     if entity.has_passengers() || baby {
         // Vanilla `Animal.mobInteract`: foals take food.
-        return baby && horse.is_food(stack) && feed(horse, player, stack);
+        return baby && horse.is_food(stack) && horse_food::fed_food(horse, player, stack);
     }
-    if is_tamed(horse) && sneaking {
-        // TODO: the horse inventory screen (`openCustomInventoryScreen`).
-        return false;
+    if try_open_inventory(horse, player) {
+        return true;
     }
     if !stack.is_empty() {
         if horse.is_food(stack) {
-            return feed(horse, player, stack);
+            return horse_food::fed_food(horse, player, stack);
         }
         if !is_tamed(horse) {
             make_mad(horse);
@@ -410,108 +452,6 @@ pub fn horse_interact(
     }
     do_player_ride(horse, player);
     true
-}
-
-/// Vanilla `fedFood`.
-fn feed(horse: &dyn AbstractHorse, player: &Player, stack: &mut ItemStack) -> bool {
-    let ate = handle_eating(horse, player, stack);
-    if ate {
-        stack.decrement_unless_creative(player.gamemode.load(), 1);
-    }
-    ate
-}
-
-/// Vanilla `RunAroundLikeCrazyGoal`: a wild horse with a rider bucks around; now and then it
-/// either takes the rider as owner, more likely the calmer it got, or throws them off.
-pub struct RunAroundLikeCrazyGoal {
-    speed: f64,
-    target: Option<pumpkin_util::math::vector3::Vector3<f64>>,
-}
-
-impl RunAroundLikeCrazyGoal {
-    #[must_use]
-    pub const fn new(speed: f64) -> Self {
-        Self {
-            speed,
-            target: None,
-        }
-    }
-}
-
-impl Goal for RunAroundLikeCrazyGoal {
-    fn can_start(&mut self, mob: &dyn Mob) -> bool {
-        let Some(horse) = as_horse(mob) else {
-            return false;
-        };
-        if horse.is_mob_controlled() || is_tamed(horse) || !mob.get_entity().has_passengers() {
-            return false;
-        }
-        self.target = default_random_pos::get_pos(mob, 5, 4);
-        self.target.is_some()
-    }
-
-    fn should_continue(&mut self, mob: &dyn Mob) -> bool {
-        as_horse(mob).is_some_and(|horse| !is_tamed(horse))
-            && !mob.is_navigator_idle()
-            && mob.get_entity().has_passengers()
-    }
-
-    fn start(&mut self, mob: &dyn Mob) {
-        if let Some(target) = self.target {
-            let pos = mob.get_entity().pos.load();
-            mob.get_mob_entity()
-                .steered()
-                .navigator()
-                .set_progress(NavigatorGoal::new(pos, target, self.speed));
-        }
-    }
-
-    fn tick(&mut self, mob: &dyn Mob) {
-        let Some(horse) = as_horse(mob) else {
-            return;
-        };
-        if is_tamed(horse) || mob.get_random().random_range(0..to_goal_ticks(50)) != 0 {
-            return;
-        }
-        let entity = mob.get_entity();
-        let Some(rider) = saddle::first_passenger_player(mob) else {
-            if entity.has_passengers() {
-                eject_passengers(horse);
-            }
-            return;
-        };
-        let max = horse.max_temper();
-        if max > 0 && mob.get_random().random_range(0..max) < temper(horse) {
-            tame_with_name(horse, &rider);
-            return;
-        }
-        modify_temper(horse, 5);
-        eject_passengers(horse);
-        make_mad(horse);
-        entity.world.load().send_entity_status(
-            entity,
-            EntityStatus::TamingFailed,
-            ActorEventID::TamingFailed,
-        );
-    }
-
-    fn controls(&self) -> Controls {
-        Controls::MOVE
-    }
-}
-
-fn eject_passengers(horse: &dyn AbstractHorse) {
-    let entity = horse.get_entity();
-    let passengers: Vec<i32> = entity
-        .passengers
-        .lock()
-        .unwrap_or_else(std::sync::PoisonError::into_inner)
-        .iter()
-        .map(|passenger| passenger.get_entity().entity_id)
-        .collect();
-    for id in passengers {
-        entity.remove_passenger(id);
-    }
 }
 
 /// Vanilla `RandomStandGoal`: now and then a horse rears with its ambient sound.
@@ -808,8 +748,9 @@ pub fn register_horse_goals(
 ) {
     use crate::entity::ai::goal::{
         breed::BreedGoal, escape_danger::EscapeDangerGoal, follow_parent::FollowParentGoal,
-        look_around::RandomLookAroundGoal, look_at_entity::LookAtEntityGoal, swim::SwimGoal,
-        tempt::TemptGoal, wander_around::WanderAroundGoal,
+        look_around::RandomLookAroundGoal, look_at_entity::LookAtEntityGoal,
+        run_around_like_crazy::RunAroundLikeCrazyGoal, swim::SwimGoal, tempt::TemptGoal,
+        wander_around::WanderAroundGoal,
     };
     goal_selector.add_goal(1, Box::new(RunAroundLikeCrazyGoal::new(1.2)));
     goal_selector.add_goal(2, BreedGoal::new(1.0));

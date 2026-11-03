@@ -7,8 +7,6 @@ use std::sync::{
 use pumpkin_data::BlockState;
 use pumpkin_data::data_component_impl::EquipmentSlot;
 use pumpkin_data::entity::EntityType;
-use pumpkin_data::game_event::GameEvent;
-use pumpkin_data::item::Item;
 use pumpkin_data::item_stack::ItemStack;
 use pumpkin_data::sound::{Sound, SoundCategory};
 use pumpkin_data::tag::{self, Taggable};
@@ -414,23 +412,6 @@ impl HappyGhastEntity {
         true
     }
 
-    /// Vanilla `Mob.attemptToShearEquipment`: shears take off the harness of an empty ghast.
-    fn try_shear_harness(&self, player: &Player, stack: &mut ItemStack) -> bool {
-        if stack.item != &Item::SHEARS || self.passenger_count() > 0 || !self.is_wearing_harness() {
-            return false;
-        }
-        let harness = self
-            .mob_entity
-            .set_item_slot(&EquipmentSlot::BODY, ItemStack::EMPTY.clone());
-        let entity = self.get_entity();
-        let world = entity.world.load();
-        world.emit_game_event(GameEvent::Shear.name(), entity.pos.load());
-        world.drop_stack(&entity.block_pos.load(), harness);
-        self.play_entity_sound(Sound::EntityHappyGhastUnequip, 1.0, 1.0);
-        let _ = player.damage_item_stack(stack, 1);
-        true
-    }
-
     /// Vanilla `doPlayerRide`.
     fn start_riding(&self, player: &Player) -> bool {
         if self.passenger_count() >= MAX_PASSENGERS {
@@ -677,8 +658,7 @@ impl Mob for HappyGhastEntity {
         if self.is_baby() {
             return self.animal_interact(player, item_stack, Sound::EntityGhastlingAmbient);
         }
-        if self.try_shear_harness(player, item_stack) || self.try_equip_harness(player, item_stack)
-        {
+        if self.try_equip_harness(player, item_stack) {
             return true;
         }
         self.is_wearing_harness() && !player.get_entity().is_sneaking() && self.start_riding(player)

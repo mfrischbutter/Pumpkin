@@ -48,6 +48,7 @@ pub mod ranged_crossbow_attack;
 pub mod reset_universal_anger;
 pub mod restrict_sun;
 pub mod revenge;
+pub mod run_around_like_crazy;
 pub mod silverfish;
 pub mod sit_when_ordered_to;
 pub mod skeleton_trap;

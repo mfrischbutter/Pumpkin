@@ -62,6 +62,7 @@ pub mod crossbow_attack_mob;
 pub mod enderman;
 pub mod endermite;
 pub mod equipment;
+pub mod equipment_slot_container;
 pub mod evoker;
 pub mod ghast;
 pub mod giant;
@@ -86,6 +87,7 @@ pub mod pillager;
 pub mod raider;
 pub mod ravager;
 pub mod saddle;
+pub mod shearing;
 pub mod shulker;
 pub mod silverfish;
 pub mod skeleton;
@@ -1693,6 +1695,25 @@ pub trait Mob: EntityBase + Send + Sync {
         false
     }
 
+    /// Vanilla `canUseSlot(EquipmentSlot.BODY)`.
+    fn can_use_body_slot(&self) -> bool {
+        true
+    }
+
+    /// Vanilla `Mob.canShearEquipment`.
+    fn can_shear_equipment(&self, _player: &Player) -> bool {
+        !self.get_entity().has_passengers()
+    }
+
+    /// Vanilla `HasCustomInventoryScreen.openCustomInventoryScreen`; `false` for a mob without
+    /// that screen.
+    fn open_custom_inventory_screen(&self, player: &Arc<Player>) -> bool {
+        self.as_abstract_horse().is_some_and(|horse| {
+            crate::entity::passive::horse_inventory::open_custom_inventory_screen(horse, player);
+            true
+        })
+    }
+
     /// Vanilla `getEquipSound` for the saddle slot.
     fn saddle_sound(&self) -> pumpkin_data::sound::Sound {
         pumpkin_data::sound::Sound::EntityHorseSaddle
@@ -2796,6 +2817,9 @@ impl<T: Mob + Send + 'static> EntityBase for T {
     }
 
     fn interact(&self, player: &Arc<Player>, item_stack: &mut ItemStack) -> bool {
+        if shearing::try_shear_equipment(self, player, item_stack) {
+            return true;
+        }
         self.mob_interact(player, item_stack)
             || self
                 .as_ageable()

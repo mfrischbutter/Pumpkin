@@ -704,7 +704,7 @@ impl Mob for NautilusEntity {
         }
         let sneaking = player.get_entity().is_sneaking();
         if self.is_tame() && sneaking {
-            // TODO: the nautilus inventory screen (`openCustomInventoryScreen`).
+            self.open_custom_inventory_screen(player);
             return true;
         }
         let is_food = self.is_food(item_stack);
@@ -736,6 +736,21 @@ impl Mob for NautilusEntity {
     fn can_be_saddled(&self) -> bool {
         let living = &self.mob_entity.living_entity;
         living.entity.is_alive() && !living.is_baby() && self.is_tame()
+    }
+
+    /// Vanilla `AbstractNautilus.canUseSlot(BODY)`, the saddle's rule.
+    fn can_use_body_slot(&self) -> bool {
+        self.can_be_saddled()
+    }
+
+    /// Vanilla `AbstractNautilus.openCustomInventoryScreen`.
+    fn open_custom_inventory_screen(&self, player: &Arc<Player>) -> bool {
+        let entity = self.get_entity();
+        if (!entity.has_passengers() || entity.has_passenger(player.entity_id())) && self.is_tame()
+        {
+            super::horse_inventory::open_nautilus_screen(self, player);
+        }
+        true
     }
 
     /// Vanilla `AbstractNautilus.getEquipSound`.

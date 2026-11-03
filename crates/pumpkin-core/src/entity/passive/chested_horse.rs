@@ -1,7 +1,7 @@
 //! Vanilla `AbstractChestedHorse` with `Donkey` and `Mule`: horses that carry a chest.
 
 use std::sync::{
-    Arc, Mutex, Weak,
+    Arc, Weak,
     atomic::{AtomicBool, Ordering},
 };
 
@@ -13,11 +13,11 @@ use pumpkin_data::item_stack::ItemStack;
 use pumpkin_data::sound::Sound;
 use pumpkin_data::tag::{self, Taggable};
 use pumpkin_nbt::compound::NbtCompound;
-use pumpkin_nbt::tag::NbtTag;
 use pumpkin_util::math::position::BlockPos;
 
 use crate::entity::custom_sound::CustomSound;
 use crate::entity::passive::abstract_horse::{self as horse_base, AbstractHorse, HorseData};
+use crate::entity::passive::horse_inventory;
 use crate::entity::{
     Entity, EntityBase,
     ageable::{AgeableData, AgeableMob},
@@ -71,9 +71,6 @@ pub struct ChestedHorseEntity {
     pub kind: &'static ChestedKind,
     horse: HorseData,
     has_chest: AtomicBool,
-    /// The chest's items as saved; Pumpkin has no horse inventory screen yet, so they are
-    /// kept as they were loaded.
-    items: Mutex<Option<NbtTag>>,
 }
 
 impl ChestedHorseEntity {
@@ -84,7 +81,6 @@ impl ChestedHorseEntity {
             kind,
             horse: HorseData::default(),
             has_chest: AtomicBool::new(false),
-            items: Mutex::new(None),
         };
         let mob_arc = Arc::new(chested);
         let mob_weak: Weak<dyn Mob> = {
@@ -93,11 +89,6 @@ impl ChestedHorseEntity {
         };
         horse_base::register_horse_goals(&mob_arc.mob_entity.goals_selector, mob_weak, true);
         mob_arc
-    }
-
-    #[must_use]
-    pub fn has_chest(&self) -> bool {
-        self.has_chest.load(Ordering::Relaxed)
     }
 
     /// Vanilla `setChest`.
@@ -122,6 +113,7 @@ impl ChestedHorseEntity {
         };
         self.play_entity_sound(self.kind.chest, 1.0, pitch);
         stack.decrement_unless_creative(player.gamemode.load(), 1);
+        horse_inventory::create_inventory(self);
     }
 }
 
@@ -190,6 +182,15 @@ impl AbstractHorse for ChestedHorseEntity {
 
     fn horse_jump_sound(&self) -> Sound {
         self.kind.jump
+    }
+
+    fn has_chest(&self) -> bool {
+        self.has_chest.load(Ordering::Relaxed)
+    }
+
+    /// Vanilla `AbstractChestedHorse.getInventoryColumns`.
+    fn inventory_columns(&self) -> i32 {
+        if self.has_chest() { 5 } else { 0 }
     }
 }
 
@@ -271,38 +272,22 @@ impl Mob for ChestedHorseEntity {
         self.finalize_spawn_super(group_data)
     }
 
-    /// Vanilla `AbstractChestedHorse.dropEquipment`: the chest drops too.
+    /// Vanilla `AbstractChestedHorse.dropEquipment`.
     fn custom_death_loot(&self) -> Vec<ItemStack> {
-        if self.has_chest() {
-            vec![ItemStack::new(1, &Item::CHEST)]
-        } else {
-            Vec::new()
-        }
+        horse_inventory::inventory_drops(self)
     }
 
     fn mob_write_nbt(&self, nbt: &mut NbtCompound) {
         self.write_ageable_nbt(nbt);
         horse_base::write_horse_nbt(self, nbt);
-        nbt.put_bool("ChestedHorse", self.has_chest());
-        if self.has_chest()
-            && let Some(items) = self
-                .items
-                .lock()
-                .unwrap_or_else(std::sync::PoisonError::into_inner)
-                .clone()
-        {
-            nbt.put("Items", items);
-        }
+        horse_inventory::write_chest_nbt(self, nbt);
     }
 
     fn mob_read_nbt(&self, nbt: &NbtCompound) {
         self.read_ageable_nbt(nbt);
         horse_base::read_horse_nbt(self, nbt);
         self.set_chest(nbt.get_bool("ChestedHorse").unwrap_or(false));
-        *self
-            .items
-            .lock()
-            .unwrap_or_else(std::sync::PoisonError::into_inner) = nbt.get("Items").cloned();
+        horse_inventory::read_chest_items(self, nbt);
         crate::entity::mob::saddle::read_legacy_saddle(self, nbt);
     }
 

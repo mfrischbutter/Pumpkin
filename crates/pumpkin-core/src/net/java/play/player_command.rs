@@ -58,8 +58,11 @@ impl JavaClient {
                     mob.mob_start_rider_jump(command.jump_boost.0);
                 }
             }
-            Action::StopHorseJump | Action::OpenVehicleInventory => {
+            Action::StopHorseJump => {
                 debug!("todo");
+            }
+            Action::OpenVehicleInventory => {
+                player.open_vehicle_inventory();
             }
             Action::StartFlyingElytra => {
                 player.try_start_fall_flying(server);
