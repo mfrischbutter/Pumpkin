@@ -93,6 +93,8 @@ pub mod sun_burn;
 pub mod vex;
 pub mod vindicator;
 pub mod warden;
+pub mod warden_ai;
+pub mod warden_anger;
 pub mod warden_spawn_tracker;
 pub mod witch;
 pub mod zoglin;
@@ -1722,6 +1724,9 @@ pub trait Mob: EntityBase + Send + Sync {
     fn travel(&self, _caller: &dyn EntityBase) -> bool {
         false
     }
+
+    /// Vanilla `doPush`: the mob itself pushes `entity`, for those that care what they touch.
+    fn mob_do_push(&self, _entity: &Arc<dyn EntityBase>) {}
 
     /// Whether the mob overrides vanilla's `LivingEntity.aiStep` from `mob_tick`, so that nothing
     /// of the living entity's own movement runs.

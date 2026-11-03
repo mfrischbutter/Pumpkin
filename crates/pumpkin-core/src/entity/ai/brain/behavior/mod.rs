@@ -36,7 +36,8 @@ pub use count_down_cooldown_ticks::CountDownCooldownTicks;
 pub use do_nothing::DoNothing;
 pub use fight::{
     erase_memory_if, melee_attack, set_walk_target_from_attack_target, start_attacking,
-    start_attacking_with, stop_attacking_if, stop_attacking_if_target_invalid,
+    start_attacking_with, stop_attacking_if, stop_attacking_if_never_tired,
+    stop_attacking_if_target_invalid,
 };
 pub use gate::{GateBehavior, OrderPolicy, RunningPolicy, run_one, run_one_with_conditions};
 pub use go_and_give_items_to_target::GoAndGiveItemsToTarget;

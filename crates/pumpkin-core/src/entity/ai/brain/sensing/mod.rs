@@ -19,6 +19,7 @@ pub mod nearest_living_entities;
 pub mod nearest_players;
 pub mod tempting;
 pub mod villager;
+pub mod warden;
 
 pub use dummy::DummySensor;
 pub use hurt_by::HurtBySensor;
@@ -43,6 +44,7 @@ pub enum SensorType {
     NearestAdult,
     NearestAdultAnyType,
     BreezeAttackEntity,
+    WardenEntity,
     ArmadilloScareDetected,
     AxolotlAttackables,
     VillagerHostiles,
@@ -69,6 +71,7 @@ impl SensorType {
             Self::FoodTemptations => "minecraft:food_temptations",
             Self::NearestAdult => "minecraft:nearest_adult",
             Self::BreezeAttackEntity => "minecraft:breeze_attack_entity_sensor",
+            Self::WardenEntity => "minecraft:warden_entity_sensor",
             Self::NearestAdultAnyType => "minecraft:nearest_adult_any_type",
             Self::ArmadilloScareDetected => "minecraft:armadillo_scare_detected",
             Self::AxolotlAttackables => "minecraft:axolotl_attackables",
@@ -96,6 +99,7 @@ impl SensorType {
             | Self::FoodTemptations
             | Self::NearestAdult
             | Self::BreezeAttackEntity
+            | Self::WardenEntity
             | Self::NearestAdultAnyType
             | Self::AxolotlAttackables
             | Self::HoglinSpecific
@@ -126,6 +130,7 @@ impl SensorType {
             Self::FoodTemptations => Box::new(tempting::TemptingSensor),
             Self::NearestAdult => Box::new(nearest_adult::AdultSensor),
             Self::BreezeAttackEntity => Box::new(breeze::BreezeAttackEntitySensor),
+            Self::WardenEntity => Box::new(warden::WardenEntitySensor),
             Self::NearestAdultAnyType => Box::new(nearest_adult::AdultSensorAnyType),
             Self::ArmadilloScareDetected => Box::new(armadillo_scare::ArmadilloScareSensor),
             Self::AxolotlAttackables => Box::new(axolotl_attackables::AxolotlAttackablesSensor),

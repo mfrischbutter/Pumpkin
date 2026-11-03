@@ -108,6 +108,7 @@ pub use lightning::LightningBoltEntity;
 
 pub(crate) mod combat;
 pub mod predicate;
+pub mod vibration;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum DelayedLeash {
@@ -569,8 +570,9 @@ pub trait EntityBase: Send + Sync + std::any::Any {
             && self.can_be_seen_by_anyone()
     }
 
+    /// Vanilla `dampensVibrations`, which only `Warden` overrides among entities.
     fn dampens_vibrations(&self) -> bool {
-        false
+        self.get_entity().entity_type == &EntityType::WARDEN
     }
 
     fn is_collidable(&self, _entity: Option<Box<dyn EntityBase>>) -> bool {
@@ -1852,6 +1854,12 @@ impl Entity {
         }
         if pose == EntityPose::Sleeping {
             return EntityDimensions::new(0.2, 0.2, 0.2);
+        }
+        // Vanilla `Warden.getDefaultDimensions`: half in the ground.
+        if self.entity_type == &EntityType::WARDEN
+            && matches!(pose, EntityPose::Digging | EntityPose::Emerging)
+        {
+            return EntityDimensions::new(0.9, 1.0, 0.85);
         }
         if self.entity_type == &EntityType::PLAYER {
             match pose {
