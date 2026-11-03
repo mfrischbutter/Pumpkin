@@ -424,8 +424,32 @@ impl MobEntity {
         }
     }
 
+    /// Vanilla `Monster.updateNoActionTime` and `Raider.updateNoActionTime`, which
+    /// `Monster.aiStep` runs before the step counts its tick: a raider idles two ticks
+    /// faster always, any other monster while its light-dependent magic value is above
+    /// `MONSTER_IDLE_LIGHT_THRESHOLD`, so monsters in daylight reach the random despawn
+    /// sooner.
+    fn update_no_action_time(&self, mob: &dyn Mob) {
+        let entity = &self.living_entity.entity;
+        if !entity.entity_type.monster {
+            return;
+        }
+        let idles_faster = mob.as_raider().is_some()
+            || entity
+                .world
+                .load()
+                .get_light_level_dependent_magic_value(&entity.get_eye_pos().to_block_pos())
+                > MONSTER_IDLE_LIGHT_THRESHOLD;
+        if idles_faster {
+            self.living_entity
+                .no_action_time
+                .fetch_add(MONSTER_IDLE_TICKS_PER_STEP, Relaxed);
+        }
+    }
+
     /// Vanilla `Mob.serverAiStep`: sensing, goals, navigation and controls.
     pub fn server_ai_step(&self, mob: &dyn Mob, caller: &dyn EntityBase) {
+        self.update_no_action_time(mob);
         self.living_entity.no_action_time.fetch_add(1, Relaxed);
         let tick_count = self.living_entity.entity.tick_count.load(Relaxed);
         let entity_id = self.living_entity.entity.entity_id;
@@ -1169,6 +1193,11 @@ impl MobEntity {
     }
 }
 
+/// Vanilla `Monster.updateNoActionTime`: the light-dependent magic value above which a
+/// monster idles faster.
+const MONSTER_IDLE_LIGHT_THRESHOLD: f32 = 0.5;
+/// The idle ticks a monster in light, or a raider, adds per step on top of the one every mob counts.
+const MONSTER_IDLE_TICKS_PER_STEP: i32 = 2;
 const RANDOM_DESPAWN_IDLE_TICKS: i32 = 600;
 const RANDOM_DESPAWN_CHANCE: u32 = 800;
 /// Vanilla `PatrollingMonster.removeWhenFarAway`: a patrol member this far (squared) from
