@@ -27,6 +27,12 @@ pub struct ChestBlockEntity {
 impl ChestBlockEntity {
     pub const INVENTORY_SIZE: usize = 27;
     pub const LID_ANIMATION_EVENT_TYPE: u8 = 1;
+
+    /// Vanilla `ChestBlockEntity.getOpenCount`.
+    #[must_use]
+    pub fn viewer_count(&self) -> u16 {
+        self.viewers.get_viewer_count()
+    }
     pub const ID: &'static str = "minecraft:chest";
     pub const EMITS_REDSTONE: bool = false;
 }

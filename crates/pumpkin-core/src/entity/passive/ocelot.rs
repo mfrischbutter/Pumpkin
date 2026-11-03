@@ -67,7 +67,10 @@ impl OcelotEntity {
             // Goal 1: FloatGoal (SwimGoal)
             goal_selector.add_goal(1, Box::new(SwimGoal::default()));
             // Goal 3: OcelotTemptGoal
-            goal_selector.add_goal(3, feline::tempt_goal());
+            goal_selector.add_goal(
+                3,
+                Box::new(feline::tempt_goal().not_scared_when(|mob| !is_wary(mob))),
+            );
             // Goal 4: OcelotAvoidEntityGoal (when not trusting)
             fleeing::apply(goal_selector, OCELOT_FLEES);
             // Goal 7-11: LeapAtTarget, OcelotAttack, Breed, Stroll, LookAtPlayer
@@ -105,6 +108,11 @@ impl Animal for OcelotEntity {
 }
 
 impl Mob for OcelotEntity {
+    /// Vanilla `Ocelot.customServerAiStep`.
+    fn custom_server_ai_step(&self, _caller: &dyn EntityBase) {
+        feline::update_pose_by_speed(self);
+    }
+
     /// Vanilla `Ocelot.getAmbientSound`.
     fn get_ambient_sound(&self) -> Option<pumpkin_data::sound::Sound> {
         Some(pumpkin_data::sound::Sound::EntityOcelotAmbient)

@@ -1,4 +1,5 @@
 mod goals;
+mod idle_goals;
 
 use std::sync::{
     Arc, Weak,
@@ -6,7 +7,8 @@ use std::sync::{
 };
 
 use crossbeam::atomic::AtomicCell;
-use pumpkin_data::entity::EntityType;
+use pumpkin_data::data_component_impl::{EquipmentSlot, FoodImpl};
+use pumpkin_data::entity::{EntityType, MobCategory};
 use pumpkin_data::item::Item;
 use pumpkin_data::item_stack::ItemStack;
 use pumpkin_data::sound::Sound;
@@ -15,6 +17,7 @@ use pumpkin_data::world::WorldEvent;
 use pumpkin_nbt::compound::NbtCompound;
 use pumpkin_nbt::tag::NbtTag;
 use pumpkin_protocol::codec::var_int::VarInt;
+use pumpkin_util::math::vector3::Vector3;
 use rand::RngExt;
 use uuid::Uuid;
 
@@ -22,8 +25,10 @@ use crate::entity::ai::behavior::fleeing::{self, Flee};
 use crate::entity::ai::behavior::hunting::{self, Hunt};
 use crate::entity::ai::goal::active_target::ActiveTargetGoal;
 use crate::entity::ai::goal::avoid_entity::not_creative_or_spectator;
+use crate::entity::ai::goal::climb_on_top_of_powder_snow::ClimbOnTopOfPowderSnowGoal;
 use crate::entity::ai::goal::leap_at_target::LeapAtTargetGoal;
 use crate::entity::ai::target_match::TargetMatch;
+use crate::entity::item::ItemEntity;
 use crate::entity::mob::spawn::SpawnGroupData;
 use crate::entity::passive::tamable::is_untamed;
 use crate::entity::{
@@ -40,6 +45,9 @@ use crate::entity::{
 use crate::world::World;
 use goals::{
     DefendTrustedTargetGoal, FaceplantGoal, FoxGoal, PounceGoal, StalkPreyGoal, melee_attack,
+};
+use idle_goals::{
+    EatBerriesGoal, PerchAndSearchGoal, SearchForItemsGoal, SeekShelterGoal, SleepGoal,
 };
 
 pub const FOX_FOOD: &[&Item] = &[&Item::SWEET_BERRIES, &Item::GLOW_BERRIES];
@@ -137,6 +145,7 @@ impl FoxVariant {
 ///
 /// Wiki: <https://minecraft.wiki/w/Fox>
 pub struct FoxEntity {
+    ticks_since_eaten: AtomicI32,
     pub mob_entity: MobEntity,
     pub ageable_data: AgeableData,
     pub variant: AtomicI32,
@@ -151,6 +160,7 @@ impl FoxEntity {
     pub fn new(entity: Entity) -> Arc<Self> {
         let mob_entity = MobEntity::new(entity);
         let fox = Self {
+            ticks_since_eaten: AtomicI32::new(0),
             mob_entity,
             ageable_data: AgeableData::default(),
             variant: AtomicI32::new(FoxVariant::Red.id()),
@@ -159,6 +169,8 @@ impl FoxEntity {
             crouch_amount: AtomicCell::new(0.0),
         };
         let mob_arc = Arc::new(fox);
+        // Vanilla's constructor.
+        mob_arc.mob_entity.set_can_pick_up_loot(true);
         let mob_weak: Weak<dyn Mob> = {
             let mob_arc: Arc<dyn Mob> = mob_arc.clone();
             Arc::downgrade(&mob_arc)
@@ -168,9 +180,7 @@ impl FoxEntity {
             let goal_selector = &mob_arc.mob_entity.goals_selector;
             let not_defending: fn(&Self) -> bool = |fox| !fox.is_defending();
 
-            // TODO: ClimbOnTopOfPowderSnowGoal(0), SeekShelterGoal(6), SleepGoal(7),
-            // StrollThroughVillageGoal(9), EatBerriesGoal(10), SearchForItemsGoal(11),
-            // PerchAndSearchGoal(13).
+            goal_selector.add_goal(0, Box::new(ClimbOnTopOfPowderSnowGoal));
             goal_selector.add_goal(
                 0,
                 Box::new(FoxGoal::new(SwimGoal::default()).on_start(Self::clear_states)),
@@ -187,7 +197,9 @@ impl FoxEntity {
             fleeing::apply(goal_selector, FOX_FLEES);
             goal_selector.add_goal(5, Box::new(StalkPreyGoal));
             goal_selector.add_goal(6, Box::new(PounceGoal));
+            goal_selector.add_goal(6, Box::new(SeekShelterGoal::new(1.25)));
             goal_selector.add_goal(7, Box::new(melee_attack(1.2)));
+            goal_selector.add_goal(7, Box::new(SleepGoal::new()));
             goal_selector.add_goal(
                 8,
                 Box::new(
@@ -196,8 +208,10 @@ impl FoxEntity {
                         .on_start(Self::clear_states),
                 ),
             );
+            goal_selector.add_goal(10, Box::new(EatBerriesGoal::new()));
             goal_selector.add_goal(10, Box::new(LeapAtTargetGoal::new(0.4)));
             goal_selector.add_goal(11, Box::new(WanderAroundGoal::water_avoiding(1.0)));
+            goal_selector.add_goal(11, Box::new(SearchForItemsGoal));
             goal_selector.add_goal(
                 12,
                 Box::new(
@@ -209,6 +223,8 @@ impl FoxEntity {
                     .gated(|fox| !fox.is_faceplanted() && !fox.is_interested()),
                 ),
             );
+
+            goal_selector.add_goal(13, Box::new(PerchAndSearchGoal::default()));
 
             mob_arc
                 .mob_entity
@@ -374,6 +390,156 @@ impl FoxEntity {
         self.crouch_amount.store(crouch);
     }
 
+    /// What it holds in its mouth.
+    #[must_use]
+    pub fn mouth_item(&self) -> ItemStack {
+        self.mob_entity
+            .living_entity
+            .entity_equipment
+            .try_lock()
+            .map_or_else(
+                |_| ItemStack::EMPTY.clone(),
+                |eq| eq.get(&EquipmentSlot::MAIN_HAND),
+            )
+    }
+
+    /// Vanilla `Fox.canMove`.
+    #[must_use]
+    pub fn can_move(&self) -> bool {
+        !self.is_sleeping() && !self.is_sitting() && !self.is_faceplanted()
+    }
+
+    /// Whether it has any business in powder snow, for `canSleep`.
+    #[must_use]
+    pub fn is_in_powder_snow(&self) -> bool {
+        let entity = self.get_entity();
+        entity.world.load().get_block(&entity.block_pos.load()) == &pumpkin_data::Block::POWDER_SNOW
+    }
+
+    /// Vanilla `ALLOWED_ITEMS`: an item that can be picked up, and not one it spat out itself.
+    #[must_use]
+    pub fn is_allowed_find(item: &ItemEntity) -> bool {
+        item.can_be_picked_up_by_mob()
+    }
+
+    /// Vanilla `FoxAlertableEntitiesSelector`.
+    #[must_use]
+    pub fn alertable_target(&self, other: &dyn EntityBase) -> bool {
+        let entity = other.get_entity();
+        let kind = entity.entity_type;
+        if kind == &EntityType::FOX {
+            return false;
+        }
+        if kind == &EntityType::CHICKEN
+            || kind == &EntityType::RABBIT
+            || kind.category == &MobCategory::MONSTER
+        {
+            return true;
+        }
+        if let Some(tamable) = other.get_mob().and_then(Mob::as_tamable) {
+            return !tamable.is_tame();
+        }
+        if let Some(player) = other.get_player() {
+            if player.is_spectator() || player.is_creative() {
+                return false;
+            }
+            return !self.trusts(player.gameprofile.id)
+                && !player.is_sleeping()
+                && !entity.is_sneaking();
+        }
+        other.get_living_entity().is_some()
+            && !self.trusts(entity.entity_uuid)
+            && !entity.is_sneaking()
+    }
+
+    fn is_consumable_food(stack: &ItemStack) -> bool {
+        stack.get_data_component::<FoodImpl>().is_some()
+    }
+
+    /// Vanilla `Fox.canHoldItem`.
+    fn can_hold_item(&self, stack: &ItemStack) -> bool {
+        let held = self.mouth_item();
+        held.is_empty()
+            || (self.ticks_since_eaten.load(Ordering::Relaxed) > 0
+                && Self::is_consumable_food(stack)
+                && !Self::is_consumable_food(&held))
+    }
+
+    /// Vanilla `Fox.spitOutItem`.
+    fn spit_out_item(&self, stack: ItemStack) {
+        if stack.is_empty() {
+            return;
+        }
+        let entity = self.get_entity();
+        let world = entity.world.load();
+        let pos = entity.pos.load();
+        let yaw = entity.yaw.load().to_radians();
+        let at = Vector3::new(
+            pos.x - f64::from(yaw.sin()),
+            pos.y + 1.0,
+            pos.z + f64::from(yaw.cos()),
+        );
+        let item = ItemEntity::new(Entity::new(world.clone(), at, &EntityType::ITEM), stack);
+        item.set_pickup_delay(40);
+        item.set_thrower(entity.entity_uuid);
+        self.play_entity_sound(Sound::EntityFoxSpit, 1.0, 1.0);
+        world.spawn_entity(Arc::new(item));
+    }
+
+    /// Vanilla `Fox.pickUpItem`: one in the mouth, the rest stays on the ground.
+    fn pick_up_nearby_items(&self) {
+        self.mob_entity.for_each_item_in_pickup_reach(|item| {
+            let stack = item
+                .get_item_stack()
+                .lock()
+                .unwrap_or_else(std::sync::PoisonError::into_inner)
+                .clone();
+            if stack.is_empty() || !self.can_hold_item(&stack) {
+                return;
+            }
+            self.spit_out_item(self.mouth_item());
+            let taken = item
+                .get_item_stack()
+                .lock()
+                .unwrap_or_else(std::sync::PoisonError::into_inner)
+                .split(1);
+            self.mob_entity
+                .set_item_slot_and_drop_when_killed(&EquipmentSlot::MAIN_HAND, taken);
+            let emptied = item
+                .get_item_stack()
+                .lock()
+                .unwrap_or_else(std::sync::PoisonError::into_inner)
+                .is_empty();
+            if emptied {
+                item.get_entity().remove();
+            } else {
+                item.init_data_tracker();
+            }
+            self.ticks_since_eaten.store(0, Ordering::Relaxed);
+        });
+    }
+
+    /// Vanilla `Fox.aiStep`: food in its mouth is gone after 30 seconds when nothing is on.
+    fn tick_eating(&self) {
+        let ticks = self.ticks_since_eaten.fetch_add(1, Ordering::Relaxed) + 1;
+        let held = self.mouth_item();
+        let entity = self.get_entity();
+        let can_eat = Self::is_consumable_food(&held)
+            && self.mob_entity.get_target().is_none()
+            && entity.on_ground.load(Ordering::Relaxed)
+            && !self.is_sleeping();
+        if !can_eat {
+            return;
+        }
+        if ticks > 600 {
+            self.mob_entity
+                .set_item_slot(&EquipmentSlot::MAIN_HAND, ItemStack::EMPTY.clone());
+            self.ticks_since_eaten.store(0, Ordering::Relaxed);
+        } else if ticks > 560 && rand::random::<f32>() < 0.1 {
+            self.play_entity_sound(Sound::EntityFoxEat, 1.0, 1.0);
+        }
+    }
+
     pub fn clear_states(&self) {
         self.set_interested(false);
         self.set_crouching(false);
@@ -428,6 +594,37 @@ fn is_thundering(world: &World) -> bool {
 }
 
 impl Mob for FoxEntity {
+    /// Vanilla `Fox.populateDefaultEquipmentSlots`: one in five carries something.
+    fn populate_default_equipment_slots(
+        &self,
+        _world: &Arc<World>,
+        _difficulty: &crate::entity::mob::equipment::RegionalDifficulty,
+    ) {
+        if rand::random::<f32>() >= 0.2 {
+            return;
+        }
+        let odds = rand::random::<f32>();
+        let item = if odds < 0.05 {
+            &Item::EMERALD
+        } else if odds < 0.2 {
+            &Item::EGG
+        } else if odds < 0.4 {
+            if rand::random::<bool>() {
+                &Item::RABBIT_FOOT
+            } else {
+                &Item::RABBIT_HIDE
+            }
+        } else if odds < 0.6 {
+            &Item::WHEAT
+        } else if odds < 0.8 {
+            &Item::LEATHER
+        } else {
+            &Item::FEATHER
+        };
+        self.mob_entity
+            .set_item_slot(&EquipmentSlot::MAIN_HAND, ItemStack::new(1, item));
+    }
+
     fn finalize_spawn(
         &self,
         world: &Arc<World>,
@@ -466,6 +663,9 @@ impl Mob for FoxEntity {
     }
 
     fn mob_tick(&self, _caller: &dyn EntityBase) {
+        if !self.mob_entity.is_no_ai() {
+            self.tick_eating();
+        }
         // Vanilla `aiStep`: a lost target ends the stalk.
         if !self.mob_entity.is_no_ai()
             && (self.is_crouching() || self.is_interested())
@@ -481,6 +681,7 @@ impl Mob for FoxEntity {
 
     fn post_tick(&self) {
         self.tick_states();
+        self.pick_up_nearby_items();
         if self.is_defending() && rand::random::<f32>() < 0.05 {
             self.get_entity().play_sound(Sound::EntityFoxAggro);
         }

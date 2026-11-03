@@ -27,17 +27,11 @@ const MAX_TIME_TO_WALK_TO_ITEM: i32 = 200;
 const DISABLE_ADMIRE_WALKING_TIME: i64 = 200;
 const CELEBRATION_TIME: i64 = 300;
 const MAX_WALK_DISTANCE_TO_START_RIDING: f64 = 8.0;
-const MELEE_ATTACK_COOLDOWN: i64 = 20;
-const EAT_COOLDOWN: i64 = 200;
-const DESIRED_DISTANCE_WHEN_AVOIDING: i32 = 12;
 const MIN_DESIRED_DIST_WITH_CROSSBOW: f64 = 5.0;
 const STRAFE_SPEED: f32 = 0.75;
 const CROSSBOW_TIMEOUT: i32 = 1200;
 const CROSSBOW_CHARGE_DURATION: i32 = 25;
 const CROSSBOW_RANGE: f64 = 8.0;
-const HOME_CLOSE_ENOUGH_DISTANCE: i32 = 2;
-const HOME_TOO_FAR_DISTANCE: i32 = 100;
-const HOME_STROLL_AROUND_DISTANCE: i32 = 5;
 
 /// Vanilla `StopHoldingItemIfNoLongerAdmiring`.
 pub(super) fn stop_holding_item_if_no_longer_admiring() -> OneShot {

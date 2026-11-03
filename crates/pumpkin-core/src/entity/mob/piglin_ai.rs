@@ -16,6 +16,7 @@ use crate::entity::item::ItemEntity;
 use crate::entity::living::LivingEntity;
 use crate::entity::mob::piglin::{PiglinActivity, PiglinEntity};
 use crate::entity::player::Player;
+use crate::world::loot::{LootContextParameters, generate_loot_from_handle};
 
 pub struct PiglinAi;
 
@@ -184,46 +185,24 @@ impl PiglinAi {
         Self::is_not_holding_loved_item_in_off_hand(piglin) && has_space
     }
 
+    /// Vanilla `getBarterResponseItems`: the loot table `piglin_bartering`.
     #[must_use]
-    pub fn get_barter_response_items() -> Vec<ItemStack> {
-        let roll = rand::random_range(0..459);
-        match roll {
-            0..5 => vec![ItemStack::new(1, &Item::ENCHANTED_BOOK)],
-            5..13 => vec![ItemStack::new(1, &Item::IRON_BOOTS)],
-            13..21 => vec![ItemStack::new(1, &Item::SPLASH_POTION)],
-            21..39 => vec![ItemStack::new(1, &Item::POTION)],
-            39..49 => vec![ItemStack::new(
-                rand::random_range(10..=36),
-                &Item::IRON_NUGGET,
-            )],
-            49..59 => vec![ItemStack::new(
-                rand::random_range(2..=4),
-                &Item::ENDER_PEARL,
-            )],
-            59..79 => vec![ItemStack::new(rand::random_range(3..=9), &Item::STRING)],
-            79..99 => vec![ItemStack::new(rand::random_range(5..=12), &Item::QUARTZ)],
-            99..139 => vec![ItemStack::new(1, &Item::OBSIDIAN)],
-            139..179 => vec![ItemStack::new(
-                rand::random_range(1..=3),
-                &Item::CRYING_OBSIDIAN,
-            )],
-            179..219 => vec![ItemStack::new(1, &Item::FIRE_CHARGE)],
-            219..259 => vec![ItemStack::new(rand::random_range(2..=4), &Item::LEATHER)],
-            259..299 => vec![ItemStack::new(rand::random_range(2..=8), &Item::SOUL_SAND)],
-            299..339 => vec![ItemStack::new(
-                rand::random_range(2..=8),
-                &Item::NETHER_BRICK,
-            )],
-            339..379 => vec![ItemStack::new(
-                rand::random_range(6..=12),
-                &Item::SPECTRAL_ARROW,
-            )],
-            379..419 => vec![ItemStack::new(rand::random_range(8..=16), &Item::GRAVEL)],
-            _ => vec![ItemStack::new(
-                rand::random_range(8..=16),
-                &Item::BLACKSTONE,
-            )],
-        }
+    pub fn get_barter_response_items(piglin: &PiglinEntity) -> Vec<ItemStack> {
+        let world = piglin.mob_entity.living_entity.entity.world.load();
+        world
+            .get_loot_table("minecraft:gameplay/piglin_bartering")
+            .map_or_else(Vec::new, |table| {
+                generate_loot_from_handle(
+                    &table,
+                    rand::random(),
+                    &LootContextParameters {
+                        world: Some(&world),
+                        this_entity: Some(piglin),
+                        position: Some(piglin.mob_entity.living_entity.entity.pos.load()),
+                        ..Default::default()
+                    },
+                )
+            })
     }
 
     #[must_use]

@@ -54,6 +54,18 @@ impl FleeSunGoal {
 
         None
     }
+
+    /// Vanilla `setWantedPos`: `true` when there is somewhere to go.
+    pub fn set_wanted_pos(&mut self, mob: &dyn Mob) -> bool {
+        if let Some(pos) = Self::find_hide_pos(mob) {
+            self.wanted_x = pos.x;
+            self.wanted_y = pos.y;
+            self.wanted_z = pos.z;
+            true
+        } else {
+            false
+        }
+    }
 }
 
 impl Goal for FleeSunGoal {
@@ -71,14 +83,7 @@ impl Goal for FleeSunGoal {
             return false;
         }
 
-        if let Some(pos) = Self::find_hide_pos(mob) {
-            self.wanted_x = pos.x;
-            self.wanted_y = pos.y;
-            self.wanted_z = pos.z;
-            true
-        } else {
-            false
-        }
+        self.set_wanted_pos(mob)
     }
 
     fn should_continue(&mut self, mob: &dyn Mob) -> bool {

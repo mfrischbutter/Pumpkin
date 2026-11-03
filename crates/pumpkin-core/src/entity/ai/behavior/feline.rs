@@ -2,7 +2,7 @@
 
 use std::sync::Weak;
 
-use pumpkin_data::entity::EntityType;
+use pumpkin_data::entity::{EntityPose, EntityType};
 use pumpkin_data::item::Item;
 
 use crate::entity::ai::behavior::fleeing::Flee;
@@ -18,10 +18,33 @@ use crate::entity::ai::target_match::TargetMatch;
 use crate::entity::mob::Mob;
 
 pub const TEMPT_ITEMS: &[&Item] = &[&Item::COD, &Item::SALMON];
+/// Vanilla `Cat.TEMPT_SPEED_MOD`.
+const TEMPT_SPEED: f64 = 0.6;
+/// Vanilla `Cat.SPRINT_SPEED_MOD`.
+const SPRINT_SPEED: f64 = 1.33;
 
 #[must_use]
-pub fn tempt_goal() -> Box<TemptGoal> {
-    Box::new(TemptGoal::new(0.6, TEMPT_ITEMS, true))
+pub fn tempt_goal() -> TemptGoal {
+    TemptGoal::new(TEMPT_SPEED, TEMPT_ITEMS, true)
+}
+
+/// Vanilla `Cat.customServerAiStep` and `Ocelot.customServerAiStep`: it creeps at the speed it
+/// is tempted at and sprints at the speed it flees at.
+pub fn update_pose_by_speed(mob: &dyn Mob) {
+    let entity = mob.get_entity();
+    let speed = {
+        let steered = mob.get_mob_entity().steered();
+        let control = steered.move_control();
+        control.has_wanted().then(|| control.get_speed_modifier())
+    };
+    let creeping = speed.is_some_and(|speed| (speed - TEMPT_SPEED).abs() < 1.0E-6);
+    let sprinting = speed.is_some_and(|speed| (speed - SPRINT_SPEED).abs() < 1.0E-6);
+    entity.set_pose(if creeping {
+        EntityPose::Crouching
+    } else {
+        EntityPose::Standing
+    });
+    entity.set_sprinting(sprinting);
 }
 
 /// Shy of players while `gate` holds: untamed cats, wary ocelots.
@@ -42,7 +65,12 @@ pub fn apply_tail(goals: &GoalSelector, mob: Weak<dyn Mob>, first: u8) {
     goals.add_goal(first, Box::new(LeapAtTargetGoal::new(0.3)));
     goals.add_goal(first + 1, Box::new(OcelotAttackGoal::new()));
     goals.add_goal(first + 2, BreedGoal::new(0.8));
-    goals.add_goal(first + 3, Box::new(WanderAroundGoal::new(0.8)));
+    goals.add_goal(
+        first + 3,
+        Box::new(WanderAroundGoal::water_avoiding_with_probability(
+            0.8, 1.0E-5,
+        )),
+    );
     goals.add_goal(
         first + 4,
         LookAtEntityGoal::with_default(mob, &EntityType::PLAYER, 10.0),

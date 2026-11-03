@@ -35,6 +35,12 @@ pub struct TemptGoal {
     watched_pitch: f32,
     cooldown: i32,
     running: bool,
+    /// Only while this holds, vanilla `CatTemptGoal.canUse`: `!isTame`.
+    only_when: Option<fn(&dyn Mob) -> bool>,
+    /// Vanilla `OcelotTemptGoal.canScare`: never scared while this holds.
+    not_scared_when: Option<fn(&dyn Mob) -> bool>,
+    /// Each tick it runs, vanilla `Cat.tick`'s begging.
+    while_running: Option<fn(&dyn Mob)>,
     /// Vanilla `TemptGoal.ForNonPathfinders`: it steers by the move control, no path.
     non_pathfinder: bool,
 }
@@ -89,8 +95,32 @@ impl TemptGoal {
             watched_pitch: 0.0,
             cooldown: 0,
             running: false,
+            only_when: None,
+            not_scared_when: None,
+            while_running: None,
             non_pathfinder: false,
         }
+    }
+
+    /// Vanilla `CatTemptGoal.canUse`: only while `gate` holds.
+    #[must_use]
+    pub const fn only_when(mut self, gate: fn(&dyn Mob) -> bool) -> Self {
+        self.only_when = Some(gate);
+        self
+    }
+
+    /// Vanilla `OcelotTemptGoal.canScare`: never scared while `gate` holds.
+    #[must_use]
+    pub const fn not_scared_when(mut self, gate: fn(&dyn Mob) -> bool) -> Self {
+        self.not_scared_when = Some(gate);
+        self
+    }
+
+    /// Called each tick it runs.
+    #[must_use]
+    pub const fn while_running(mut self, action: fn(&dyn Mob)) -> Self {
+        self.while_running = Some(action);
+        self
     }
 
     /// Vanilla `TemptGoal.ForNonPathfinders`.
@@ -192,12 +222,15 @@ impl Goal for TemptGoal {
             self.cooldown -= 1;
             return false;
         }
+        if self.only_when.is_some_and(|gate| !gate(mob)) {
+            return false;
+        }
         self.target_player = self.find_tempting_player(mob);
         self.target_player.is_some()
     }
 
     fn should_continue(&mut self, mob: &dyn Mob) -> bool {
-        if self.can_scare {
+        if self.can_scare && !self.not_scared_when.is_some_and(|gate| gate(mob)) {
             let Some(player) = self.target_player.clone() else {
                 return false;
             };
@@ -233,6 +266,9 @@ impl Goal for TemptGoal {
     }
 
     fn tick(&mut self, mob: &dyn Mob) {
+        if let Some(action) = self.while_running {
+            action(mob);
+        }
         let Some(player) = &self.target_player else {
             return;
         };

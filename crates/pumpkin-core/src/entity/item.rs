@@ -191,6 +191,12 @@ impl ItemEntity {
         self.pickup_delay.load(Ordering::Relaxed)
     }
 
+    /// Vanilla `!hasPickUpDelay() && isAlive()`, what mobs look for on the ground.
+    #[must_use]
+    pub fn can_be_picked_up_by_mob(&self) -> bool {
+        self.pickup_delay.load(std::sync::atomic::Ordering::Relaxed) == 0 && self.entity.is_alive()
+    }
+
     pub fn set_pickup_delay(&self, pickup_delay: u8) {
         self.pickup_delay.store(pickup_delay, Ordering::Relaxed);
     }

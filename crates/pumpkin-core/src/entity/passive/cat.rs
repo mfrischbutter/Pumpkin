@@ -5,6 +5,7 @@ use std::sync::{
 
 use pumpkin_data::cat_sound_variant::CatSoundVariant;
 use pumpkin_data::cat_variant::CatVariant;
+use pumpkin_data::dye_color::DyeColor;
 use pumpkin_data::entity::{EntityStatus, EntityType};
 use pumpkin_data::item::Item;
 use pumpkin_data::item_stack::ItemStack;
@@ -16,6 +17,7 @@ use rand::RngExt;
 use uuid::Uuid;
 
 use crate::entity::custom_sound::CustomSound;
+use crate::entity::passive::animal::get_mixed_color;
 use crate::entity::{
     Entity, EntityBase,
     ai::behavior::{
@@ -24,8 +26,12 @@ use crate::entity::{
         hunting::{self, Hunt},
     },
     ai::goal::{
-        active_target::TargetCondition, escape_danger::EscapeDangerGoal,
-        follow_owner::FollowOwnerGoal, sit_when_ordered_to::SitWhenOrderedToGoal, swim::SwimGoal,
+        active_target::TargetCondition,
+        cat::{CatLieOnBlockGoal, CatRelaxOnOwnerGoal, CatSitOnBlockGoal},
+        escape_danger::EscapeDangerGoal,
+        follow_owner::FollowOwnerGoal,
+        sit_when_ordered_to::SitWhenOrderedToGoal,
+        swim::SwimGoal,
     },
     ai::target_match::TargetMatch,
     mob::{Mob, MobEntity},
@@ -35,6 +41,7 @@ use crate::entity::{
     },
     player::Player,
 };
+use crate::world::loot::{LootContextParameters, generate_loot_from_handle};
 
 const CAT_FLEES: &[Flee] = &[feline::flee_players(4, is_untamed)];
 
@@ -42,6 +49,39 @@ const CAT_HUNTS: &[Hunt] = &[
     Hunt::new(1, TargetMatch::Type(&EntityType::RABBIT), false).when(TargetCondition::Untamed),
     hunting::baby_turtles(1, false).when(TargetCondition::Untamed),
 ];
+
+/// Vanilla `Cat.tick`: a wild cat begs every 5 seconds while tempted.
+fn beg_for_food(mob: &dyn Mob) {
+    let Some(cat) = mob.cast_any().downcast_ref::<CatEntity>() else {
+        return;
+    };
+    if !cat.is_tame() && cat.get_entity().tick_count.load(Ordering::Relaxed) % 100 == 0 {
+        cat.play_entity_sound(
+            cat.sound_set().beg_for_food_sound(cat.is_baby_cat()),
+            1.0,
+            1.0,
+        );
+    }
+}
+
+/// What a cat brings its owner in the morning, vanilla's loot table `cat_morning_gift`.
+#[must_use]
+pub fn morning_gift(cat: &CatEntity) -> Vec<ItemStack> {
+    let world = cat.get_entity().world.load();
+    world
+        .get_loot_table("minecraft:gameplay/cat_morning_gift")
+        .map_or_else(Vec::new, |table| {
+            generate_loot_from_handle(
+                &table,
+                rand::random(),
+                &LootContextParameters {
+                    world: Some(&world),
+                    position: Some(cat.get_entity().pos.load()),
+                    ..Default::default()
+                },
+            )
+        })
+}
 
 pub struct CatEntity {
     pub mob_entity: MobEntity,
@@ -80,13 +120,22 @@ impl CatEntity {
             goal_selector.add_goal(1, EscapeDangerGoal::new(1.5));
             // Goal 2: SitWhenOrderedToGoal
             goal_selector.add_goal(2, Box::new(SitWhenOrderedToGoal::new()));
-            // TODO: CatRelaxOnOwnerGoal at 3, CatLieOnBlockGoal at 5, CatSitOnBlockGoal at 7.
+            goal_selector.add_goal(3, Box::new(CatRelaxOnOwnerGoal::default()));
             // Goal 4: CatTemptGoal
-            goal_selector.add_goal(4, feline::tempt_goal());
+            goal_selector.add_goal(
+                4,
+                Box::new(
+                    feline::tempt_goal()
+                        .only_when(is_untamed)
+                        .while_running(beg_for_food),
+                ),
+            );
             // Goal 4: CatAvoidEntityGoal (when untamed)
             fleeing::apply(goal_selector, CAT_FLEES);
             // Goal 6: FollowOwnerGoal
+            goal_selector.add_goal(5, Box::new(CatLieOnBlockGoal::new()));
             goal_selector.add_goal(6, FollowOwnerGoal::new(1.0, 10.0, 5.0));
+            goal_selector.add_goal(7, Box::new(CatSitOnBlockGoal::new()));
             // Goal 8-12: LeapAtTarget, OcelotAttack, Breed, Stroll, LookAtPlayer
             feline::apply_tail(goal_selector, mob_weak, 8);
         };
@@ -99,6 +148,14 @@ impl CatEntity {
         };
 
         mob_arc
+    }
+
+    fn sound_set(&self) -> CatSoundVariant {
+        CatSoundVariant::from_id(self.sound_variant.load(Ordering::Relaxed)).unwrap_or_default()
+    }
+
+    fn is_baby_cat(&self) -> bool {
+        self.get_entity().age.load(Ordering::Relaxed) < 0
     }
 
     pub fn get_tame_flags(&self) -> u8 {
@@ -207,6 +264,44 @@ impl CustomSound for CatEntity {
 }
 
 impl Animal for CatEntity {
+    /// Vanilla `Cat.canMate`: both tame.
+    fn can_mate(&self, partner: &dyn EntityBase) -> bool {
+        self.is_tame()
+            && partner
+                .cast_any()
+                .downcast_ref::<Self>()
+                .is_some_and(TamableAnimal::is_tame)
+    }
+
+    /// Vanilla `Cat.getBreedOffspring`: a parent's variant, the owner and a mixed collar.
+    fn get_breed_offspring(&self, partner: &dyn EntityBase) -> Arc<dyn EntityBase> {
+        let entity = self.get_entity();
+        let world = entity.world.load_full();
+        let baby = Self::new(Entity::new(
+            world.clone(),
+            entity.pos.load(),
+            &EntityType::CAT,
+        ));
+        if let Some(partner) = partner.cast_any().downcast_ref::<Self>() {
+            let parent = if self.get_random().random::<bool>() {
+                self
+            } else {
+                partner
+            };
+            baby.set_variant(parent.variant.load(Ordering::Relaxed));
+            if self.is_tame() {
+                baby.set_tame(true, self.get_owner());
+                let collar = get_mixed_color(
+                    &world,
+                    DyeColor::from(self.get_collar_color()),
+                    DyeColor::from(partner.get_collar_color()),
+                );
+                baby.set_collar_color(collar.id());
+            }
+        }
+        baby
+    }
+
     fn is_food(&self, item_stack: &ItemStack) -> bool {
         let item = item_stack.get_item();
         item.has_tag(&tag::Item::MINECRAFT_CAT_FOOD) || item == &Item::COD || item == &Item::SALMON
@@ -220,6 +315,45 @@ impl TamableAnimal for CatEntity {
 }
 
 impl Mob for CatEntity {
+    /// Vanilla `Cat.getAmbientSound`.
+    fn get_ambient_sound(&self) -> Option<pumpkin_data::sound::Sound> {
+        let baby = self.is_baby_cat();
+        let set = self.sound_set();
+        Some(if !self.is_tame() {
+            set.stray_ambient_sound()
+        } else if self.mob_entity.love_ticks.load(Ordering::Relaxed) > 0 {
+            set.purr_sound(baby)
+        } else if self.get_random().random_range(0..4) == 0 {
+            set.purreow_sound(baby)
+        } else {
+            set.ambient_sound(baby)
+        })
+    }
+
+    /// Vanilla `Cat.getAmbientSoundInterval`.
+    fn get_ambient_sound_interval(&self) -> i32 {
+        120
+    }
+
+    /// Vanilla `Cat.customServerAiStep`.
+    fn custom_server_ai_step(&self, _caller: &dyn EntityBase) {
+        feline::update_pose_by_speed(self);
+    }
+
+    /// Vanilla `Cat.handleLieDown`: it purrs while it lies down.
+    fn mob_tick(&self, _caller: &dyn EntityBase) {
+        if (self.is_lying() || self.is_relax_state_one())
+            && self.get_entity().tick_count.load(Ordering::Relaxed) % 5 == 0
+        {
+            let (a, b): (f32, f32) = (self.get_random().random(), self.get_random().random());
+            self.play_entity_sound(
+                self.sound_set().purr_sound(self.is_baby_cat()),
+                0.4f32.mul_add(a - b, 0.6),
+                1.0,
+            );
+        }
+    }
+
     fn as_custom_sound(&self) -> Option<&dyn CustomSound> {
         Some(self)
     }
