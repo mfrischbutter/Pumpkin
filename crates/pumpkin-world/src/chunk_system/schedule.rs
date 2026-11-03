@@ -524,15 +524,44 @@ impl GenerationSchedule {
         newly_created
     }
 
+    /// Features of neighbours overlap, and what they write decides what the next one finds. This
+    /// order keeps a seed's world the same however the chunks get scheduled.
+    pub(crate) fn is_features_order_ready(
+        chunk_map: &HashMap<ChunkPos, ChunkHolder>,
+        pos: ChunkPos,
+    ) -> bool {
+        for dx in -2..=2 {
+            for dz in -2..=2 {
+                if dx > 0 || (dx == 0 && dz >= 0) {
+                    continue;
+                }
+                let neighbor_pos = pos.add_raw(dx, dz);
+                if let Some(holder) = chunk_map.get(&neighbor_pos) {
+                    let effective_target = holder.target_stage.max(holder.dependency_stage);
+                    if effective_target >= StagedChunkEnum::Features
+                        && holder.current_stage < StagedChunkEnum::Features
+                    {
+                        return false;
+                    }
+                }
+            }
+        }
+        true
+    }
+
     fn is_task_ready(&self, pos: ChunkPos, stage: StagedChunkEnum) -> bool {
         let read_radius = stage.get_read_radius();
-        (-read_radius..=read_radius).all(|dx| {
+        let chunks_present = (-read_radius..=read_radius).all(|dx| {
             (-read_radius..=read_radius).all(|dy| {
                 self.chunk_map
                     .get(&pos.add_raw(dx, dy))
                     .is_some_and(|h| h.chunk.is_some())
             })
-        })
+        });
+        if !chunks_present {
+            return false;
+        }
+        stage != StagedChunkEnum::Features || Self::is_features_order_ready(&self.chunk_map, pos)
     }
 
     /// Check if any tasks parked in `waiting_for_chunks` now have all their neighbor
@@ -1516,6 +1545,9 @@ impl GenerationSchedule {
                                 n.in_flight = false;
                             }
                             self.waiting_for_chunks.insert(task.1);
+                            // A chunk or feature neighbour may have finished earlier in this
+                            // same loop iteration, before this task was parked.
+                            self.check_waiting_tasks();
                             continue;
                         }
 
