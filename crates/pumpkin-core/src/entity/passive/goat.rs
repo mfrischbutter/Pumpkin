@@ -1,31 +1,91 @@
 use std::sync::{
-    Arc, Weak,
+    Arc,
     atomic::{AtomicBool, Ordering},
 };
 
 use pumpkin_data::BlockState;
+use pumpkin_data::attributes::Attributes;
+use pumpkin_data::data_component_impl::InstrumentImpl;
 use pumpkin_data::entity::EntityType;
 use pumpkin_data::item::Item;
 use pumpkin_data::item_stack::ItemStack;
 use pumpkin_data::sound::{Sound, SoundCategory};
 use pumpkin_data::tag::{self, Taggable};
 use pumpkin_nbt::compound::NbtCompound;
+use pumpkin_util::math::boundingbox::EntityDimensions;
 use pumpkin_util::math::position::BlockPos;
+use pumpkin_util::math::vector3::Vector3;
+use pumpkin_util::random::RandomImpl;
+use pumpkin_util::random::legacy_rand::LegacyRand;
+use rand::RngExt;
+use std::borrow::Cow;
 
+use super::goat_ai;
+use crate::entity::ai::brain::memory::{MemoryModuleId, PackedMemories, types};
+use crate::entity::ai::brain::sensing::SensorType;
+use crate::entity::ai::brain::{Brain, BrainProvider};
+use crate::entity::ai::pathfinder::node::PathType;
+use crate::entity::item::ItemEntity;
+use crate::entity::mob::spawn::SpawnGroupData;
 use crate::entity::{
     Entity, EntityBase,
     ageable::{AgeableData, AgeableMob},
-    ai::goal::{
-        breed::BreedGoal, escape_danger::EscapeDangerGoal, follow_parent::FollowParentGoal,
-        look_around::RandomLookAroundGoal, look_at_entity::LookAtEntityGoal, swim::SwimGoal,
-        tempt::TemptGoal, wander_around::WanderAroundGoal,
-    },
+    custom_sound::CustomSound,
     mob::{Mob, MobEntity},
     passive::animal::Animal,
     player::Player,
 };
+use crate::item::items::bucket::fill_bucket_stack;
+use crate::world::World;
 
-const TEMPT_ITEMS: &[&Item] = &[&Item::WHEAT];
+/// Vanilla `Goat.GOAT_FALL_DAMAGE_REDUCTION`.
+const FALL_DAMAGE_REDUCTION: f32 = 10.0;
+/// Vanilla `Goat.GOAT_SCREAMING_CHANCE`.
+const SCREAMING_CHANCE: f64 = 0.02;
+/// Vanilla `Goat.UNIHORN_CHANCE`.
+const UNIHORN_CHANCE: f32 = 0.1;
+/// Vanilla `Goat.ADULT_ATTACK_DAMAGE`.
+const ADULT_ATTACK_DAMAGE: f64 = 2.0;
+/// Vanilla `Goat.BABY_ATTACK_DAMAGE`.
+const BABY_ATTACK_DAMAGE: f64 = 1.0;
+/// Vanilla `Goat.BABY_DIMENSIONS`.
+const BABY_DIMENSIONS: EntityDimensions = EntityDimensions {
+    width: 0.45,
+    height: 0.65,
+    eye_height: 0.593_75,
+};
+/// The tag `minecraft:regular_goat_horns`, in the order of its data file.
+const REGULAR_HORNS: [&str; 4] = [
+    "minecraft:ponder_goat_horn",
+    "minecraft:sing_goat_horn",
+    "minecraft:seek_goat_horn",
+    "minecraft:feel_goat_horn",
+];
+/// The tag `minecraft:screaming_goat_horns`, in the order of its data file.
+const SCREAMING_HORNS: [&str; 4] = [
+    "minecraft:admire_goat_horn",
+    "minecraft:call_goat_horn",
+    "minecraft:yearn_goat_horn",
+    "minecraft:dream_goat_horn",
+];
+
+const MEMORIES: [MemoryModuleId; 15] = [
+    types::LOOK_TARGET.id(),
+    types::WALK_TARGET.id(),
+    types::CANT_REACH_WALK_TARGET_SINCE.id(),
+    types::PATH.id(),
+    types::BREED_TARGET.id(),
+    types::IS_PANICKING.id(),
+    types::TEMPTING_PLAYER.id(),
+    types::TEMPTATION_COOLDOWN_TICKS.id(),
+    types::IS_TEMPTED.id(),
+    types::LONG_JUMP_COOLDOWN_TICKS.id(),
+    types::LONG_JUMP_MID_JUMP.id(),
+    types::RAM_COOLDOWN_TICKS.id(),
+    types::RAM_TARGET.id(),
+    types::NEAREST_VISIBLE_LIVING_ENTITIES.id(),
+    types::NEAREST_VISIBLE_ADULT.id(),
+];
 
 pub struct GoatEntity {
     pub mob_entity: MobEntity,
@@ -37,37 +97,25 @@ pub struct GoatEntity {
 
 impl GoatEntity {
     pub fn new(entity: Entity) -> Arc<Self> {
-        let mob_entity = MobEntity::new(entity);
-        let goat = Self {
+        let mut mob_entity = MobEntity::new(entity);
+        let navigator = mob_entity
+            .navigator
+            .get_mut()
+            .unwrap_or_else(std::sync::PoisonError::into_inner);
+        navigator.set_can_float(true);
+        navigator.set_pathfinding_malus(PathType::PowderSnow, -1.0);
+        navigator.set_pathfinding_malus(PathType::DangerPowderSnow, -1.0);
+        let living = &mob_entity.living_entity;
+        living.set_attribute_base(&Attributes::MAX_HEALTH, 10.0);
+        living.set_attribute_base(&Attributes::MOVEMENT_SPEED, 0.2);
+        living.set_attribute_base(&Attributes::ATTACK_DAMAGE, ADULT_ATTACK_DAMAGE);
+        Arc::new(Self {
             mob_entity,
             ageable_data: AgeableData::default(),
             is_screaming: AtomicBool::new(false),
             has_left_horn: AtomicBool::new(true),
             has_right_horn: AtomicBool::new(true),
-        };
-        let mob_arc = Arc::new(goat);
-        let mob_weak: Weak<dyn Mob> = {
-            let mob_arc: Arc<dyn Mob> = mob_arc.clone();
-            Arc::downgrade(&mob_arc)
-        };
-
-        {
-            let goal_selector = &mob_arc.mob_entity.goals_selector;
-
-            goal_selector.add_goal(0, Box::new(SwimGoal::default()));
-            goal_selector.add_goal(1, EscapeDangerGoal::new(2.0));
-            goal_selector.add_goal(2, BreedGoal::new(1.0));
-            goal_selector.add_goal(3, Box::new(TemptGoal::new(1.25, TEMPT_ITEMS, false)));
-            goal_selector.add_goal(4, Box::new(FollowParentGoal::new(1.25)));
-            goal_selector.add_goal(6, Box::new(WanderAroundGoal::new(1.0)));
-            goal_selector.add_goal(
-                7,
-                LookAtEntityGoal::with_default(mob_weak, &EntityType::PLAYER, 6.0),
-            );
-            goal_selector.add_goal(8, Box::new(RandomLookAroundGoal::default()));
-        };
-
-        mob_arc
+        })
     }
 
     #[must_use]
@@ -111,22 +159,219 @@ impl GoatEntity {
             has_horn,
         );
     }
+
+    /// Vanilla `Goat.createHorn`: one goat always gives the same horn.
+    fn create_horn(&self) -> ItemStack {
+        let uuid = self.get_entity().entity_uuid.as_u128();
+        let mixed = ((uuid >> 64) as u64) ^ (uuid as u64);
+        let hash = ((mixed >> 32) as u32) ^ (mixed as u32);
+        let mut random = LegacyRand::from_seed(u64::from(hash as i32 as u32));
+        let horns = if self.is_screaming() {
+            SCREAMING_HORNS
+        } else {
+            REGULAR_HORNS
+        };
+        let horn = horns[random.next_bounded_i32(4) as usize];
+        let mut stack = ItemStack::new(1, &Item::GOAT_HORN);
+        stack.set_data_component(InstrumentImpl {
+            instrument: Cow::Borrowed(horn),
+        });
+        stack
+    }
+
+    /// Vanilla `Goat.dropHorn`.
+    #[must_use]
+    pub fn drop_horn(&self) -> bool {
+        if self.is_baby() {
+            return false;
+        }
+        let (left, right) = (self.has_left_horn(), self.has_right_horn());
+        if !left && !right {
+            return false;
+        }
+        let mut rng = self.get_random();
+        let drop_left = if !left {
+            false
+        } else if !right {
+            true
+        } else {
+            rng.random_bool(0.5)
+        };
+        if drop_left {
+            self.set_has_left_horn(false);
+        } else {
+            self.set_has_right_horn(false);
+        }
+        let entity = self.get_entity();
+        let velocity = Vector3::new(
+            f64::from(rng.random_range(-0.2f32..0.2)),
+            f64::from(rng.random_range(0.3f32..0.7)),
+            f64::from(rng.random_range(-0.2f32..0.2)),
+        );
+        let world = entity.world.load_full();
+        let item = ItemEntity::new_with_velocity(
+            Entity::new(world.clone(), entity.pos.load(), &EntityType::ITEM),
+            self.create_horn(),
+            velocity,
+            10,
+        );
+        world.spawn_entity(Arc::new(item));
+        true
+    }
+
+    fn eating_sound(&self) -> Sound {
+        if self.is_screaming() {
+            Sound::EntityGoatScreamingEat
+        } else {
+            Sound::EntityGoatEat
+        }
+    }
+
+    fn ambient_sound(&self) -> Sound {
+        if self.is_screaming() {
+            Sound::EntityGoatScreamingAmbient
+        } else {
+            Sound::EntityGoatAmbient
+        }
+    }
+}
+
+impl CustomSound for GoatEntity {
+    fn hurt_sound(&self) -> Option<Sound> {
+        Some(if self.is_screaming() {
+            Sound::EntityGoatScreamingHurt
+        } else {
+            Sound::EntityGoatHurt
+        })
+    }
+
+    fn death_sound(&self) -> Option<Sound> {
+        Some(if self.is_screaming() {
+            Sound::EntityGoatScreamingDeath
+        } else {
+            Sound::EntityGoatDeath
+        })
+    }
 }
 
 impl AgeableMob for GoatEntity {
     fn get_ageable_data(&self) -> &AgeableData {
         &self.ageable_data
     }
+
+    /// Vanilla `Goat.ageBoundaryReached`, with `getDefaultDimensions` of a baby.
+    fn age_boundary_reached(&self) {
+        let living = &self.mob_entity.living_entity;
+        let baby = self.is_baby();
+        living.set_attribute_base(
+            &Attributes::ATTACK_DAMAGE,
+            if baby {
+                BABY_ATTACK_DAMAGE
+            } else {
+                ADULT_ATTACK_DAMAGE
+            },
+        );
+        living.entity.set_default_dimensions(if baby {
+            BABY_DIMENSIONS
+        } else {
+            Entity::type_dimensions(living.entity.entity_type)
+        });
+    }
 }
 
 impl Animal for GoatEntity {
     fn is_food(&self, item_stack: &ItemStack) -> bool {
         item_stack.item.has_tag(&tag::Item::MINECRAFT_GOAT_FOOD)
-            || TEMPT_ITEMS.iter().any(|i| i.id == item_stack.item.id)
+    }
+
+    /// Vanilla `Goat.getBreedOffspring`.
+    fn get_breed_offspring(&self, partner: &dyn EntityBase) -> Arc<dyn EntityBase> {
+        let entity = self.get_entity();
+        let baby = Self::new(Entity::new(
+            entity.world.load_full(),
+            entity.pos.load(),
+            &EntityType::GOAT,
+        ));
+        let mut rng = self.get_random();
+        let parent_screams = if rng.random_bool(0.5) {
+            self.is_screaming()
+        } else {
+            partner
+                .cast_any()
+                .downcast_ref::<Self>()
+                .is_some_and(Self::is_screaming)
+        };
+        baby.set_screaming(parent_screams || rng.random_bool(SCREAMING_CHANCE));
+        baby.mob_entity
+            .with_brain(baby.as_ref(), |brain| goat_ai::init_memories(brain));
+        baby
     }
 }
 
 impl Mob for GoatEntity {
+    fn make_brain(&self, packed: &PackedMemories) -> Brain {
+        BrainProvider {
+            memory_types: &MEMORIES,
+            sensor_types: &[
+                SensorType::NearestLivingEntities,
+                SensorType::NearestPlayers,
+                SensorType::NearestItems,
+                SensorType::NearestAdult,
+                SensorType::HurtBy,
+                SensorType::FoodTemptations,
+            ],
+            activities: goat_ai::activities,
+        }
+        .make_brain(self, packed)
+    }
+
+    /// Vanilla `Goat.customServerAiStep`.
+    fn custom_server_ai_step(&self, _caller: &dyn EntityBase) {
+        self.mob_entity.tick_brain(self);
+        self.mob_entity
+            .with_brain(self, |brain| goat_ai::update_activity(brain));
+    }
+
+    /// Vanilla `Goat.finalizeSpawn`.
+    fn finalize_spawn(
+        &self,
+        _world: &Arc<World>,
+        group_data: Option<SpawnGroupData>,
+    ) -> Option<SpawnGroupData> {
+        self.mob_entity
+            .with_brain(self, |brain| goat_ai::init_memories(brain));
+        let mut rng = self.get_random();
+        self.set_screaming(rng.random_bool(SCREAMING_CHANCE));
+        self.age_boundary_reached();
+        if !self.is_baby() && rng.random::<f32>() < UNIHORN_CHANCE {
+            if rng.random_bool(0.5) {
+                self.set_has_left_horn(false);
+            } else {
+                self.set_has_right_horn(false);
+            }
+        }
+        self.finalize_spawn_super(group_data)
+    }
+
+    /// Vanilla `Goat.getMaxHeadYRot`.
+    fn get_max_head_rotation(&self) -> f32 {
+        15.0
+    }
+
+    /// Vanilla `Goat.calculateFallDamage`.
+    fn mob_fall_damage_reduction(&self) -> f32 {
+        FALL_DAMAGE_REDUCTION
+    }
+
+    /// Vanilla `Goat.getAmbientSound`.
+    fn get_ambient_sound(&self) -> Option<Sound> {
+        Some(self.ambient_sound())
+    }
+
+    fn as_custom_sound(&self) -> Option<&dyn CustomSound> {
+        Some(self)
+    }
+
     fn mob_play_step_sound(&self, _pos: &BlockPos, _state: &BlockState) {
         self.play_entity_sound(Sound::EntityGoatStep, 0.15, 1.0);
     }
@@ -155,6 +400,7 @@ impl Mob for GoatEntity {
         if let Some(right) = nbt.get_bool("HasRightHorn") {
             self.set_has_right_horn(right);
         }
+        self.age_boundary_reached();
     }
 
     fn get_mob_entity(&self) -> &MobEntity {
@@ -181,26 +427,31 @@ impl Mob for GoatEntity {
         );
     }
 
+    /// Vanilla `Goat.mobInteract`.
     fn mob_interact(&self, player: &Arc<Player>, item_stack: &mut ItemStack) -> bool {
-        let item = item_stack.get_item();
-        if item == &Item::BUCKET && !self.is_baby() {
-            item_stack.decrement_unless_creative(player.gamemode.load(), 1);
-            let entity = self.get_entity();
-            let world = entity.world.load();
+        if item_stack.get_item() == &Item::BUCKET && !self.is_baby() {
             let sound = if self.is_screaming() {
                 Sound::EntityGoatScreamingMilk
             } else {
                 Sound::EntityGoatMilk
             };
-            world.play_sound(sound, SoundCategory::Neutral, &entity.pos.load());
+            self.get_entity().world.load().play_sound_expect(
+                player,
+                sound,
+                SoundCategory::Players,
+                &player.position(),
+            );
+            fill_bucket_stack(item_stack, player, &Item::MILK_BUCKET);
             return true;
         }
-
-        let ambient_sound = if self.is_screaming() {
-            Sound::EntityGoatScreamingAmbient
-        } else {
-            Sound::EntityGoatAmbient
-        };
-        self.animal_interact(player, item_stack, ambient_sound)
+        let food = self.is_food(item_stack);
+        let used = self.animal_interact(player, item_stack, self.ambient_sound());
+        if used && food {
+            self.play_eating_sound(self.eating_sound());
+        }
+        used
     }
 }
+
+/// Vanilla `Goat.LONG_JUMPING_DIMENSION_SCALE_FACTOR`.
+pub const LONG_JUMPING_SCALE: f32 = 0.7;

@@ -1927,6 +1927,12 @@ impl Entity {
             .default_dimensions
             .load()
             .unwrap_or_else(|| Self::type_dimensions(self.entity_type));
+        // Vanilla `Goat.getDefaultDimensions`.
+        if self.entity_type == &EntityType::GOAT && pose == EntityPose::LongJumping {
+            return dimensions
+                .scale(passive::goat::LONG_JUMPING_SCALE)
+                .scale(self.scale.load());
+        }
         dimensions.scale(self.scale.load())
     }
 

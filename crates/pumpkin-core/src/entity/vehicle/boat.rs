@@ -290,13 +290,14 @@ impl EntityBase for BoatEntity {
         }
     }
 
+    /// Vanilla `AbstractBoat.getControllingPassenger`: only a player steers.
     fn get_controlling_passenger(&self) -> Option<Arc<dyn EntityBase>> {
         self.get_entity()
             .passengers
             .lock()
             .unwrap_or_else(std::sync::PoisonError::into_inner)
             .first()
-            .filter(|passenger| passenger.get_living_entity().is_some())
+            .filter(|passenger| passenger.get_player().is_some())
             .cloned()
     }
 

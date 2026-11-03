@@ -538,7 +538,7 @@ fn long_jump_activity() -> ActivityData {
                         max_height: MAX_LONG_JUMP_HEIGHT,
                         max_width: MAX_LONG_JUMP_WIDTH,
                         max_velocity_multiplier: MAX_JUMP_VELOCITY_MULTIPLIER,
-                        jump_sound: Sound::EntityFrogLongJump,
+                        jump_sound: |_| Sound::EntityFrogLongJump,
                         acceptable_landing_spot: is_acceptable_landing_spot,
                     })
                     .preferring(&tag::Block::MINECRAFT_FROG_PREFER_JUMP_TO, 0.5),

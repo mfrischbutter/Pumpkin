@@ -121,13 +121,34 @@ struct PossibleJump {
     weight: i32,
 }
 
+/// Vanilla `LongJumpToRandomPos.defaultAcceptableLandingSpot`.
+#[must_use]
+pub fn default_acceptable_landing_spot(mob: &dyn Mob, target: &BlockPos) -> bool {
+    let entity = mob.get_entity();
+    if !entity
+        .world
+        .load()
+        .get_block_state(&target.down())
+        .is_solid_render()
+    {
+        return false;
+    }
+    let mob_entity = mob.get_mob_entity();
+    let mut navigator = mob_entity
+        .navigator
+        .lock()
+        .unwrap_or_else(std::sync::PoisonError::into_inner);
+    let path_type = navigator.get_path_type(&mob_entity.living_entity, *target);
+    navigator.get_pathfinding_malus(path_type) == 0.0
+}
+
 /// What a species needs to say about its long jumps.
 pub struct LongJumpSettings {
     pub cooldown: JumpCooldown,
     pub max_height: i32,
     pub max_width: i32,
     pub max_velocity_multiplier: f32,
-    pub jump_sound: Sound,
+    pub jump_sound: fn(&dyn Mob) -> Sound,
     pub acceptable_landing_spot: fn(&dyn Mob, &BlockPos) -> bool,
 }
 
@@ -408,7 +429,7 @@ impl Behavior for LongJumpToRandomPos {
         living.entity.set_velocity(jump * (boosted / length));
         tick.state.set(types::LONG_JUMP_MID_JUMP, true);
         tick.mob
-            .play_entity_sound(self.settings.jump_sound, 1.0, 1.0);
+            .play_entity_sound((self.settings.jump_sound)(tick.mob), 1.0, 1.0);
     }
 
     fn debug_name(&self) -> &'static str {
