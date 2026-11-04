@@ -22,8 +22,8 @@ use crate::{
 /// can be placed.
 pub struct BridgeEndPiece {
     pub piece: NetherFortressPiece,
-    /// Seed used so the crumbling geometry is deterministic per world seed.
-    pub seed: u32,
+    /// Vanilla's `selfSeed`, drawn at creation, which the crumbling geometry comes from.
+    pub seed: i32,
 }
 
 impl BridgeEndPiece {
@@ -42,7 +42,7 @@ impl BridgeEndPiece {
             return None;
         }
 
-        let seed = random.next_i32() as u32;
+        let seed = random.next_i32();
         let mut piece = NetherFortressPiece::new(
             StructurePieceType::NetherFortressBridgeEnd,
             chain_length,
@@ -77,9 +77,9 @@ impl StructurePieceBase for BridgeEndPiece {
         let p = &self.piece.piece;
         let nb = Block::NETHER_BRICKS.default_state;
 
-        // Use a seeded local random so geometry is deterministic.
+        // Vanilla widens the int seed with its sign.
         let mut rng =
-            pumpkin_util::random::legacy_rand::LegacyRand::from_seed((self.seed as i64) as u64);
+            pumpkin_util::random::legacy_rand::LegacyRand::from_seed(i64::from(self.seed) as u64);
 
         for i in 0..=4i32 {
             for j in 3..=4i32 {
