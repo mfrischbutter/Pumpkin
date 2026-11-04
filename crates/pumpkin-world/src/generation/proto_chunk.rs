@@ -437,6 +437,13 @@ impl ProtoChunk {
             .blending_data
             .clone_from(&chunk_data.blending_data);
 
+        // A chunk saved after its terrain keeps its scheduled ticks and post-processing marks
+        // until it is full; one saved before generates them again with its terrain.
+        let terrain_done = StagedChunkEnum::from(chunk_data.status) >= StagedChunkEnum::Carvers;
+        if terrain_done {
+            proto_chunk.fluid_ticks = chunk_data.fluid_ticks.to_vec();
+            proto_chunk.block_ticks = chunk_data.block_ticks.to_vec();
+        }
         // Chunks loaded from disk carry their block entities in the chunk data.
         // Keep them so the world can create the block entities when the chunk
         // becomes active, and so saving the chunk again does not drop them.
@@ -447,15 +454,17 @@ impl ProtoChunk {
             .values()
             .cloned()
             .collect();
-        for (section, offsets) in chunk_data
-            .post_processing
-            .lock()
-            .unwrap_or_else(std::sync::PoisonError::into_inner)
-            .iter()
-            .enumerate()
-        {
-            if let Some(target) = proto_chunk.post_processing.get_mut(section) {
-                target.extend_from_slice(offsets);
+        if terrain_done {
+            for (section, offsets) in chunk_data
+                .post_processing
+                .lock()
+                .unwrap_or_else(std::sync::PoisonError::into_inner)
+                .iter()
+                .enumerate()
+            {
+                if let Some(target) = proto_chunk.post_processing.get_mut(section) {
+                    target.extend_from_slice(offsets);
+                }
             }
         }
 

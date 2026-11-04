@@ -71,7 +71,8 @@ impl From<ChunkStatus> for StagedChunkEnum {
             ChunkStatus::StructureStarts => Self::StructureStart,
             ChunkStatus::StructureReferences => Self::StructureReferences,
             ChunkStatus::Biomes => Self::Biomes,
-            ChunkStatus::Terrain => Self::Noise,
+            // Vanilla's `terrain` status is noise, surface and carvers in one step.
+            ChunkStatus::Terrain => Self::Carvers,
             ChunkStatus::Features => Self::Features,
             ChunkStatus::InitializeLight | ChunkStatus::Light => Self::Lighting,
             ChunkStatus::Spawn => Self::Spawn,
@@ -86,11 +87,13 @@ impl From<StagedChunkEnum> for ChunkStatus {
         match status {
             StagedChunkEnum::Empty => Self::Empty,
             StagedChunkEnum::StructureStart => Self::StructureStarts,
-            StagedChunkEnum::StructureReferences => Self::StructureReferences,
             StagedChunkEnum::Biomes => Self::Biomes,
-            StagedChunkEnum::Noise | StagedChunkEnum::Surface | StagedChunkEnum::Carvers => {
-                Self::Terrain
-            }
+            // A chunk part way through vanilla's single `terrain` step is saved before it, so it
+            // generates its terrain again instead of running surface and carvers twice.
+            StagedChunkEnum::StructureReferences
+            | StagedChunkEnum::Noise
+            | StagedChunkEnum::Surface => Self::StructureReferences,
+            StagedChunkEnum::Carvers => Self::Terrain,
             StagedChunkEnum::Features => Self::Features,
             StagedChunkEnum::Lighting => Self::Light,
             StagedChunkEnum::Spawn => Self::Spawn,

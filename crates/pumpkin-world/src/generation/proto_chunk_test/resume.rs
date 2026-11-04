@@ -235,10 +235,15 @@ fn heightmap_roundtrip_through_chunk_data_resume() {
     let Chunk::Level(chunk_data) = staged else {
         unreachable!()
     };
-    assert_eq!(chunk_data.status, pumpkin_data::chunk::ChunkStatus::Terrain);
+    // Vanilla has one `terrain` status for noise, surface and carvers: a chunk part way through
+    // it is saved before it and generates its terrain again.
+    assert_eq!(
+        chunk_data.status,
+        pumpkin_data::chunk::ChunkStatus::StructureReferences
+    );
 
     let mut resumed = ProtoChunk::from_chunk_data(&chunk_data, &world_gen);
-    assert_eq!(resumed.stage, StagedChunkEnum::Noise);
+    assert_eq!(resumed.stage, StagedChunkEnum::StructureReferences);
 
     let mut height_mismatches = 0;
     for z in 0..16i32 {
@@ -256,6 +261,7 @@ fn heightmap_roundtrip_through_chunk_data_resume() {
     );
 
     let surface_biomes = surface_biomes(&world_gen, cx, cz);
+    resumed.step_to_noise(generator);
     resumed.step_to_surface(generator, &surface_biomes);
 
     let mut fresh = ProtoChunk::new(cx, cz, &world_gen);
@@ -288,4 +294,40 @@ fn heightmap_roundtrip_through_chunk_data_resume() {
         surface_mismatches, 0,
         "resumed chunk surface differs from uninterrupted generation (stone-trail bug)"
     );
+}
+
+// A chunk saved after its terrain resumes at features: surface and carvers do not run twice.
+#[test]
+fn terrain_resumes_after_carvers_with_its_ticks() {
+    use pumpkin_config::lighting::LightingEngineConfig;
+
+    let seed = Seed(1779920288596261407);
+    let (cx, cz) = (67i32, 63i32);
+    let world_gen = get_world_gen(seed, Dimension::OVERWORLD, false, Vec::new(), String::new());
+    let WorldGenerator::Noise(generator) = &*world_gen else {
+        unreachable!()
+    };
+
+    let mut proto = ProtoChunk::new(cx, cz, &world_gen);
+    proto.step_to_biomes(generator);
+    proto.set_structure_starts(generator);
+    proto.set_structure_references(generator);
+    proto.step_to_noise(generator);
+    proto.step_to_surface(generator, &surface_biomes(&world_gen, cx, cz));
+    proto.step_to_carvers(generator);
+    let (x, y, z) = (cx * 16 + 3, 40, cz * 16 + 5);
+    proto.schedule_fluid_tick(x, y, z, &pumpkin_data::fluid::Fluid::WATER, 0);
+    proto.schedule_block_tick(x, y + 1, z, &pumpkin_data::Block::OAK_LEAVES, 1);
+
+    let mut staged = Chunk::Proto(Box::new(proto));
+    staged.upgrade_to_level_chunk(&Dimension::OVERWORLD, &LightingEngineConfig::Default);
+    let Chunk::Level(chunk_data) = staged else {
+        unreachable!()
+    };
+    assert_eq!(chunk_data.status, pumpkin_data::chunk::ChunkStatus::Terrain);
+
+    let resumed = ProtoChunk::from_chunk_data(&chunk_data, &world_gen);
+    assert_eq!(resumed.stage, StagedChunkEnum::Carvers);
+    assert_eq!(resumed.fluid_ticks.len(), 1);
+    assert_eq!(resumed.block_ticks.len(), 1);
 }
