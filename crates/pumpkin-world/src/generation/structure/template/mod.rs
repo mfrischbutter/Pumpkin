@@ -608,6 +608,12 @@ fn place_entities(
             NbtTag::List(vec![pos.x.into(), pos.y.into(), pos.z.into()]),
         );
         nbt.child_tags.remove("UUID");
+        if nbt.child_tags.contains_key("block_pos") {
+            nbt.put(
+                "block_pos",
+                NbtTag::IntArray(vec![block_pos.x, block_pos.y, block_pos.z]),
+            );
+        }
 
         // `Entity.rotate` and `Entity.mirror` on the template's yaw.
         if let Some(rotation_nbt) = nbt.get_list("Rotation")
