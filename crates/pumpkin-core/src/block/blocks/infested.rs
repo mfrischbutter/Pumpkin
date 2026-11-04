@@ -8,7 +8,7 @@ use pumpkin_data::{
 use pumpkin_util::{GameMode, math::vector3::Vector3};
 
 use crate::{
-    block::{BlockBehaviour, BlockMetadata, BrokenArgs, OnPlaceArgs},
+    block::{BlockBehaviour, BlockMetadata, BrokenArgs, ExplodeArgs, OnPlaceArgs},
     entity::r#type::from_type,
     world::World,
 };
@@ -150,6 +150,14 @@ impl BlockBehaviour for InfestedBlock {
             return;
         }
         spawn_infestation(args.world, args.position);
+    }
+
+    /// Vanilla `BlockBehaviour.onExplosionHit` runs `InfestedBlock.spawnAfterBreak` with an empty
+    /// tool, so only `GameRules.BLOCK_DROPS` holds the silverfish back.
+    fn explode(&self, args: ExplodeArgs<'_>) {
+        if args.world.level_info.load().game_rules.block_drops {
+            spawn_infestation(args.world, args.position);
+        }
     }
 }
 
