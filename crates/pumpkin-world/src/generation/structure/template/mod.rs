@@ -291,12 +291,14 @@ pub fn place_template_with_options(
                 }
             }
 
-            // Vanilla seeds the loot of every container the template gives data, from the
-            // placement's random in placement order.
-            if block_entity_nbt.is_some()
-                && block_entity_id.is_some_and(|id| RANDOMIZABLE_CONTAINERS.contains(&id))
+            // Vanilla draws a loot seed for every container the template gives data, from the
+            // placement's random in placement order; one without a loot table does not keep it.
+            if block_entity_nbt.is_some() && block_entity_id.is_some_and(is_randomizable_container)
             {
-                placed_nbt.put_long("LootTableSeed", random.next_i64());
+                let seed = random.next_i64();
+                if placed_nbt.get_string("LootTable").is_some() {
+                    placed_nbt.put_long("LootTableSeed", seed);
+                }
             }
 
             placer.add_block_entity(placed_nbt);
@@ -431,19 +433,6 @@ pub(crate) fn get_block_entity_id(block_name: &str) -> Option<&'static str> {
     let name = block_name.strip_prefix("minecraft:").unwrap_or(block_name);
     block_entity_id(pumpkin_data::Block::from_name(name)?)
 }
-
-/// The block entities vanilla's `RandomizableContainer` covers.
-const RANDOMIZABLE_CONTAINERS: [&str; 9] = [
-    "minecraft:chest",
-    "minecraft:trapped_chest",
-    "minecraft:barrel",
-    "minecraft:dispenser",
-    "minecraft:dropper",
-    "minecraft:hopper",
-    "minecraft:shulker_box",
-    "minecraft:crafter",
-    "minecraft:decorated_pot",
-];
 
 /// [`get_block_entity_id`] for a block.
 pub(crate) fn block_entity_id(block: &pumpkin_data::Block) -> Option<&'static str> {

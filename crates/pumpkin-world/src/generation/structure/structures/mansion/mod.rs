@@ -218,7 +218,7 @@ const fn relative(position: Vector3<i32>, direction: Direction, distance: i32) -
     )
 }
 
-struct MansionTemplatePiece {
+pub(crate) struct MansionTemplatePiece {
     piece: StructurePiece,
     template: Arc<StructureTemplate>,
     template_position: Vector3<i32>,
@@ -488,13 +488,20 @@ impl StructurePieceBase for MansionTemplatePiece {
         seed: i64,
         chunk_box: &BlockBox,
     ) {
-        let mut region_random = region_random(seed, chunk);
+        // Vanilla's allay count draws from the `WorldGenRegion`'s random; a placement outside of
+        // world generation has none and uses the region random's start for the chunk.
+        let taken = chunk.region_random.take();
+        let in_region = taken.is_some();
+        let mut region_random = taken.unwrap_or_else(|| region_random(seed, chunk));
         self.place_in_chunk(chunk, random, &mut region_random, chunk_box);
+        if in_region {
+            chunk.region_random = Some(region_random);
+        }
     }
 }
 
-/// Stand-in for vanilla's `level.getRandom()` while generating, the region's random, which the
-/// allay count draws from: the level's `minecraft:worldgen_region_random` factory at the chunk.
+/// The level's `minecraft:worldgen_region_random` factory at the chunk, vanilla's region random
+/// before anything drew from it.
 fn region_random(seed: i64, chunk: &ProtoChunk) -> RandomGenerator {
     RandomGenerator::Xoroshiro(Xoroshiro::from_seed(seed as u64))
         .next_splitter()

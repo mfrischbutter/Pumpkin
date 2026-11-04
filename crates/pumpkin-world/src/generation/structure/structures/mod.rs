@@ -766,8 +766,16 @@ impl StructurePiecesCollector {
                 piece.place(chunk, block_registry, random, seed, &chunk_box);
             }
         }
-        // Vanilla's `Structure.afterPlace`, which the desert pyramid overrides.
+        // Vanilla's `Structure.afterPlace`, which the desert pyramid and the woodland mansion
+        // override.
         desert_pyramid::after_place(&self.pieces, chunk, &chunk_box, seed);
+        if self
+            .pieces
+            .iter()
+            .any(|piece| piece.as_any().is::<mansion::MansionTemplatePiece>())
+        {
+            mansion::after_place(self, chunk, &chunk_box);
+        }
     }
 
     pub fn shift(&mut self, y_offset: i32) {
