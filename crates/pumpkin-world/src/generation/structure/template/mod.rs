@@ -423,7 +423,8 @@ pub(crate) fn place_template_entities(
 }
 
 /// The block entity a block owns, as the id its NBT carries (`minecraft:<type>`): from the block's
-/// state data like the server's `block_entity_name`, beds by their tag.
+/// state data like the server's `block_entity_name`. Beds have none in vanilla 26.3, though
+/// the server gives a placed bed one for Bedrock and older Java clients.
 pub(crate) fn get_block_entity_id(block_name: &str) -> Option<&'static str> {
     let name = block_name.strip_prefix("minecraft:").unwrap_or(block_name);
     block_entity_id(pumpkin_data::Block::from_name(name)?)
@@ -437,12 +438,8 @@ pub(crate) fn block_entity_id(block: &pumpkin_data::Block) -> Option<&'static st
             .map(|name| format!("minecraft:{name}"))
             .collect()
     });
-    if let Some(id) = IDS.get(usize::from(block.default_state.block_entity_type)) {
-        return Some(id);
-    }
-    (pumpkin_data::tag::Taggable::has_tag(block, &pumpkin_data::tag::Block::MINECRAFT_BEDS)
-        || block == &pumpkin_data::Block::STRAW_BED)
-        .then_some("minecraft:bed")
+    IDS.get(usize::from(block.default_state.block_entity_type))
+        .map(String::as_str)
 }
 
 /// Vanilla's `DUMMY` block entity: a block entity block set during generation gets an empty
