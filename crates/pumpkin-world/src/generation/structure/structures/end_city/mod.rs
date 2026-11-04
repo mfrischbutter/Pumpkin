@@ -2,7 +2,7 @@ mod layout;
 
 use std::sync::{Arc, Mutex};
 
-use pumpkin_data::{BlockDirection, Mirror, Rotation, item::Item, item_stack::ItemStack};
+use pumpkin_data::{BlockDirection, Rotation, item::Item, item_stack::ItemStack};
 use pumpkin_nbt::{compound::NbtCompound, tag::NbtTag};
 use pumpkin_util::{
     math::{block_box::BlockBox, position::BlockPos, vector3::Vector3},
@@ -17,7 +17,10 @@ use crate::{
             StructureGenerator, StructureGeneratorContext, StructurePiece, StructurePieceBase,
             StructurePiecesCollector, StructurePosition,
         },
-        template::{BlockStateResolver, PaletteEntry, get_block_entity_id},
+        template::{
+            StructurePlaceSettings, place_template_piece, processor::StructureProcessor,
+            set_block_entity_loot_table,
+        },
     },
     world::WorldPortalExt,
 };
@@ -73,104 +76,19 @@ impl StructureGenerator for EndCityGenerator {
 struct EndCityTemplatePiece {
     piece: StructurePiece,
     descriptor: PieceDescriptor,
+    place_settings: StructurePlaceSettings,
 }
 
 impl EndCityTemplatePiece {
-    const fn new(descriptor: PieceDescriptor) -> Self {
+    fn new(descriptor: PieceDescriptor) -> Self {
         Self {
             piece: StructurePiece::new(StructurePieceType::EndCity, descriptor.bounding_box, 0),
+            place_settings: make_settings(descriptor.overwrite, descriptor.rotation),
             descriptor,
         }
     }
 
-    const fn world_position(&self, local: Vector3<i32>) -> Vector3<i32> {
-        let (x, z) = self.descriptor.rotation.rotate_offset(local.x, local.z);
-        Vector3::new(
-            self.descriptor.template_position.x + x,
-            self.descriptor.template_position.y + local.y,
-            self.descriptor.template_position.z + z,
-        )
-    }
-
-    fn place_blocks(
-        &self,
-        chunk: &mut ProtoChunk,
-        random: &mut RandomGenerator,
-        chunk_box: &BlockBox,
-    ) {
-        for block in &self.descriptor.template.blocks {
-            let palette = &self.descriptor.template.palette[block.state as usize];
-            if matches!(
-                palette.name.as_str(),
-                "minecraft:structure_void" | "minecraft:structure_block"
-            ) || (!self.descriptor.overwrite && palette.name == "minecraft:air")
-            {
-                continue;
-            }
-            let position = self.world_position(block.pos);
-            if !chunk_box.contains_pos(&position) {
-                continue;
-            }
-            let Some(state) =
-                BlockStateResolver::resolve(palette, self.descriptor.rotation, Mirror::None)
-            else {
-                continue;
-            };
-            chunk.set_block_state(position.x, position.y, position.z, state);
-            Self::place_block_entity(chunk, palette, block.nbt.as_ref(), position, random);
-        }
-
-        for block in &self.descriptor.template.blocks {
-            let palette = &self.descriptor.template.palette[block.state as usize];
-            if palette.name != "minecraft:structure_block" {
-                continue;
-            }
-            let Some(marker) = block
-                .nbt
-                .as_ref()
-                .and_then(|nbt| nbt.get_string("metadata"))
-            else {
-                continue;
-            };
-            self.handle_marker(
-                chunk,
-                random,
-                marker,
-                self.world_position(block.pos),
-                chunk_box,
-            );
-        }
-    }
-
-    fn place_block_entity(
-        chunk: &mut ProtoChunk,
-        palette: &PaletteEntry,
-        template_nbt: Option<&NbtCompound>,
-        position: Vector3<i32>,
-        random: &mut RandomGenerator,
-    ) {
-        let block_entity_id = get_block_entity_id(&palette.name);
-        if template_nbt.is_none() && block_entity_id.is_none() {
-            return;
-        }
-        let mut nbt = NbtCompound::new();
-        nbt.put_string("id", block_entity_id.unwrap_or(&palette.name).to_string());
-        nbt.put_int("x", position.x);
-        nbt.put_int("y", position.y);
-        nbt.put_int("z", position.z);
-        if let Some(template_nbt) = template_nbt {
-            for (key, value) in &template_nbt.child_tags {
-                if !matches!(key.as_ref(), "x" | "y" | "z" | "id") {
-                    nbt.child_tags.insert(key.clone(), value.clone());
-                }
-            }
-        }
-        if nbt.get_string("LootTable").is_some() && nbt.get_long("LootTableSeed").is_none() {
-            nbt.put_long("LootTableSeed", random.next_i64());
-        }
-        chunk.add_block_entity(nbt);
-    }
-
+    /// Vanilla's `EndCityPiece.handleDataMarker`.
     fn handle_marker(
         &self,
         chunk: &mut ProtoChunk,
@@ -182,14 +100,7 @@ impl EndCityTemplatePiece {
         if marker.starts_with("Chest") {
             let chest_position = Vector3::new(position.x, position.y - 1, position.z);
             if chunk_box.contains_pos(&chest_position) {
-                let mut nbt = NbtCompound::new();
-                nbt.put_string("id", "minecraft:chest".to_string());
-                nbt.put_int("x", chest_position.x);
-                nbt.put_int("y", chest_position.y);
-                nbt.put_int("z", chest_position.z);
-                nbt.put_string("LootTable", LOOT_TABLE.to_string());
-                nbt.put_long("LootTableSeed", random.next_i64());
-                chunk.add_block_entity(nbt);
+                set_block_entity_loot_table(chunk, random, chest_position, LOOT_TABLE);
             }
             return;
         }
@@ -275,11 +186,39 @@ impl StructurePieceBase for EndCityTemplatePiece {
         chunk: &mut ProtoChunk,
         _block_registry: &dyn WorldPortalExt,
         random: &mut RandomGenerator,
-        _seed: i64,
+        seed: i64,
         chunk_box: &BlockBox,
     ) {
-        self.place_blocks(chunk, random, chunk_box);
+        self.place_settings.bounding_box = Some(*chunk_box);
+        self.piece.bounding_box = self
+            .descriptor
+            .template
+            .get_bounding_box(&self.place_settings, self.descriptor.template_position);
+        place_template_piece(
+            chunk,
+            &self.descriptor.template,
+            self.descriptor.template_position,
+            &self.place_settings,
+            random,
+            seed,
+            |chunk, random, marker, position| {
+                self.handle_marker(chunk, random, marker, position, chunk_box);
+            },
+        );
     }
+}
+
+/// Vanilla's `EndCityPiece.makeSettings`.
+fn make_settings(overwrite: bool, rotation: Rotation) -> StructurePlaceSettings {
+    StructurePlaceSettings::new()
+        .set_ignore_entities(true)
+        .add_processor(if overwrite {
+            StructureProcessor::ignore_structure_blocks()
+        } else {
+            StructureProcessor::ignore_structure_blocks_and_air()
+        })
+        .set_rotation(rotation)
+        .set_apply_waterlogging(true)
 }
 
 fn entity_nbt(id: &str, position: Vector3<f64>) -> NbtCompound {
@@ -305,7 +244,10 @@ fn entity_nbt(id: &str, position: Vector3<f64>) -> NbtCompound {
 mod tests {
     use pumpkin_util::random::legacy_rand::LegacyRand;
 
-    use crate::generation::structure::{structures::HeightSampler, template::get_template};
+    use crate::generation::structure::{
+        structures::HeightSampler,
+        template::{get_block_entity_id, get_template},
+    };
 
     use super::*;
 
