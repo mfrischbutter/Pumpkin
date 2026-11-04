@@ -152,3 +152,91 @@ impl BlockBehaviour for InfestedBlock {
         spawn_infestation(args.world, args.position);
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use pumpkin_util::math::vector2::Vector2;
+    use pumpkin_world::{chunk::ChunkData, world::BlockFlags};
+
+    use super::*;
+    use crate::entity::ai::test_support::world;
+    use crate::world::explosion::{BlockInteraction, Explosion};
+
+    const POS: BlockPos = BlockPos(Vector3::new(0, 64, 0));
+
+    fn world_with_infested_stone(folder: &tempfile::TempDir) -> Arc<World> {
+        let world = world(folder);
+        world
+            .level
+            .loaded_chunks
+            .insert(Vector2::new(0, 0), ChunkData::empty_sync(0, 0));
+        world.set_block_state(
+            &POS,
+            Block::INFESTED_STONE.default_state.id,
+            BlockFlags::SKIP_BLOCK_ADDED_CALLBACK | BlockFlags::UPDATE_KNOWN_SHAPE,
+        );
+        world
+    }
+
+    fn blast(world: &Arc<World>, interaction: BlockInteraction) {
+        Explosion::new(4.0, Vector3::new(0.5, 64.5, 0.5), interaction).explode(world);
+    }
+
+    fn silverfish_positions(world: &World) -> Vec<Vector3<f64>> {
+        world
+            .entities
+            .load()
+            .iter()
+            .filter(|entity| entity.get_entity().entity_type == &EntityType::SILVERFISH)
+            .map(|entity| entity.get_entity().pos.load())
+            .collect()
+    }
+
+    /// Vanilla `BlockBehaviour.onExplosionHit` calls `spawnAfterBreak` whatever the loot decay.
+    #[tokio::test]
+    async fn a_blast_releases_a_silverfish() -> Result<(), Box<dyn std::error::Error>> {
+        for interaction in [
+            BlockInteraction::Destroy,
+            BlockInteraction::DestroyWithDecay,
+        ] {
+            let folder = tempfile::tempdir()?;
+            let world = world_with_infested_stone(&folder);
+
+            blast(&world, interaction);
+
+            assert!(world.get_block_state(&POS).is_air());
+            assert_eq!(silverfish_positions(&world), [Vector3::new(0.5, 64.0, 0.5)]);
+        }
+        Ok(())
+    }
+
+    /// Vanilla `InfestedBlock.spawnAfterBreak` is gated on `GameRules.BLOCK_DROPS`; the block
+    /// still breaks.
+    #[tokio::test]
+    async fn block_drops_off_holds_the_silverfish_back() -> Result<(), Box<dyn std::error::Error>> {
+        let folder = tempfile::tempdir()?;
+        let world = world_with_infested_stone(&folder);
+        let mut level_info = (**world.level_info.load()).clone();
+        level_info.game_rules.block_drops = false;
+        world.level_info.store(Arc::new(level_info));
+
+        blast(&world, BlockInteraction::Destroy);
+
+        assert!(world.get_block_state(&POS).is_air());
+        assert!(silverfish_positions(&world).is_empty());
+        Ok(())
+    }
+
+    /// `TRIGGER_BLOCK` skips the break in `onExplosionHit`, so a wind charge leaves it infested.
+    #[tokio::test]
+    async fn a_trigger_blast_leaves_the_block_infested() -> Result<(), Box<dyn std::error::Error>> {
+        let folder = tempfile::tempdir()?;
+        let world = world_with_infested_stone(&folder);
+
+        blast(&world, BlockInteraction::TriggerBlock);
+
+        assert_eq!(world.get_block(&POS), &Block::INFESTED_STONE);
+        assert!(silverfish_positions(&world).is_empty());
+        Ok(())
+    }
+}
