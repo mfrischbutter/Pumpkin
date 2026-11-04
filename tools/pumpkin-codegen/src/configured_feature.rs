@@ -1284,12 +1284,84 @@ pub fn value_to_configured_feature(v: &Value) -> TokenStream {
             }
         }
         "minecraft:template" => {
-            quote! { ConfiguredFeature::NoOp }
+            let templates = config["templates"]
+                .as_array()
+                .expect("template features need a list of templates")
+                .iter()
+                .map(|entry| {
+                    let weight = entry["weight"]
+                        .as_i64()
+                        .expect("template weights must be integers")
+                        as i32;
+                    let data = &entry["data"];
+                    let template = data["id"].as_str().expect("template ids must be strings");
+                    // Vanilla's `TemplateEntry` turns its template every way unless it lists
+                    // rotations.
+                    let rotations: Vec<TokenStream> = data.get("rotations").map_or_else(
+                        || {
+                            ["none", "clockwise_90", "180", "counterclockwise_90"]
+                                .into_iter()
+                                .map(rotation_tokens)
+                                .collect()
+                        },
+                        |rotations| {
+                            rotations
+                                .as_array()
+                                .expect("template rotations must be a list")
+                                .iter()
+                                .map(|rotation| {
+                                    rotation_tokens(
+                                        rotation.as_str().expect("rotations must be names"),
+                                    )
+                                })
+                                .collect()
+                        },
+                    );
+                    quote! {
+                        Weighted {
+                            data: crate::generation::feature::features::template::TemplateEntry {
+                                template: #template,
+                                rotations: &[#(#rotations),*],
+                            },
+                            weight: #weight,
+                        }
+                    }
+                });
+            // A processor list is a registry name or written out in place.
+            let processors = match config.get("processors") {
+                None => quote! { std::sync::Arc::from([]) },
+                Some(Value::String(name)) => quote! {
+                    crate::generation::structure::template::load_processor_list(#name)
+                },
+                Some(list) => {
+                    let json = list.to_string();
+                    quote! {
+                        crate::generation::structure::template::inline_processor_list(#json)
+                    }
+                }
+            };
+            quote! {
+                ConfiguredFeature::Template(crate::generation::feature::features::template::TemplateFeature {
+                    templates: vec![#(#templates),*],
+                    processors: #processors,
+                })
+            }
         }
         other => {
             let msg = format!("unknown configured feature type: {other}");
             quote! { compile_error!(#msg) }
         }
+    }
+}
+
+/// The `Rotation` a vanilla rotation name stands for.
+fn rotation_tokens(name: &str) -> TokenStream {
+    match name {
+        "none" => quote! { pumpkin_data::Rotation::None },
+        "clockwise_90" => quote! { pumpkin_data::Rotation::Clockwise90 },
+        "180" => quote! { pumpkin_data::Rotation::Rotate180 },
+        "counterclockwise_90" => quote! { pumpkin_data::Rotation::CounterClockwise90 },
+        other => panic!("Unknown rotation: {other}"),
     }
 }
 

@@ -1140,19 +1140,23 @@ fn convert_raw_processor(raw: RawProcessor) -> Option<StructureProcessor> {
 static DYNAMIC_PROCESSORS: LazyLock<dashmap::DashMap<String, Arc<[StructureProcessor]>>> =
     LazyLock::new(dashmap::DashMap::new);
 
+fn parse_processor_list(json: &str) -> Result<Arc<[StructureProcessor]>, serde_json::Error> {
+    let raw_list: Vec<RawProcessor> = match serde_json::from_str::<RawProcessorListWrapper>(json)? {
+        RawProcessorListWrapper::Object { processors }
+        | RawProcessorListWrapper::Array(processors) => processors,
+    };
+    Ok(raw_list
+        .into_iter()
+        .filter_map(convert_raw_processor)
+        .collect())
+}
+
 /// Registers a dynamically-loaded processor list from a runtime datapack.
 pub fn register_dynamic_processor_list(
     name: &str,
     json: &str,
 ) -> Result<Arc<[StructureProcessor]>, serde_json::Error> {
-    let raw_list: Vec<RawProcessor> = match serde_json::from_str::<RawProcessorListWrapper>(json)? {
-        RawProcessorListWrapper::Object { processors }
-        | RawProcessorListWrapper::Array(processors) => processors,
-    };
-    let processors = raw_list
-        .into_iter()
-        .filter_map(convert_raw_processor)
-        .collect::<Arc<[_]>>();
+    let processors = parse_processor_list(json)?;
     let name_key = name.strip_prefix("minecraft:").unwrap_or(name);
     DYNAMIC_PROCESSORS.insert(name_key.to_string(), Arc::clone(&processors));
     DYNAMIC_PROCESSORS.insert(format!("minecraft:{name_key}"), Arc::clone(&processors));
@@ -1349,6 +1353,15 @@ pub fn load_processor_list(name: &str) -> Arc<[StructureProcessor]> {
 
     tracing::warn!("Unknown structure processor list: {name}");
     Arc::from([])
+}
+
+/// A processor list written out in place of a registry name, as a template feature may give one.
+#[must_use]
+pub fn inline_processor_list(json: &str) -> Arc<[StructureProcessor]> {
+    parse_processor_list(json).unwrap_or_else(|error| {
+        tracing::warn!("Invalid structure processor list: {error}");
+        Arc::from([])
+    })
 }
 
 #[cfg(test)]

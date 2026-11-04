@@ -50,7 +50,7 @@ pub use cache::{
     all_template_names, get_template, global_cache,
 };
 pub use processor::{
-    StructureProcessor, clear_dynamic_processors, load_processor_list,
+    StructureProcessor, clear_dynamic_processors, inline_processor_list, load_processor_list,
     register_dynamic_processor_list,
 };
 pub use pumpkin_data::{BlockState, Mirror as BlockMirror, Rotation as BlockRotation};
