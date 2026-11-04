@@ -836,7 +836,7 @@ mod tests {
                     .any(|direction| placer.blocks.contains_key(&(*pos + direction.to_offset())))
         }));
 
-        let known = place(&settings.clone().set_known_shape(true));
+        let known = place(&settings.set_known_shape(true));
         assert!(known.marks.is_empty());
     }
 }
