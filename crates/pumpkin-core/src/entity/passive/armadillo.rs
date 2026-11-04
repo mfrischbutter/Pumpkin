@@ -6,6 +6,7 @@ use std::sync::{
 use pumpkin_data::BlockState;
 use pumpkin_data::damage::DamageType;
 use pumpkin_data::entity::EntityType;
+use pumpkin_data::game_event::GameEvent;
 use pumpkin_data::item::Item;
 use pumpkin_data::item_stack::ItemStack;
 use pumpkin_data::sound::{Sound, SoundCategory};
@@ -39,11 +40,14 @@ use crate::entity::{
     passive::animal::Animal,
     player::Player,
 };
+use crate::world::game_event::GameEventContext;
+use crate::world::loot::{LootContextParameters, LootTableHandle, generate_loot_from_handle};
 
 pub const ARMADILLO_FOOD: &[&Item] = &[&Item::SPIDER_EYE];
 pub const ARMADILLO_BABY_START_AGE: i32 = -48000;
 pub const SCARE_DISTANCE_HORIZONTAL: f64 = 7.0;
 pub const SCARE_DISTANCE_VERTICAL: f64 = 2.0;
+const ARMADILLO_SHED_LOOT_TABLE: &str = "minecraft:gameplay/armadillo_shed";
 
 fn pick_next_scute_drop_time() -> i32 {
     let rand_ticks = (rand::random::<u32>() % 6000) as i32;
@@ -237,6 +241,58 @@ impl ArmadilloEntity {
         true
     }
 
+    /// Vanilla `Armadillo.customServerAiStep`: the timer also runs while shedding is held back, so
+    /// the scute falls as soon as `shouldDropLoot` allows it.
+    fn tick_scute_shedding(&self) {
+        let entity = self.get_entity();
+        if !entity.is_alive()
+            || self.scute_time.fetch_sub(1, Ordering::Relaxed) > 1
+            || !self.mob_entity.living_entity.should_drop_loot()
+        {
+            return;
+        }
+        let dropped = entity
+            .world
+            .load()
+            .get_loot_table(ARMADILLO_SHED_LOOT_TABLE)
+            .is_some_and(|table| self.drop_shed_loot(&table));
+        if dropped {
+            let mut rng = self.get_random();
+            self.play_entity_sound(
+                Sound::EntityArmadilloScuteDrop,
+                1.0,
+                (rng.random::<f32>() - rng.random::<f32>()).mul_add(0.2, 1.0),
+            );
+            entity.world.load().emit_game_event_with_context(
+                GameEvent::EntityPlace.name(),
+                entity.pos.load(),
+                &GameEventContext {
+                    source_entity: Some(self),
+                },
+            );
+        }
+        self.scute_time
+            .store(pick_next_scute_drop_time(), Ordering::Relaxed);
+    }
+
+    /// Vanilla `dropFromGiftLootTable`: whether the table dropped anything.
+    fn drop_shed_loot(&self, table: &LootTableHandle) -> bool {
+        let entity = self.get_entity();
+        let world = entity.world.load();
+        let params = LootContextParameters {
+            world: Some(&world),
+            position: Some(entity.pos.load()),
+            this_entity: Some(self),
+            ..Default::default()
+        };
+        let drops = generate_loot_from_handle(table, self.get_random().random(), &params);
+        let dropped = !drops.is_empty();
+        for stack in drops {
+            entity.spawn_at_location(stack);
+        }
+        dropped
+    }
+
     pub fn is_scared_by(&self, living_entity: &dyn EntityBase) -> bool {
         let entity = self.get_entity();
         let pos = entity.pos.load();
@@ -378,27 +434,7 @@ impl Mob for ArmadilloEntity {
             brain.set_active_activity_to_first_valid(&[Activity::Panic, Activity::Idle]);
         });
 
-        let entity = self.get_entity();
-        let world = entity.world.load();
-
-        if entity.is_alive() && !self.is_baby() {
-            let scute_time = self.scute_time.fetch_sub(1, Ordering::Relaxed) - 1;
-            if scute_time <= 0 {
-                let pos = entity.pos.load();
-                let item_entity = Arc::new(ItemEntity::new(
-                    Entity::new(world.clone(), pos, &EntityType::ITEM),
-                    ItemStack::new(1, &Item::ARMADILLO_SCUTE),
-                ));
-                world.spawn_entity_non_save(item_entity as Arc<dyn EntityBase>);
-                world.play_sound(
-                    Sound::EntityArmadilloScuteDrop,
-                    SoundCategory::Neutral,
-                    &pos,
-                );
-                self.scute_time
-                    .store(pick_next_scute_drop_time(), Ordering::Relaxed);
-            }
-        }
+        self.tick_scute_shedding();
     }
 
     fn mob_init_data_tracker(&self) {
@@ -736,6 +772,25 @@ mod tests {
                 (stack.item, stack.item_count)
             })
             .collect()
+    }
+
+    /// The drop is whatever the table holds, and a table without drops reports no shed.
+    #[tokio::test]
+    async fn shed_drops_come_from_the_table() -> Result<(), Box<dyn std::error::Error>> {
+        let folder = tempfile::tempdir()?;
+        let world = world(&folder);
+        let armadillo = armadillo(&world, 1);
+
+        assert!(!armadillo.drop_shed_loot(&LootTableHandle::Static(
+            &pumpkin_data::loot_table::ENTITIES_ARMADILLO
+        )));
+        assert!(dropped_items(&world).is_empty());
+
+        assert!(armadillo.drop_shed_loot(&LootTableHandle::Static(
+            &pumpkin_data::loot_table::DISPENSERS_TRIAL_CHAMBERS_WATER
+        )));
+        assert_eq!(dropped_items(&world), [(&Item::WATER_BUCKET, 1)]);
+        Ok(())
     }
 
     /// Vanilla counts `scuteTime` down for babies too, so an armadillo that grows up with the
