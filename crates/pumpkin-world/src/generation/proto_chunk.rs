@@ -1900,6 +1900,10 @@ impl BlockPlacer for ProtoChunk {
     fn schedule_fluid_tick(&mut self, pos: &Vector3<i32>, fluid: &'static Fluid, delay: u8) {
         Self::schedule_fluid_tick(self, pos.x, pos.y, pos.z, fluid, delay);
     }
+
+    fn add_entity(&mut self, nbt: NbtCompound, finalize: bool) {
+        self.add_structure_entity(nbt, finalize);
+    }
 }
 
 impl GenerationCache for ProtoChunk {

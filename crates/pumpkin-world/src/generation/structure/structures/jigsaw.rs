@@ -7,7 +7,8 @@ use crate::generation::structure::structures::{
     StructureGenerator, StructureGeneratorContext, StructurePieceBase, StructurePosition,
 };
 use crate::generation::structure::template::{
-    BlockMirror, BlockPlacer, BlockRotation, PaletteEntry, StructureProcessor, StructureTemplate,
+    BlockMirror, BlockPlacer, BlockRotation, PaletteEntry, StructurePlaceSettings,
+    StructureProcessor, StructureTemplate, TemplatePlacement, place_template_with_options,
 };
 use pumpkin_util::HeightMap;
 use pumpkin_util::math::block_box::BlockBox;
@@ -468,6 +469,26 @@ impl PoolElementKind {
 impl PoolElement {
     /// The template's processor list followed by the projection's processors, like
     /// `SinglePoolElement.getSettings`.
+    /// Vanilla's `SinglePoolElement.getSettings` for one of the element's templates: turned, kept to
+    /// the chunk, with its shape known, and finalizing its entities.
+    fn template_settings(
+        &self,
+        rotation: BlockRotation,
+        bounding_box: Option<BlockBox>,
+        liquid_settings: LiquidSettings,
+        processor_list: &ProcessorListRef,
+    ) -> StructurePlaceSettings {
+        StructurePlaceSettings {
+            rotation,
+            bounding_box,
+            known_shape: true,
+            apply_waterlogging: liquid_settings == LiquidSettings::ApplyWaterlog,
+            processors: self.template_processors(processor_list),
+            finalize_entities: true,
+            ..StructurePlaceSettings::default()
+        }
+    }
+
     fn template_processors(&self, processor_list: &ProcessorListRef) -> Arc<[StructureProcessor]> {
         let processors = match processor_list {
             ProcessorListRef::Named(name) => {
@@ -867,32 +888,24 @@ impl StructurePieceBase for PoolElementStructurePiece {
                     origin.y,
                     origin.z + corner.1.min(0),
                 );
-                let processors = self.element.template_processors(processor_list);
-                crate::generation::structure::template::place_template_with_options(
-                    chunk,
-                    &template,
-                    placement_origin,
-                    (0, 0),
+                let settings = self.element.template_settings(
                     self.rotation,
-                    legacy,
-                    self.liquid_settings == LiquidSettings::ApplyWaterlog,
-                    processors.as_ref(),
-                    Some(chunk_box),
-                    false,
-                    random,
-                    crate::generation::structure::template::TemplatePlacement {
-                        position: origin,
-                        level_seed: seed,
-                    },
+                    Some(*chunk_box),
+                    self.liquid_settings,
+                    processor_list,
                 );
-                crate::generation::structure::template::place_template_entities(
+                place_template_with_options(
                     chunk,
                     &template,
-                    placement_origin,
-                    self.rotation,
-                    chunk_box,
-                    // Vanilla `SinglePoolElement` places with `setFinalizeEntities(true)`.
-                    true,
+                    origin,
+                    &settings,
+                    random,
+                    TemplatePlacement {
+                        reference: placement_origin,
+                        level_seed: seed,
+                        skip_air: legacy,
+                        keep_jigsaws: false,
+                    },
                 );
             });
     }
@@ -926,22 +939,23 @@ pub fn place_pool_element_templates(
                 origin.y,
                 origin.z + corner.1.min(0),
             );
-            let processors = piece.element.template_processors(processor_list);
-            crate::generation::structure::template::place_template_with_options(
+            let settings = piece.element.template_settings(
+                piece.rotation,
+                chunk_box.copied(),
+                piece.liquid_settings,
+                processor_list,
+            );
+            place_template_with_options(
                 placer,
                 &template,
-                placement_origin,
-                (0, 0),
-                piece.rotation,
-                legacy,
-                piece.liquid_settings == LiquidSettings::ApplyWaterlog,
-                processors.as_ref(),
-                chunk_box,
-                keep_jigsaws,
+                origin,
+                &settings,
                 &mut random,
-                crate::generation::structure::template::TemplatePlacement {
-                    position: origin,
+                TemplatePlacement {
+                    reference: placement_origin,
                     level_seed,
+                    skip_air: legacy,
+                    keep_jigsaws,
                 },
             );
         });

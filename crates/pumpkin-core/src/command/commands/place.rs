@@ -33,7 +33,9 @@ use pumpkin_world::generation::structure::structures::jigsaw::{
 use pumpkin_world::generation::structure::structures::jigsaw_placement::{
     DimensionPadding, JigsawPlacement, LiquidSettings, MaxDistance, PoolAliasLookup,
 };
-use pumpkin_world::generation::structure::template::BlockPlacer;
+use pumpkin_world::generation::structure::template::{
+    BlockPlacer, StructurePlaceSettings, TemplatePlacement, place_template_with_options,
+};
 
 use pumpkin_util::PermissionLvl;
 use pumpkin_util::permission::{Permission, PermissionDefault, PermissionRegistry};
@@ -157,16 +159,17 @@ impl CommandExecutor for PlaceTemplateExecutor {
         };
 
         let mut placer = WorldBlockPlacer::new(context.world());
-        pumpkin_world::generation::structure::template::place_template(
+        place_template_with_options(
             &mut placer,
             &template,
             block_pos.0,
-            (0, 0),
-            Rotation::None,
-            false,
-            false,
-            &[],
-            None,
+            &StructurePlaceSettings::new(),
+            &mut RandomGenerator::Legacy(LegacyRand::from_seed(hash_block_pos(
+                block_pos.0.x,
+                block_pos.0.y,
+                block_pos.0.z,
+            ) as u64)),
+            TemplatePlacement::piece(block_pos.0, 0),
         );
 
         placer.finalize();

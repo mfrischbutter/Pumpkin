@@ -4,7 +4,7 @@
 //! into a runtime representation with palettes, entities, block info, and transformations.
 
 use std::io::Cursor;
-use std::sync::OnceLock;
+use std::sync::{Arc, OnceLock};
 
 use pumpkin_data::{Mirror, Rotation};
 use pumpkin_nbt::{compound::NbtCompound, nbt_compress::read_gzip_compound_tag, tag::NbtTag};
@@ -40,7 +40,7 @@ pub struct StructurePlaceSettings {
     pub ignore_entities: bool,
     pub apply_waterlogging: bool,
     pub known_shape: bool,
-    pub processors: Vec<StructureProcessor>,
+    pub processors: Arc<[StructureProcessor]>,
     pub finalize_entities: bool,
     pub palette_index: Option<usize>,
 }
@@ -55,7 +55,7 @@ impl Default for StructurePlaceSettings {
             ignore_entities: false,
             apply_waterlogging: false,
             known_shape: false,
-            processors: Vec::new(),
+            processors: Arc::from([]),
             finalize_entities: false,
             palette_index: None,
         }
@@ -118,7 +118,12 @@ impl StructurePlaceSettings {
 
     #[must_use]
     pub fn add_processor(mut self, processor: StructureProcessor) -> Self {
-        self.processors.push(processor);
+        self.processors = self
+            .processors
+            .iter()
+            .cloned()
+            .chain(std::iter::once(processor))
+            .collect();
         self
     }
 

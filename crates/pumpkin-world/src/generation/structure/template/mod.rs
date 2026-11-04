@@ -36,10 +36,8 @@ use pumpkin_data::Rotation;
 use pumpkin_data::fluid::Fluid;
 use pumpkin_nbt::{compound::NbtCompound, tag::NbtTag};
 use pumpkin_util::HeightMap;
-use pumpkin_util::math::vector3::Vector3;
+use pumpkin_util::math::{vector3::Vector3, wrap_degrees};
 use pumpkin_util::random::{RandomGenerator, RandomImpl, hash_block_pos, legacy_rand::LegacyRand};
-
-use crate::ProtoChunk;
 
 pub use block_state_resolver::BlockStateResolver;
 pub use cache::{
@@ -68,6 +66,9 @@ pub trait BlockPlacer {
     fn get_height(&self, heightmap: HeightMap, x: i32, z: i32) -> Option<i32>;
     /// Schedules a fluid tick, like vanilla's `scheduleTick`; a placer without ticks ignores it.
     fn schedule_fluid_tick(&mut self, _pos: &Vector3<i32>, _fluid: &'static Fluid, _delay: u8) {}
+    /// Adds an entity of the template, which runs `finalizeSpawn` when `finalize` is set; a placer
+    /// without entities ignores it.
+    fn add_entity(&mut self, _nbt: NbtCompound, _finalize: bool) {}
 }
 
 /// Whether the block holds a water source: still water or a waterlogged block.
@@ -90,55 +91,31 @@ fn waterlog(placer: &mut impl BlockPlacer, pos: &Vector3<i32>, state: &'static B
     }
 }
 
-/// Places a template at a world origin with an un-rotated XZ offset.
-///
-/// All rotation is handled internally:
-/// - The offset is rotated to position the template correctly
-/// - Block positions within the template are rotated
-/// - Directional block properties (facing, axis, etc.) are rotated
-/// - Block entities are created from template NBT data
-///
-/// `origin` is the base world position (x, y, z).
-/// `offset` is the un-rotated XZ offset from origin (`x_offset`, `z_offset`) - rotation is applied automatically.
-#[allow(clippy::too_many_arguments)]
-pub fn place_template(
-    placer: &mut impl BlockPlacer,
-    template: &StructureTemplate,
-    origin: Vector3<i32>,
-    offset: (i32, i32),
-    rotation: Rotation,
-    skip_air: bool,
-    apply_waterlogging: bool,
-    processors: &[StructureProcessor],
-    chunk_box: Option<&pumpkin_util::math::block_box::BlockBox>,
-) {
-    place_template_with_options(
-        placer,
-        template,
-        origin,
-        offset,
-        rotation,
-        skip_air,
-        apply_waterlogging,
-        processors,
-        chunk_box,
-        false,
-        &mut RandomGenerator::Legacy(LegacyRand::from_seed(hash_block_pos(
-            origin.x, origin.y, origin.z,
-        ) as u64)),
-        TemplatePlacement {
-            position: origin,
-            level_seed: 0,
-        },
-    );
-}
-
-/// Where vanilla's `StructureTemplate.placeInWorld` happens: its `position`, at which a capped
-/// processor's random is forked, and the level seed that random starts from.
+/// Where vanilla's `StructureTemplate.placeInWorld` happens besides its settings: the
+/// `referencePos` the processors' position rules measure from, the level seed a capped processor's
+/// random starts from, and the flags of a jigsaw pool element.
 #[derive(Clone, Copy, Debug)]
 pub struct TemplatePlacement {
-    pub position: Vector3<i32>,
+    pub reference: Vector3<i32>,
     pub level_seed: i64,
+    /// Legacy pool elements ignore air after every processor.
+    pub skip_air: bool,
+    /// Jigsaw blocks stay instead of turning into their final state.
+    pub keep_jigsaws: bool,
+}
+
+impl TemplatePlacement {
+    /// The placement of a template structure piece, which turns its jigsaw blocks into their final
+    /// state (vanilla's `TemplateStructurePiece.postProcess`).
+    #[must_use]
+    pub const fn piece(reference: Vector3<i32>, level_seed: i64) -> Self {
+        Self {
+            reference,
+            level_seed,
+            skip_air: false,
+            keep_jigsaws: false,
+        }
+    }
 }
 
 /// One template block after the processors (vanilla's processed `StructureBlockInfo`).
@@ -148,35 +125,41 @@ struct ProcessedBlock {
     nbt: Option<NbtCompound>,
 }
 
-#[allow(clippy::too_many_arguments, clippy::too_many_lines)]
+/// Vanilla's `StructureTemplate.placeInWorld`: the blocks of the palette the position picks, moved
+/// to `position` with the settings' mirror, rotation and pivot, run through the processors and kept
+/// to the settings' bounding box, then the template's entities unless the settings ignore them.
+/// Returns `false`, like vanilla, when the template has nothing to place.
+#[expect(clippy::too_many_lines)]
 pub fn place_template_with_options(
     placer: &mut impl BlockPlacer,
     template: &StructureTemplate,
-    origin: Vector3<i32>,
-    offset: (i32, i32),
-    rotation: Rotation,
-    skip_air: bool,
-    apply_waterlogging: bool,
-    processors: &[StructureProcessor],
-    chunk_box: Option<&pumpkin_util::math::block_box::BlockBox>,
-    keep_jigsaws: bool,
+    position: Vector3<i32>,
+    settings: &StructurePlaceSettings,
     random: &mut RandomGenerator,
     placement: TemplatePlacement,
-) {
-    let (rotated_ox, rotated_oz) = rotation.rotate_offset(offset.0, offset.1);
-    let world_x = origin.x + rotated_ox;
-    let world_z = origin.z + rotated_oz;
+) -> bool {
+    if template.palettes.is_empty() {
+        return false;
+    }
+    let blocks = settings
+        .get_random_palette(&template.palettes, position)
+        .blocks();
+    if (blocks.is_empty() && (settings.ignore_entities || template.entities.is_empty()))
+        || template.size.x < 1
+        || template.size.y < 1
+        || template.size.z < 1
+    {
+        return false;
+    }
+    let (mirror, rotation, pivot) = (settings.mirror, settings.rotation, settings.rotation_pivot);
 
-    let mut context = processor::ProcessorContext::new(origin);
+    let mut context = processor::ProcessorContext::new(placement.reference);
 
     // Vanilla `StructureTemplate.processBlockInfos`: every block of the template runs through the
     // processors, not only this chunk's, because a capped processor then picks among all of them.
-    let mut processed = Vec::with_capacity(template.blocks.len());
-    for block in &template.blocks {
-        // Rotate block position within template bounds
-        let local_pos = rotation.transform_pos(block.pos, template.size);
-
-        let palette_entry = &template.palette[block.state as usize];
+    let mut processed = Vec::with_capacity(blocks.len());
+    for block in blocks {
+        let palette_entry = &block.state;
 
         // Structure blocks are data markers.
         if palette_entry.name == "minecraft:structure_block" {
@@ -185,7 +168,7 @@ pub fn place_template_with_options(
 
         let mut block_entity_nbt = block.nbt.clone();
         let jigsaw_entry: PaletteEntry;
-        let placed_entry = if !keep_jigsaws && palette_entry.name == "minecraft:jigsaw" {
+        let placed_entry = if !placement.keep_jigsaws && palette_entry.name == "minecraft:jigsaw" {
             // Jigsaw blocks are replaced during template processing, before block entities are
             // collected. Keeping this in the placement pipeline avoids stale jigsaw entities.
             let final_state = block_entity_nbt
@@ -205,23 +188,17 @@ pub fn place_template_with_options(
             continue;
         }
 
-        // Resolve block state with rotation applied to directional properties
-        let Some(mut state) =
-            BlockStateResolver::resolve(placed_entry, rotation, Mirror::default())
-        else {
+        let Some(mut state) = BlockStateResolver::resolve(placed_entry, rotation, mirror) else {
             continue;
         };
 
-        let mut world_pos = Vector3::new(
-            world_x + local_pos.x,
-            origin.y + local_pos.y,
-            world_z + local_pos.z,
-        );
+        let mut world_pos =
+            position + StructureTemplate::transform_block_pos(block.pos, mirror, rotation, pivot);
 
         // Apply processors; each one seeds its own random from the block's position, like
         // vanilla's processors (`RandomSource.create(Mth.getSeed(pos))`).
         let mut should_place = true;
-        for processor in processors {
+        for processor in settings.get_processors() {
             match processor {
                 // Mirrors `GravityProcessor`: the block keeps its template y on top of the column.
                 StructureProcessor::Gravity { heightmap, offset } => {
@@ -258,7 +235,7 @@ pub fn place_template_with_options(
         }
     }
 
-    for processor in processors {
+    for processor in settings.get_processors() {
         if let StructureProcessor::Capped { limit, delegate } = processor {
             finalize_capped(
                 placer,
@@ -266,7 +243,8 @@ pub fn place_template_with_options(
                 limit,
                 delegate,
                 &mut context,
-                placement,
+                position,
+                placement.level_seed,
             );
         }
     }
@@ -282,15 +260,20 @@ pub fn place_template_with_options(
         nbt: block_entity_nbt,
     } in processed
     {
-        if chunk_box.is_some_and(|bbox| !bbox.contains_pos(&world_pos)) {
+        if settings
+            .bounding_box
+            .is_some_and(|bbox| !bbox.contains_pos(&world_pos))
+        {
             continue;
         }
         // Legacy pool elements ignore air after jigsaw replacement and custom processors.
-        if skip_air && state.id.to_block_id() == pumpkin_data::Block::AIR.id {
+        if placement.skip_air && state.id.to_block_id() == pumpkin_data::Block::AIR.id {
             continue;
         }
 
-        let previous = apply_waterlogging.then(|| placer.get_block_state(&world_pos));
+        let previous = settings
+            .apply_waterlogging
+            .then(|| placer.get_block_state(&world_pos));
         placer.set_block_state(&world_pos, state);
         if let Some(previous) = previous {
             if holds_fluid_source(state.id) {
@@ -365,6 +348,11 @@ pub fn place_template_with_options(
             false
         });
     }
+
+    if !settings.ignore_entities {
+        place_entities(placer, template, position, settings);
+    }
+    true
 }
 
 /// Vanilla's `CappedProcessor.finalizeProcessing`: a random forked from the level seed at the
@@ -376,16 +364,17 @@ fn finalize_capped(
     limit: &pumpkin_util::math::int_provider::IntProvider,
     delegate: &StructureProcessor,
     context: &mut processor::ProcessorContext,
-    placement: TemplatePlacement,
+    position: Vector3<i32>,
+    level_seed: i64,
 ) {
     if limit.get_max() == 0 || processed.is_empty() {
         return;
     }
     let mut random = pumpkin_util::random::RandomDeriverImpl::split_pos(
-        &LegacyRand::from_seed(placement.level_seed as u64).next_splitter(),
-        placement.position.x,
-        placement.position.y,
-        placement.position.z,
+        &LegacyRand::from_seed(level_seed as u64).next_splitter(),
+        position.x,
+        position.y,
+        position.z,
     );
     let max_to_replace = limit.get(&mut random).min(processed.len() as i32);
     if max_to_replace < 1 {
@@ -422,7 +411,7 @@ fn finalize_capped(
 }
 
 pub(crate) fn place_template_entities(
-    chunk: &mut ProtoChunk,
+    chunk: &mut crate::ProtoChunk,
     template: &StructureTemplate,
     origin: Vector3<i32>,
     rotation: Rotation,
@@ -484,6 +473,63 @@ pub(crate) fn place_template_entities(
         }
 
         chunk.add_structure_entity(nbt, finalize_entities);
+    }
+}
+
+/// Vanilla's `StructureTemplate.placeEntities`: every entity whose block lies in the settings'
+/// bounding box, moved, mirrored and turned with the template.
+fn place_entities(
+    placer: &mut impl BlockPlacer,
+    template: &StructureTemplate,
+    position: Vector3<i32>,
+    settings: &StructurePlaceSettings,
+) {
+    let (mirror, rotation, pivot) = (settings.mirror, settings.rotation, settings.rotation_pivot);
+    for entity in &template.entities {
+        let block_pos = position
+            + StructureTemplate::transform_block_pos(entity.block_pos, mirror, rotation, pivot);
+        if settings
+            .bounding_box
+            .is_some_and(|bbox| !bbox.contains_pos(&block_pos))
+        {
+            continue;
+        }
+
+        let pos = StructureTemplate::transform_vec3(entity.pos, mirror, rotation, pivot)
+            + position.to_f64();
+        let mut nbt = entity.nbt.clone();
+        nbt.put(
+            "Pos",
+            NbtTag::List(vec![pos.x.into(), pos.y.into(), pos.z.into()]),
+        );
+        nbt.child_tags.remove("UUID");
+
+        // `Entity.rotate` and `Entity.mirror` on the template's yaw.
+        if let Some(rotation_nbt) = nbt.get_list("Rotation")
+            && rotation_nbt.len() == 2
+        {
+            let yaw = rotation_nbt[0].extract_float().unwrap_or_default();
+            let wrapped = wrap_degrees(yaw);
+            let rotated = wrapped
+                + match rotation {
+                    Rotation::None => 0.0,
+                    Rotation::Clockwise90 => 90.0,
+                    Rotation::Rotate180 => 180.0,
+                    Rotation::CounterClockwise90 => 270.0,
+                };
+            let mirrored = match mirror {
+                Mirror::None => wrapped,
+                Mirror::FrontBack => -wrapped,
+                Mirror::LeftRight => 180.0 - wrapped,
+            };
+            let pitch = rotation_nbt[1].extract_float().unwrap_or_default();
+            nbt.put(
+                "Rotation",
+                NbtTag::List(vec![(rotated + mirrored - yaw).into(), pitch.into()]),
+            );
+        }
+
+        placer.add_entity(nbt, settings.finalize_entities);
     }
 }
 
@@ -574,16 +620,13 @@ mod tests {
             };
 
             let mut placer = CollectingPlacer(Vec::new());
-            place_template(
+            place_template_with_options(
                 &mut placer,
                 &template,
                 Vector3::new(0, 0, 0),
-                (0, 0),
-                Rotation::None,
-                false,
-                false,
-                &[],
-                None,
+                &StructurePlaceSettings::new(),
+                &mut RandomGenerator::Legacy(LegacyRand::from_seed(0)),
+                TemplatePlacement::piece(Vector3::new(0, 0, 0), 0),
             );
 
             for state_id in &placer.0 {
