@@ -74,6 +74,36 @@ pub trait FlowingFluid: Send + Sync {
         None
     }
 
+    /// Vanilla `FluidState.getType()` of `props`: the still fluid for a source, `fluid` otherwise.
+    fn fluid_type<'a>(&self, fluid: &'a Fluid, props: &FlowingFluidProperties) -> &'a Fluid {
+        Fluid::from_state_id(props.to_state_id(fluid)).unwrap_or(fluid)
+    }
+
+    /// Vanilla `FlowingFluid.isSourceBlockOfThisType`, waterlogged blocks included.
+    fn is_source_block_of_this_type(&self, fluid: &Fluid, state_id: BlockStateId) -> bool {
+        self.get_effective_props(fluid, state_id)
+            .is_some_and(|props| props.level == Level::L8 && props.falling == Falling::False)
+    }
+
+    /// Vanilla `FlowingFluid.canMaybePassThrough`, without the collision shapes that
+    /// `canPassThroughWall` compares.
+    fn can_maybe_pass_through(&self, fluid: &Fluid, state_id: BlockStateId) -> bool {
+        !self.is_source_block_of_this_type(fluid, state_id)
+            && physics::can_hold_any_fluid(state_id.to_block())
+    }
+
+    /// Vanilla `FlowingFluid.canPassThrough` for the flowing fluid, as the slope search asks it.
+    fn can_pass_through(&self, fluid: &Fluid, state_id: BlockStateId) -> bool {
+        self.can_maybe_pass_through(fluid, state_id)
+            && physics::can_hold_specific_fluid(state_id, fluid)
+    }
+
+    /// Vanilla `FlowingFluid.isWaterHole`, without the collision shapes that
+    /// `canPassThroughWall` compares: whether the fluid would flow down into `below_state_id`.
+    fn is_water_hole(&self, fluid: &Fluid, below_state_id: BlockStateId) -> bool {
+        self.has_fluid_at(fluid, below_state_id) || physics::can_hold_fluid(below_state_id, fluid)
+    }
+
     /// Core fluid tick handler that updates fluid state and triggers spreading.
     ///
     /// Processes scheduled fluid ticks by:
@@ -144,13 +174,9 @@ pub trait FlowingFluid: Send + Sync {
         self.try_flow(world, fluid, block_pos, &state_for_spreading);
     }
 
-    /// Attempts to flow fluid from a position, prioritizing downward flow.
-    ///
-    /// Flow priority:
-    /// 1. Down - if space below, create falling fluid (level 8)
-    /// 2. Sides - spread horizontally using pathfinding
-    ///
-    /// Sources with 3+ adjacent sources also spread to sides when flowing down.
+    /// Vanilla `FlowingFluid.spread`: flows down into the block below when that block takes the
+    /// fluid, and to the sides as well next to three sources. Otherwise a source, or a fluid
+    /// with no hole below, flows to the sides.
     fn try_flow(
         &self,
         world: &Arc<World>,
@@ -159,33 +185,30 @@ pub trait FlowingFluid: Send + Sync {
         props: &FlowingFluidProperties,
     ) {
         let below_pos = block_pos.down();
-        let below_state = world.get_block_state(&below_pos);
-        let below_block = Block::from_state_id(below_state.id);
-        let is_hole = physics::can_be_replaced(below_state, below_block, fluid);
-
-        // Try to flow down first
-        if is_hole {
-            let falling_props = self.get_flowing(fluid, Level::L8, true);
+        let below_state_id = world.get_block_state_id(&below_pos);
+        if self.can_maybe_pass_through(fluid, below_state_id)
+            && physics::can_be_replaced_with(world, &below_pos, fluid, BlockDirection::Down)
+            && let Some(new_below) = self.get_new_liquid(world, fluid, &below_pos)
+            && physics::can_hold_specific_fluid(below_state_id, self.fluid_type(fluid, &new_below))
+        {
             self.spread_to(
                 world,
                 fluid,
                 block_pos,
                 &below_pos,
-                falling_props.to_state_id(fluid),
+                BlockDirection::Down,
+                new_below.to_state_id(fluid),
             );
-
-            // Check if we should also spread to sides
-            if props.level == Level::L8 && props.falling == Falling::False {
-                let source_count = self.count_source_neighbors(world, fluid, block_pos);
-                if source_count >= 3 {
-                    self.flow_to_sides(world, fluid, block_pos, props);
-                }
+            if self.count_source_neighbors(world, fluid, block_pos) >= 3 {
+                self.flow_to_sides(world, fluid, block_pos, props);
             }
             return;
         }
 
-        // Check if fluid should flow to the side(s)
-        self.flow_to_sides(world, fluid, block_pos, props);
+        let is_source = props.level == Level::L8 && props.falling == Falling::False;
+        if is_source || !self.is_water_hole(fluid, below_state_id) {
+            self.flow_to_sides(world, fluid, block_pos, props);
+        }
     }
 
     fn count_source_neighbors(
@@ -309,7 +332,7 @@ pub trait FlowingFluid: Send + Sync {
     /// Implements:
     /// - Quiescence: prevents unnecessary updates (e.g., source blocks, lower levels)
     /// - Infinite source formation checks (before and after placement)
-    /// - Block replacement for non-fluid blocks
+    /// - Block replacement for non-fluid blocks, waterlogging for `LiquidBlockContainer`s
     /// - Fluid tick scheduling for non-source blocks
     ///
     /// Called by `spread_to` implementations after fluid-specific pre-checks.
@@ -379,6 +402,20 @@ pub trait FlowingFluid: Send + Sync {
             server.plugin_manager.fire_blocking(&server, &mut event);
         }
         if event.cancelled {
+            return;
+        }
+
+        // Vanilla `LiquidBlockContainer.placeLiquid`: the block takes the fluid in, if it can, and
+        // is never replaced.
+        if physics::is_liquid_block_container(current_state_id.to_block()) {
+            if world.get_block_state_id(pos) == current_state_id {
+                physics::place_liquid(
+                    world,
+                    pos,
+                    current_state_id,
+                    self.fluid_type(fluid, &new_props),
+                );
+            }
             return;
         }
 
@@ -475,6 +512,7 @@ pub trait FlowingFluid: Send + Sync {
         fluid: &Fluid,
         from_pos: &BlockPos,
         pos: &BlockPos,
+        _direction: BlockDirection,
         state_id: BlockStateId,
     ) {
         let new_props = FlowingFluidProperties::from_state_id(state_id, fluid);
@@ -509,7 +547,7 @@ pub trait FlowingFluid: Send + Sync {
         for &(direction, state_id) in spread_dirs.iter().take(count) {
             let side_pos = block_pos.offset(direction.to_offset());
 
-            self.spread_to(world, fluid, block_pos, &side_pos, state_id);
+            self.spread_to(world, fluid, block_pos, &side_pos, direction, state_id);
         }
     }
 }
@@ -536,4 +574,81 @@ fn fire_level_change(
     let mut event = FluidLevelChangeEvent::new(*pos, world.clone(), new_state_id);
     server.plugin_manager.fire_blocking(&server, &mut event);
     (!event.cancelled).then_some(event.new_state_id)
+}
+
+#[cfg(test)]
+mod tests {
+    use std::sync::Arc;
+
+    use pumpkin_data::block_properties::GlowLichenProperties;
+    use pumpkin_data::{Block, fluid::Fluid};
+    use pumpkin_util::math::{position::BlockPos, vector2::Vector2};
+    use pumpkin_world::{chunk::ChunkData, world::BlockFlags};
+
+    use super::FlowingFluid;
+    use crate::block::fluid::water::FlowingWater;
+    use crate::entity::ai::test_support::world;
+    use crate::world::World;
+
+    /// Loads chunk 0 0 with a stone floor at y 64, so that no hole is in reach of the flow.
+    fn stone_floor(world: &Arc<World>) {
+        world
+            .level
+            .loaded_chunks
+            .insert(Vector2::new(0, 0), ChunkData::empty_sync(0, 0));
+        for x in 0..16 {
+            for z in 0..16 {
+                world.set_block_state(
+                    &BlockPos::new(x, 64, z),
+                    Block::STONE.default_state.id,
+                    BlockFlags::empty(),
+                );
+            }
+        }
+    }
+
+    #[tokio::test]
+    async fn water_does_not_flow_down_into_a_glow_lichen() -> Result<(), Box<dyn std::error::Error>>
+    {
+        let folder = tempfile::tempdir()?;
+        let world = world(&folder);
+        stone_floor(&world);
+        let lichen = BlockPos::new(8, 65, 8);
+        let mut on_floor = GlowLichenProperties::default(&Block::GLOW_LICHEN);
+        on_floor.down = true;
+        let lichen_state = on_floor.to_state_id(&Block::GLOW_LICHEN);
+        world.set_block_state(&lichen, lichen_state, BlockFlags::empty());
+        let water = lichen.up();
+        world.set_block_state(&water, Block::WATER.default_state.id, BlockFlags::empty());
+
+        FlowingWater.on_scheduled_tick_internal(&world, &Fluid::FLOWING_WATER, &water);
+
+        assert_eq!(world.get_block_state_id(&lichen), lichen_state);
+        world.level.shutdown().await;
+        Ok(())
+    }
+
+    #[tokio::test]
+    async fn water_source_between_two_sources_waterlogs_a_slab()
+    -> Result<(), Box<dyn std::error::Error>> {
+        let folder = tempfile::tempdir()?;
+        let world = world(&folder);
+        stone_floor(&world);
+        let slab = BlockPos::new(8, 65, 8);
+        let dry_slab = Block::OAK_SLAB.default_state.id;
+        world.set_block_state(&slab, dry_slab, BlockFlags::empty());
+        let sources = [BlockPos::new(7, 65, 8), BlockPos::new(9, 65, 8)];
+        for source in &sources {
+            world.set_block_state(source, Block::WATER.default_state.id, BlockFlags::empty());
+        }
+
+        FlowingWater.on_scheduled_tick_internal(&world, &Fluid::FLOWING_WATER, &sources[0]);
+
+        assert_eq!(
+            Some(world.get_block_state_id(&slab)),
+            Block::OAK_SLAB.set_waterlogged(dry_slab, true)
+        );
+        world.level.shutdown().await;
+        Ok(())
+    }
 }

@@ -7,7 +7,7 @@ use crate::{
 use pumpkin_data::{
     Block, BlockDirection, BlockState, BlockStateId,
     damage::DamageType,
-    fluid::{Falling, Fluid, FluidProperties, Level},
+    fluid::{Fluid, FluidProperties},
     tag::Taggable,
     world::WorldEvent,
 };
@@ -144,6 +144,8 @@ impl FlowingLava {
 
 const LAVA_FLOW_SPEED_NETHER: u8 = 10;
 const LAVA_FLOW_SPEED_SLOW: u8 = 30;
+/// Vanilla `LavaFluid.MIN_LEVEL_CUTOFF`: lava at least this high gives way to water.
+pub const MIN_LEVEL_CUTOFF: f32 = 0.444_444_45;
 
 impl FluidBehaviour for FlowingLava {
     fn placed(
@@ -273,27 +275,24 @@ impl FlowingFluid for FlowingLava {
         fluid: &Fluid,
         from_pos: &BlockPos,
         pos: &BlockPos,
+        direction: BlockDirection,
         state_id: BlockStateId,
     ) {
-        let new_props = FlowingFluidProperties::from_state_id(state_id, fluid);
-        let current_state_id = world.get_block_state_id(pos);
-        let block = Block::from_state_id(current_state_id);
-
-        if new_props.level == Level::L8 && new_props.falling == Falling::True {
-            // Stone creation when lava meets water
-            if block == &Block::WATER {
+        // Lava flowing down into water fizzes; only a water block itself turns into stone.
+        if direction == BlockDirection::Down
+            && world
+                .get_fluid(pos)
+                .has_tag(&pumpkin_data::tag::Fluid::MINECRAFT_WATER)
+        {
+            if world.get_block(pos) == &Block::WATER {
                 world.set_block_state(pos, Block::STONE.default_state.id, BlockFlags::NOTIFY_ALL);
-                world.sync_world_event(WorldEvent::LavaFizz, *pos, 0);
-                return;
             }
-        }
-
-        // Don't flow into waterlogged blocks
-        if block.is_waterlogged(current_state_id) {
+            world.sync_world_event(WorldEvent::LavaFizz, *pos, 0);
             return;
         }
 
         // Delegate quiescence, replacement and scheduling to the shared helper
+        let new_props = FlowingFluidProperties::from_state_id(state_id, fluid);
         self.apply_spread(world, fluid, from_pos, pos, state_id, new_props);
     }
 }

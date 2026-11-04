@@ -2,6 +2,7 @@ use std::sync::Arc;
 use std::sync::atomic::Ordering;
 
 use crate::{
+    block::fluid::physics,
     entity::{EntityBase, mob::spawn::create_at, player::Player},
     item::{ItemBehaviour, ItemMetadata},
 };
@@ -369,11 +370,7 @@ fn try_place_liquid(
     }
 
     if can_waterlog_target {
-        let state_id = target_block
-            .set_waterlogged(target_state.id, true)
-            .unwrap_or(target_state.id);
-        world.set_block_state(&place_pos, state_id, BlockFlags::NOTIFY_ALL);
-        world.schedule_fluid_tick(&Fluid::WATER, place_pos, 5, TickPriority::Normal);
+        physics::place_liquid(world, &place_pos, target_state.id, &Fluid::WATER);
         return Some(place_pos);
     }
 
