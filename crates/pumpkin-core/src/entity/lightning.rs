@@ -97,7 +97,7 @@ impl LightningBoltEntity {
 
     fn get_strike_position(&self) -> BlockPos {
         let pos = self.entity.pos.load();
-        Vector3::new(pos.x, pos.y - 1.0e-6, pos.z).to_block_pos()
+        BlockPos::floored(pos.x, pos.y - 1.0e-6, pos.z)
     }
 
     /// Vanilla `powerLightningRod`, for every rod including the oxidized ones.

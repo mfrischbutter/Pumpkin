@@ -155,7 +155,9 @@ impl ThrownItemEntity {
 
         // Apply gravity and inertia
         let mut velocity = entity.velocity.load();
-        velocity.y -= self.get_gravity();
+        if !entity.has_no_gravity() {
+            velocity.y -= self.get_gravity();
+        }
 
         let inertia = if entity.touching_water.load(Ordering::Relaxed) {
             0.8

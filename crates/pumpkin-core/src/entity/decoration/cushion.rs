@@ -184,7 +184,12 @@ impl CushionEntity {
                 .id();
             }
         }
-        0
+        // Vanilla's `Items` gives each cushion its `CUSHION_COLOR`, which the extracted item
+        // components leave out; the item's name holds the color as well.
+        item.registry_key
+            .strip_suffix("_cushion")
+            .and_then(DyeColor::by_name)
+            .map_or_else(|| DyeColor::White.id(), |color| color.id())
     }
 
     #[must_use]

@@ -422,17 +422,6 @@ impl AreaEffectCloudEntity {
         duration > 0
     }
 
-    /// The `potion_contents` tag: vanilla's codec writes the potion's name, not its id.
-    fn contents_tag(contents: &PotionContentsImpl) -> NbtTag {
-        let mut contents_tag = contents.write_data();
-        if let NbtTag::Compound(compound) = &mut contents_tag
-            && let Some(potion) = PotionContents::potion_of(contents)
-        {
-            compound.put_string("potion", format!("minecraft:{}", potion.name));
-        }
-        contents_tag
-    }
-
     /// Vanilla `PotionContents.CODEC`: a compound, or the potion's name alone.
     fn read_contents(nbt: &NbtCompound) -> Option<PotionContentsImpl> {
         if let Some(name) = nbt.get_string("potion_contents") {
@@ -504,7 +493,7 @@ impl EntityBase for AreaEffectCloudEntity {
             || contents.custom_name.is_some()
             || !contents.custom_effects.is_empty()
         {
-            nbt.put("potion_contents", Self::contents_tag(&contents));
+            nbt.put("potion_contents", contents.write_data());
         }
         let scale = self.potion_duration_scale.load();
         if scale != 1.0 {
