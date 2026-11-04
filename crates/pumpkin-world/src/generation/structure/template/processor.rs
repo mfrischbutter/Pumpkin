@@ -521,8 +521,9 @@ fn get_random_facing_stairs(
     stair_block: &'static Block,
 ) -> &'static BlockState {
     use pumpkin_data::block_properties::{Facing, Half};
-    let facings = [Facing::North, Facing::South, Facing::East, Facing::West];
-    let halves = [Half::Bottom, Half::Top];
+    // `Direction.Plane.HORIZONTAL` and `Half.values()`.
+    let facings = [Facing::North, Facing::East, Facing::South, Facing::West];
+    let halves = [Half::Top, Half::Bottom];
     let facing = facings[rng.next_bounded_i32(4) as usize];
     let half = halves[rng.next_bounded_i32(2) as usize];
     let props = [Property::Facing(facing), Property::Half(half)];
@@ -539,12 +540,7 @@ fn process_block_age(
 
     if matches!(
         block_id,
-        BlockId::STONE_BRICKS
-            | BlockId::STONE
-            | BlockId::CHISELED_STONE_BRICKS
-            | BlockId::INFESTED_STONE
-            | BlockId::INFESTED_STONE_BRICKS
-            | BlockId::INFESTED_CHISELED_STONE_BRICKS
+        BlockId::STONE_BRICKS | BlockId::STONE | BlockId::CHISELED_STONE_BRICKS
     ) {
         if rng.next_f32() < 0.5 {
             let non_mossy = [
@@ -555,11 +551,7 @@ fn process_block_age(
                 Block::MOSSY_STONE_BRICKS.default_state,
                 get_random_facing_stairs(rng, &Block::MOSSY_STONE_BRICK_STAIRS),
             ];
-            let idx = rng.next_bounded_i32(2) as usize;
-            if rng.next_f32() < mossiness {
-                return mossy[idx];
-            }
-            return non_mossy[idx];
+            return random_aged_block(rng, mossiness, non_mossy, mossy);
         }
     } else if block_id.has_tag(pumpkin_data::tag::Block::MINECRAFT_STAIRS) {
         if rng.next_f32() < 0.5 {
@@ -571,11 +563,7 @@ fn process_block_age(
                 replace_preserving_properties(state, &Block::MOSSY_STONE_BRICK_STAIRS),
                 Block::MOSSY_STONE_BRICK_SLAB.default_state,
             ];
-            let idx = rng.next_bounded_i32(2) as usize;
-            if rng.next_f32() < mossiness {
-                return mossy[idx];
-            }
-            return non_mossy[idx];
+            return random_aged_block(rng, mossiness, non_mossy, mossy);
         }
     } else if block_id.has_tag(pumpkin_data::tag::Block::MINECRAFT_SLABS) {
         if rng.next_f32() < mossiness {
@@ -590,6 +578,22 @@ fn process_block_age(
     }
 
     state
+}
+
+/// Vanilla's `BlockAgeProcessor.getRandomBlock`: the random picks the mossy or the plain list, then
+/// the block in it.
+fn random_aged_block(
+    rng: &mut impl RandomImpl,
+    mossiness: f32,
+    non_mossy: [&'static BlockState; 2],
+    mossy: [&'static BlockState; 2],
+) -> &'static BlockState {
+    let blocks = if rng.next_f32() < mossiness {
+        mossy
+    } else {
+        non_mossy
+    };
+    blocks[rng.next_bounded_i32(2) as usize]
 }
 
 fn process_blackstone_replace(state: &'static BlockState) -> &'static BlockState {
