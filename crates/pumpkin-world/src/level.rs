@@ -1109,6 +1109,19 @@ impl Level {
         }
     }
 
+    /// Vanilla's `LevelChunk.unpackTicks` when a chunk starts ticking: the ticks it brought from
+    /// generation or from disk run from now on.
+    pub fn unpack_chunk_ticks(&self, chunk_pos: &Vector2<i32>) {
+        if self
+            .read_chunk_sync(chunk_pos, |chunk| {
+                chunk.block_ticks.has_ticks() || chunk.fluid_ticks.has_ticks()
+            })
+            .unwrap_or(false)
+        {
+            self.chunks_with_scheduled_ticks.insert(*chunk_pos);
+        }
+    }
+
     pub fn schedule_fluid_tick(
         &self,
         fluid: &Fluid,

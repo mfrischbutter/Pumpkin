@@ -639,6 +639,7 @@ impl World {
         drop(tracker);
         for pos in migrations {
             self.pending_post_processing.push(pos);
+            self.level.unpack_chunk_ticks(&pos);
             self.migrate_pending_block_entities(pos);
         }
 
