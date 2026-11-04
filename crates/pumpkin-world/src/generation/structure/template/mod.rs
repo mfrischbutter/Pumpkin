@@ -235,7 +235,8 @@ pub fn place_template_with_options(
             continue;
         }
 
-        let Some(mut state) = BlockStateResolver::resolve(placed_entry, rotation, mirror) else {
+        // Vanilla's processors see the template's own state; the placement turns it afterwards.
+        let Some(mut state) = BlockStateResolver::resolve_simple(placed_entry) else {
             continue;
         };
 
@@ -318,6 +319,7 @@ pub fn place_template_with_options(
         if placement.skip_air && state.id.to_block_id() == pumpkin_data::Block::AIR.id {
             continue;
         }
+        let state = state.mirror(mirror).rotate(rotation);
 
         let previous = settings
             .apply_waterlogging
