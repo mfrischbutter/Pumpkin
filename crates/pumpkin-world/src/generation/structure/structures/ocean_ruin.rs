@@ -384,7 +384,14 @@ impl OceanRuinPiece {
         }
     }
 
-    fn calculate_height(pos: Vector3<i32>, corner: Vector3<i32>, chunk: &ProtoChunk) -> i32 {
+    /// Vanilla's `OceanRuinPiece.getHeight`: each column of the ruin's base reads down from below
+    /// the ruin through air, water and ice; the ruin sinks to the lowest floor when most columns
+    /// lie deeper.
+    fn calculate_height(
+        pos: Vector3<i32>,
+        corner: Vector3<i32>,
+        cache: &dyn GenerationCache,
+    ) -> i32 {
         let mut new_y = pos.y;
         let mut min_y = 512;
         let top_y = new_y - 1;
@@ -393,10 +400,25 @@ impl OceanRuinPiece {
         let max_x = pos.x.max(corner.x);
         let min_z = pos.z.min(corner.z);
         let max_z = pos.z.max(corner.z);
+        let bottom_y = i32::from(cache.bottom_y());
 
         for x in min_x..=max_x {
             for z in min_z..=max_z {
-                let floor_y = chunk.get_top_y(&HeightMap::OceanFloorWg, x, z) - 1;
+                let mut floor_y = pos.y - 1;
+                loop {
+                    let floor = Vector3::new(x, floor_y, z);
+                    let state = GenerationCache::get_block_state(cache, &floor);
+                    if !((state.to_state().is_air()
+                        || holds_water(cache, &floor)
+                        || state
+                            .to_block_id()
+                            .has_tag(pumpkin_data::tag::Block::MINECRAFT_ICE))
+                        && floor_y > bottom_y + 1)
+                    {
+                        break;
+                    }
+                    floor_y -= 1;
+                }
                 min_y = min_y.min(floor_y);
                 if floor_y < top_y - 2 {
                     area += 1;
@@ -422,11 +444,9 @@ impl OceanRuinPiece {
     ) {
         match marker {
             "chest" => {
-                let (fluid, _) = GenerationCache::get_fluid_and_fluid_state(chunk, &position);
                 let mut props = ChestLikeProperties::default(&Block::CHEST);
                 props.facing = HorizontalFacing::North;
-                props.waterlogged =
-                    fluid.id == Fluid::WATER.id || fluid.id == Fluid::FLOWING_WATER.id;
+                props.waterlogged = holds_water(chunk, &position);
                 let chest_state = BlockState::from_id(props.to_state_id(&Block::CHEST));
                 chunk.set_block_state(position.x, position.y, position.z, chest_state);
 
@@ -491,12 +511,25 @@ impl StructurePieceBase for OceanRuinPiece {
     fn place(
         &mut self,
         chunk: &mut ProtoChunk,
+        block_registry: &dyn WorldPortalExt,
+        random: &mut RandomGenerator,
+        seed: i64,
+        chunk_box: &BlockBox,
+    ) {
+        self.place_in_region(chunk, block_registry, random, seed, chunk_box);
+    }
+
+    /// Vanilla's `OceanRuinPiece.postProcess`, which reads the floor of the region around the
+    /// chunk.
+    fn place_in_region(
+        &mut self,
+        cache: &mut dyn GenerationCache,
         _block_registry: &dyn WorldPortalExt,
         random: &mut RandomGenerator,
         seed: i64,
         chunk_box: &BlockBox,
     ) {
-        let height = chunk.get_top_y(
+        let height = cache.get_top_y(
             &HeightMap::OceanFloorWg,
             self.template_position.x,
             self.template_position.z,
@@ -510,14 +543,14 @@ impl StructurePieceBase for OceanRuinPiece {
             Vector3::new(0, 0, 0),
         ) + pos;
 
-        pos.y = Self::calculate_height(pos, corner, chunk);
+        pos.y = Self::calculate_height(pos, corner, cache);
         self.template_position = pos;
         self.place_settings.bounding_box = Some(*chunk_box);
         self.piece.bounding_box = self
             .template
             .get_bounding_box(&self.place_settings, self.template_position);
         place_template_piece(
-            chunk,
+            cache.get_center_chunk_mut(),
             &self.template,
             self.template_position,
             &self.place_settings,
@@ -528,6 +561,12 @@ impl StructurePieceBase for OceanRuinPiece {
             },
         );
     }
+}
+
+/// Whether the block holds water, flowing or not (vanilla's `FluidState.is(FluidTags.WATER)`).
+fn holds_water(cache: &dyn GenerationCache, pos: &Vector3<i32>) -> bool {
+    let (fluid, _) = cache.get_fluid_and_fluid_state(pos);
+    fluid.id == Fluid::WATER.id || fluid.id == Fluid::FLOWING_WATER.id
 }
 
 /// Vanilla's `OceanRuinPiece.makeSettings`.
