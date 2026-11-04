@@ -387,7 +387,6 @@ impl StructureProcessor {
     }
 
     #[must_use]
-    #[expect(clippy::too_many_arguments)]
     pub fn process_with_context(
         &self,
         placer: &impl BlockPlacer,
@@ -437,8 +436,10 @@ impl StructureProcessor {
                     Some(state)
                 }
             }
-            // Gravity moves the block instead of changing it, see `place_template_with_options`.
-            Self::Gravity { .. } | Self::Nop => Some(state),
+            // Gravity moves the block instead of changing it, and vanilla's
+            // `CappedProcessor.processBlock` changes nothing either: its delegate runs over the
+            // whole template in `finalizeProcessing` (see `place_template_with_options`).
+            Self::Gravity { .. } | Self::Capped { .. } | Self::Nop => Some(state),
             Self::ProtectedBlocks(tag) => {
                 let world_state_id = placer.get_block_state(&world_pos);
                 if tag.matches(world_state_id.to_block_id()) {
@@ -470,9 +471,6 @@ impl StructureProcessor {
                 }
                 Some(state)
             }
-            // Vanilla's `CappedProcessor.processBlock` changes nothing; its delegate runs over the
-            // whole template in `finalizeProcessing` (see `place_template_with_options`).
-            Self::Capped { .. } => Some(state),
         }
     }
 }
