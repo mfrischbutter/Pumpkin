@@ -616,6 +616,42 @@ mod tests {
     use pumpkin_util::random::xoroshiro128::Xoroshiro;
 
     use super::*;
+    use crate::generation::feature::features::sculk::test_utils::{empty_region, set};
+    use crate::generation::proto_chunk_test::stage_parity::TestBlockRegistry;
+
+    #[test]
+    fn desert_wells_stand_on_ground() {
+        // The well needs sand at its foot and no air in the five by two by five blocks below.
+        let well = PLACED_FEATURES.get(&pumpkin_data::placed_feature::PlacedFeature::DesertWell);
+        let filter = well.and_then(|well| {
+            well.placement.iter().find_map(|modifier| match modifier {
+                PlacementModifier::BlockPredicateFilter(filter) => Some(&filter.predicate),
+                _ => None,
+            })
+        });
+        assert!(filter.is_some(), "the desert well checks its ground");
+        let Some(filter) = filter else {
+            return;
+        };
+        let origin = BlockPos::new(24, 64, 24);
+        let mut level = empty_region();
+        for x in -2..=2 {
+            for z in -2..=2 {
+                for y in -2..=-1 {
+                    set(
+                        &mut level,
+                        origin.add(x, y, z),
+                        Block::SANDSTONE.default_state,
+                    );
+                }
+            }
+        }
+        set(&mut level, origin, Block::SAND.default_state);
+        assert!(filter.test(&TestBlockRegistry, &level, &origin));
+
+        set(&mut level, origin.add(2, -2, -2), Block::AIR.default_state);
+        assert!(!filter.test(&TestBlockRegistry, &level, &origin));
+    }
 
     #[test]
     fn modifier_candidates_interleave_with_feature_rng() {

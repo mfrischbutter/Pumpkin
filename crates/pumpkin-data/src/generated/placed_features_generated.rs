@@ -928,7 +928,20 @@ fn build_placed_features()
                                 offset: OffsetBlocksBlockPredicate { offset: None },
                                 blocks: MatchingBlocksWrapper::Single("minecraft:sand".to_string()),
                             }),
-                            BlockPredicate::AlwaysTrue,
+                            BlockPredicate::VolumeMatch(
+                                crate::generation::block_predicate::VolumeMatchBlockPredicate {
+                                    min: Vector3::new(-2i32, -2i32, -2i32),
+                                    max: Vector3::new(2i32, -1i32, 2i32),
+                                    predicate: Box::new(BlockPredicate::Not(NotBlockPredicate {
+                                        predicate: Box::new(BlockPredicate::MatchingBlockTag(
+                                            MatchingBlockTagPredicate {
+                                                offset: OffsetBlocksBlockPredicate { offset: None },
+                                                tag: pumpkin_data::tag::Block::MINECRAFT_AIR,
+                                            },
+                                        )),
+                                    })),
+                                },
+                            ),
                         ],
                     }),
                 }),

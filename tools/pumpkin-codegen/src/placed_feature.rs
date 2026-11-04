@@ -384,7 +384,27 @@ pub fn value_to_block_predicate(v: &Value) -> TokenStream {
 
     let type_str = v["type"].as_str().unwrap_or("");
     match type_str {
-        "minecraft:true" | "minecraft:volume_match" | "" => quote! { BlockPredicate::AlwaysTrue },
+        "minecraft:true" | "" => quote! { BlockPredicate::AlwaysTrue },
+        "minecraft:volume_match" => {
+            let corner = |corner: &Value| {
+                let [x, y, z] = [0, 1, 2].map(|axis| {
+                    corner[axis]
+                        .as_i64()
+                        .expect("volume corners are three integers") as i32
+                });
+                quote! { Vector3::new(#x, #y, #z) }
+            };
+            let min = corner(&v["min"]);
+            let max = corner(&v["max"]);
+            let predicate = value_to_block_predicate(&v["match"]);
+            quote! {
+                BlockPredicate::VolumeMatch(crate::generation::block_predicate::VolumeMatchBlockPredicate {
+                    min: #min,
+                    max: #max,
+                    predicate: Box::new(#predicate),
+                })
+            }
+        }
         "minecraft:matching_blocks" => {
             let offset = value_to_offset_predicate(&v["offset"]);
             let blocks = value_to_matching_blocks_wrapper(&v["blocks"]);
