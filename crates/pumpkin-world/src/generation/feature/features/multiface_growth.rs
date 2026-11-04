@@ -1,9 +1,13 @@
-use pumpkin_data::{Block, BlockDirection, BlockState, block_properties::GlowLichenLikeProperties};
+use pumpkin_data::{
+    Block, BlockDirection, BlockId, BlockState, block_properties::GlowLichenLikeProperties,
+    fluid::Fluid,
+};
 use pumpkin_util::{
     math::position::BlockPos,
     random::{RandomGenerator, RandomImpl},
 };
 
+use crate::generation::feature::features::sculk::vein::VeinRules;
 use crate::generation::proto_chunk::GenerationCache;
 
 pub struct MultifaceGrowthFeature {
@@ -134,7 +138,7 @@ impl MultifaceGrowthFeature {
             ];
 
             for (target_pos, target_face) in candidates {
-                if self.can_spread_into(chunk, target_pos, target_face) {
+                if self.can_spread_into(chunk, pos, target_pos, target_face) {
                     self.place_face(chunk, target_pos, target_face);
                     return;
                 }
@@ -171,9 +175,14 @@ impl MultifaceGrowthFeature {
     fn can_spread_into<T: GenerationCache>(
         &self,
         chunk: &T,
+        source_pos: BlockPos,
         pos: BlockPos,
         face: BlockDirection,
     ) -> bool {
+        // Sculk veins spread with their own rules (vanilla `SculkVeinSpreaderConfig`).
+        if self.place_block == BlockId::SCULK_VEIN {
+            return VeinRules::can_spread_into(chunk, source_pos, pos, face);
+        }
         let existing = GenerationCache::get_block_state(chunk, &pos.0);
         let id = existing.to_block_id();
         let replaceable = existing.to_state().is_air()
@@ -187,7 +196,7 @@ impl MultifaceGrowthFeature {
 
     fn place_face<T: GenerationCache>(&self, chunk: &mut T, pos: BlockPos, face: BlockDirection) {
         let cur_state = GenerationCache::get_block_state(chunk, &pos.0);
-        let is_water_source = cur_state == Block::WATER.default_state.id;
+        let is_water_source = chunk.get_fluid_and_fluid_state(&pos.0).0.id == Fluid::WATER.id;
         let block = Block::from_id(self.place_block);
 
         let mut props = GlowLichenLikeProperties {

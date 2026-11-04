@@ -1,56 +1,147 @@
-//! Sculk growth rules: sensor / shrieker placement above sculk.
+//! Sculk spending a cursor's charge on sensors and shriekers (vanilla `SculkBlock`).
 
 use pumpkin_data::Block;
 use pumpkin_data::BlockId;
 use pumpkin_data::BlockState;
 use pumpkin_data::block_properties::SculkSensorLikeProperties;
 use pumpkin_data::block_properties::SculkShriekerLikeProperties;
+use pumpkin_data::tag::Block::MINECRAFT_SCULK_GROWTH_INHIBITORS;
 use pumpkin_util::math::position::BlockPos;
-use pumpkin_util::math::vector3::Vector3;
 use pumpkin_util::random::RandomGenerator;
 use pumpkin_util::random::RandomImpl;
 
-use super::SculkLevel;
+use super::get_block_state;
+use super::holds_no_fluid;
+use super::holds_water_source;
+use super::spreader::ChargeCursor;
+use super::spreader::SculkSpreader;
+use crate::generation::proto_chunk::GenerationCache;
 
-/// Radius of the nearby-growth scan: -4..4 on XZ, 0..2 on Y.
-const GROWTH_CHECK_RADIUS: i32 = 4;
-const GROWTH_CHECK_HEIGHT: i32 = 2;
-/// Maximum nearby growths allowed before placement is blocked.
-const MAX_NEARBY_GROWTHS: i32 = 2;
+/// Vanilla `SculkSpreader.MAX_GROWTH_RATE_RADIUS`: past this distance from the origin a decaying
+/// cursor loses the most charge.
+const MAX_GROWTH_RATE_RADIUS: i32 = 24;
+/// Vanilla `SculkSpreader.MAX_DECAY_FACTOR`.
+const MAX_DECAY_FACTOR: f32 = 0.5;
+/// Vanilla `SculkSpreader.SHRIEKER_PLACEMENT_RATE`: one growth in this many is a shrieker.
+const SHRIEKER_PLACEMENT_RATE: i32 = 11;
+/// Vanilla `SculkBlock.GROWTH_INHIBITOR_RANGE`: the horizontal reach of the growth check.
+const GROWTH_INHIBITOR_RANGE: i32 = 4;
+/// How far above the sculk the growth check reaches.
+const GROWTH_INHIBITOR_HEIGHT: i32 = 2;
+/// How many growth inhibitors may be in reach of a new growth.
+const MAX_GROWTH_INHIBITORS: i32 = 2;
 
-/// Rules governing sculk sensor / shrieker placement.
+/// Rules of sculk using a cursor's charge.
 pub struct GrowthRules;
 
 impl GrowthRules {
-    /// Checks whether a growth can be placed above `pos`: the block above
-    /// must be air or water and nearby growths must be few.
-    pub fn can_place_growth(level: &dyn SculkLevel, pos: BlockPos) -> bool {
+    /// Vanilla `SculkBlock.attemptUseCharge`: grows a sensor or shrieker above the cursor or lets
+    /// its charge decay with the distance from the origin.
+    pub fn attempt_use_charge<T: GenerationCache>(
+        cursor: &ChargeCursor,
+        level: &mut T,
+        origin_pos: BlockPos,
+        random: &mut RandomGenerator,
+        spreader: &SculkSpreader,
+    ) -> i32 {
+        let charge = cursor.charge;
+        if charge == 0 || random.next_bounded_i32(spreader.charge_decay_rate()) != 0 {
+            return charge;
+        }
+
+        let charge_pos = cursor.pos;
+        let is_close_to_catalyst =
+            Self::is_close_to_catalyst(charge_pos, origin_pos, spreader.no_growth_radius());
+        if !is_close_to_catalyst && Self::can_place_growth(level, charge_pos) {
+            let xp_per_growth_spawn = spreader.growth_spawn_cost();
+            if random.next_bounded_i32(xp_per_growth_spawn) < charge {
+                let growth_placement = charge_pos.up();
+                let growth_state = Self::random_growth_state(
+                    level,
+                    growth_placement,
+                    random,
+                    spreader.is_world_generation(),
+                );
+                level.set_block_state(&growth_placement.0, growth_state);
+            }
+            return (charge - xp_per_growth_spawn).max(0);
+        }
+
+        if random.next_bounded_i32(spreader.additional_decay_rate()) != 0 {
+            charge
+        } else if is_close_to_catalyst {
+            charge - 1
+        } else {
+            charge - Self::decay_penalty(spreader, charge_pos, origin_pos, charge)
+        }
+    }
+
+    /// Vanilla `BlockPos.closerThan` with the spreader's no-growth radius.
+    fn is_close_to_catalyst(pos: BlockPos, origin_pos: BlockPos, no_growth_radius: i32) -> bool {
+        pos.squared_distance(&origin_pos) < no_growth_radius * no_growth_radius
+    }
+
+    /// Vanilla `SculkBlock.getDecayPenalty`.
+    fn decay_penalty(
+        spreader: &SculkSpreader,
+        pos: BlockPos,
+        origin_pos: BlockPos,
+        charge: i32,
+    ) -> i32 {
+        let no_growth_radius = spreader.no_growth_radius();
+        let outer_distance =
+            f64::from(pos.squared_distance(&origin_pos)).sqrt() as f32 - no_growth_radius as f32;
+        let outer_distance_squared = outer_distance * outer_distance;
+        let max_reach = MAX_GROWTH_RATE_RADIUS - no_growth_radius;
+        let max_reach_squared = max_reach * max_reach;
+        let distance_factor = (outer_distance_squared / max_reach_squared as f32).min(1.0);
+        ((charge as f32 * distance_factor * MAX_DECAY_FACTOR) as i32).max(1)
+    }
+
+    /// Vanilla `SculkBlock.getRandomGrowthState`: a sensor, or one time in
+    /// [`SHRIEKER_PLACEMENT_RATE`] a shrieker, waterlogged if `pos` holds a fluid.
+    fn random_growth_state<T: GenerationCache>(
+        level: &T,
+        pos: BlockPos,
+        random: &mut RandomGenerator,
+        is_world_gen: bool,
+    ) -> &'static BlockState {
+        let waterlogged = !holds_no_fluid(level, pos);
+        if random.next_bounded_i32(SHRIEKER_PLACEMENT_RATE) == 0 {
+            let mut props = SculkShriekerLikeProperties::default(&Block::SCULK_SHRIEKER);
+            props.can_summon = is_world_gen;
+            props.waterlogged = waterlogged;
+            props.to_state_id(&Block::SCULK_SHRIEKER).to_state()
+        } else {
+            let mut props = SculkSensorLikeProperties::default(&Block::SCULK_SENSOR);
+            props.waterlogged = waterlogged;
+            props.to_state_id(&Block::SCULK_SENSOR).to_state()
+        }
+    }
+
+    /// Vanilla `SculkBlock.canPlaceGrowth`: air or a water source above, and at most
+    /// [`MAX_GROWTH_INHIBITORS`] sensors and shriekers in reach.
+    fn can_place_growth<T: GenerationCache>(level: &T, pos: BlockPos) -> bool {
         let above = pos.up();
-        let Some(above_state) = level.sculk_get(above) else {
-            return false;
-        };
-        let above_id = above_state.to_block_id();
-        // The block above must be air, or a water block holding water.
-        if !(above_state.to_state().is_air()
-            || (above_id == BlockId::WATER && level.sculk_is_water(above)))
+        let state_above = get_block_state(level, above);
+        if !(state_above.to_state().is_air()
+            || (state_above.to_block_id() == BlockId::WATER && holds_water_source(level, above)))
         {
             return false;
         }
-        // Count nearby growths (sensor + shrieker).
-        let mut growth_count = 0i32;
-        for dx in -GROWTH_CHECK_RADIUS..=GROWTH_CHECK_RADIUS {
-            for dz in -GROWTH_CHECK_RADIUS..=GROWTH_CHECK_RADIUS {
-                for dy in 0..=GROWTH_CHECK_HEIGHT {
-                    let check_pos = pos.offset(Vector3::new(dx, dy, dz));
-                    if let Some(s) = level.sculk_get(check_pos) {
-                        let id = s.to_block_id();
-                        // Only sculk sensors and shriekers count
-                        // (exact block match — calibrated sensors don't).
-                        if id == BlockId::SCULK_SENSOR || id == BlockId::SCULK_SHRIEKER {
-                            growth_count += 1;
-                            if growth_count > MAX_NEARBY_GROWTHS {
-                                return false;
-                            }
+
+        let mut inhibitors = 0;
+        for dy in 0..=GROWTH_INHIBITOR_HEIGHT {
+            for dz in -GROWTH_INHIBITOR_RANGE..=GROWTH_INHIBITOR_RANGE {
+                for dx in -GROWTH_INHIBITOR_RANGE..=GROWTH_INHIBITOR_RANGE {
+                    let state = get_block_state(level, pos.add(dx, dy, dz));
+                    if state
+                        .to_block_id()
+                        .has_tag(MINECRAFT_SCULK_GROWTH_INHIBITORS)
+                    {
+                        inhibitors += 1;
+                        if inhibitors > MAX_GROWTH_INHIBITORS {
+                            return false;
                         }
                     }
                 }
@@ -58,81 +149,39 @@ impl GrowthRules {
         }
         true
     }
-
-    /// Returns a sculk sensor (10/11 chance) or a sculk shrieker
-    /// (1/11 chance), waterlogged when placed in water.
-    pub fn random_growth_state(
-        level: &dyn SculkLevel,
-        pos: BlockPos,
-        random: &mut RandomGenerator,
-        is_world_gen: bool,
-    ) -> &'static BlockState {
-        let base_state = if random.next_bounded_i32(11) == 0 {
-            // Shrieker (1/11 chance).
-            let mut props = SculkShriekerLikeProperties::default(&Block::SCULK_SHRIEKER);
-            props.r#can_summon = is_world_gen;
-            BlockState::from_id(props.to_state_id(&Block::SCULK_SHRIEKER))
-        } else {
-            Block::SCULK_SENSOR.default_state
-        };
-        // Apply waterlogging if the position holds water.
-        if level.sculk_is_water(pos) {
-            let block_id = base_state.id.to_block_id();
-            if block_id == BlockId::SCULK_SHRIEKER {
-                let mut props = SculkShriekerLikeProperties::from_state_id(base_state.id);
-                props.r#waterlogged = true;
-                return BlockState::from_id(props.to_state_id(&Block::SCULK_SHRIEKER));
-            } else if block_id == BlockId::SCULK_SENSOR {
-                let mut props = SculkSensorLikeProperties::from_state_id(base_state.id);
-                props.r#waterlogged = true;
-                return BlockState::from_id(props.to_state_id(&Block::SCULK_SENSOR));
-            }
-        }
-        base_state
-    }
 }
 
 #[cfg(test)]
 mod tests {
+    use super::super::test_utils::{empty_chunk, set};
     use super::*;
-    use crate::generation::feature::features::sculk::test_utils::MockSculkLevel;
-    use pumpkin_util::math::vector3::Vector3;
-
-    #[test]
-    fn shrieker_state_default() {
-        let props = SculkShriekerLikeProperties::default(&Block::SCULK_SHRIEKER);
-        assert!(!props.r#can_summon);
-    }
 
     #[test]
     fn can_place_growth_accepts_air_like_states() {
-        // Cavity and void air count as air here, not just the plain
-        // `minecraft:air` block.
-        let mut level = MockSculkLevel::new();
-        let pos = BlockPos::new(0, 60, 0);
-        level.set_id(pos.up(), Block::CAVE_AIR.default_state.id);
+        // Cave and void air count as air, not only `minecraft:air`.
+        let mut level = empty_chunk();
+        let pos = BlockPos::new(4, 60, 4);
+        set(&mut level, pos.up(), Block::CAVE_AIR.default_state);
         assert!(GrowthRules::can_place_growth(&level, pos));
     }
 
     #[test]
-    fn can_place_growth_accepts_water_above() {
-        let mut level = MockSculkLevel::new();
-        let pos = BlockPos::new(0, 60, 0);
-        level.set_id(pos.up(), Block::WATER.default_state.id);
+    fn can_place_growth_accepts_water_source_above() {
+        let mut level = empty_chunk();
+        let pos = BlockPos::new(4, 60, 4);
+        set(&mut level, pos.up(), Block::WATER.default_state);
         assert!(GrowthRules::can_place_growth(&level, pos));
     }
 
     #[test]
     fn density_ignores_calibrated_sensors() {
-        // Only SCULK_SENSOR / SCULK_SHRIEKER count; three nearby
-        // calibrated sensors must not block placement.
-        let mut level = MockSculkLevel::new();
-        let pos = BlockPos::new(0, 60, 0);
-        level.set_id(pos.up(), Block::AIR.default_state.id);
+        let mut level = empty_chunk();
+        let pos = BlockPos::new(4, 60, 4);
         for dx in 0..3 {
-            level.set_id(
-                pos.offset(Vector3::new(dx, 0, 0)),
-                Block::CALIBRATED_SCULK_SENSOR.default_state.id,
+            set(
+                &mut level,
+                pos.add(dx, 0, 0),
+                Block::CALIBRATED_SCULK_SENSOR.default_state,
             );
         }
         assert!(GrowthRules::can_place_growth(&level, pos));
@@ -140,20 +189,42 @@ mod tests {
 
     #[test]
     fn density_blocks_after_two_sensors_or_shriekers() {
-        let mut level = MockSculkLevel::new();
-        let pos = BlockPos::new(0, 60, 0);
-        level.set_id(pos.up(), Block::AIR.default_state.id);
+        let mut level = empty_chunk();
+        let pos = BlockPos::new(4, 60, 4);
         for dx in 0..2 {
-            level.set_id(
-                pos.offset(Vector3::new(dx, 0, 0)),
-                Block::SCULK_SENSOR.default_state.id,
+            set(
+                &mut level,
+                pos.add(dx, 0, 0),
+                Block::SCULK_SENSOR.default_state,
             );
         }
         assert!(GrowthRules::can_place_growth(&level, pos));
-        level.set_id(
-            pos.offset(Vector3::new(2, 0, 0)),
-            Block::SCULK_SHRIEKER.default_state.id,
+        set(
+            &mut level,
+            pos.add(2, 0, 0),
+            Block::SCULK_SHRIEKER.default_state,
         );
         assert!(!GrowthRules::can_place_growth(&level, pos));
+    }
+
+    #[test]
+    fn close_to_catalyst_is_strict() {
+        let origin = BlockPos::new(0, 60, 0);
+        // `closerThan` uses `< radius²`: exactly on the boundary is not close.
+        assert!(!GrowthRules::is_close_to_catalyst(
+            BlockPos::new(4, 60, 0),
+            origin,
+            4
+        ));
+        assert!(GrowthRules::is_close_to_catalyst(
+            BlockPos::new(3, 60, 0),
+            origin,
+            4
+        ));
+        assert!(GrowthRules::is_close_to_catalyst(
+            BlockPos::new(2, 62, 2),
+            origin,
+            4
+        ));
     }
 }

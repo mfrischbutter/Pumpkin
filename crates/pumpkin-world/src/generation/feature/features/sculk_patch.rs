@@ -1,23 +1,14 @@
-//! Driver for the sculk-patch configured feature.
+//! Vanilla `SculkPatchFeature`: rounds of charge cursors spreading sculk from the origin.
 //!
-//! This module keeps the public struct / field layout required by the
-//! codegen (`configured_features_generated.rs`) and the two generation entry
-//! points (`generate` / `generate_in_proto_chunk`). The actual spreading
-//! algorithm lives in the [`sculk`] sub-module.
+//! The catalysts and shriekers of the deep dark and ancient cities are features of their own,
+//! run after it in a sequence.
 
-use pumpkin_data::Block;
-use pumpkin_util::math::int_provider::IntProvider;
 use pumpkin_util::math::position::BlockPos;
-use pumpkin_util::math::vector3::Vector3;
 use pumpkin_util::random::RandomGenerator;
-use pumpkin_util::random::RandomImpl;
 
 use crate::generation::feature::features::sculk;
-use crate::generation::feature::features::sculk::ProtoChunkSculkView;
-use crate::generation::feature::features::sculk::SculkLevel;
 use crate::generation::feature::features::sculk::spreader::SculkSpreader;
 use crate::generation::proto_chunk::GenerationCache;
-use crate::world::WorldPortalExt;
 
 pub struct SculkPatchFeature {
     pub charge_count: i32,
@@ -25,16 +16,11 @@ pub struct SculkPatchFeature {
     pub spread_attempts: i32,
     pub growth_rounds: i32,
     pub spread_rounds: i32,
-    pub extra_rare_growths: IntProvider,
-    pub catalyst_chance: f32,
 }
 
 impl SculkPatchFeature {
-    /// Post-terrain generation entry point. `T: GenerationCache` also
-    /// implements `SculkLevel` via the blanket impl.
     pub fn generate<T: GenerationCache>(
         &self,
-        _block_registry: &dyn WorldPortalExt,
         chunk: &mut T,
         random: &mut RandomGenerator,
         pos: BlockPos,
@@ -45,82 +31,66 @@ impl SculkPatchFeature {
 
         let mut spreader = SculkSpreader::new_world_gen_spreader();
         let total_rounds = self.spread_rounds + self.growth_rounds;
-
         for round in 0..total_rounds {
             for _ in 0..self.charge_count {
                 spreader.add_cursors(pos, self.amount_per_charge);
             }
-
+            let spread_veins = round < self.spread_rounds;
             for _ in 0..self.spread_attempts {
-                spreader.update_cursors(chunk, pos, random, round < self.spread_rounds);
-            }
-
-            spreader.clear();
-        }
-
-        // Catalyst needs a full cube below it.
-        if random.next_f32() <= self.catalyst_chance && chunk.sculk_is_full_cube(pos.down()) {
-            chunk.sculk_set(pos, Block::SCULK_CATALYST.default_state);
-        }
-
-        // Extra-rare growths (shriekers, only for ancient cities).
-        self.place_extra_rare_growths(chunk, random, pos);
-
-        true
-    }
-
-    /// In-chunk (proto-chunk) generation entry point used during terrain.
-    pub fn generate_in_proto_chunk(
-        &self,
-        chunk: &mut crate::ProtoChunk,
-        random: &mut RandomGenerator,
-        pos: BlockPos,
-    ) -> bool {
-        let mut view = ProtoChunkSculkView::new(chunk);
-        if !sculk::can_spread_from(&view, pos) {
-            return false;
-        }
-
-        let mut spreader = SculkSpreader::new_world_gen_spreader();
-        let total_rounds = self.spread_rounds + self.growth_rounds;
-        for round in 0..total_rounds {
-            for _ in 0..self.charge_count {
-                spreader.add_cursors(pos, self.amount_per_charge);
-            }
-            for _ in 0..self.spread_attempts {
-                spreader.update_cursors(&mut view, pos, random, round < self.spread_rounds);
+                spreader.update_cursors(chunk, pos, random, spread_veins);
             }
             spreader.clear();
         }
-
-        if random.next_f32() <= self.catalyst_chance && view.sculk_is_full_cube(pos.down()) {
-            view.sculk_set(pos, Block::SCULK_CATALYST.default_state);
-        }
-
-        self.place_extra_rare_growths(&mut view, random, pos);
-
         true
     }
+}
 
-    /// Places extra-rare growths (sculk shriekers) around the origin.
-    fn place_extra_rare_growths(
-        &self,
-        level: &mut dyn SculkLevel,
-        random: &mut RandomGenerator,
-        pos: BlockPos,
-    ) {
-        let extra_growths = self.extra_rare_growths.get(random);
-        for _ in 0..extra_growths {
-            let candidate = pos.offset(Vector3::new(
-                random.next_bounded_i32(5) - 2,
-                0,
-                random.next_bounded_i32(5) - 2,
-            ));
-            if level.sculk_is_air(candidate)
-                && level.sculk_is_face_sturdy(candidate.down(), pumpkin_data::BlockDirection::Up)
-            {
-                level.sculk_set(candidate, sculk::shrieker_state(true));
+#[cfg(test)]
+mod tests {
+    use pumpkin_data::{Block, BlockId};
+    use pumpkin_util::random::legacy_rand::LegacyRand;
+
+    use super::*;
+    use crate::generation::feature::features::sculk::test_utils::{empty_region, set};
+
+    #[test]
+    fn sculk_stays_within_twelve_blocks_of_the_origin() {
+        // A deepslate floor under air, three chunks wide. On a floor sculk only grows straight
+        // above or below a vein a cursor stood on, and world generation cursors stay within
+        // twelve blocks (horizontally) of the origin.
+        let mut level = empty_region();
+        for x in 0..48 {
+            for z in 0..48 {
+                set(
+                    &mut level,
+                    BlockPos::new(x, 0, z),
+                    Block::DEEPSLATE.default_state,
+                );
             }
         }
+        let origin = BlockPos::new(24, 1, 24);
+        let feature = SculkPatchFeature {
+            charge_count: 32,
+            amount_per_charge: 500,
+            spread_attempts: 64,
+            growth_rounds: 0,
+            spread_rounds: 8,
+        };
+        let mut random = RandomGenerator::Legacy(LegacyRand::from_seed(1));
+        assert!(feature.generate(&mut level, &mut random, origin));
+
+        let mut sculk = 0;
+        for x in 0..48 {
+            for z in 0..48 {
+                let pos = BlockPos::new(x, 0, z);
+                if GenerationCache::get_block_state(&level, &pos.0).to_block_id() == BlockId::SCULK
+                {
+                    sculk += 1;
+                    let (dx, dz) = (x - origin.0.x, z - origin.0.z);
+                    assert!(dx * dx + dz * dz <= 144, "sculk at {pos:?}");
+                }
+            }
+        }
+        assert!(sculk > 0);
     }
 }

@@ -1145,8 +1145,6 @@ pub fn value_to_configured_feature(v: &Value) -> TokenStream {
             let spread_attempts = config["spread_attempts"].as_u64().unwrap() as i32;
             let growth_rounds = config["growth_rounds"].as_u64().unwrap() as i32;
             let spread_rounds = config["spread_rounds"].as_u64().unwrap() as i32;
-            let extra_rare_growths = value_to_int_provider(&config["extra_rare_growths"]);
-            let catalyst_chance = config["catalyst_chance"].as_f64().unwrap() as f32;
             quote! {
                 ConfiguredFeature::SculkPatch(crate::generation::feature::features::sculk_patch::SculkPatchFeature {
                     charge_count: #charge_count,
@@ -1154,8 +1152,6 @@ pub fn value_to_configured_feature(v: &Value) -> TokenStream {
                     spread_attempts: #spread_attempts,
                     growth_rounds: #growth_rounds,
                     spread_rounds: #spread_rounds,
-                    extra_rare_growths: #extra_rare_growths,
-                    catalyst_chance: #catalyst_chance,
                 })
             }
         }

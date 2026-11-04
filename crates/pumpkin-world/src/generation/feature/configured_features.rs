@@ -429,7 +429,7 @@ impl ConfiguredFeature {
             Self::EndIsland(_feature) => {
                 EndIslandFeature::generate(chunk, min_y, height, feature_name, random, pos)
             }
-            Self::SculkPatch(feature) => feature.generate(block_registry, chunk, random, pos),
+            Self::SculkPatch(feature) => feature.generate(chunk, random, pos),
             Self::RootSystem(feature) => feature.generate(
                 chunk,
                 block_registry,
