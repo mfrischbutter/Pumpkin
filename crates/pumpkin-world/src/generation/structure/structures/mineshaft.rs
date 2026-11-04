@@ -970,7 +970,7 @@ impl MineShaftCorridor {
         }
     }
 
-    const fn is_interior(
+    fn is_interior(
         &self,
         chunk: &ProtoChunk,
         x: i32,

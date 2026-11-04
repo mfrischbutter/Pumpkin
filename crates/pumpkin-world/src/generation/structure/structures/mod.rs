@@ -392,7 +392,7 @@ impl StructurePiece {
     }
 
     #[must_use]
-    pub const fn is_under_sea_level(
+    pub fn is_under_sea_level(
         &self,
         chunk: &ProtoChunk,
         x: i32,
@@ -766,6 +766,8 @@ impl StructurePiecesCollector {
                 piece.place(chunk, block_registry, random, seed, &chunk_box);
             }
         }
+        // Vanilla's `Structure.afterPlace`, which the desert pyramid overrides.
+        desert_pyramid::after_place(&self.pieces, chunk, &chunk_box, seed);
     }
 
     pub fn shift(&mut self, y_offset: i32) {

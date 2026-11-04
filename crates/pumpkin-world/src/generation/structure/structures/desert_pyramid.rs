@@ -7,10 +7,8 @@ use pumpkin_data::{
 use pumpkin_nbt::compound::NbtCompound;
 use pumpkin_util::{
     BlockDirection, HeightMap,
-    math::{block_box::BlockBox, position::BlockPos},
-    random::{
-        RandomDeriverImpl, RandomGenerator, RandomImpl, hash_block_pos, legacy_rand::LegacyRand,
-    },
+    math::{block_box::BlockBox, position::BlockPos, vector3::Vector3},
+    random::{RandomDeriverImpl, RandomGenerator, RandomImpl, legacy_rand::LegacyRand},
 };
 
 use crate::{
@@ -55,6 +53,8 @@ impl StructureGenerator for DesertPyramidGenerator {
             piece,
             height_adjusted: false,
             has_placed_chest: [false; 4],
+            potential_suspicious_sand: Vec::new(),
+            random_collapsed_roof_pos: Vector3::new(0, 0, 0),
         }));
 
         Some(StructurePosition {
@@ -68,6 +68,9 @@ pub struct DesertPyramidPiece {
     piece: StructurePiece,
     height_adjusted: bool,
     has_placed_chest: [bool; 4],
+    /// The cellar's sand, of which [`after_place`] turns some into suspicious sand.
+    potential_suspicious_sand: Vec<Vector3<i32>>,
+    random_collapsed_roof_pos: Vector3<i32>,
 }
 
 impl DesertPyramidPiece {
@@ -78,11 +81,12 @@ impl DesertPyramidPiece {
     }
 
     fn adjust_height(&mut self, chunk: &ProtoChunk, random: &mut RandomGenerator) -> bool {
+        // Vanilla draws the offset on every call, also once the height is set.
+        let ground_offset = -(random.next_bounded_i32(3));
         if self.height_adjusted {
             return true;
         }
 
-        let ground_offset = -(random.next_bounded_i32(3));
         let bb = self.piece.bounding_box;
         let mut lowest = i32::MAX;
 
@@ -163,29 +167,37 @@ impl DesertPyramidPiece {
         &self,
         chunk: &mut ProtoChunk,
         bb: &BlockBox,
-        random: &mut RandomGenerator,
+        region_random: &mut RandomGenerator,
+        seed: i64,
         x0: i32,
         y0: i32,
         z0: i32,
         x1: i32,
         z1: i32,
-        potential_positions: &mut Vec<pumpkin_util::math::vector3::Vector3<i32>>,
-    ) {
+    ) -> Vector3<i32> {
         for x in x0..=x1 {
             for z in z0..=z1 {
-                self.place_collapsed_roof_piece(chunk, bb, random, x, y0, z);
+                self.place_collapsed_roof_piece(chunk, bb, region_random, x, y0, z);
             }
         }
+        let corner = self.piece.offset_pos(x0, y0, z0);
+        let mut random = RandomDeriverImpl::split_pos(
+            &LegacyRand::from_seed(seed as u64).next_splitter(),
+            corner.x,
+            corner.y,
+            corner.z,
+        );
         let rx = x0 + random.next_bounded_i32(x1 - x0 + 1);
         let rz = z0 + random.next_bounded_i32(z1 - z0 + 1);
-        let sus_pos = self.piece.offset_pos(rx, y0, rz);
-        potential_positions.push(sus_pos);
+        self.piece.offset_pos(rx, y0, rz)
     }
 
+    #[expect(clippy::too_many_arguments)]
     fn try_place_chest(
         &mut self,
         chunk: &mut ProtoChunk,
         bb: &BlockBox,
+        random: &mut RandomGenerator,
         index: usize,
         x: i32,
         y: i32,
@@ -194,18 +206,10 @@ impl DesertPyramidPiece {
         if self.has_placed_chest[index] {
             return;
         }
-
-        let world_pos = self.piece.offset_pos(x, y, z);
-        let mut random = RandomGenerator::Legacy(LegacyRand::from_seed(hash_block_pos(
-            world_pos.x,
-            world_pos.y,
-            world_pos.z,
-        ) as u64));
-
         if self.piece.add_chest(
             chunk,
             bb,
-            &mut random,
+            random,
             x,
             y,
             z,
@@ -215,45 +219,25 @@ impl DesertPyramidPiece {
         }
     }
 
-    fn add_cellar(&self, chunk: &mut ProtoChunk, bb: &BlockBox, random: &mut RandomGenerator) {
+    fn add_cellar(
+        &mut self,
+        chunk: &mut ProtoChunk,
+        bb: &BlockBox,
+        region_random: &mut RandomGenerator,
+        seed: i64,
+    ) {
         let mut potential_positions = Vec::new();
-        self.add_cellar_stairs(chunk, bb, random, &mut potential_positions);
-        self.add_cellar_room(chunk, bb, random, &mut potential_positions);
-
-        for i in (1..potential_positions.len()).rev() {
-            let j = random.next_bounded_i32(i as i32 + 1) as usize;
-            potential_positions.swap(i, j);
-        }
-
-        let sus_count =
-            (random.next_bounded_i32(5) + 4).min(potential_positions.len() as i32) as usize;
-        for pos in potential_positions.into_iter().take(sus_count) {
-            if bb.contains_pos(&pos) {
-                chunk.set_block_state(pos.x, pos.y, pos.z, Block::SUSPICIOUS_SAND.default_state);
-                let mut nbt = NbtCompound::new();
-                nbt.put_string("id", "minecraft:brushable_block".to_string());
-                nbt.put_int("x", pos.x);
-                nbt.put_int("y", pos.y);
-                nbt.put_int("z", pos.z);
-                nbt.put_string(
-                    "LootTable",
-                    "minecraft:archaeology/desert_pyramid".to_string(),
-                );
-                nbt.put_long(
-                    "LootTableSeed",
-                    BlockPos::new(pos.x, pos.y, pos.z).as_long(),
-                );
-                chunk.add_block_entity(nbt);
-            }
-        }
+        self.add_cellar_stairs(chunk, bb, region_random);
+        self.random_collapsed_roof_pos =
+            self.add_cellar_room(chunk, bb, region_random, seed, &mut potential_positions);
+        self.potential_suspicious_sand.extend(potential_positions);
     }
 
     fn add_cellar_stairs(
         &self,
         chunk: &mut ProtoChunk,
         bb: &BlockBox,
-        random: &mut RandomGenerator,
-        potential_positions: &mut Vec<pumpkin_util::math::vector3::Vector3<i32>>,
+        region_random: &mut RandomGenerator,
     ) {
         let west_stairs = Self::sandstone_stairs(HorizontalFacing::West);
         self.piece.add_block(chunk, west_stairs, 13, -1, 17, bb);
@@ -263,14 +247,14 @@ impl DesertPyramidPiece {
         let sand = Block::SAND.default_state;
         let sandstone = Block::SANDSTONE.default_state;
         let (x, y, z) = (16, -4, 13);
-        let variant = random.next_bool();
+        let variant = region_random.next_bool();
 
-        self.place_sand(chunk, bb, x - 4, y + 4, z + 4, potential_positions);
-        self.place_sand(chunk, bb, x - 3, y + 4, z + 4, potential_positions);
-        self.place_sand(chunk, bb, x - 2, y + 4, z + 4, potential_positions);
-        self.place_sand(chunk, bb, x - 1, y + 4, z + 4, potential_positions);
-        self.place_sand(chunk, bb, x, y + 4, z + 4, potential_positions);
-        self.place_sand(chunk, bb, x - 2, y + 3, z + 4, potential_positions);
+        self.piece.add_block(chunk, sand, x - 4, y + 4, z + 4, bb);
+        self.piece.add_block(chunk, sand, x - 3, y + 4, z + 4, bb);
+        self.piece.add_block(chunk, sand, x - 2, y + 4, z + 4, bb);
+        self.piece.add_block(chunk, sand, x - 1, y + 4, z + 4, bb);
+        self.piece.add_block(chunk, sand, x, y + 4, z + 4, bb);
+        self.piece.add_block(chunk, sand, x - 2, y + 3, z + 4, bb);
         self.piece.add_block(
             chunk,
             if variant { sand } else { sandstone },
@@ -287,19 +271,21 @@ impl DesertPyramidPiece {
             z + 4,
             bb,
         );
-        self.place_sand(chunk, bb, x - 1, y + 2, z + 4, potential_positions);
+        self.piece.add_block(chunk, sand, x - 1, y + 2, z + 4, bb);
         self.piece.add_block(chunk, sandstone, x, y + 2, z + 4, bb);
-        self.place_sand(chunk, bb, x, y + 1, z + 4, potential_positions);
+        self.piece.add_block(chunk, sand, x, y + 1, z + 4, bb);
     }
 
+    /// Returns the collapsed roof's block that becomes suspicious sand.
     #[expect(clippy::too_many_lines)]
     fn add_cellar_room(
         &self,
         chunk: &mut ProtoChunk,
         bb: &BlockBox,
-        random: &mut RandomGenerator,
+        region_random: &mut RandomGenerator,
+        seed: i64,
         potential_positions: &mut Vec<pumpkin_util::math::vector3::Vector3<i32>>,
-    ) {
+    ) -> Vector3<i32> {
         let (x, y, z) = (16, -4, 13);
         let cut = Block::CUT_SANDSTONE.default_state;
         let chiseled = Block::CHISELED_SANDSTONE.default_state;
@@ -473,16 +459,16 @@ impl DesertPyramidPiece {
             z + 2,
             potential_positions,
         );
-        self.place_collapsed_roof(
+        let collapsed_roof_pos = self.place_collapsed_roof(
             chunk,
             bb,
-            random,
+            region_random,
+            seed,
             x - 2,
             y + 4,
             z - 2,
             x + 2,
             z + 2,
-            potential_positions,
         );
         self.piece.add_block(chunk, blue, x, y, z, bb);
         self.piece.add_block(chunk, orange, x + 1, y, z - 1, bb);
@@ -515,6 +501,7 @@ impl DesertPyramidPiece {
         self.place_sand(chunk, bb, x, y + 2, z - 3, potential_positions);
         self.piece.add_block(chunk, cut, x, y + 1, z - 4, bb);
         self.piece.add_block(chunk, chiseled, x, -2, z - 4, bb);
+        collapsed_roof_pos
     }
 }
 
@@ -544,11 +531,6 @@ impl StructurePieceBase for DesertPyramidPiece {
         if !self.adjust_height(chunk, random) {
             return;
         }
-
-        let origin = self.piece.bounding_box.min;
-        let mut level_random = RandomGenerator::Xoroshiro(Xoroshiro::from_seed(seed as u64));
-        let splitter = level_random.next_splitter();
-        let mut level_random = splitter.split_pos(origin.x, origin.y, origin.z);
 
         let bb = chunk_box;
         let ss = Block::SANDSTONE.default_state;
@@ -860,10 +842,104 @@ impl StructurePieceBase for DesertPyramidPiece {
         self.piece.add_block(chunk, chiseled, 10, -10, 13, bb);
         self.piece.add_block(chunk, cut, 10, -11, 13, bb);
 
-        for (index, x, z) in [(0, 10, 12), (1, 8, 10), (2, 10, 8), (3, 12, 10)] {
-            self.try_place_chest(chunk, bb, index, x, -11, z);
+        // Vanilla's `Direction.Plane.HORIZONTAL` order, indexed by `get2DDataValue`.
+        for (index, x, z) in [(2, 10, 8), (3, 12, 10), (0, 10, 12), (1, 8, 10)] {
+            self.try_place_chest(chunk, bb, random, index, x, -11, z);
         }
 
-        self.add_cellar(chunk, bb, &mut level_random);
+        // Vanilla draws the cellar from the `WorldGenRegion`'s random; a placement outside of
+        // world generation has none and uses one of the seed.
+        let region_random = chunk.region_random.take();
+        let in_region = region_random.is_some();
+        let mut region_random = region_random
+            .unwrap_or_else(|| RandomGenerator::Xoroshiro(Xoroshiro::from_seed(seed as u64)));
+        self.add_cellar(chunk, bb, &mut region_random, seed);
+        if in_region {
+            chunk.region_random = Some(region_random);
+        }
     }
+}
+
+/// Vanilla's `DesertPyramidStructure.afterPlace`, once a chunk's pieces are placed.
+///
+/// A random of the level seed at the structure's centre picks which of the cellar's sand
+/// blocks become suspicious sand (the same ones in every chunk), the others stay sand, and the
+/// collapsed roof gets its suspicious block.
+pub fn after_place(
+    pieces: &[Box<dyn StructurePieceBase>],
+    chunk: &mut ProtoChunk,
+    chunk_box: &BlockBox,
+    seed: i64,
+) {
+    // Ordered like vanilla's `SortedArraySet` of `Vec3i.compareTo`: y, then z, then x.
+    let mut unique = std::collections::BTreeSet::new();
+    let mut found = false;
+    for piece in pieces {
+        if let Some(pyramid) = piece.as_any().downcast_ref::<DesertPyramidPiece>() {
+            found = true;
+            unique.extend(
+                pyramid
+                    .potential_suspicious_sand
+                    .iter()
+                    .map(|pos| (pos.y, pos.z, pos.x)),
+            );
+            place_suspicious_sand(chunk, chunk_box, pyramid.random_collapsed_roof_pos);
+        }
+    }
+    if !found {
+        return;
+    }
+    let mut shuffled: Vec<Vector3<i32>> = unique
+        .into_iter()
+        .map(|(y, z, x)| Vector3::new(x, y, z))
+        .collect();
+    let Some(bounds) = BlockBox::encompass_all(pieces.iter().map(|piece| piece.bounding_box()))
+    else {
+        return;
+    };
+    let center = Vector3::new(
+        bounds.min.x + (bounds.max.x - bounds.min.x + 1) / 2,
+        bounds.min.y + (bounds.max.y - bounds.min.y + 1) / 2,
+        bounds.min.z + (bounds.max.z - bounds.min.z + 1) / 2,
+    );
+    let mut random = RandomDeriverImpl::split_pos(
+        &LegacyRand::from_seed(seed as u64).next_splitter(),
+        center.x,
+        center.y,
+        center.z,
+    );
+    for i in (2..=shuffled.len()).rev() {
+        let swap_to = random.next_bounded_i32(i as i32) as usize;
+        shuffled.swap(i - 1, swap_to);
+    }
+    let mut to_place = (5 + random.next_bounded_i32(3)).min(shuffled.len() as i32);
+    for pos in shuffled {
+        if to_place > 0 {
+            to_place -= 1;
+            place_suspicious_sand(chunk, chunk_box, pos);
+        } else if chunk_box.contains_pos(&pos) {
+            chunk.set_block_state(pos.x, pos.y, pos.z, Block::SAND.default_state);
+        }
+    }
+}
+
+fn place_suspicious_sand(chunk: &mut ProtoChunk, chunk_box: &BlockBox, pos: Vector3<i32>) {
+    if !chunk_box.contains_pos(&pos) {
+        return;
+    }
+    chunk.set_block_state(pos.x, pos.y, pos.z, Block::SUSPICIOUS_SAND.default_state);
+    let mut nbt = NbtCompound::new();
+    nbt.put_string("id", "minecraft:brushable_block".to_string());
+    nbt.put_int("x", pos.x);
+    nbt.put_int("y", pos.y);
+    nbt.put_int("z", pos.z);
+    nbt.put_string(
+        "LootTable",
+        "minecraft:archaeology/desert_pyramid".to_string(),
+    );
+    nbt.put_long(
+        "LootTableSeed",
+        BlockPos::new(pos.x, pos.y, pos.z).as_long(),
+    );
+    chunk.add_block_entity(nbt);
 }

@@ -223,6 +223,68 @@ pub struct ProtoChunk {
     pub(crate) surface_height_cache: FxHashMap<u64, i32>,
     pub(crate) aquifer_sampler:
         Option<Box<crate::generation::noise::aquifer_sampler::WorldAquiferSampler>>,
+    /// Vanilla's `WorldGenRegion` random (`level.getRandom()`) while the chunk's structures and
+    /// features are placed.
+    pub region_random: Option<RandomGenerator>,
+    /// The heightmaps of the neighbouring chunks while the chunk's structures are placed.
+    region_heights: Option<Box<RegionHeights>>,
+}
+
+/// The heightmaps a chunk's structure pieces read: vanilla's pieces measure the ground beyond
+/// their chunk through the `WorldGenRegion`, so the neighbours' heights are taken from the cache.
+pub(crate) struct RegionHeights {
+    center_x: i32,
+    center_z: i32,
+    /// Per chunk of the 3x3 neighbourhood (x-major, the centre unused), per heightmap in
+    /// [`REGION_HEIGHTMAPS`] order, per column.
+    chunks: Box<[[[i32; CHUNK_AREA]; 6]]>,
+}
+
+const REGION_HEIGHTMAPS: [HeightMap; 6] = [
+    HeightMap::WorldSurfaceWg,
+    HeightMap::WorldSurface,
+    HeightMap::OceanFloorWg,
+    HeightMap::OceanFloor,
+    HeightMap::MotionBlocking,
+    HeightMap::MotionBlockingNoLeaves,
+];
+
+impl RegionHeights {
+    fn snapshot<T: GenerationCache>(cache: &T, center_x: i32, center_z: i32) -> Self {
+        let mut chunks = vec![[[0; CHUNK_AREA]; 6]; 9].into_boxed_slice();
+        for (index, heights) in chunks.iter_mut().enumerate() {
+            let (dx, dz) = (index as i32 / 3 - 1, index as i32 % 3 - 1);
+            if dx == 0 && dz == 0 {
+                continue;
+            }
+            let (start_x, start_z) = ((center_x + dx) << 4, (center_z + dz) << 4);
+            for (map, columns) in REGION_HEIGHTMAPS.iter().zip(heights.iter_mut()) {
+                for local_x in 0..16 {
+                    for local_z in 0..16 {
+                        columns[ProtoChunk::local_position_to_height_map_index(local_x, local_z)] =
+                            cache.get_top_y(map, start_x + local_x, start_z + local_z);
+                    }
+                }
+            }
+        }
+        Self {
+            center_x,
+            center_z,
+            chunks,
+        }
+    }
+
+    fn get(&self, map: HeightMap, x: i32, z: i32) -> Option<i32> {
+        let (dx, dz) = ((x >> 4) - self.center_x, (z >> 4) - self.center_z);
+        if dx.abs() > 1 || dz.abs() > 1 || (dx == 0 && dz == 0) {
+            return None;
+        }
+        let map_index = REGION_HEIGHTMAPS.iter().position(|m| *m == map)?;
+        Some(
+            self.chunks[((dx + 1) * 3 + dz + 1) as usize][map_index]
+                [ProtoChunk::local_position_to_height_map_index(x & 15, z & 15)],
+        )
+    }
 }
 
 /// An entity a structure placed, spawned once its chunk is generated.
@@ -353,6 +415,8 @@ impl ProtoChunk {
             post_processing: vec![Vec::new(); section_count],
             surface_height_cache: FxHashMap::default(),
             aquifer_sampler: None,
+            region_random: None,
+            region_heights: None,
         }
     }
 
@@ -687,7 +751,7 @@ impl ProtoChunk {
     }
 
     #[must_use]
-    pub const fn get_top_y(&self, heightmap: &HeightMap, x: i32, z: i32) -> i32 {
+    pub fn get_top_y(&self, heightmap: &HeightMap, x: i32, z: i32) -> i32 {
         match heightmap {
             HeightMap::WorldSurfaceWg => self.top_block_wg_height_exclusive(x, z),
             HeightMap::WorldSurface => self.top_block_height_exclusive(x, z),
@@ -777,43 +841,65 @@ impl ProtoChunk {
     }
 
     #[must_use]
-    pub const fn top_block_height_exclusive(&self, x: i32, z: i32) -> i32 {
+    pub fn top_block_height_exclusive(&self, x: i32, z: i32) -> i32 {
+        if let Some(height) = self.region_height(HeightMap::WorldSurface, x, z) {
+            return height;
+        }
         let index = Self::local_position_to_height_map_index(x & 15, z & 15);
         self.flat_surface_height_map[index] as i32 + 1
     }
 
     #[must_use]
-    pub const fn top_block_wg_height_exclusive(&self, x: i32, z: i32) -> i32 {
+    pub fn top_block_wg_height_exclusive(&self, x: i32, z: i32) -> i32 {
+        if let Some(height) = self.region_height(HeightMap::WorldSurfaceWg, x, z) {
+            return height;
+        }
         let index = Self::local_position_to_height_map_index(x & 15, z & 15);
         self.flat_surface_wg_height_map[index] as i32 + 1
     }
 
     #[must_use]
-    pub const fn ocean_floor_height_exclusive(&self, x: i32, z: i32) -> i32 {
+    pub fn ocean_floor_height_exclusive(&self, x: i32, z: i32) -> i32 {
+        if let Some(height) = self.region_height(HeightMap::OceanFloor, x, z) {
+            return height;
+        }
         let index = Self::local_position_to_height_map_index(x & 15, z & 15);
         self.flat_ocean_floor_height_map[index] as i32 + 1
     }
 
     #[must_use]
-    pub const fn ocean_floor_wg_height_exclusive(&self, x: i32, z: i32) -> i32 {
+    pub fn ocean_floor_wg_height_exclusive(&self, x: i32, z: i32) -> i32 {
+        if let Some(height) = self.region_height(HeightMap::OceanFloorWg, x, z) {
+            return height;
+        }
         let index = Self::local_position_to_height_map_index(x & 15, z & 15);
         self.flat_ocean_floor_wg_height_map[index] as i32 + 1
     }
 
     #[must_use]
-    pub const fn top_motion_blocking_block_height_exclusive(&self, x: i32, z: i32) -> i32 {
+    pub fn top_motion_blocking_block_height_exclusive(&self, x: i32, z: i32) -> i32 {
+        if let Some(height) = self.region_height(HeightMap::MotionBlocking, x, z) {
+            return height;
+        }
         let index = Self::local_position_to_height_map_index(x & 15, z & 15);
         self.flat_motion_blocking_height_map[index] as i32 + 1
     }
 
     #[must_use]
-    pub const fn top_motion_blocking_block_no_leaves_height_exclusive(
-        &self,
-        x: i32,
-        z: i32,
-    ) -> i32 {
+    pub fn top_motion_blocking_block_no_leaves_height_exclusive(&self, x: i32, z: i32) -> i32 {
+        if let Some(height) = self.region_height(HeightMap::MotionBlockingNoLeaves, x, z) {
+            return height;
+        }
         let index = Self::local_position_to_height_map_index(x & 15, z & 15);
         self.flat_motion_blocking_no_leaves_height_map[index] as i32 + 1
+    }
+
+    /// A neighbour's height while this chunk's structures are placed.
+    fn region_height(&self, map: HeightMap, x: i32, z: i32) -> Option<i32> {
+        if x >> 4 == self.x && z >> 4 == self.z {
+            return None;
+        }
+        self.region_heights.as_ref()?.get(map, x, z)
     }
 
     #[inline]
@@ -1507,6 +1593,13 @@ impl ProtoChunk {
             start_block_x,
             start_block_z,
         );
+        cache.get_center_chunk_mut().region_random = Some(RandomGenerator::Xoroshiro(
+            random_config
+                .base_random_deriver
+                .split_string("minecraft:worldgen_region_random")
+                .next_splitter()
+                .split_pos(start_block_x, 0, start_block_z),
+        ));
 
         for chunk_x in center_x - 1..=center_x + 1 {
             for chunk_z in center_z - 1..=center_z + 1 {
@@ -1550,7 +1643,9 @@ impl ProtoChunk {
             }
         }
 
-        cache.get_center_chunk_mut().stage = StagedChunkEnum::Features;
+        let center = cache.get_center_chunk_mut();
+        center.region_random = None;
+        center.stage = StagedChunkEnum::Features;
     }
 
     fn generate_structure_step<T: GenerationCache>(
@@ -1577,6 +1672,7 @@ impl ProtoChunk {
         };
 
         let structures = &STRUCTURES_PER_STEP[step];
+        let mut region_heights = None;
         for (index, &structure_key) in structures.iter().enumerate() {
             let mut tasks = Vec::new();
             {
@@ -1644,13 +1740,20 @@ impl ProtoChunk {
             let decorator_seed = get_decorator_seed(population_seed, index as u64, step as u64);
             let mut random = RandomGenerator::Worldgen(WorldgenRandom::from_seed(decorator_seed));
 
+            // Only this chunk changes while its structures are placed, so one snapshot of the
+            // neighbours' heights serves the whole step.
+            let heights = region_heights
+                .take()
+                .unwrap_or_else(|| Box::new(RegionHeights::snapshot(cache, center_x, center_z)));
             let chunk = cache.get_center_chunk_mut();
+            chunk.region_heights = Some(heights);
             for collector_arc in tasks {
                 let mut collector = collector_arc
                     .lock()
                     .unwrap_or_else(std::sync::PoisonError::into_inner);
                 collector.generate_in_chunk(chunk, block_registry, &mut random, world_seed);
             }
+            region_heights = chunk.region_heights.take();
         }
     }
 
