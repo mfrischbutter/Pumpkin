@@ -72,19 +72,10 @@ impl StructureGenerator for MansionGenerator {
         let origin = Vector3::new(x, y, z);
         let grid = MansionGrid::new(&mut context.random);
         let descriptors = MansionPiecePlacer::create(&mut context.random, origin, rotation, &grid);
-        let mut pieces = Vec::with_capacity(descriptors.len());
-        for descriptor in descriptors {
-            pieces.push(MansionTemplatePiece::new(&descriptor)?);
-        }
-        let piece_boxes = pieces
-            .iter()
-            .map(|piece| piece.piece.bounding_box)
-            .collect::<Vec<_>>();
         let mut collector = StructurePiecesCollector::default();
-        for piece in pieces {
-            collector.add_piece(Box::new(piece));
+        for descriptor in descriptors {
+            collector.add_piece(Box::new(MansionTemplatePiece::new(&descriptor)?));
         }
-        collector.add_piece(Box::new(MansionFoundationPiece::new(piece_boxes)?));
 
         Some(StructurePosition {
             start_pos: BlockPos::new(x, y, z),
@@ -512,68 +503,40 @@ fn region_random(seed: i64, chunk: &ProtoChunk) -> RandomGenerator {
         .split_pos(start_block_x(chunk.x), 0, start_block_z(chunk.z))
 }
 
-struct MansionFoundationPiece {
-    piece: StructurePiece,
-    mansion_pieces: Vec<BlockBox>,
-    y: i32,
-}
-
-impl MansionFoundationPiece {
-    fn new(mansion_pieces: Vec<BlockBox>) -> Option<Self> {
-        let bounding_box = BlockBox::encompass_all(mansion_pieces.iter().copied())?;
-        let y = bounding_box.min.y;
-        Some(Self {
-            piece: StructurePiece::new(StructurePieceType::WoodlandMansion, bounding_box, 0),
-            mansion_pieces,
-            y,
-        })
-    }
-}
-
-impl StructurePieceBase for MansionFoundationPiece {
-    fn as_any(&self) -> &dyn std::any::Any {
-        self
-    }
-
-    fn get_structure_piece(&self) -> &StructurePiece {
-        &self.piece
-    }
-
-    fn get_structure_piece_mut(&mut self) -> &mut StructurePiece {
-        &mut self.piece
-    }
-
-    fn place(
-        &mut self,
-        chunk: &mut ProtoChunk,
-        _block_registry: &dyn WorldPortalExt,
-        _random: &mut RandomGenerator,
-        _seed: i64,
-        chunk_box: &BlockBox,
-    ) {
-        let min_x = self.piece.bounding_box.min.x.max(chunk_box.min.x);
-        let max_x = self.piece.bounding_box.max.x.min(chunk_box.max.x);
-        let min_z = self.piece.bounding_box.min.z.max(chunk_box.min.z);
-        let max_z = self.piece.bounding_box.max.z.min(chunk_box.max.z);
-        let bottom = i32::from(chunk.bottom_y()) + 1;
-        for x in min_x..=max_x {
-            for z in min_z..=max_z {
-                let position = Vector3::new(x, self.y, z);
-                if chunk.get_block_state(&position).to_state().is_air()
-                    || !self
-                        .mansion_pieces
-                        .iter()
-                        .any(|piece| piece.contains_pos(&position))
-                {
-                    continue;
+/// Vanilla's `WoodlandMansionStructure.afterPlace`, the mansion's cobblestone foundation.
+///
+/// Below each block of the mansion's bottom layer in the chunk that a piece covers and that is not
+/// air, cobblestone replaces the air and fluids down to the ground.
+pub fn after_place(
+    collector: &StructurePiecesCollector,
+    chunk: &mut ProtoChunk,
+    chunk_box: &BlockBox,
+) {
+    let Some(bounding_box) =
+        BlockBox::encompass_all(collector.pieces.iter().map(|piece| piece.bounding_box()))
+    else {
+        return;
+    };
+    let y_start = bounding_box.min.y;
+    let min_y = i32::from(chunk.bottom_y());
+    for x in chunk_box.min.x..=chunk_box.max.x {
+        for z in chunk_box.min.z..=chunk_box.max.z {
+            let position = Vector3::new(x, y_start, z);
+            if chunk.get_block_state(&position).to_state().is_air()
+                || !bounding_box.contains_pos(&position)
+                || !collector
+                    .pieces
+                    .iter()
+                    .any(|piece| piece.bounding_box().contains_pos(&position))
+            {
+                continue;
+            }
+            for y in (min_y + 1..y_start).rev() {
+                let state = chunk.get_block_state(&Vector3::new(x, y, z)).to_state();
+                if !state.is_air() && !state.is_liquid() {
+                    break;
                 }
-                for y in (bottom..self.y).rev() {
-                    let state = chunk.get_block_state(&Vector3::new(x, y, z)).to_state();
-                    if !state.is_air() && !state.is_liquid() {
-                        break;
-                    }
-                    chunk.set_block_state(x, y, z, Block::COBBLESTONE.default_state);
-                }
+                chunk.set_block_state(x, y, z, Block::COBBLESTONE.default_state);
             }
         }
     }
@@ -817,5 +780,49 @@ mod tests {
                 .collect::<Vec<_>>();
             assert_eq!(seeds, [loot_table_seed], "chest at {chest:?}");
         }
+    }
+
+    #[test]
+    fn foundation_fills_air_and_fluids_below_covered_blocks() {
+        let world_gen = get_world_gen(
+            Seed(0),
+            Dimension::OVERWORLD,
+            false,
+            Vec::new(),
+            String::new(),
+        );
+        let mut chunk = ProtoChunk::new(0, 0, &world_gen);
+        let chunk_box = BlockBox::new(0, -63, 0, 15, 319, 15);
+        for x in 0..16 {
+            for z in 0..16 {
+                chunk.set_block_state(x, 60, z, Block::STONE.default_state);
+            }
+        }
+        for y in 61..65 {
+            chunk.set_block_state(5, y, 5, Block::WATER.default_state);
+        }
+        let roof = MansionTemplatePiece::new(&PieceDescriptor {
+            template: "roof".to_string(),
+            position: Vector3::new(4, 70, 4),
+            rotation: Rotation::None,
+            mirror: TemplateMirror::None,
+        })
+        .unwrap();
+        let mut random = RandomGenerator::Legacy(LegacyRand::from_seed(0));
+        let mut region_random = RandomGenerator::Legacy(LegacyRand::from_seed(0));
+        roof.place_in_chunk(&mut chunk, &mut random, &mut region_random, &chunk_box);
+        chunk.set_block_state(6, 70, 6, Block::AIR.default_state);
+        chunk.set_block_state(2, 70, 2, Block::DARK_OAK_PLANKS.default_state);
+        let mut collector = StructurePiecesCollector::default();
+        collector.add_piece(Box::new(roof));
+
+        after_place(&collector, &mut chunk, &chunk_box);
+
+        let block = |x, y, z| chunk.get_block_state(&Vector3::new(x, y, z)).to_block_id();
+        assert!((61..70).all(|y| block(5, y, 5) == Block::COBBLESTONE.id));
+        assert_eq!(block(5, 60, 5), Block::STONE.id);
+        // An empty block of the bottom layer, or one outside every piece, gets no foundation.
+        assert_eq!(block(6, 69, 6), Block::AIR.id);
+        assert_eq!(block(2, 69, 2), Block::AIR.id);
     }
 }
