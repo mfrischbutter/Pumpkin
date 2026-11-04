@@ -1,5 +1,9 @@
 use pumpkin_data::{Block, BlockState, block_properties::OakFenceLikeProperties};
-use pumpkin_util::{math::position::BlockPos, random::RandomGenerator};
+use pumpkin_nbt::{compound::NbtCompound, tag::NbtTag};
+use pumpkin_util::{
+    math::position::BlockPos,
+    random::{RandomGenerator, RandomImpl},
+};
 
 use crate::generation::proto_chunk::GenerationCache;
 use crate::{generation::section_coords, world::WorldPortalExt};
@@ -134,7 +138,7 @@ impl EndSpikeFeature {
         _min_y: i8,
         _height: u16,
         _feature: pumpkin_data::placed_feature::PlacedFeature,
-        _random: &mut RandomGenerator,
+        random: &mut RandomGenerator,
         pos: BlockPos,
     ) -> bool {
         let spikes = if self.spikes.is_empty() {
@@ -147,13 +151,13 @@ impl EndSpikeFeature {
             if !spike.is_center_within_chunk(&pos) {
                 continue;
             }
-            Self::gen_spike(&spike, chunk);
+            Self::gen_spike(&spike, chunk, random);
         }
 
         true
     }
 
-    fn gen_spike<T: GenerationCache>(spike: &Spike, chunk: &mut T) {
+    fn gen_spike<T: GenerationCache>(spike: &Spike, chunk: &mut T, random: &mut RandomGenerator) {
         let radius = spike.radius;
         for pos in BlockPos::iterate(
             BlockPos::new(
@@ -181,23 +185,6 @@ impl EndSpikeFeature {
             }
             chunk.set_block_state(&pos.0, Block::AIR.default_state);
         }
-
-        chunk.set_block_state(
-            &pumpkin_util::math::vector3::Vector3::new(
-                spike.center_x,
-                spike.height,
-                spike.center_z,
-            ),
-            Block::BEDROCK.default_state,
-        );
-        chunk.set_block_state(
-            &pumpkin_util::math::vector3::Vector3::new(
-                spike.center_x,
-                spike.height + 1,
-                spike.center_z,
-            ),
-            Block::FIRE.default_state,
-        );
 
         if spike.guarded {
             for dy in 0i32..=3 {
@@ -232,5 +219,47 @@ impl EndSpikeFeature {
                 }
             }
         }
+
+        // The crystal on top, on bedrock and in fire.
+        let yaw = random.next_f32() * 360.0;
+        chunk
+            .get_center_chunk_mut()
+            .add_structure_entity(end_crystal_nbt(spike, yaw), false);
+        chunk.set_block_state(
+            &pumpkin_util::math::vector3::Vector3::new(
+                spike.center_x,
+                spike.height,
+                spike.center_z,
+            ),
+            Block::BEDROCK.default_state,
+        );
+        chunk.set_block_state(
+            &pumpkin_util::math::vector3::Vector3::new(
+                spike.center_x,
+                spike.height + 1,
+                spike.center_z,
+            ),
+            Block::FIRE.default_state,
+        );
     }
+}
+
+fn end_crystal_nbt(spike: &Spike, yaw: f32) -> NbtCompound {
+    let mut nbt = NbtCompound::new();
+    nbt.put_string("id", "minecraft:end_crystal".to_string());
+    nbt.put(
+        "Pos",
+        NbtTag::List(vec![
+            (f64::from(spike.center_x) + 0.5).into(),
+            f64::from(spike.height + 1).into(),
+            (f64::from(spike.center_z) + 0.5).into(),
+        ]),
+    );
+    nbt.put(
+        "Motion",
+        NbtTag::List(vec![0.0f64.into(), 0.0f64.into(), 0.0f64.into()]),
+    );
+    nbt.put("Rotation", NbtTag::List(vec![yaw.into(), 0.0f32.into()]));
+    nbt.put_bool("ShowBottom", true);
+    nbt
 }
