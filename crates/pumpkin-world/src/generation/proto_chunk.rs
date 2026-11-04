@@ -1889,8 +1889,8 @@ impl BlockPlacer for ProtoChunk {
         Self::set_block_state(self, pos.x, pos.y, pos.z, state);
     }
 
-    fn add_block_entity(&mut self, nbt: NbtCompound) {
-        self.add_block_entity(nbt);
+    fn add_block_entity(&mut self, _pos: &Vector3<i32>, nbt: NbtCompound) {
+        Self::add_block_entity(self, nbt);
     }
 
     fn get_height(&self, heightmap: HeightMap, x: i32, z: i32) -> Option<i32> {

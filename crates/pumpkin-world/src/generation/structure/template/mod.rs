@@ -39,6 +39,8 @@ use pumpkin_util::HeightMap;
 use pumpkin_util::math::{vector3::Vector3, wrap_degrees};
 use pumpkin_util::random::{RandomGenerator, RandomImpl, hash_block_pos, legacy_rand::LegacyRand};
 
+use crate::generation::proto_chunk::GenerationCache;
+
 pub use block_state_resolver::BlockStateResolver;
 pub use cache::{
     TemplateCache, all_embedded_datapack_names, all_pool_names, all_structure_names,
@@ -60,7 +62,7 @@ pub use template_piece::TemplatePiece;
 pub trait BlockPlacer {
     fn get_block_state(&self, pos: &Vector3<i32>) -> BlockStateId;
     fn set_block_state(&mut self, pos: &Vector3<i32>, state: &BlockState);
-    fn add_block_entity(&mut self, nbt: NbtCompound);
+    fn add_block_entity(&mut self, pos: &Vector3<i32>, nbt: NbtCompound);
     /// The first free y above the heightmap column, like vanilla `LevelReader.getHeight`, or
     /// `None` if this placer has no such heightmap.
     fn get_height(&self, heightmap: HeightMap, x: i32, z: i32) -> Option<i32>;
@@ -69,6 +71,38 @@ pub trait BlockPlacer {
     /// Adds an entity of the template, which runs `finalizeSpawn` when `finalize` is set; a placer
     /// without entities ignores it.
     fn add_entity(&mut self, _nbt: NbtCompound, _finalize: bool) {}
+}
+
+/// A [`BlockPlacer`] over the generation region around a chunk, for the pieces vanilla lets write
+/// into the neighbouring chunks.
+pub(crate) struct RegionPlacer<'a>(pub &'a mut dyn GenerationCache);
+
+impl BlockPlacer for RegionPlacer<'_> {
+    fn get_block_state(&self, pos: &Vector3<i32>) -> BlockStateId {
+        GenerationCache::get_block_state(self.0, pos)
+    }
+
+    fn set_block_state(&mut self, pos: &Vector3<i32>, state: &BlockState) {
+        self.0.set_block_state_raw(pos, state);
+    }
+
+    fn add_block_entity(&mut self, pos: &Vector3<i32>, nbt: NbtCompound) {
+        self.0.add_block_entity(pos, nbt);
+    }
+
+    fn get_height(&self, heightmap: HeightMap, x: i32, z: i32) -> Option<i32> {
+        Some(self.0.get_top_y(&heightmap, x, z))
+    }
+
+    fn schedule_fluid_tick(&mut self, pos: &Vector3<i32>, fluid: &'static Fluid, delay: u8) {
+        self.0.schedule_fluid_tick_at(pos, fluid, delay);
+    }
+
+    fn add_entity(&mut self, nbt: NbtCompound, finalize: bool) {
+        self.0
+            .get_center_chunk_mut()
+            .add_structure_entity(nbt, finalize);
+    }
 }
 
 /// Whether the block holds a water source: still water or a waterlogged block.
@@ -321,7 +355,7 @@ pub fn place_template_with_options(
                 }
             }
 
-            placer.add_block_entity(placed_nbt);
+            placer.add_block_entity(&world_pos, placed_nbt);
         }
     }
 
@@ -626,7 +660,7 @@ mod tests {
             self.0.push(state.id);
         }
 
-        fn add_block_entity(&mut self, _nbt: NbtCompound) {}
+        fn add_block_entity(&mut self, _pos: &Vector3<i32>, _nbt: NbtCompound) {}
 
         fn get_height(&self, _heightmap: HeightMap, _x: i32, _z: i32) -> Option<i32> {
             None

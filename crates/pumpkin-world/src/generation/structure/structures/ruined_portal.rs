@@ -7,23 +7,23 @@ use pumpkin_data::{
 use pumpkin_util::{
     HeightMap,
     math::{block_box::BlockBox, position::BlockPos, vector3::Vector3},
-    random::{RandomGenerator, RandomImpl, hash_block_pos, legacy_rand::LegacyRand},
+    random::{RandomGenerator, RandomImpl},
 };
 
 use crate::{
     ProtoChunk,
-    generation::structure::{
-        piece::StructurePieceType,
-        structures::{
-            HeightSampler, StructureGenerator, StructureGeneratorContext, StructurePiece,
-            StructurePieceBase, StructurePiecesCollector, StructurePosition, WorldPortalExt,
-        },
-        template::{
-            BlockStateResolver, PaletteEntry, StructurePlaceSettings, StructureTemplate,
-            get_template,
-            processor::{
-                IgnoredBlock, PosRuleTest, ProcessorContext, ProcessorRule, RuleTest,
-                StructureProcessor,
+    generation::{
+        proto_chunk::GenerationCache,
+        structure::{
+            piece::StructurePieceType,
+            structures::{
+                HeightSampler, StructureGenerator, StructureGeneratorContext, StructurePiece,
+                StructurePieceBase, StructurePiecesCollector, StructurePosition, WorldPortalExt,
+            },
+            template::{
+                BlockStateResolver, PaletteEntry, RegionPlacer, StructurePlaceSettings,
+                StructureTemplate, get_template, place_template_piece,
+                processor::{PosRuleTest, ProcessorRule, RuleTest, StructureProcessor},
             },
         },
     },
@@ -438,120 +438,7 @@ impl RuinedPortalPiece {
         }
     }
 
-    fn place_blocks(&self, chunk: &mut ProtoChunk, chunk_box: &BlockBox) {
-        let rotation = self.place_settings.get_rotation();
-        let mirror = self.place_settings.get_mirror();
-        let pivot = self.place_settings.get_rotation_pivot();
-
-        let mut context = ProcessorContext::new(self.template_position);
-
-        for block in &self.template.blocks {
-            let palette_entry = &self.template.palette[block.state as usize];
-
-            let mut block_entity_nbt = block.nbt.clone();
-            let placed_entry = palette_entry.clone();
-
-            let Some(mut state) = BlockStateResolver::resolve(&placed_entry, rotation, mirror)
-            else {
-                continue;
-            };
-
-            let local_pos =
-                StructureTemplate::transform_block_pos(block.pos, mirror, rotation, pivot);
-            let world_pos = self.template_position + local_pos;
-
-            if !chunk_box.contains_pos(&world_pos) {
-                continue;
-            }
-
-            let mut processed_state = Some(state);
-            for processor in self.place_settings.get_processors() {
-                let Some(current_state) = processed_state else {
-                    break;
-                };
-                // Each processor seeds its own random from the block, like vanilla's
-                // `StructurePlaceSettings.getRandom(pos)` without a random of its own.
-                let mut rng =
-                    LegacyRand::from_seed(
-                        hash_block_pos(world_pos.x, world_pos.y, world_pos.z) as u64
-                    );
-                processed_state = processor.process_with_context(
-                    chunk,
-                    world_pos,
-                    current_state,
-                    &mut block_entity_nbt,
-                    &mut context,
-                    &mut rng,
-                );
-            }
-
-            let Some(final_state) = processed_state else {
-                continue;
-            };
-
-            if chunk.get_block_state(&world_pos).to_block_id() == Block::WATER.id
-                && placed_entry
-                    .properties
-                    .contains(&pumpkin_data::Property::Waterlogged(true))
-            {
-                if let Some(waterlogged_state) =
-                    BlockStateResolver::resolve(&placed_entry, rotation, mirror)
-                {
-                    state = waterlogged_state;
-                } else {
-                    state = final_state;
-                }
-            } else {
-                state = final_state;
-            }
-
-            chunk.set_block_state(world_pos.x, world_pos.y, world_pos.z, state);
-
-            let final_block = Block::from_id(state.id.to_block_id());
-            let block_entity_id =
-                crate::generation::structure::template::get_block_entity_id(final_block.name);
-            if block_entity_nbt.is_some() || block_entity_id.is_some() {
-                let fallback_id = block_entity_id.unwrap_or(final_block.name);
-                let mut placed_nbt = pumpkin_nbt::compound::NbtCompound::new();
-
-                placed_nbt.put_string("id", fallback_id.to_string());
-                placed_nbt.put_int("x", world_pos.x);
-                placed_nbt.put_int("y", world_pos.y);
-                placed_nbt.put_int("z", world_pos.z);
-
-                if let Some(template_nbt) = &block_entity_nbt {
-                    for (key, value) in &template_nbt.child_tags {
-                        if key.as_ref() != "x"
-                            && key.as_ref() != "y"
-                            && key.as_ref() != "z"
-                            && key.as_ref() != "id"
-                        {
-                            placed_nbt.child_tags.insert(key.clone(), value.clone());
-                        }
-                    }
-                }
-
-                if placed_nbt.get_string("LootTable").is_some()
-                    && placed_nbt.get_long("LootTableSeed").is_none()
-                {
-                    let mut rng =
-                        LegacyRand::from_seed(
-                            hash_block_pos(world_pos.x, world_pos.y, world_pos.z) as u64,
-                        );
-                    placed_nbt.put_long("LootTableSeed", rng.next_i64());
-                }
-
-                chunk.add_block_entity(placed_nbt);
-            }
-        }
-    }
-
-    fn spread_netherrack(
-        &self,
-        random: &mut RandomGenerator,
-        chunk: &mut ProtoChunk,
-        chunk_box: &BlockBox,
-    ) {
+    fn spread_netherrack(&self, random: &mut RandomGenerator, cache: &mut dyn GenerationCache) {
         let follow_ground_surface = self.vertical_placement == VerticalPlacement::OnLandSurface
             || self.vertical_placement == VerticalPlacement::OnOceanFloor;
         let bb = self.piece.bounding_box;
@@ -574,7 +461,7 @@ impl RuinedPortalPiece {
                 if adjusted_distance < max_distance {
                     let prob = NETHERRACK_PROBABILITY_BY_DISTANCE[adjusted_distance as usize];
                     if random.next_f64() < prob as f64 {
-                        let surface_y = chunk.get_top_y(&heightmap, x, z) - 1;
+                        let surface_y = cache.get_top_y(&heightmap, x, z) - 1;
                         let y = if follow_ground_surface {
                             surface_y
                         } else {
@@ -582,18 +469,16 @@ impl RuinedPortalPiece {
                         };
                         let pos = Vector3::new(x, y, z);
                         if (y - bb.min.y).abs() <= 3
-                            && chunk_box.contains_pos(&pos)
-                            && self.can_block_be_replaced_by_netherrack_or_magma(chunk, pos)
+                            && self.can_block_be_replaced_by_netherrack_or_magma(cache, pos)
                         {
-                            self.place_netherrack_or_magma(random, chunk, pos);
+                            self.place_netherrack_or_magma(random, cache, pos);
                             if self.properties.overgrown {
-                                Self::maybe_add_leaves_above(random, chunk, pos);
+                                Self::maybe_add_leaves_above(random, cache, pos);
                             }
                             self.add_netherrack_drip_column(
                                 random,
-                                chunk,
+                                cache,
                                 pos + Vector3::new(0, -1, 0),
-                                chunk_box,
                             );
                         }
                     }
@@ -604,11 +489,10 @@ impl RuinedPortalPiece {
 
     fn can_block_be_replaced_by_netherrack_or_magma(
         &self,
-        chunk: &ProtoChunk,
+        cache: &dyn GenerationCache,
         pos: Vector3<i32>,
     ) -> bool {
-        let state = chunk.get_block_state(&pos);
-        let block_id = state.to_block_id();
+        let block_id = GenerationCache::get_block_state(cache, &pos).to_block_id();
         block_id != Block::AIR.id
             && block_id != Block::OBSIDIAN.id
             && block_id != Block::BEDROCK.id
@@ -619,32 +503,32 @@ impl RuinedPortalPiece {
     fn place_netherrack_or_magma(
         &self,
         random: &mut RandomGenerator,
-        chunk: &mut ProtoChunk,
+        cache: &mut dyn GenerationCache,
         pos: Vector3<i32>,
     ) {
         if !self.properties.cold && random.next_f32() < 0.07 {
-            chunk.set_block_state(pos.x, pos.y, pos.z, Block::MAGMA_BLOCK.default_state);
+            cache.set_block_state(&pos, Block::MAGMA_BLOCK.default_state);
         } else {
-            chunk.set_block_state(pos.x, pos.y, pos.z, Block::NETHERRACK.default_state);
+            cache.set_block_state(&pos, Block::NETHERRACK.default_state);
         }
     }
 
     fn add_netherrack_drip_columns_below_portal(
         &self,
         random: &mut RandomGenerator,
-        chunk: &mut ProtoChunk,
-        chunk_box: &BlockBox,
+        cache: &mut dyn GenerationCache,
     ) {
         let bb = self.piece.bounding_box;
         for x in (bb.min.x + 1)..bb.max.x {
             for z in (bb.min.z + 1)..bb.max.z {
                 let pos = Vector3::new(x, bb.min.y, z);
-                if chunk.get_block_state(&pos).to_block_id() == Block::NETHERRACK.id {
+                if GenerationCache::get_block_state(cache, &pos).to_block_id()
+                    == Block::NETHERRACK.id
+                {
                     self.add_netherrack_drip_column(
                         random,
-                        chunk,
+                        cache,
                         Vector3::new(x, bb.min.y - 1, z),
-                        chunk_box,
                     );
                 }
             }
@@ -654,28 +538,26 @@ impl RuinedPortalPiece {
     fn add_netherrack_drip_column(
         &self,
         random: &mut RandomGenerator,
-        chunk: &mut ProtoChunk,
+        cache: &mut dyn GenerationCache,
         start_pos: Vector3<i32>,
-        chunk_box: &BlockBox,
     ) {
         let mut cur = start_pos;
-        if chunk_box.contains_pos(&cur) {
-            self.place_netherrack_or_magma(random, chunk, cur);
-        }
+        self.place_netherrack_or_magma(random, cache, cur);
         let mut remaining = 8;
         while remaining > 0 && random.next_f32() < 0.5 {
             cur.y -= 1;
             remaining -= 1;
-            if chunk_box.contains_pos(&cur) {
-                self.place_netherrack_or_magma(random, chunk, cur);
-            }
+            self.place_netherrack_or_magma(random, cache, cur);
         }
     }
 
-    fn maybe_add_vines(random: &mut RandomGenerator, chunk: &mut ProtoChunk, pos: Vector3<i32>) {
+    fn maybe_add_vines(
+        random: &mut RandomGenerator,
+        cache: &mut dyn GenerationCache,
+        pos: Vector3<i32>,
+    ) {
         use pumpkin_data::Property;
-        let state = chunk.get_block_state(&pos);
-        let block_id = state.to_block_id();
+        let block_id = GenerationCache::get_block_state(cache, &pos).to_block_id();
         if block_id != Block::AIR.id && block_id != Block::VINE.id {
             let dir_idx = random.next_bounded_i32(4);
             let (dir_offset, vine_face) = match dir_idx {
@@ -685,18 +567,14 @@ impl RuinedPortalPiece {
                 _ => (Vector3::new(1, 0, 0), Property::West(true)),
             };
             let neighbor_pos = pos + dir_offset;
-            if chunk.get_block_state(&neighbor_pos).to_block_id() == Block::AIR.id {
+            if GenerationCache::get_block_state(cache, &neighbor_pos).to_block_id() == Block::AIR.id
+            {
                 let entry =
                     PaletteEntry::with_properties("minecraft:vine".to_string(), vec![vine_face]);
                 if let Some(vine_state) =
                     BlockStateResolver::resolve(&entry, Rotation::None, Mirror::None)
                 {
-                    chunk.set_block_state(
-                        neighbor_pos.x,
-                        neighbor_pos.y,
-                        neighbor_pos.z,
-                        vine_state,
-                    );
+                    cache.set_block_state(&neighbor_pos, vine_state);
                 }
             }
         }
@@ -704,14 +582,14 @@ impl RuinedPortalPiece {
 
     fn maybe_add_leaves_above(
         random: &mut RandomGenerator,
-        chunk: &mut ProtoChunk,
+        cache: &mut dyn GenerationCache,
         pos: Vector3<i32>,
     ) {
         if random.next_f32() < 0.5
-            && chunk.get_block_state(&pos).to_block_id() == Block::NETHERRACK.id
+            && GenerationCache::get_block_state(cache, &pos).to_block_id() == Block::NETHERRACK.id
         {
             let above = pos + Vector3::new(0, 1, 0);
-            if chunk.get_block_state(&above).to_block_id() == Block::AIR.id {
+            if GenerationCache::get_block_state(cache, &above).to_block_id() == Block::AIR.id {
                 let entry = PaletteEntry::with_properties(
                     "minecraft:jungle_leaves".to_string(),
                     vec![pumpkin_data::Property::Persistent(true)],
@@ -719,7 +597,7 @@ impl RuinedPortalPiece {
                 if let Some(leaves_state) =
                     BlockStateResolver::resolve(&entry, Rotation::None, Mirror::None)
                 {
-                    chunk.set_block_state(above.x, above.y, above.z, leaves_state);
+                    cache.set_block_state(&above, leaves_state);
                 }
             }
         }
@@ -739,9 +617,22 @@ impl StructurePieceBase for RuinedPortalPiece {
     fn place(
         &mut self,
         chunk: &mut ProtoChunk,
+        block_registry: &dyn WorldPortalExt,
+        random: &mut RandomGenerator,
+        seed: i64,
+        chunk_box: &BlockBox,
+    ) {
+        self.place_in_region(chunk, block_registry, random, seed, chunk_box);
+    }
+
+    /// Vanilla's `RuinedPortalPiece.postProcess`: the chunk with the portal's center places the
+    /// whole portal and what grows around it into the region.
+    fn place_in_region(
+        &mut self,
+        cache: &mut dyn GenerationCache,
         _block_registry: &dyn WorldPortalExt,
         random: &mut RandomGenerator,
-        _seed: i64,
+        seed: i64,
         chunk_box: &BlockBox,
     ) {
         let bounding_box = self
@@ -752,28 +643,36 @@ impl StructurePieceBase for RuinedPortalPiece {
             i32::midpoint(bounding_box.min.y, bounding_box.max.y),
             i32::midpoint(bounding_box.min.z, bounding_box.max.z),
         );
+        if !chunk_box.contains_pos(&center) {
+            return;
+        }
+        let mut enlarged_box = *chunk_box;
+        enlarged_box.encompass(&bounding_box);
 
-        if chunk_box.contains_pos(&center) {
-            let mut enlarged_box = *chunk_box;
-            enlarged_box.encompass(&bounding_box);
+        self.place_settings.bounding_box = Some(enlarged_box);
+        self.piece.bounding_box = bounding_box;
+        place_template_piece(
+            &mut RegionPlacer(cache),
+            &self.template,
+            self.template_position,
+            &self.place_settings,
+            random,
+            seed,
+            |_, _, _, _| {},
+        );
+        self.spread_netherrack(random, cache);
+        self.add_netherrack_drip_columns_below_portal(random, cache);
 
-            self.place_blocks(chunk, &enlarged_box);
-            self.spread_netherrack(random, chunk, &enlarged_box);
-            self.add_netherrack_drip_columns_below_portal(random, chunk, &enlarged_box);
-
-            if self.properties.vines || self.properties.overgrown {
-                for x in self.piece.bounding_box.min.x..=self.piece.bounding_box.max.x {
-                    for y in self.piece.bounding_box.min.y..=self.piece.bounding_box.max.y {
-                        for z in self.piece.bounding_box.min.z..=self.piece.bounding_box.max.z {
-                            let pos = Vector3::new(x, y, z);
-                            if enlarged_box.contains_pos(&pos) {
-                                if self.properties.vines {
-                                    Self::maybe_add_vines(random, chunk, pos);
-                                }
-                                if self.properties.overgrown {
-                                    Self::maybe_add_leaves_above(random, chunk, pos);
-                                }
-                            }
+        if self.properties.vines || self.properties.overgrown {
+            for x in self.piece.bounding_box.min.x..=self.piece.bounding_box.max.x {
+                for y in self.piece.bounding_box.min.y..=self.piece.bounding_box.max.y {
+                    for z in self.piece.bounding_box.min.z..=self.piece.bounding_box.max.z {
+                        let pos = Vector3::new(x, y, z);
+                        if self.properties.vines {
+                            Self::maybe_add_vines(random, cache, pos);
+                        }
+                        if self.properties.overgrown {
+                            Self::maybe_add_leaves_above(random, cache, pos);
                         }
                     }
                 }
@@ -782,6 +681,7 @@ impl StructurePieceBase for RuinedPortalPiece {
     }
 }
 
+/// Vanilla's `RuinedPortalPiece.makeSettings`.
 fn make_settings(
     mirror: Mirror,
     rotation: Rotation,
@@ -790,21 +690,9 @@ fn make_settings(
     properties: &RuinedPortalProperties,
 ) -> StructurePlaceSettings {
     let ignore_processor = if properties.air_pocket {
-        StructureProcessor::BlockIgnore(vec![IgnoredBlock {
-            block_id: Block::STRUCTURE_BLOCK.id,
-            properties: None,
-        }])
+        StructureProcessor::ignore_structure_blocks()
     } else {
-        StructureProcessor::BlockIgnore(vec![
-            IgnoredBlock {
-                block_id: Block::STRUCTURE_BLOCK.id,
-                properties: None,
-            },
-            IgnoredBlock {
-                block_id: Block::AIR.id,
-                properties: None,
-            },
-        ])
+        StructureProcessor::ignore_structure_blocks_and_air()
     };
 
     let mut rules = Vec::new();
@@ -869,6 +757,7 @@ fn make_settings(
         .set_rotation(rotation)
         .set_mirror(mirror)
         .set_rotation_pivot(pivot)
+        .set_apply_waterlogging(true)
         .add_processor(ignore_processor)
         .add_processor(StructureProcessor::Rule(rules))
         .add_processor(StructureProcessor::BlockAge {

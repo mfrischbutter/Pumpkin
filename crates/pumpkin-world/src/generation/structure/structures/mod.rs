@@ -88,6 +88,25 @@ pub trait StructurePieceBase: Send + Sync {
         _chunk_box: &BlockBox,
     );
 
+    /// Places the piece into the generation region around the chunk. A piece that vanilla lets
+    /// write into the neighbouring chunks overrides it; the others place into the chunk.
+    fn place_in_region(
+        &mut self,
+        cache: &mut dyn GenerationCache,
+        block_registry: &dyn WorldPortalExt,
+        random: &mut RandomGenerator,
+        seed: i64,
+        chunk_box: &BlockBox,
+    ) {
+        self.place(
+            cache.get_center_chunk_mut(),
+            block_registry,
+            random,
+            seed,
+            chunk_box,
+        );
+    }
+
     #[expect(clippy::too_many_arguments)]
     fn fill_openings(
         &self,
@@ -764,13 +783,7 @@ impl StructurePiecesCollector {
 
         for piece in &mut self.pieces {
             if piece.bounding_box().intersects(&chunk_box) {
-                piece.place(
-                    cache.get_center_chunk_mut(),
-                    block_registry,
-                    random,
-                    seed,
-                    &chunk_box,
-                );
+                piece.place_in_region(cache, block_registry, random, seed, &chunk_box);
                 if let Some(pool_piece) = piece
                     .as_any()
                     .downcast_ref::<jigsaw::PoolElementStructurePiece>()

@@ -80,7 +80,7 @@ impl BlockPlacer for WorldBlockPlacer<'_> {
         self.changed_positions.push((block_pos, state.id));
     }
 
-    fn add_block_entity(&mut self, nbt: NbtCompound) {
+    fn add_block_entity(&mut self, _pos: &Vector3<i32>, nbt: NbtCompound) {
         self.block_entity_nbts.push(nbt);
     }
 

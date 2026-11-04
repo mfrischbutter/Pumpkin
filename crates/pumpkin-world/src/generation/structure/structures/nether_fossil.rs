@@ -3,15 +3,14 @@ use std::sync::Arc;
 use pumpkin_data::{Block, BlockDirection, BlockState, Mirror, Rotation};
 use pumpkin_util::{
     math::{block_box::BlockBox, position::BlockPos, vector3::Vector3},
-    random::{
-        RandomDeriverImpl, RandomGenerator, RandomImpl, hash_block_pos, legacy_rand::LegacyRand,
-    },
+    random::{RandomDeriverImpl, RandomGenerator, RandomImpl},
 };
 
 use crate::{
     ProtoChunk,
     generation::{
         positions::chunk_pos::{start_block_x, start_block_z},
+        proto_chunk::GenerationCache,
         structure::{
             piece::StructurePieceType,
             structures::{
@@ -19,8 +18,8 @@ use crate::{
                 StructurePiecesCollector, StructurePosition, WorldPortalExt,
             },
             template::{
-                BlockStateResolver, StructurePlaceSettings, StructureTemplate, get_template,
-                processor::{IgnoredBlock, ProcessorContext, StructureProcessor},
+                RegionPlacer, StructurePlaceSettings, StructureTemplate, get_template,
+                place_template_piece, processor::StructureProcessor,
             },
         },
     },
@@ -155,62 +154,8 @@ impl NetherFossilPiece {
         }
     }
 
-    fn place_blocks(&self, chunk: &mut ProtoChunk, chunk_box: &BlockBox) {
-        let rotation = self.place_settings.get_rotation();
-        let mirror = self.place_settings.get_mirror();
-        let pivot = self.place_settings.get_rotation_pivot();
-
-        let mut context = ProcessorContext::new(self.template_position);
-
-        for block in &self.template.blocks {
-            let palette_entry = &self.template.palette[block.state as usize];
-
-            let mut block_entity_nbt = block.nbt.clone();
-            let placed_entry = palette_entry.clone();
-
-            let Some(state) = BlockStateResolver::resolve(&placed_entry, rotation, mirror) else {
-                continue;
-            };
-
-            let local_pos =
-                StructureTemplate::transform_block_pos(block.pos, mirror, rotation, pivot);
-            let world_pos = self.template_position + local_pos;
-
-            if !chunk_box.contains_pos(&world_pos) {
-                continue;
-            }
-
-            let mut processed_state = Some(state);
-            for processor in self.place_settings.get_processors() {
-                let Some(current_state) = processed_state else {
-                    break;
-                };
-                // Each processor seeds its own random from the block, like vanilla's
-                // `StructurePlaceSettings.getRandom(pos)` without a random of its own.
-                let mut rng =
-                    LegacyRand::from_seed(
-                        hash_block_pos(world_pos.x, world_pos.y, world_pos.z) as u64
-                    );
-                processed_state = processor.process_with_context(
-                    chunk,
-                    world_pos,
-                    current_state,
-                    &mut block_entity_nbt,
-                    &mut context,
-                    &mut rng,
-                );
-            }
-
-            let Some(final_state) = processed_state else {
-                continue;
-            };
-
-            chunk.set_block_state(world_pos.x, world_pos.y, world_pos.z, final_state);
-        }
-    }
-
     fn place_dried_ghast(
-        chunk: &mut ProtoChunk,
+        cache: &mut dyn GenerationCache,
         seed: i64,
         fossil_bb: &BlockBox,
         chunk_bb: &BlockBox,
@@ -233,12 +178,12 @@ impl NetherFossilPiece {
             let z = fossil_bb.min.z + positional_random.next_bounded_i32(z_span);
             let random_pos = Vector3::new(x, y, z);
 
-            let block_at = chunk.get_block_state(&random_pos);
+            let block_at = GenerationCache::get_block_state(cache, &random_pos);
             if BlockState::from_id(block_at).is_air() && chunk_bb.contains_pos(&random_pos) {
                 let rot_idx = positional_random.next_bounded_i32(4) as u8;
                 let rot = Rotation::from_index(rot_idx);
                 let state = Block::DRIED_GHAST.default_state.rotate(rot);
-                chunk.set_block_state(random_pos.x, random_pos.y, random_pos.z, state);
+                cache.set_block_state(&random_pos, state);
             }
         }
     }
@@ -257,34 +202,52 @@ impl StructurePieceBase for NetherFossilPiece {
     fn place(
         &mut self,
         chunk: &mut ProtoChunk,
-        _block_registry: &dyn WorldPortalExt,
-        _random: &mut RandomGenerator,
+        block_registry: &dyn WorldPortalExt,
+        random: &mut RandomGenerator,
         seed: i64,
         chunk_box: &BlockBox,
     ) {
-        let fossil_bb = self.piece.bounding_box;
+        self.place_in_region(chunk, block_registry, random, seed, chunk_box);
+    }
+
+    /// Vanilla's `NetherFossilPiece.postProcess`: every chunk the fossil touches places the whole
+    /// fossil into the region.
+    fn place_in_region(
+        &mut self,
+        cache: &mut dyn GenerationCache,
+        _block_registry: &dyn WorldPortalExt,
+        random: &mut RandomGenerator,
+        seed: i64,
+        chunk_box: &BlockBox,
+    ) {
+        let fossil_bb = self
+            .template
+            .get_bounding_box(&self.place_settings, self.template_position);
         let mut enlarged_box = *chunk_box;
         enlarged_box.encompass(&fossil_bb);
 
-        self.place_blocks(chunk, &enlarged_box);
-        Self::place_dried_ghast(chunk, seed, &fossil_bb, chunk_box);
+        self.place_settings.bounding_box = Some(enlarged_box);
+        self.piece.bounding_box = fossil_bb;
+        place_template_piece(
+            &mut RegionPlacer(cache),
+            &self.template,
+            self.template_position,
+            &self.place_settings,
+            random,
+            seed,
+            |_, _, _, _| {},
+        );
+        Self::place_dried_ghast(cache, seed, &fossil_bb, chunk_box);
     }
 }
 
+/// Vanilla's `NetherFossilPiece.makeSettings`.
 fn make_settings(rotation: Rotation) -> StructurePlaceSettings {
     StructurePlaceSettings::new()
         .set_rotation(rotation)
         .set_mirror(Mirror::None)
-        .add_processor(StructureProcessor::BlockIgnore(vec![
-            IgnoredBlock {
-                block_id: Block::STRUCTURE_BLOCK.id,
-                properties: None,
-            },
-            IgnoredBlock {
-                block_id: Block::AIR.id,
-                properties: None,
-            },
-        ]))
+        .add_processor(StructureProcessor::ignore_structure_blocks_and_air())
+        .set_apply_waterlogging(true)
 }
 
 #[cfg(test)]
