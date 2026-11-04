@@ -23,7 +23,8 @@ use crate::{
                 StructurePiecesCollector, StructurePosition, WorldPortalExt,
             },
             template::{
-                StructurePlaceSettings, StructureTemplate, get_template, place_template_piece,
+                RegionPlacer, StructurePlaceSettings, StructureTemplate, get_template,
+                place_template_piece,
                 processor::{
                     BlockEntityModifier, PosRuleTest, ProcessorRule, RuleTest, StructureProcessor,
                 },
@@ -550,14 +551,14 @@ impl StructurePieceBase for OceanRuinPiece {
             .template
             .get_bounding_box(&self.place_settings, self.template_position);
         place_template_piece(
-            cache.get_center_chunk_mut(),
+            &mut RegionPlacer(cache),
             &self.template,
             self.template_position,
             &self.place_settings,
             random,
             seed,
-            |chunk, random, marker, position| {
-                self.handle_data_marker(chunk, random, marker, position);
+            |placer, random, marker, position| {
+                self.handle_data_marker(placer.0.get_center_chunk_mut(), random, marker, position);
             },
         );
     }

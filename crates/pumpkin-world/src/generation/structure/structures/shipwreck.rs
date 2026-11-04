@@ -11,6 +11,7 @@ use crate::{
     ProtoChunk,
     generation::{
         positions::chunk_pos::{get_center_x, get_center_z, start_block_x, start_block_z},
+        proto_chunk::GenerationCache,
         structure::{
             piece::StructurePieceType,
             structures::{
@@ -18,8 +19,8 @@ use crate::{
                 StructurePiecesCollector, StructurePosition, WorldPortalExt,
             },
             template::{
-                StructurePlaceSettings, StructureTemplate, get_template, place_template_piece,
-                processor::StructureProcessor, set_block_entity_loot_table,
+                RegionPlacer, StructurePlaceSettings, StructureTemplate, get_template,
+                place_template_piece, processor::StructureProcessor, set_block_entity_loot_table,
             },
         },
     },
@@ -215,6 +216,18 @@ impl StructurePieceBase for ShipwreckPiece {
     fn place(
         &mut self,
         chunk: &mut ProtoChunk,
+        block_registry: &dyn WorldPortalExt,
+        random: &mut RandomGenerator,
+        seed: i64,
+        chunk_box: &BlockBox,
+    ) {
+        self.place_in_region(chunk, block_registry, random, seed, chunk_box);
+    }
+
+    /// Vanilla's `ShipwreckPiece.postProcess`.
+    fn place_in_region(
+        &mut self,
+        cache: &mut dyn GenerationCache,
         _block_registry: &dyn WorldPortalExt,
         random: &mut RandomGenerator,
         seed: i64,
@@ -231,7 +244,7 @@ impl StructurePieceBase for ShipwreckPiece {
             let base_size = template_size.x * template_size.z;
 
             let (mean, min_y) = if base_size == 0 {
-                let h = chunk.get_top_y(
+                let h = cache.get_top_y(
                     &heightmap_type,
                     self.template_position.x,
                     self.template_position.z,
@@ -242,7 +255,7 @@ impl StructurePieceBase for ShipwreckPiece {
                 let mut total = 0;
                 for x in self.template_position.x..self.template_position.x + template_size.x {
                     for z in self.template_position.z..self.template_position.z + template_size.z {
-                        let h = chunk.get_top_y(&heightmap_type, x, z);
+                        let h = cache.get_top_y(&heightmap_type, x, z);
                         total += h;
                         min_y = min_y.min(h);
                     }
@@ -264,17 +277,17 @@ impl StructurePieceBase for ShipwreckPiece {
             .template
             .get_bounding_box(&self.place_settings, self.template_position);
         place_template_piece(
-            chunk,
+            &mut RegionPlacer(cache),
             &self.template,
             self.template_position,
             &self.place_settings,
             random,
             seed,
-            |chunk, random, marker, position| {
+            |placer, random, marker, position| {
                 if let Some((_, loot_table)) = MARKERS_TO_LOOT.iter().find(|(id, _)| *id == marker)
                 {
                     set_block_entity_loot_table(
-                        chunk,
+                        placer.0.get_center_chunk_mut(),
                         random,
                         Vector3::new(position.x, position.y - 1, position.z),
                         loot_table,

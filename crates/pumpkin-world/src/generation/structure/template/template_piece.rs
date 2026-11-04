@@ -13,14 +13,17 @@ use pumpkin_util::{
 
 use crate::{
     ProtoChunk,
-    generation::structure::{
-        piece::StructurePieceType,
-        structures::{StructurePiece, StructurePieceBase},
+    generation::{
+        proto_chunk::GenerationCache,
+        structure::{
+            piece::StructurePieceType,
+            structures::{StructurePiece, StructurePieceBase},
+        },
     },
     world::WorldPortalExt,
 };
 
-use super::{StructurePlaceSettings, StructureTemplate, place_template_piece};
+use super::{RegionPlacer, StructurePlaceSettings, StructureTemplate, place_template_piece};
 
 /// A structure piece that places blocks from an NBT template matching vanilla `TemplateStructurePiece`.
 ///
@@ -164,6 +167,17 @@ impl StructurePieceBase for TemplatePiece {
     fn place(
         &mut self,
         chunk: &mut ProtoChunk,
+        block_registry: &dyn WorldPortalExt,
+        random: &mut RandomGenerator,
+        seed: i64,
+        chunk_box: &BlockBox,
+    ) {
+        self.place_in_region(chunk, block_registry, random, seed, chunk_box);
+    }
+
+    fn place_in_region(
+        &mut self,
+        cache: &mut dyn GenerationCache,
         _block_registry: &dyn WorldPortalExt,
         random: &mut RandomGenerator,
         seed: i64,
@@ -174,7 +188,7 @@ impl StructurePieceBase for TemplatePiece {
             .template
             .get_bounding_box(&self.place_settings, self.template_position);
         place_template_piece(
-            chunk,
+            &mut RegionPlacer(cache),
             &self.template,
             self.template_position,
             &self.place_settings,

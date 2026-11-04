@@ -14,6 +14,7 @@ use crate::{
     ProtoChunk,
     generation::{
         positions::chunk_pos::{start_block_x, start_block_z},
+        proto_chunk::GenerationCache,
         structure::{
             piece::StructurePieceType,
             structures::{
@@ -21,8 +22,9 @@ use crate::{
                 StructurePiecesCollector, StructurePosition,
             },
             template::{
-                BlockStateResolver, PaletteEntry, StructurePlaceSettings, StructureTemplate,
-                get_template, place_template_piece, processor::StructureProcessor,
+                BlockStateResolver, PaletteEntry, RegionPlacer, StructurePlaceSettings,
+                StructureTemplate, get_template, place_template_piece,
+                processor::StructureProcessor,
             },
         },
     },
@@ -259,7 +261,7 @@ impl MansionTemplatePiece {
     /// markers.
     fn place_in_chunk(
         &self,
-        chunk: &mut ProtoChunk,
+        cache: &mut dyn GenerationCache,
         random: &mut RandomGenerator,
         region_random: &mut RandomGenerator,
         seed: i64,
@@ -270,14 +272,20 @@ impl MansionTemplatePiece {
             .clone()
             .set_bounding_box(Some(*chunk_box));
         place_template_piece(
-            chunk,
+            &mut RegionPlacer(cache),
             &self.template,
             self.template_position,
             &settings,
             random,
             seed,
-            |chunk, random, marker, position| {
-                self.handle_data_marker(chunk, random, region_random, marker, position);
+            |placer, random, marker, position| {
+                self.handle_data_marker(
+                    placer.0.get_center_chunk_mut(),
+                    random,
+                    region_random,
+                    marker,
+                    position,
+                );
             },
         );
     }
@@ -385,6 +393,17 @@ impl StructurePieceBase for MansionTemplatePiece {
     fn place(
         &mut self,
         chunk: &mut ProtoChunk,
+        block_registry: &dyn WorldPortalExt,
+        random: &mut RandomGenerator,
+        seed: i64,
+        chunk_box: &BlockBox,
+    ) {
+        self.place_in_region(chunk, block_registry, random, seed, chunk_box);
+    }
+
+    fn place_in_region(
+        &mut self,
+        cache: &mut dyn GenerationCache,
         _block_registry: &dyn WorldPortalExt,
         random: &mut RandomGenerator,
         seed: i64,
@@ -392,12 +411,13 @@ impl StructurePieceBase for MansionTemplatePiece {
     ) {
         // Vanilla's allay count draws from the `WorldGenRegion`'s random; a placement outside of
         // world generation has none and uses the region random's start for the chunk.
+        let chunk = cache.get_center_chunk_mut();
         let taken = chunk.region_random.take();
         let in_region = taken.is_some();
         let mut region_random = taken.unwrap_or_else(|| region_random(seed, chunk));
-        self.place_in_chunk(chunk, random, &mut region_random, seed, chunk_box);
+        self.place_in_chunk(cache, random, &mut region_random, seed, chunk_box);
         if in_region {
-            chunk.region_random = Some(region_random);
+            cache.get_center_chunk_mut().region_random = Some(region_random);
         }
     }
 }

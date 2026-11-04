@@ -10,6 +10,7 @@ use crate::{
     ProtoChunk,
     generation::{
         positions::chunk_pos::{start_block_x, start_block_z},
+        proto_chunk::GenerationCache,
         structure::{
             piece::StructurePieceType,
             structures::{
@@ -17,8 +18,8 @@ use crate::{
                 StructurePiecesCollector, StructurePosition, WorldPortalExt,
             },
             template::{
-                StructurePlaceSettings, StructureTemplate, block_entity_id, get_template,
-                place_template_piece, processor::StructureProcessor, set_loot_table,
+                RegionPlacer, StructurePlaceSettings, StructureTemplate, block_entity_id,
+                get_template, place_template_piece, processor::StructureProcessor, set_loot_table,
             },
         },
     },
@@ -183,6 +184,18 @@ impl StructurePieceBase for IglooPiece {
     fn place(
         &mut self,
         chunk: &mut ProtoChunk,
+        block_registry: &dyn WorldPortalExt,
+        random: &mut RandomGenerator,
+        seed: i64,
+        chunk_box: &BlockBox,
+    ) {
+        self.place_in_region(chunk, block_registry, random, seed, chunk_box);
+    }
+
+    /// Vanilla's `IglooPiece.postProcess`.
+    fn place_in_region(
+        &mut self,
+        cache: &mut dyn GenerationCache,
         _block_registry: &dyn WorldPortalExt,
         random: &mut RandomGenerator,
         seed: i64,
@@ -195,7 +208,7 @@ impl StructurePieceBase for IglooPiece {
             Vector3::new(3 - offset.x, 0, -offset.z),
         );
         let entrance_pos = self.template_position + entrance_rel;
-        let height = chunk.get_top_y(
+        let height = cache.get_top_y(
             &pumpkin_util::HeightMap::WorldSurfaceWg,
             entrance_pos.x,
             entrance_pos.z,
@@ -208,17 +221,20 @@ impl StructurePieceBase for IglooPiece {
             .template
             .get_bounding_box(&self.place_settings, self.template_position);
         place_template_piece(
-            chunk,
+            &mut RegionPlacer(cache),
             &self.template,
             self.template_position,
             &self.place_settings,
             random,
             seed,
-            |chunk, random, marker, position| {
+            |placer, random, marker, position| {
                 if marker != "chest" {
                     return;
                 }
-                chunk.set_block_state(position.x, position.y, position.z, Block::AIR.default_state);
+                placer
+                    .0
+                    .set_block_state(&position, Block::AIR.default_state);
+                let chunk = placer.0.get_center_chunk_mut();
                 let below = Vector3::new(position.x, position.y - 1, position.z);
                 // `ChestBlockEntity`, which the trapped chest's block entity extends.
                 if matches!(
@@ -235,17 +251,10 @@ impl StructurePieceBase for IglooPiece {
                 StructureTemplate::calculate_relative_position(&settings, Vector3::new(3, 0, 5));
             let trap_door_pos = self.template_position + trap_door_rel;
             let below_pos = trap_door_pos - Vector3::new(0, 1, 0);
-            let below_state = BlockState::from_id(chunk.get_block_state(&below_pos));
-            if !below_state.is_air()
-                && below_state.id.to_block_id() != Block::LADDER.id
-                && chunk_box.contains_pos(&trap_door_pos)
-            {
-                chunk.set_block_state(
-                    trap_door_pos.x,
-                    trap_door_pos.y,
-                    trap_door_pos.z,
-                    Block::SNOW_BLOCK.default_state,
-                );
+            let below_state =
+                BlockState::from_id(GenerationCache::get_block_state(cache, &below_pos));
+            if !below_state.is_air() && below_state.id.to_block_id() != Block::LADDER.id {
+                cache.set_block_state(&trap_door_pos, Block::SNOW_BLOCK.default_state);
             }
         }
 

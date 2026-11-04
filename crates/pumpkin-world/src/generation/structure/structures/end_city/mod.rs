@@ -11,15 +11,18 @@ use pumpkin_util::{
 
 use crate::{
     ProtoChunk,
-    generation::structure::{
-        piece::StructurePieceType,
-        structures::{
-            StructureGenerator, StructureGeneratorContext, StructurePiece, StructurePieceBase,
-            StructurePiecesCollector, StructurePosition,
-        },
-        template::{
-            StructurePlaceSettings, place_template_piece, processor::StructureProcessor,
-            set_block_entity_loot_table,
+    generation::{
+        proto_chunk::GenerationCache,
+        structure::{
+            piece::StructurePieceType,
+            structures::{
+                StructureGenerator, StructureGeneratorContext, StructurePiece, StructurePieceBase,
+                StructurePiecesCollector, StructurePosition,
+            },
+            template::{
+                RegionPlacer, StructurePlaceSettings, place_template_piece,
+                processor::StructureProcessor, set_block_entity_loot_table,
+            },
         },
     },
     world::WorldPortalExt,
@@ -184,6 +187,17 @@ impl StructurePieceBase for EndCityTemplatePiece {
     fn place(
         &mut self,
         chunk: &mut ProtoChunk,
+        block_registry: &dyn WorldPortalExt,
+        random: &mut RandomGenerator,
+        seed: i64,
+        chunk_box: &BlockBox,
+    ) {
+        self.place_in_region(chunk, block_registry, random, seed, chunk_box);
+    }
+
+    fn place_in_region(
+        &mut self,
+        cache: &mut dyn GenerationCache,
         _block_registry: &dyn WorldPortalExt,
         random: &mut RandomGenerator,
         seed: i64,
@@ -195,14 +209,20 @@ impl StructurePieceBase for EndCityTemplatePiece {
             .template
             .get_bounding_box(&self.place_settings, self.descriptor.template_position);
         place_template_piece(
-            chunk,
+            &mut RegionPlacer(cache),
             &self.descriptor.template,
             self.descriptor.template_position,
             &self.place_settings,
             random,
             seed,
-            |chunk, random, marker, position| {
-                self.handle_marker(chunk, random, marker, position, chunk_box);
+            |placer, random, marker, position| {
+                self.handle_marker(
+                    placer.0.get_center_chunk_mut(),
+                    random,
+                    marker,
+                    position,
+                    chunk_box,
+                );
             },
         );
     }
