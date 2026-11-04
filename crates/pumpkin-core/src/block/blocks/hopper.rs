@@ -79,9 +79,7 @@ impl BlockBehaviour for HopperBlock {
         &self,
         args: GetScreenHandlerFactoryArgs<'_>,
     ) -> Option<Box<dyn ScreenHandlerFactory>> {
-        let block_entity = args.world.get_block_entity(args.position)?;
-        let inventory = block_entity.get_inventory()?;
-        Some(Box::new(HopperBlockScreenFactory(inventory)))
+        crate::block::container_screen_handler_factory(&args, HopperBlockScreenFactory)
     }
 
     fn on_place(&self, args: OnPlaceArgs<'_>) -> BlockStateId {

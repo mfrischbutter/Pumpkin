@@ -194,9 +194,7 @@ impl BlockBehaviour for DispenserBlock {
         &self,
         args: GetScreenHandlerFactoryArgs<'_>,
     ) -> Option<Box<dyn ScreenHandlerFactory>> {
-        let block_entity = args.world.get_block_entity(args.position)?;
-        let inventory = block_entity.get_inventory()?;
-        Some(Box::new(DispenserScreenFactory(inventory)))
+        crate::block::container_screen_handler_factory(&args, DispenserScreenFactory)
     }
 
     fn on_place(&self, args: OnPlaceArgs<'_>) -> BlockStateId {
@@ -245,6 +243,8 @@ impl BlockBehaviour for DispenserBlock {
                 return;
             };
 
+            // Vanilla `DispenserBlockEntity.getRandomSlot` unpacks the loot table first.
+            block_entity.clone().unpack_loot_table(args.world, None);
             if let Some((slot_index, mut item)) = dispenser.get_random_slot() {
                 let props = DispenserLikeProperties::from_state_id(state.id);
                 let ctx = DispenseContext {

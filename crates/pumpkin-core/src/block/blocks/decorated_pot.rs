@@ -47,6 +47,11 @@ impl BlockBehaviour for DecoratedPotBlock {
     }
 
     fn use_with_item(&self, args: UseWithItemArgs<'_>) -> BlockActionResult {
+        // Vanilla `useItemOn` reads the pot's item first, whatever the hand holds, which unpacks
+        // its loot table.
+        if let Some(block_entity) = args.world.get_block_entity(args.position) {
+            block_entity.unpack_loot_table_before_read(args.world);
+        }
         if args.item_stack.item_count == 0 {
             return self.normal_use(NormalUseArgs {
                 server: args.server,
@@ -100,6 +105,10 @@ impl BlockBehaviour for DecoratedPotBlock {
                 .as_any()
                 .downcast_ref::<DecoratedPotBlockEntity>()
         {
+            // Vanilla reads the pot's item, which unpacks its loot table first.
+            block_entity
+                .clone()
+                .unpack_loot_table_before_read(args.world);
             Some(pot_entity.get_comparator_output())
         } else {
             Some(0)

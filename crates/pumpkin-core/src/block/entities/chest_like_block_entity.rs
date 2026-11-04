@@ -18,10 +18,6 @@ macro_rules! impl_block_entity_for_chest {
             where
                 Self: Sized,
             {
-                // Read deferred loot-table fields first.
-                let loot_table_key = nbt.get_string("LootTable").map(|s| s.to_string());
-                let loot_table_seed = nbt.get_long("LootTableSeed").unwrap_or(0);
-
                 let mut chest = Self {
                     position,
                     items: std::sync::RwLock::new(std::array::from_fn(|_| {
@@ -30,17 +26,13 @@ macro_rules! impl_block_entity_for_chest {
                     dirty: std::sync::atomic::AtomicBool::new(false),
                     comparator_dirty: std::sync::atomic::AtomicBool::new(false),
                     viewers: $crate::block::viewer::ViewerCountTracker::new(),
-                    loot_table: StdMutex::new(loot_table_key),
-                    loot_table_seed,
+                    loot_table:
+                        $crate::block::entities::randomizable_container::ContainerLootTable::from_nbt(
+                            nbt,
+                        ),
                 };
 
-                // Only read saved items when there is no pending loot table.
-                let has_loot_table = chest
-                    .loot_table
-                    .lock()
-                    .unwrap_or_else(std::sync::PoisonError::into_inner)
-                    .is_some();
-                if !has_loot_table {
+                if !chest.loot_table.is_pending() {
                     pumpkin_inventory::sync_read_items_from_nbt(
                         nbt,
                         chest
@@ -56,22 +48,7 @@ macro_rules! impl_block_entity_for_chest {
             fn write_nbt(&self, nbt: &mut pumpkin_nbt::compound::NbtCompound) {
                 use pumpkin_inventory::Inventory;
 
-                let loot_table_key = {
-                    let guard = self
-                        .loot_table
-                        .lock()
-                        .unwrap_or_else(std::sync::PoisonError::into_inner);
-                    guard.clone()
-                };
-
-                if let Some(key) = loot_table_key {
-                    // Persist deferred loot: write the key and seed; skip items.
-                    nbt.put_string("LootTable", key);
-                    if self.loot_table_seed != 0 {
-                        nbt.put_long("LootTableSeed", self.loot_table_seed);
-                    }
-                } else {
-                    // Loot has already been generated, so persist the actual items.
+                if !self.loot_table.try_write_nbt(nbt) {
                     self.write_inventory_nbt(nbt, true);
                 }
             }
@@ -110,12 +87,7 @@ macro_rules! impl_block_entity_for_chest {
 
             fn chunk_data_nbt(&self) -> Option<pumpkin_nbt::compound::NbtCompound> {
                 let mut nbt = pumpkin_nbt::compound::NbtCompound::new();
-                let has_loot_table = self
-                    .loot_table
-                    .lock()
-                    .unwrap_or_else(std::sync::PoisonError::into_inner)
-                    .is_some();
-                if !has_loot_table {
+                if !self.loot_table.is_pending() {
                     if let Ok(items) = self.items.try_read() {
                         pumpkin_inventory::sync_write_items_to_nbt(&*items, &mut nbt);
                     }
@@ -138,30 +110,18 @@ macro_rules! impl_block_entity_for_chest {
                 self
             }
 
-            fn take_loot_table(&self) -> Option<(String, i64)> {
-                let mut guard = self
-                    .loot_table
-                    .lock()
-                    .unwrap_or_else(std::sync::PoisonError::into_inner);
-                guard.take().map(|key| (key, self.loot_table_seed))
-            }
-
-            fn has_loot_table(&self) -> bool {
-                self.loot_table
-                    .lock()
-                    .unwrap_or_else(std::sync::PoisonError::into_inner)
-                    .is_some()
+            fn container_loot_table(
+                &self,
+            ) -> Option<&$crate::block::entities::randomizable_container::ContainerLootTable>
+            {
+                Some(&self.loot_table)
             }
 
             fn apply_item_components(&self, stack: &ItemStack) {
                 if let Some(loot) = stack
                     .get_data_component::<pumpkin_data::data_component_impl::ContainerLootImpl>()
                 {
-                    *self
-                        .loot_table
-                        .lock()
-                        .unwrap_or_else(std::sync::PoisonError::into_inner) =
-                        Some(loot.loot_table.clone());
+                    self.loot_table.apply_component(loot);
                 }
                 if let Some(container) =
                     stack.get_data_component::<pumpkin_data::data_component_impl::ContainerImpl>()
@@ -343,7 +303,6 @@ macro_rules! impl_chest_helper_methods {
             #[must_use]
             pub fn new(position: pumpkin_util::math::position::BlockPos) -> Self {
                 use std::array::from_fn;
-                use std::sync::Mutex as StdMutex;
                 use std::sync::RwLock;
                 use std::sync::atomic::AtomicBool;
 
@@ -353,8 +312,8 @@ macro_rules! impl_chest_helper_methods {
                     dirty: AtomicBool::new(false),
                     comparator_dirty: AtomicBool::new(false),
                     viewers: $crate::block::viewer::ViewerCountTracker::new(),
-                    loot_table: StdMutex::new(None),
-                    loot_table_seed: 0,
+                    loot_table:
+                        $crate::block::entities::randomizable_container::ContainerLootTable::new(),
                 }
             }
 

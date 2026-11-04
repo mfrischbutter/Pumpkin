@@ -67,8 +67,14 @@ impl HopperMinecart {
         // Vanilla `HopperBlockEntity.suckInItems`: `getLevelY()` is half a block above the cart.
         let source_center = Vector3::new(pos.x, pos.y + 1.5, pos.z);
         let source_pos = BlockPos::floored_v(source_center);
-        let source = world
-            .get_block_entity(&source_pos)
+        let source_block_entity = world.get_block_entity(&source_pos);
+        // Vanilla `tryTakeInItemFromSlot` reads the source's slots, which unpacks its loot table.
+        if let Some(source_block_entity) = &source_block_entity {
+            source_block_entity
+                .clone()
+                .unpack_loot_table_before_read(&world);
+        }
+        let source = source_block_entity
             .and_then(crate::block::entities::BlockEntity::get_inventory)
             .or_else(|| entity_container_at(&world, source_center));
         if let Some(source) = source {

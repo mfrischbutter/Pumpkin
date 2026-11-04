@@ -108,9 +108,7 @@ impl BlockBehaviour for DropperBlock {
         &self,
         args: GetScreenHandlerFactoryArgs<'_>,
     ) -> Option<Box<dyn ScreenHandlerFactory>> {
-        let block_entity = args.world.get_block_entity(args.position)?;
-        let inventory = block_entity.get_inventory()?;
-        Some(Box::new(DropperScreenFactory(inventory)))
+        crate::block::container_screen_handler_factory(&args, DropperScreenFactory)
     }
 
     fn on_place(&self, args: OnPlaceArgs<'_>) -> BlockStateId {
@@ -157,6 +155,8 @@ impl BlockBehaviour for DropperBlock {
                 return;
             };
 
+            // Vanilla `DispenserBlockEntity.getRandomSlot` unpacks the loot table first.
+            block_entity.clone().unpack_loot_table(args.world, None);
             if let Some((slot_index, mut item)) = dropper.get_random_slot() {
                 let props = DispenserLikeProperties::from_state_id(state.id);
 
@@ -164,9 +164,15 @@ impl BlockBehaviour for DropperBlock {
                     .position
                     .offset(props.facing.to_block_direction().to_offset());
 
-                if let Some(container) = args
-                    .world
-                    .get_block_entity(&target_pos)
+                let target_block_entity = args.world.get_block_entity(&target_pos);
+                // Vanilla `HopperBlockEntity.addItem` reads and fills the target's slots, which
+                // unpacks its loot table first.
+                if let Some(target_block_entity) = &target_block_entity {
+                    target_block_entity
+                        .clone()
+                        .unpack_loot_table(args.world, None);
+                }
+                if let Some(container) = target_block_entity
                     .and_then(crate::block::entities::BlockEntity::get_inventory)
                     .or_else(|| entity_container_at(args.world, target_pos.to_centered_f64()))
                 {

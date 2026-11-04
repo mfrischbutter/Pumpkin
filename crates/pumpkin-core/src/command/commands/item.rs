@@ -62,7 +62,7 @@ impl CommandExecutor for BlockReplaceExecutor {
             )
         })?;
 
-        let inventory = block_entity.get_inventory().ok_or_else(|| {
+        let inventory = block_entity.clone().get_inventory().ok_or_else(|| {
             ERROR_NOT_CONTAINER.create_without_context(
                 TextComponent::text(pos.0.x.to_string()),
                 TextComponent::text(pos.0.y.to_string()),
@@ -78,6 +78,8 @@ impl CommandExecutor for BlockReplaceExecutor {
 
         let mut item_stack = parsed_stack.clone();
         item_stack.item_count = count as u8;
+        // Vanilla `Container.setItem` unpacks the loot table first.
+        block_entity.unpack_loot_table(world, None);
         inventory.set_stack(slot, item_stack);
 
         let item_name = item.registry_key;

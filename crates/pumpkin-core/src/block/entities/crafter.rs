@@ -1,4 +1,5 @@
 use crate::block::entities::BlockEntity;
+use crate::block::entities::randomizable_container::ContainerLootTable;
 use crate::world::World;
 use pumpkin_data::block_properties::CrafterLikeProperties;
 use pumpkin_data::item_stack::ItemStack;
@@ -22,15 +23,18 @@ pub struct CrafterBlockEntity {
     pub triggered: AtomicBool,
     pub dirty: AtomicBool,
     pub comparator_dirty: AtomicBool,
+    pub loot_table: ContainerLootTable,
 }
 
 impl BlockEntity for CrafterBlockEntity {
     fn write_nbt(&self, nbt: &mut NbtCompound) {
-        let items = self
-            .items
-            .read()
-            .unwrap_or_else(std::sync::PoisonError::into_inner);
-        sync_write_items_to_nbt(items.as_slice(), nbt);
+        if !self.loot_table.try_write_nbt(nbt) {
+            let items = self
+                .items
+                .read()
+                .unwrap_or_else(std::sync::PoisonError::into_inner);
+            sync_write_items_to_nbt(items.as_slice(), nbt);
+        }
         nbt.put_int(
             "crafting_ticks_remaining",
             self.crafting_ticks_remaining.load(Ordering::Relaxed),
@@ -69,15 +73,18 @@ impl BlockEntity for CrafterBlockEntity {
             ),
             dirty: AtomicBool::new(false),
             comparator_dirty: AtomicBool::new(false),
+            loot_table: ContainerLootTable::from_nbt(nbt),
         };
 
-        sync_read_items_from_nbt(
-            nbt,
-            crafter
-                .items
-                .get_mut()
-                .unwrap_or_else(std::sync::PoisonError::into_inner),
-        );
+        if !crafter.loot_table.is_pending() {
+            sync_read_items_from_nbt(
+                nbt,
+                crafter
+                    .items
+                    .get_mut()
+                    .unwrap_or_else(std::sync::PoisonError::into_inner),
+            );
+        }
 
         if let Some(NbtTag::IntArray(disabled)) = nbt.get("disabled_slots") {
             let disabled_array = crafter
@@ -125,6 +132,14 @@ impl BlockEntity for CrafterBlockEntity {
     fn get_inventory(self: Arc<Self>) -> Option<Arc<dyn Inventory>> {
         Some(self)
     }
+
+    fn container_loot_table(&self) -> Option<&ContainerLootTable> {
+        Some(&self.loot_table)
+    }
+
+    /// Vanilla `CrafterBlockEntity.getItem` and `isEmpty` skip the unpacking, so breaking a
+    /// crafter or a hopper pulling from it leaves the loot table alone.
+    fn unpack_loot_table_before_read(self: Arc<Self>, _world: &World) {}
 
     fn is_comparator_dirty(&self) -> bool {
         self.comparator_dirty.load(Ordering::Relaxed)
@@ -207,6 +222,7 @@ impl CrafterBlockEntity {
             triggered: AtomicBool::new(false),
             dirty: AtomicBool::new(false),
             comparator_dirty: AtomicBool::new(false),
+            loot_table: ContainerLootTable::new(),
         }
     }
 

@@ -1,4 +1,5 @@
 use crate::block::entities::BlockEntity;
+use crate::block::entities::randomizable_container::ContainerLootTable;
 use crate::entity::experience_orb::ExperienceOrbEntity;
 use crate::entity::vehicle::minecart::MinecartEntity;
 use crate::world::World;
@@ -50,6 +51,7 @@ pub struct HopperBlockEntity {
     pub facing: FacingHopper,
     pub cooldown_time: AtomicI32,
     pub ticked_game_time: AtomicI64,
+    pub loot_table: ContainerLootTable,
 }
 
 #[must_use]
@@ -87,7 +89,9 @@ impl BlockEntity for HopperBlockEntity {
             "TransferCooldown",
             NbtTag::Int(self.cooldown_time.load(Ordering::Relaxed)),
         );
-        self.write_inventory_nbt(nbt, true);
+        if !self.loot_table.try_write_nbt(nbt) {
+            self.write_inventory_nbt(nbt, true);
+        }
     }
 
     fn from_nbt(nbt: &pumpkin_nbt::compound::NbtCompound, position: BlockPos) -> Self
@@ -102,15 +106,18 @@ impl BlockEntity for HopperBlockEntity {
             facing: FacingHopper::Down,
             cooldown_time: AtomicI32::from(nbt.get_int("TransferCooldown").unwrap_or(-1)),
             ticked_game_time: AtomicI64::new(0),
+            loot_table: ContainerLootTable::from_nbt(nbt),
         };
 
-        pumpkin_inventory::sync_read_items_from_nbt(
-            nbt,
-            hopper
-                .items
-                .get_mut()
-                .unwrap_or_else(std::sync::PoisonError::into_inner),
-        );
+        if !hopper.loot_table.is_pending() {
+            pumpkin_inventory::sync_read_items_from_nbt(
+                nbt,
+                hopper
+                    .items
+                    .get_mut()
+                    .unwrap_or_else(std::sync::PoisonError::into_inner),
+            );
+        }
 
         hopper
     }
@@ -131,6 +138,8 @@ impl BlockEntity for HopperBlockEntity {
                 && let Some(entity) = world.get_block_entity(&self.position)
                 && let Some(hopper) = entity.as_any().downcast_ref::<Self>()
             {
+                // Vanilla `tryMoveItems` starts with `isEmpty`, which unpacks the loot table.
+                entity.clone().unpack_loot_table_before_read(world);
                 hopper.try_move_items(properties, world);
             }
         }
@@ -146,6 +155,10 @@ impl BlockEntity for HopperBlockEntity {
 
     fn get_inventory(self: Arc<Self>) -> Option<Arc<dyn Inventory>> {
         Some(self)
+    }
+
+    fn container_loot_table(&self) -> Option<&ContainerLootTable> {
+        Some(&self.loot_table)
     }
 
     fn set_block_state(&mut self, block_state: BlockStateId) {
@@ -211,6 +224,7 @@ impl HopperBlockEntity {
             facing,
             cooldown_time: AtomicI32::new(-1),
             ticked_game_time: AtomicI64::new(0),
+            loot_table: ContainerLootTable::new(),
         }
     }
     fn try_move_items(&self, state: HopperLikeProperties, world: &Arc<World>) {
@@ -260,6 +274,12 @@ impl HopperBlockEntity {
         }
 
         let source_block_entity = world.get_block_entity(pos_up);
+        // Vanilla `tryTakeInItemFromSlot` reads the source's slots, which unpacks its loot table.
+        if let Some(source_block_entity) = &source_block_entity {
+            source_block_entity
+                .clone()
+                .unpack_loot_table_before_read(world);
+        }
         if let Some(container) = source_block_entity
             .clone()
             .and_then(super::BlockEntity::get_inventory)
@@ -408,8 +428,12 @@ impl HopperBlockEntity {
 
     fn eject_items(&self, world: &Arc<World>) -> bool {
         let target = self.position.offset(to_offset(&self.facing));
-        if let Some(container) = world
-            .get_block_entity(&target)
+        let target_block_entity = world.get_block_entity(&target);
+        // Vanilla reads and fills the target's slots, which unpacks its loot table first.
+        if let Some(target_block_entity) = &target_block_entity {
+            target_block_entity.clone().unpack_loot_table(world, None);
+        }
+        if let Some(container) = target_block_entity
             .and_then(super::BlockEntity::get_inventory)
             .or_else(|| entity_container_at(world, target.to_centered_f64()))
         {

@@ -205,8 +205,14 @@ impl CrafterBlock {
         let direction = orientation_to_front(orientation);
         let target_pos = pos.offset(direction.to_offset());
 
-        if let Some(target_entity) = world.get_block_entity(&target_pos)
-            && let Some(target_inv) = target_entity.get_inventory()
+        let target_entity = world.get_block_entity(&target_pos);
+        // Vanilla `HopperBlockEntity.addItem` fills the target's slots, which unpacks its loot
+        // table first.
+        if let Some(target_entity) = &target_entity {
+            target_entity.clone().unpack_loot_table(world, None);
+        }
+        if let Some(target_inv) =
+            target_entity.and_then(crate::block::entities::BlockEntity::get_inventory)
         {
             while !stack.is_empty() {
                 let one_item = stack.split(1);
@@ -268,9 +274,7 @@ impl BlockBehaviour for CrafterBlock {
         &self,
         args: GetScreenHandlerFactoryArgs<'_>,
     ) -> Option<Box<dyn ScreenHandlerFactory>> {
-        let block_entity = args.world.get_block_entity(args.position)?;
-        let inventory = block_entity.get_inventory()?;
-        Some(Box::new(CrafterScreenFactory(inventory)))
+        crate::block::container_screen_handler_factory(&args, CrafterScreenFactory)
     }
 
     fn on_place(&self, args: OnPlaceArgs<'_>) -> BlockStateId {

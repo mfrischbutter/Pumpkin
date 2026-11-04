@@ -24,10 +24,15 @@ use pumpkin_data::BlockDirection;
 use pumpkin_data::block_rotation::{Mirror, Rotation};
 use pumpkin_data::data_component_impl::EquipmentSlot;
 use pumpkin_data::item_stack::ItemStack;
-use pumpkin_inventory::screen_handler::ScreenHandlerFactory;
+use pumpkin_inventory::Inventory;
+use pumpkin_inventory::player::player_inventory::PlayerInventory;
+use pumpkin_inventory::screen_handler::{
+    InventoryPlayer, ScreenHandlerFactory, SharedScreenHandler,
+};
 use pumpkin_protocol::java::server::play::SUseItemOn;
 use pumpkin_util::math::boundingbox::BoundingBox;
 use pumpkin_util::math::vector3::Vector3;
+use pumpkin_util::text::TextComponent;
 use pumpkin_world::world::{BlockAccessor, BlockFlags};
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -600,11 +605,69 @@ pub fn can_support_center(
 /// entity's own inventory as a comparator would.
 #[must_use]
 pub fn container_comparator_output(args: &GetComparatorOutputArgs<'_>) -> Option<u8> {
-    let inventory = args
-        .world
-        .get_block_entity(args.position)?
-        .get_inventory()?;
+    let block_entity = args.world.get_block_entity(args.position)?;
+    block_entity
+        .clone()
+        .unpack_loot_table_before_read(args.world);
+    let inventory = block_entity.get_inventory()?;
     Some(calculate_comparator_output(inventory.as_ref()))
+}
+
+/// Vanilla `RandomizableContainerBlockEntity.canOpen`: a spectator cannot open a container
+/// whose loot table is not unpacked yet.
+pub struct RandomizableContainerScreenFactory<F> {
+    factory: F,
+    loot_pending: bool,
+}
+
+impl<F> RandomizableContainerScreenFactory<F> {
+    #[must_use]
+    pub const fn new(factory: F, loot_pending: bool) -> Self {
+        Self {
+            factory,
+            loot_pending,
+        }
+    }
+}
+
+impl<F: ScreenHandlerFactory> ScreenHandlerFactory for RandomizableContainerScreenFactory<F> {
+    fn create_screen_handler(
+        &self,
+        sync_id: u8,
+        player_inventory: &Arc<PlayerInventory>,
+        player: &dyn InventoryPlayer,
+    ) -> Option<SharedScreenHandler> {
+        if self.loot_pending && player.is_spectator() {
+            return None;
+        }
+        self.factory
+            .create_screen_handler(sync_id, player_inventory, player)
+    }
+
+    fn get_display_name(&self) -> TextComponent {
+        self.factory.get_display_name()
+    }
+}
+
+/// Vanilla `RandomizableContainerBlockEntity.createMenu` for the container at the position: the
+/// opener unpacks its loot table, unless they are a spectator.
+#[must_use]
+pub fn container_screen_handler_factory<F: ScreenHandlerFactory + 'static>(
+    args: &GetScreenHandlerFactoryArgs<'_>,
+    factory: impl FnOnce(Arc<dyn Inventory>) -> F,
+) -> Option<Box<dyn ScreenHandlerFactory>> {
+    let block_entity = args.world.get_block_entity(args.position)?;
+    if !args.player.is_spectator() {
+        block_entity
+            .clone()
+            .unpack_loot_table(args.world, Some(args.player));
+    }
+    let loot_pending = block_entity.has_loot_table();
+    let inventory = block_entity.get_inventory()?;
+    Some(Box::new(RandomizableContainerScreenFactory::new(
+        factory(inventory),
+        loot_pending,
+    )))
 }
 
 pub fn calculate_comparator_output(inventory: &dyn pumpkin_inventory::Inventory) -> u8 {

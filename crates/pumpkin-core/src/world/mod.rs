@@ -6058,6 +6058,16 @@ impl World {
         }
     }
 
+    /// The `Block.playerWillDestroy` overrides that work on the block entity, like a shulker box
+    /// unpacking its loot table.
+    fn player_will_destroy_block_entity(&self, position: &BlockPos, cause: Option<&Arc<Player>>) {
+        if let Some(player) = cause
+            && let Some(block_entity) = self.get_block_entity(position)
+        {
+            block_entity.player_will_destroy(self, player);
+        }
+    }
+
     pub fn break_block(
         self: &Arc<Self>,
         position: &BlockPos,
@@ -6075,6 +6085,7 @@ impl World {
             return None;
         }
         self.anger_piglins_guarding(position, cause);
+        self.player_will_destroy_block_entity(position, cause);
 
         let (broken_block, broken_block_state) = self.get_block_and_state(position);
         if broken_block_state.is_air() {
@@ -8177,7 +8188,7 @@ impl World {
     /// Fires a `LootGenerateEvent` for `items` generated from `loot_table` and returns the items
     /// plugins left in it, or nothing if a plugin cancelled it.
     pub fn fire_loot_generate(
-        self: &Arc<Self>,
+        &self,
         loot_table: &str,
         block_pos: Option<BlockPos>,
         entity_id: Option<i32>,
@@ -8194,7 +8205,7 @@ impl World {
             return items;
         };
         let mut event = LootGenerateEvent::new(
-            self.clone(),
+            server.get_world_from_dimension(&self.dimension),
             loot_table.to_string(),
             block_pos,
             entity_id.and_then(|id| self.get_entity_by_id(id)),

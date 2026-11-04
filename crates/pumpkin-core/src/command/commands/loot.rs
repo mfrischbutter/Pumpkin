@@ -557,7 +557,7 @@ impl CommandExecutor for LootExecutor {
                         TextComponent::text(pos.0.z.to_string()),
                     )
                 })?;
-                let inventory = block_entity.get_inventory().ok_or_else(|| {
+                let inventory = block_entity.clone().get_inventory().ok_or_else(|| {
                     ERROR_NOT_CONTAINER.create_without_context(
                         TextComponent::text(pos.0.x.to_string()),
                         TextComponent::text(pos.0.y.to_string()),
@@ -565,6 +565,11 @@ impl CommandExecutor for LootExecutor {
                     )
                 })?;
 
+                // Vanilla reads and fills the slots for each stack, which unpacks the loot
+                // table first.
+                if !drops.is_empty() {
+                    block_entity.unpack_loot_table(&world, None);
+                }
                 let mut used_items = Vec::new();
                 for stack in &drops {
                     if distribute_to_container(inventory.as_ref(), stack.clone()) {
@@ -591,7 +596,7 @@ impl CommandExecutor for LootExecutor {
                         TextComponent::text(pos.0.z.to_string()),
                     )
                 })?;
-                let inventory = block_entity.get_inventory().ok_or_else(|| {
+                let inventory = block_entity.clone().get_inventory().ok_or_else(|| {
                     ERROR_NOT_CONTAINER.create_without_context(
                         TextComponent::text(pos.0.x.to_string()),
                         TextComponent::text(pos.0.y.to_string()),
@@ -604,6 +609,10 @@ impl CommandExecutor for LootExecutor {
                         .create_without_context(TextComponent::text(slot.to_string())));
                 }
 
+                // Vanilla `Container.setItem` unpacks the loot table first.
+                if count > 0 {
+                    block_entity.unpack_loot_table(&world, None);
+                }
                 let mut used_items = Vec::new();
                 for i in 0..count {
                     let s = slot + i;

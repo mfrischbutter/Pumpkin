@@ -1,4 +1,5 @@
 use crate::block::entities::BlockEntity;
+use crate::block::entities::randomizable_container::ContainerLootTable;
 use pumpkin_data::item_stack::ItemStack;
 use pumpkin_inventory::{Clearable, Inventory, sync_write_items_to_nbt};
 use pumpkin_nbt::compound::NbtCompound;
@@ -15,11 +16,14 @@ pub struct DropperBlockEntity {
     pub items: RwLock<[ItemStack; Self::INVENTORY_SIZE]>,
     pub dirty: AtomicBool,
     pub comparator_dirty: AtomicBool,
+    pub loot_table: ContainerLootTable,
 }
 
 impl BlockEntity for DropperBlockEntity {
     fn write_nbt(&self, nbt: &mut NbtCompound) {
-        self.write_inventory_nbt(nbt, true);
+        if !self.loot_table.try_write_nbt(nbt) {
+            self.write_inventory_nbt(nbt, true);
+        }
     }
 
     fn from_nbt(nbt: &pumpkin_nbt::compound::NbtCompound, position: BlockPos) -> Self
@@ -31,15 +35,18 @@ impl BlockEntity for DropperBlockEntity {
             items: RwLock::new(from_fn(|_| ItemStack::EMPTY.clone())),
             dirty: AtomicBool::new(false),
             comparator_dirty: AtomicBool::new(false),
+            loot_table: ContainerLootTable::from_nbt(nbt),
         };
 
-        pumpkin_inventory::sync_read_items_from_nbt(
-            nbt,
-            dropper
-                .items
-                .get_mut()
-                .unwrap_or_else(std::sync::PoisonError::into_inner),
-        );
+        if !dropper.loot_table.is_pending() {
+            pumpkin_inventory::sync_read_items_from_nbt(
+                nbt,
+                dropper
+                    .items
+                    .get_mut()
+                    .unwrap_or_else(std::sync::PoisonError::into_inner),
+            );
+        }
 
         dropper
     }
@@ -54,6 +61,10 @@ impl BlockEntity for DropperBlockEntity {
 
     fn get_inventory(self: Arc<Self>) -> Option<Arc<dyn Inventory>> {
         Some(self)
+    }
+
+    fn container_loot_table(&self) -> Option<&ContainerLootTable> {
+        Some(&self.loot_table)
     }
 
     fn is_comparator_dirty(&self) -> bool {
@@ -107,6 +118,7 @@ impl DropperBlockEntity {
             items: RwLock::new(from_fn(|_| ItemStack::EMPTY.clone())),
             dirty: AtomicBool::new(false),
             comparator_dirty: AtomicBool::new(false),
+            loot_table: ContainerLootTable::new(),
         }
     }
 

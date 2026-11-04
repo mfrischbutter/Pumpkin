@@ -1,6 +1,7 @@
 use std::sync::Arc;
 
-use super::chest_container::{is_chest_blocked, unpack_loot};
+use super::chest_container::is_chest_blocked;
+use crate::block::RandomizableContainerScreenFactory;
 use crate::block::entities::BlockEntity;
 use crate::block::entities::chest::ChestBlockEntity;
 use pumpkin_data::BlockStateId;
@@ -36,7 +37,6 @@ use pumpkin_data::BlockState;
 
 struct ChestScreenFactory {
     inventory: Arc<dyn Inventory>,
-    loot_pending: bool,
 }
 
 impl ScreenHandlerFactory for ChestScreenFactory {
@@ -46,10 +46,6 @@ impl ScreenHandlerFactory for ChestScreenFactory {
         player_inventory: &Arc<PlayerInventory>,
         player: &dyn InventoryPlayer,
     ) -> Option<SharedScreenHandler> {
-        if self.loot_pending && player.is_spectator() {
-            return None;
-        }
-
         let concrete_handler = if self.inventory.size() > 27 {
             create_generic_9x6(sync_id, player_inventory, self.inventory.clone(), player)
         } else {
@@ -133,8 +129,8 @@ fn placed_chest_impl<E: BlockEntity + 'static>(
 /// Computes the comparator output for a chest, combining both halves for double chests.
 fn get_chest_comparator_output(args: &GetComparatorOutputArgs<'_>) -> Option<u8> {
     let state = args.world.get_block_state_id(args.position);
-    let first_chest = args.world.get_block_entity(args.position);
-    let first_inventory = first_chest.and_then(BlockEntity::get_inventory)?;
+    let first_chest = args.world.get_block_entity(args.position)?;
+    let first_inventory = first_chest.clone().get_inventory()?;
 
     let chest_props = ChestLikeProperties::from_state_id(state);
     let connected_towards = match chest_props.r#type {
@@ -154,12 +150,15 @@ fn get_chest_comparator_output(args: &GetComparatorOutputArgs<'_>) -> Option<u8>
         return Some(0);
     }
 
+    // Vanilla reads every slot of both halves, which unpacks their loot tables first.
+    first_chest.unpack_loot_table_before_read(args.world);
     if let Some(direction) = connected_towards
-        && let Some(second_inventory) = args
+        && let Some(second_chest) = args
             .world
             .get_block_entity(&args.position.offset(direction.to_offset()))
-            .and_then(BlockEntity::get_inventory)
+        && let Some(second_inventory) = second_chest.clone().get_inventory()
     {
+        second_chest.unpack_loot_table_before_read(args.world);
         let double_inventory = if matches!(chest_props.r#type, ChestType::Right) {
             DoubleInventory::new(first_inventory, second_inventory)
         } else {
@@ -183,7 +182,7 @@ fn get_chest_screen_handler_factory(
     args: GetScreenHandlerFactoryArgs<'_>,
 ) -> Option<Box<dyn ScreenHandlerFactory>> {
     let state = args.world.get_block_state_id(args.position);
-    let first_chest = args.world.get_block_entity(args.position);
+    let first_chest = args.world.get_block_entity(args.position)?;
 
     let player_is_spectator = args.player.gamemode.load() == GameMode::Spectator;
 
@@ -194,19 +193,7 @@ fn get_chest_screen_handler_factory(
         ChestType::Right => Some(chest_props.facing.rotate_counter_clockwise()),
     };
 
-    let unpack = |entity: &Arc<dyn BlockEntity>| {
-        unpack_loot(args.world, args.position, entity, Some(args.player));
-    };
-
-    // Unpack deferred loot table on first open (non-spectator only).
-    if !player_is_spectator && let Some(ref entity) = first_chest {
-        unpack(entity);
-    }
-
-    let first_loot_pending = first_chest
-        .as_ref()
-        .is_some_and(|entity| entity.has_loot_table());
-    let first_inventory = first_chest.and_then(BlockEntity::get_inventory)?;
+    let first_inventory = first_chest.clone().get_inventory()?;
 
     if is_chest_blocked(args.world, args.position) {
         return None;
@@ -219,28 +206,31 @@ fn get_chest_screen_handler_factory(
         }
     }
 
-    // Both halves of a double chest are unpacked at once, like vanilla's CompoundContainer.
-    if !player_is_spectator
-        && let Some(direction) = connected_towards
-        && let Some(second) = args
-            .world
+    let second_chest = connected_towards.and_then(|direction| {
+        args.world
             .get_block_entity(&args.position.offset(direction.to_offset()))
-    {
-        unpack(&second);
+    });
+
+    // Both halves of a double chest are unpacked at once, like vanilla's CompoundContainer,
+    // and a blocked chest opens no menu that could unpack them.
+    if !player_is_spectator {
+        first_chest
+            .clone()
+            .unpack_loot_table(args.world, Some(args.player));
+        if let Some(second_chest) = &second_chest {
+            second_chest
+                .clone()
+                .unpack_loot_table(args.world, Some(args.player));
+        }
     }
 
-    let loot_pending = first_loot_pending
-        || connected_towards.is_some_and(|direction| {
-            args.world
-                .get_block_entity(&args.position.offset(direction.to_offset()))
-                .is_some_and(|second| second.has_loot_table())
-        });
+    let loot_pending = first_chest.has_loot_table()
+        || second_chest
+            .as_ref()
+            .is_some_and(|second_chest| second_chest.has_loot_table());
 
-    let inventory = if let Some(direction) = connected_towards
-        && let Some(second_inventory) = args
-            .world
-            .get_block_entity(&args.position.offset(direction.to_offset()))
-            .and_then(BlockEntity::get_inventory)
+    let inventory = if let Some(second_chest) = second_chest
+        && let Some(second_inventory) = second_chest.get_inventory()
     {
         // Vanilla: chestType == ChestType.RIGHT ? DoubleBlockProperties.Type.FIRST : DoubleBlockProperties.Type.SECOND;
         if matches!(chest_props.r#type, ChestType::Right) {
@@ -252,10 +242,10 @@ fn get_chest_screen_handler_factory(
         first_inventory
     };
 
-    Some(Box::new(ChestScreenFactory {
-        inventory,
+    Some(Box::new(RandomizableContainerScreenFactory::new(
+        ChestScreenFactory { inventory },
         loot_pending,
-    }))
+    )))
 }
 
 fn normal_use_chest_impl(args: &NormalUseArgs<'_>) -> BlockActionResult {

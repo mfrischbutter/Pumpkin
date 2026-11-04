@@ -21,6 +21,7 @@ use crate::world::{BlockFlags, World};
 use pumpkin_inventory::{Clearable, Inventory, sync_write_items_to_nbt};
 
 use super::BlockEntity;
+use super::randomizable_container::ContainerLootTable;
 
 pub struct BarrelBlockEntity {
     pub position: BlockPos,
@@ -30,6 +31,7 @@ pub struct BarrelBlockEntity {
 
     // Viewer
     viewers: ViewerCountTracker,
+    pub loot_table: ContainerLootTable,
 }
 
 impl BlockEntity for BarrelBlockEntity {
@@ -51,21 +53,26 @@ impl BlockEntity for BarrelBlockEntity {
             dirty: AtomicBool::new(false),
             comparator_dirty: AtomicBool::new(false),
             viewers: ViewerCountTracker::new(),
+            loot_table: ContainerLootTable::from_nbt(nbt),
         };
 
-        pumpkin_inventory::sync_read_items_from_nbt(
-            nbt,
-            barrel
-                .items
-                .get_mut()
-                .unwrap_or_else(std::sync::PoisonError::into_inner),
-        );
+        if !barrel.loot_table.is_pending() {
+            pumpkin_inventory::sync_read_items_from_nbt(
+                nbt,
+                barrel
+                    .items
+                    .get_mut()
+                    .unwrap_or_else(std::sync::PoisonError::into_inner),
+            );
+        }
 
         barrel
     }
 
     fn write_nbt(&self, nbt: &mut NbtCompound) {
-        self.write_inventory_nbt(nbt, true);
+        if !self.loot_table.try_write_nbt(nbt) {
+            self.write_inventory_nbt(nbt, true);
+        }
     }
 
     fn tick(&self, world: &Arc<World>) {
@@ -75,6 +82,10 @@ impl BlockEntity for BarrelBlockEntity {
 
     fn get_inventory(self: Arc<Self>) -> Option<Arc<dyn Inventory>> {
         Some(self)
+    }
+
+    fn container_loot_table(&self) -> Option<&ContainerLootTable> {
+        Some(&self.loot_table)
     }
 
     fn is_comparator_dirty(&self) -> bool {
@@ -141,6 +152,7 @@ impl BarrelBlockEntity {
             dirty: AtomicBool::new(false),
             comparator_dirty: AtomicBool::new(false),
             viewers: ViewerCountTracker::new(),
+            loot_table: ContainerLootTable::new(),
         }
     }
 

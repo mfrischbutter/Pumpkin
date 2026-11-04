@@ -1,16 +1,20 @@
 use super::BlockEntity;
+use super::randomizable_container::{ContainerLootTable, fill_with_loot};
 use pumpkin_data::item_stack::ItemStack;
+use pumpkin_inventory::{Inventory, SimpleInventory};
 use pumpkin_nbt::compound::NbtCompound;
 use pumpkin_nbt::tag::NbtTag;
 use pumpkin_util::math::position::BlockPos;
 use std::sync::{Arc, Mutex};
 
+use crate::entity::player::Player;
 use crate::world::World;
 
 pub struct DecoratedPotBlockEntity {
     pub position: BlockPos,
     pub sherds: Mutex<Option<Vec<NbtTag>>>,
     pub item: Mutex<Option<ItemStack>>,
+    pub loot_table: ContainerLootTable,
 }
 
 impl BlockEntity for DecoratedPotBlockEntity {
@@ -23,6 +27,8 @@ impl BlockEntity for DecoratedPotBlockEntity {
     }
 
     fn on_block_replaced(self: Arc<Self>, world: &Arc<World>, position: &BlockPos) {
+        // Vanilla `Containers.dropContents` reads the item, which unpacks the loot table first.
+        self.clone().unpack_loot_table_before_read(world);
         if let Some(item) = self.take_item() {
             world.drop_stack(position, item);
         }
@@ -33,13 +39,18 @@ impl BlockEntity for DecoratedPotBlockEntity {
         Self: Sized,
     {
         let sherds = nbt.get_list("sherds").map(<[_]>::to_vec);
-        let item = nbt
-            .get_compound("item")
-            .and_then(ItemStack::read_item_stack);
+        let loot_table = ContainerLootTable::from_nbt(nbt);
+        let item = if loot_table.is_pending() {
+            None
+        } else {
+            nbt.get_compound("item")
+                .and_then(ItemStack::read_item_stack)
+        };
         Self {
             position,
             sherds: Mutex::new(sherds),
             item: Mutex::new(item),
+            loot_table,
         }
     }
 
@@ -49,7 +60,8 @@ impl BlockEntity for DecoratedPotBlockEntity {
         {
             nbt.put_list("sherds", sh.clone());
         }
-        if let Ok(item) = self.item.lock()
+        if !self.loot_table.try_write_nbt(nbt)
+            && let Ok(item) = self.item.lock()
             && let Some(it) = item.as_ref()
         {
             let mut it_nbt = NbtCompound::new();
@@ -82,6 +94,26 @@ impl BlockEntity for DecoratedPotBlockEntity {
         let sherds_guard = self.sherds.lock().ok();
         let sherds = sherds_guard.as_ref().and_then(|s| s.as_deref());
         Some(build_decorated_pot_actor(self.position, sherds))
+    }
+
+    fn container_loot_table(&self) -> Option<&ContainerLootTable> {
+        Some(&self.loot_table)
+    }
+
+    /// Vanilla `DecoratedPotBlockEntity` is a single-slot container: the loot fills that slot.
+    fn unpack_loot_table(self: Arc<Self>, world: &World, player: Option<&Arc<Player>>) {
+        let Some((loot_table, seed)) = self.loot_table.take() else {
+            return;
+        };
+        let slot: Arc<dyn Inventory> = Arc::new(SimpleInventory::new(1));
+        fill_with_loot(world, self.position, &loot_table, seed, &slot, player);
+        let item = slot.remove_stack(0);
+        if !item.is_empty() {
+            *self
+                .item
+                .lock()
+                .unwrap_or_else(std::sync::PoisonError::into_inner) = Some(item);
+        }
     }
 
     fn collect_item_components(&self, stack: &mut ItemStack) {
@@ -150,6 +182,7 @@ impl DecoratedPotBlockEntity {
             position,
             sherds: Mutex::new(None),
             item: Mutex::new(None),
+            loot_table: ContainerLootTable::new(),
         }
     }
 

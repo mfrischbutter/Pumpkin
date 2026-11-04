@@ -9,7 +9,9 @@ use std::sync::atomic::{AtomicBool, Ordering};
 use std::{array::from_fn, sync::Arc};
 
 use crate::block::entities::BlockEntity;
+use crate::block::entities::randomizable_container::ContainerLootTable;
 use crate::block::viewer::{ViewerCountListener, ViewerCountTracker, ViewerCountTrackerExt};
+use crate::entity::player::Player;
 use crate::world::World;
 use pumpkin_inventory::{Clearable, Inventory, sync_write_items_to_nbt};
 
@@ -21,6 +23,7 @@ pub struct ShulkerBoxBlockEntity {
 
     // Viewer
     pub viewers: ViewerCountTracker,
+    pub loot_table: ContainerLootTable,
 }
 
 impl BlockEntity for ShulkerBoxBlockEntity {
@@ -42,21 +45,26 @@ impl BlockEntity for ShulkerBoxBlockEntity {
             dirty: AtomicBool::new(false),
             comparator_dirty: AtomicBool::new(false),
             viewers: ViewerCountTracker::new(),
+            loot_table: ContainerLootTable::from_nbt(nbt),
         };
 
-        pumpkin_inventory::sync_read_items_from_nbt(
-            nbt,
-            shulker_box
-                .items
-                .get_mut()
-                .unwrap_or_else(std::sync::PoisonError::into_inner),
-        );
+        if !shulker_box.loot_table.is_pending() {
+            pumpkin_inventory::sync_read_items_from_nbt(
+                nbt,
+                shulker_box
+                    .items
+                    .get_mut()
+                    .unwrap_or_else(std::sync::PoisonError::into_inner),
+            );
+        }
 
         shulker_box
     }
 
     fn write_nbt(&self, nbt: &mut NbtCompound) {
-        self.write_inventory_nbt(nbt, true);
+        if !self.loot_table.try_write_nbt(nbt) {
+            self.write_inventory_nbt(nbt, true);
+        }
     }
 
     fn tick(&self, world: &Arc<World>) {
@@ -70,6 +78,17 @@ impl BlockEntity for ShulkerBoxBlockEntity {
 
     fn get_inventory(self: Arc<Self>) -> Option<Arc<dyn Inventory>> {
         Some(self)
+    }
+
+    fn container_loot_table(&self) -> Option<&ContainerLootTable> {
+        Some(&self.loot_table)
+    }
+
+    /// Vanilla `ShulkerBoxBlock.playerWillDestroy`: a creative player's check for contents
+    /// unpacks the loot table for no one, any other player unpacks it for themselves.
+    fn player_will_destroy(self: Arc<Self>, world: &World, player: &Arc<Player>) {
+        let opener = (!player.is_creative()).then_some(player);
+        self.unpack_loot_table(world, opener);
     }
 
     fn collect_item_components(&self, stack: &mut ItemStack) {
@@ -188,6 +207,7 @@ impl ShulkerBoxBlockEntity {
             dirty: AtomicBool::new(false),
             comparator_dirty: AtomicBool::new(false),
             viewers: ViewerCountTracker::new(),
+            loot_table: ContainerLootTable::new(),
         }
     }
 

@@ -7,9 +7,11 @@ use pumpkin_nbt::compound::NbtCompound;
 use pumpkin_util::math::position::BlockPos;
 
 use crate::entity::experience_orb::ExperienceOrbEntity;
+use crate::entity::player::Player;
 use crate::world::World;
 use pumpkin_data::BlockStateId;
 use pumpkin_inventory::Inventory;
+use randomizable_container::ContainerLootTable;
 
 pub mod barrel;
 pub mod beacon;
@@ -56,6 +58,7 @@ pub mod enchanting_table;
 pub mod end_gateway;
 pub mod hanging_sign;
 pub mod potent_sulfur;
+pub mod randomizable_container;
 pub mod sculk_catalyst;
 pub mod sculk_sensor;
 pub mod sculk_shrieker;
@@ -80,19 +83,44 @@ pub trait BlockEntity: Any + Send + Sync {
     fn resource_location(&self) -> &'static str;
     fn get_position(&self) -> BlockPos;
 
-    /// Atomically takes the pending loot-table key and seed from this block entity.
-    ///
-    /// Returns `Some((key, seed))` if a deferred loot table was set, clearing it in the
-    /// process. Returns `None` for entities that do not support loot tables, or if the
-    /// loot has already been generated.
-    fn take_loot_table(&self) -> Option<(String, i64)> {
+    /// The loot table of a vanilla `RandomizableContainer`, kept until its loot is rolled.
+    fn container_loot_table(&self) -> Option<&ContainerLootTable> {
         None
     }
 
     /// Returns `true` if this block entity has a pending deferred loot table that has
     /// not yet been unpacked. Does not consume the loot table.
     fn has_loot_table(&self) -> bool {
-        false
+        self.container_loot_table()
+            .is_some_and(ContainerLootTable::is_pending)
+    }
+
+    /// Vanilla `RandomizableContainer.unpackLootTable`: rolls the pending loot table into the
+    /// inventory. `player` is the one opening the container, `None` for any other access.
+    fn unpack_loot_table(self: Arc<Self>, world: &World, player: Option<&Arc<Player>>) {
+        let position = self.get_position();
+        let Some((loot_table, seed)) = self
+            .container_loot_table()
+            .and_then(ContainerLootTable::take)
+        else {
+            return;
+        };
+        if let Some(inventory) = self.get_inventory() {
+            randomizable_container::fill_with_loot(
+                world,
+                position,
+                &loot_table,
+                seed,
+                &inventory,
+                player,
+            );
+        }
+    }
+
+    /// Vanilla `RandomizableContainerBlockEntity.getItem` and `isEmpty`, which unpack the loot
+    /// table before an item is read.
+    fn unpack_loot_table_before_read(self: Arc<Self>, world: &World) {
+        self.unpack_loot_table(world, None);
     }
 
     fn write_internal(&self, nbt: &mut NbtCompound) {
@@ -139,6 +167,9 @@ pub trait BlockEntity: Any + Send + Sync {
         false
     }
 
+    /// Vanilla `Block.playerWillDestroy` for this block entity, before anything drops.
+    fn player_will_destroy(self: Arc<Self>, _world: &World, _player: &Arc<Player>) {}
+
     fn set_block_state(&mut self, _block_state: BlockStateId) {}
     /// Runs before the block entity is removed, like vanilla `preRemoveSideEffects`. Drops
     /// belong here: by the time `BlockBehaviour::broken` runs, the entity is already gone.
@@ -149,6 +180,8 @@ pub trait BlockEntity: Any + Send + Sync {
                 ExperienceOrbEntity::spawn(world, position.to_f64(), xp as u32);
             }
         }
+        // Vanilla `Containers.dropContents` reads every slot, which unpacks the loot table first.
+        self.clone().unpack_loot_table_before_read(world);
         if let Some(inventory) = self.get_inventory() {
             world.scatter_inventory(position, &inventory);
         }
@@ -544,6 +577,45 @@ mod test {
             let stack = inventory.get_stack(0);
             assert_eq!(stack.get_item().id, Item::DIAMOND.id);
             assert_eq!(stack.item_count, 5);
+        }
+    }
+
+    /// Like vanilla `RandomizableContainer`s, generated containers keep their loot table and
+    /// seed, and no items, until the loot is rolled. Dropping them on load emptied every
+    /// structure dispenser, barrel and decorated pot.
+    #[test]
+    fn container_loot_table_survives_a_chunk_round_trip() {
+        const LOOT_TABLE: &str = "minecraft:dispensers/trial_chambers/chamber";
+        for id in [
+            "minecraft:barrel",
+            "minecraft:chest",
+            "minecraft:crafter",
+            "minecraft:decorated_pot",
+            "minecraft:dispenser",
+            "minecraft:dropper",
+            "minecraft:hopper",
+            "minecraft:shulker_box",
+            "minecraft:trapped_chest",
+        ] {
+            let mut nbt = NbtCompound::new();
+            nbt.put_string("id", id.to_string());
+            nbt.put_int("x", 0);
+            nbt.put_int("y", 64);
+            nbt.put_int("z", 0);
+            nbt.put_string("LootTable", LOOT_TABLE.to_string());
+            nbt.put_long("LootTableSeed", 1234);
+
+            let entity = block_entity_from_nbt(&nbt).expect(id);
+            assert!(entity.has_loot_table(), "{id} dropped its loot table");
+
+            let mut written = NbtCompound::new();
+            entity.write_internal(&mut written);
+            assert_eq!(written.get_string("LootTable"), Some(LOOT_TABLE), "{id}");
+            assert_eq!(written.get_long("LootTableSeed"), Some(1234), "{id}");
+            assert!(
+                written.get_list("Items").is_none() && written.get_compound("item").is_none(),
+                "{id} wrote items next to its loot table"
+            );
         }
     }
 }
