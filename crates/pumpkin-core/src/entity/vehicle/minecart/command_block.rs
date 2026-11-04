@@ -12,7 +12,7 @@ use pumpkin_util::text::TextComponent;
 use crate::block::entities::command_block::CommandBlockEntity;
 use crate::command::CommandSender;
 use crate::command::context::command_source::CommandSource;
-use crate::entity::{Entity, EntityBase};
+use crate::entity::Entity;
 
 /// Vanilla `MinecartCommandBlock.ACTIVATION_DELAY`.
 const ACTIVATION_DELAY: i32 = 4;

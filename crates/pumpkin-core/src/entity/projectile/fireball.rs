@@ -81,7 +81,10 @@ impl FireballItem {
 
     /// Updates only when the key is present, so a partial read keeps the rest.
     pub fn read_nbt(&self, entity: &Entity, nbt: &NbtCompound) {
-        if let Some(item) = nbt.get_compound("Item").and_then(ItemStack::read_item_stack) {
+        if let Some(item) = nbt
+            .get_compound("Item")
+            .and_then(ItemStack::read_item_stack)
+        {
             self.set(entity, &item);
         }
     }
@@ -251,7 +254,7 @@ impl EntityBase for FireballEntity {
             entity.pos.load(),
             self.get_explosion_power() as f32,
             ExplosionInteraction::Mob,
-            ExplosionSettings {
+            &ExplosionSettings {
                 fire: grief,
                 ..ExplosionSettings::default()
             },

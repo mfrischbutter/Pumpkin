@@ -33,11 +33,11 @@ impl DynamicLightEngine {
 impl DynamicLightEngine {
     /// Checks if there is an open sky above the given position (no opaque blocks blocking sky light).
     fn has_open_sky_above(&self, level: &Arc<Level>, pos: &BlockPos) -> bool {
-        self.is_clear_up_to(level, pos, self.max_y - 1)
+        Self::is_clear_up_to(level, pos, self.max_y - 1)
     }
 
     /// Checks that no block above `pos`, up to and including `top_y`, blocks sky light.
-    fn is_clear_up_to(&self, level: &Arc<Level>, pos: &BlockPos, top_y: i32) -> bool {
+    fn is_clear_up_to(level: &Arc<Level>, pos: &BlockPos, top_y: i32) -> bool {
         let mut current_pos = *pos;
 
         // Scan upward until we hit the top or an opaque block
@@ -88,7 +88,7 @@ impl DynamicLightEngine {
                 last_scan.filter(|(above, _)| above.0.x == pos.0.x && above.0.z == pos.0.z);
             self.check_sky_light_updates_with(level, pos, || {
                 let open = match same_column {
-                    Some((above, open)) => open && self.is_clear_up_to(level, &pos, above.0.y),
+                    Some((above, open)) => open && Self::is_clear_up_to(level, &pos, above.0.y),
                     None => self.has_open_sky_above(level, &pos),
                 };
                 last_scan = Some((pos, open));

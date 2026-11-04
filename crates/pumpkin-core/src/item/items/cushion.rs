@@ -36,7 +36,7 @@ fn recalculate_hit(
     if !block.has_tag(&tag::Block::MINECRAFT_CUSHION_USES_COLLISION_SHAPE) {
         return (face, click);
     }
-    let from = player.get_entity().get_eye_pos();
+    let from = player.living_entity.entity.get_eye_pos();
     let ray = click.sub(&from).normalize();
     let to = click.add(&(ray * COLLISION_SHAPE_RAYCAST_EPSILON));
     let state = player.world().get_block_state(&location);
@@ -47,7 +47,9 @@ fn recalculate_hit(
             intersects_aabb_with_hit(from, to, shape.min, shape.max)
         })
         .min_by(|a, b| a.0.total_cmp(&b.0))
-        .map_or((face, click), |(_, hit_face, hit_pos, _)| (hit_face, hit_pos))
+        .map_or((face, click), |(_, hit_face, hit_pos, _)| {
+            (hit_face, hit_pos)
+        })
 }
 
 impl ItemMetadata for CushionItem {

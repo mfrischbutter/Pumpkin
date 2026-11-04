@@ -76,11 +76,7 @@ impl EnderPearlEntity {
         self.tickets
             .lock()
             .unwrap_or_else(std::sync::PoisonError::into_inner)
-            .tick(
-                &entity.world.load().level,
-                entity.chunk_pos.load(),
-                true,
-            );
+            .tick(&entity.world.load().level, entity.chunk_pos.load(), true);
     }
 
     /// The ticket step of vanilla `ThrownEnderpearl.tick`, with

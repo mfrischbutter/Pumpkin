@@ -26,7 +26,7 @@ impl MobEffect for WindChargedMobEffect {
             center,
             gust_strength,
             ExplosionInteraction::Trigger,
-            ExplosionSettings {
+            &ExplosionSettings {
                 calculator: Some(BREEZE_WIND_CHARGE_EXPLOSION_DAMAGE_CALCULATOR.clone()),
                 fire: false,
                 small_particle: Particle::GustEmitterSmall,

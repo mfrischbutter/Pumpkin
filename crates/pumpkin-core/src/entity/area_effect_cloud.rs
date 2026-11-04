@@ -182,7 +182,10 @@ impl AreaEffectCloudEntity {
             .radius_per_tick
             .store(-DEFAULT_RADIUS / DEFAULT_LINGERING_DURATION as f32);
         if let Some(contents) = stack.get_data_component::<PotionContentsImpl>() {
-            *cloud.contents.lock().unwrap_or_else(PoisonError::into_inner) = contents.clone();
+            *cloud
+                .contents
+                .lock()
+                .unwrap_or_else(PoisonError::into_inner) = contents.clone();
         }
         cloud
             .potion_duration_scale
@@ -249,8 +252,10 @@ impl AreaEffectCloudEntity {
     pub fn set_radius(&self, radius: f32) {
         let radius = radius.clamp(0.0, MAX_RADIUS);
         self.radius.store(radius);
-        self.entity
-            .set_synced_data(pumpkin_data::tracked_data::area_effect_cloud::RADIUS, radius);
+        self.entity.set_synced_data(
+            pumpkin_data::tracked_data::area_effect_cloud::RADIUS,
+            radius,
+        );
         self.entity.set_dimensions(radius * 2.0, HEIGHT);
     }
 
@@ -329,6 +334,7 @@ impl AreaEffectCloudEntity {
     }
 
     /// The applications of vanilla `serverTick`, every `TIME_BETWEEN_APPLICATIONS` ticks.
+    #[allow(clippy::semicolon_outside_block)]
     fn apply_to_victims(&self, tick: i32, mut radius: f32) {
         let effects = self.scaled_effects();
         {
@@ -362,7 +368,10 @@ impl AreaEffectCloudEntity {
                 continue;
             }
             let target_position = target_entity.pos.load();
-            let (xd, zd) = (target_position.x - position.x, target_position.z - position.z);
+            let (xd, zd) = (
+                target_position.x - position.x,
+                target_position.z - position.z,
+            );
             if xd * xd + zd * zd > f64::from(radius * radius) {
                 continue;
             }
@@ -476,10 +485,7 @@ impl EntityBase for AreaEffectCloudEntity {
         nbt.put_int("Age", self.entity.tick_count.load(Relaxed));
         nbt.put_int("Duration", self.duration.load(Relaxed));
         nbt.put_int("WaitTime", self.wait_time.load(Relaxed));
-        nbt.put_int(
-            "ReapplicationDelay",
-            self.reapplication_delay.load(Relaxed),
-        );
+        nbt.put_int("ReapplicationDelay", self.reapplication_delay.load(Relaxed));
         nbt.put_int("DurationOnUse", self.duration_on_use.load(Relaxed));
         nbt.put_float("RadiusOnUse", self.radius_on_use.load());
         nbt.put_float("RadiusPerTick", self.radius_per_tick.load());

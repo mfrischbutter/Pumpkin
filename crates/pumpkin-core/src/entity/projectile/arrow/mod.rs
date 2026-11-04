@@ -165,7 +165,7 @@ impl ArrowEntity {
         self.entity.entity_type == &EntityType::SPECTRAL_ARROW
     }
 
-    fn spectral_glowing_effect(duration: i32) -> pumpkin_data::potion::Effect {
+    const fn spectral_glowing_effect(duration: i32) -> pumpkin_data::potion::Effect {
         pumpkin_data::potion::Effect {
             effect_type: &StatusEffect::GLOWING,
             duration,
@@ -221,6 +221,7 @@ impl ArrowEntity {
 
     /// Vanilla `Arrow.addEffect` with `new MobEffectInstance(effect, duration)`: the effect
     /// joins the custom effects of the arrow's item and colors the arrow.
+    #[allow(clippy::semicolon_outside_block)]
     pub fn add_effect(&self, effect: &'static StatusEffect, duration: i32) {
         {
             let mut item_stack = self
@@ -372,10 +373,9 @@ impl EntityBase for ArrowEntity {
                 hit_pos,
                 ..
             } => {
-                self.arrow
-                    .on_hit_entity(self, &target, hit_pos, &|living| {
-                        self.do_post_hurt_effects(living);
-                    });
+                self.arrow.on_hit_entity(self, &target, hit_pos, &|living| {
+                    self.do_post_hurt_effects(living);
+                });
             }
         }
     }
@@ -479,7 +479,6 @@ mod tests {
         let normal_color = ArrowEntity::get_effect_color(&normal);
         assert_eq!(normal_color, -1);
     }
-
 
     #[tokio::test]
     async fn arrow_nbt_round_trips_pickup_item_and_state() -> TestResult {

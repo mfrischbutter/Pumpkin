@@ -163,12 +163,8 @@ impl BlockBehaviour for RailBlock {
     fn placed(&self, args: PlacedArgs<'_>) {
         let mut rail_props = RailProperties::new(args.state_id, args.block);
         let has_signal = block_receives_redstone_power(args.world, args.position);
-        let shape = compute_curved_rail_shape(
-            args.world,
-            args.position,
-            rail_props.shape(),
-            has_signal,
-        );
+        let shape =
+            compute_curved_rail_shape(args.world, args.position, rail_props.shape(), has_signal);
         let state_id = if shape == rail_props.shape() {
             args.state_id
         } else {

@@ -250,8 +250,10 @@ impl DisplayEntity {
 
     pub fn set_scale(&self, scale: Vector3<f32>) {
         store(&self.scale, scale);
-        self.entity
-            .set_synced_data(tracked::SCALE, Vector3fSerializer(scale.x, scale.y, scale.z));
+        self.entity.set_synced_data(
+            tracked::SCALE,
+            Vector3fSerializer(scale.x, scale.y, scale.z),
+        );
     }
 
     #[must_use]
@@ -389,7 +391,7 @@ impl DisplayEntity {
 
     /// Vanilla `Display.addAdditionalSaveData`; `start_interpolation` is not saved.
     pub fn write_display_nbt(&self, nbt: &mut NbtCompound) {
-        nbt.put_compound("transformation", self.transformation().to_nbt());
+        nbt.put_compound("transformation", self.transformation().write_nbt());
         let billboard = BILLBOARD_CONSTRAINTS
             .get(usize::from(self.get_billboard()))
             .copied()

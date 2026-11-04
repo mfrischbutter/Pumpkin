@@ -95,7 +95,10 @@ impl MannequinEntity {
     pub fn new(entity: Entity) -> Arc<Self> {
         let data = &entity.synched_data;
         data.define(tracked::PLAYER_MAIN_HAND, VarInt(i32::from(ARM_RIGHT)));
-        data.define(tracked::PLAYER_MODE_CUSTOMISATION, DEFAULT_MODEL_CUSTOMIZATION);
+        data.define(
+            tracked::PLAYER_MODE_CUSTOMISATION,
+            DEFAULT_MODEL_CUSTOMIZATION,
+        );
         data.define(tracked::PROFILE, ProfileImpl::default());
         data.define(tracked::IMMOVABLE, false);
         data.define(tracked::DESCRIPTION, Some(default_description()));

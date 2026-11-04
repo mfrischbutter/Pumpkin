@@ -128,7 +128,7 @@ impl WindChargeEntity {
             position,
             power,
             ExplosionInteraction::Trigger,
-            ExplosionSettings {
+            &ExplosionSettings {
                 calculator: Some(calculator),
                 fire: false,
                 small_particle: Particle::GustEmitterSmall,

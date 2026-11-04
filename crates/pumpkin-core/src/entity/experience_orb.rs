@@ -62,7 +62,7 @@ impl ExperienceOrbEntity {
     const UNDERWATER_RISE: f32 = 5.0e-4;
     const UNDERWATER_MAX_RISE: f32 = 0.06;
 
-    pub fn new(entity: Entity, value: u32) -> Self {
+    pub const fn new(entity: Entity, value: u32) -> Self {
         Self {
             entity,
             value: AtomicI32::new(value as i32),
@@ -361,7 +361,8 @@ impl EntityBase for ExperienceOrbEntity {
     fn do_water_splash_effect(&self, _caller: &dyn EntityBase) {}
 
     fn init_data_tracker(&self) {
-        self.entity.set_synced_data(DATA_VALUE, VarInt(self.value()));
+        self.entity
+            .set_synced_data(DATA_VALUE, VarInt(self.value()));
     }
 
     fn audited_reach(&self) -> Option<AuditedReach> {

@@ -41,10 +41,10 @@ impl ItemBehaviour for FishingRodItem {
 
         if let Some(bobber_base) = bobber {
             // Reel in
-            let mut dmg = 0;
-            if let Some(bobber) = bobber_base.cast_any().downcast_ref::<FishingBobberEntity>() {
-                dmg = bobber.reel_in(player, &rod, hand);
-            }
+            let dmg = bobber_base
+                .cast_any()
+                .downcast_ref::<FishingBobberEntity>()
+                .map_or(0, |bobber| bobber.reel_in(player, &rod, hand));
             bobber_base.get_entity().remove();
             player.fishing_bobber.store(-1, Ordering::Relaxed);
 

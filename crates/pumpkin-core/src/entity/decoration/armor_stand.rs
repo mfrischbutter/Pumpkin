@@ -239,9 +239,15 @@ impl ArmorStandEntity {
         entity.set_synced_data(armor_stand::DATA_HEAD_POSE, rotations(packed.head));
         entity.set_synced_data(armor_stand::DATA_BODY_POSE, rotations(packed.body));
         entity.set_synced_data(armor_stand::DATA_LEFT_ARM_POSE, rotations(packed.left_arm));
-        entity.set_synced_data(armor_stand::DATA_RIGHT_ARM_POSE, rotations(packed.right_arm));
+        entity.set_synced_data(
+            armor_stand::DATA_RIGHT_ARM_POSE,
+            rotations(packed.right_arm),
+        );
         entity.set_synced_data(armor_stand::DATA_LEFT_LEG_POSE, rotations(packed.left_leg));
-        entity.set_synced_data(armor_stand::DATA_RIGHT_LEG_POSE, rotations(packed.right_leg));
+        entity.set_synced_data(
+            armor_stand::DATA_RIGHT_LEG_POSE,
+            rotations(packed.right_leg),
+        );
     }
 
     fn get_item_by_slot(&self, slot: &EquipmentSlot) -> ItemStack {
@@ -258,7 +264,7 @@ impl ArmorStandEntity {
     }
 
     /// Vanilla `LivingEntity.setItemSlot`.
-    fn set_item_slot(&self, slot: &EquipmentSlot, stack: ItemStack) {
+    fn set_item_slot(&self, slot: &EquipmentSlot, stack: &ItemStack) {
         let previous = self
             .living_entity
             .entity_equipment
@@ -267,7 +273,7 @@ impl ArmorStandEntity {
             .put(slot, stack.clone());
         self.living_entity
             .send_equipment_changes(&[(slot.clone(), stack.clone())]);
-        self.on_equip_item(slot, &previous, &stack);
+        self.on_equip_item(slot, &previous, stack);
     }
 
     /// Vanilla `LivingEntity.onEquipItem`.
@@ -366,12 +372,12 @@ impl ArmorStandEntity {
         }
 
         if fills_from_infinite {
-            self.set_item_slot(slot, player_stack.copy_with_count(1));
+            self.set_item_slot(slot, &player_stack.copy_with_count(1));
         } else if swaps {
-            self.set_item_slot(slot, player_stack.clone());
+            self.set_item_slot(slot, player_stack);
             *player_stack = current;
         } else {
-            self.set_item_slot(slot, player_stack.split(1));
+            self.set_item_slot(slot, &player_stack.split(1));
         }
         true
     }
@@ -640,7 +646,13 @@ impl EntityBase for ArmorStandEntity {
             return false;
         }
 
-        let griefing = entity.world.load().level_info.load().game_rules.mob_griefing;
+        let griefing = entity
+            .world
+            .load()
+            .level_info
+            .load()
+            .game_rules
+            .mob_griefing;
         // Vanilla: only mob attackers are stopped by `mobGriefing`.
         if !griefing && cause.is_some_and(|cause| cause.get_mob().is_some()) {
             return false;
@@ -682,8 +694,7 @@ impl EntityBase for ArmorStandEntity {
     }
 
     fn get_gravity(&self) -> f64 {
-        self.living_entity
-            .get_attribute_value(&Attributes::GRAVITY)
+        self.living_entity.get_attribute_value(&Attributes::GRAVITY)
     }
 
     /// Vanilla `isEffectiveAi`.

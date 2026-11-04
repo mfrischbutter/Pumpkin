@@ -13,7 +13,6 @@ use crate::command::argument_builder::{
     ArgumentBuilder, RequiredArgumentBuilder, argument, command, literal,
 };
 use crate::command::argument_types::argument_type::JavaClientArgumentType;
-use crate::entity::decoration::display::ItemDisplayEntity;
 use crate::command::argument_types::client_parsed::ClientParsed;
 use crate::command::argument_types::coordinates::block_pos::BlockPosArgumentType;
 use crate::command::argument_types::core::integer::IntegerArgumentType;
@@ -24,6 +23,7 @@ use crate::command::context::command_context::CommandContext;
 use crate::command::errors::error_types::CommandErrorType;
 use crate::command::node::dispatcher::CommandDispatcher;
 use crate::command::node::{CommandExecutor, CommandExecutorResult};
+use crate::entity::decoration::display::ItemDisplayEntity;
 
 const DESCRIPTION: &str = "Modifies items in block or entity inventories.";
 const PERMISSION: &str = "minecraft:command.item";

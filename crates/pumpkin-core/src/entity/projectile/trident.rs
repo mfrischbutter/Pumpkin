@@ -27,7 +27,6 @@ use crate::entity::player::Player;
 use crate::entity::projectile_deflection::ProjectileDeflectionType;
 use crate::entity::{Entity, EntityBase};
 use crate::server::Server;
-use crate::world::level_accessor::LevelAccessor;
 
 /// Vanilla `TridentItem.BASE_DAMAGE`.
 const BASE_DAMAGE: f64 = 8.0;
@@ -114,7 +113,8 @@ impl TridentEntity {
             .get_data_component::<EnchantmentGlintOverrideImpl>()
             .map_or_else(|| item_stack.has_enchantments(), |glint| glint.glint);
         self.loyalty.store(loyalty, Ordering::Relaxed);
-        self.entity.set_synced_data(trident_data::ID_LOYALTY, loyalty);
+        self.entity
+            .set_synced_data(trident_data::ID_LOYALTY, loyalty);
         self.entity.set_synced_data(trident_data::ID_FOIL, foil);
     }
 
@@ -147,8 +147,7 @@ impl TridentEntity {
         let position = entity.pos.load();
         let owner_entity = owner.get_entity();
         let to_owner = owner_entity.get_eye_pos().sub(&position);
-        if owner.get_player().is_none()
-            && to_owner.length() < f64::from(owner_entity.width()) + 1.0
+        if owner.get_player().is_none() && to_owner.length() < f64::from(owner_entity.width()) + 1.0
         {
             entity.remove();
             return false;
@@ -163,11 +162,15 @@ impl TridentEntity {
         ));
         let acceleration = 0.05 * level;
         entity.velocity.store(
-            entity.velocity.load().multiply(0.95, 0.95, 0.95).add(
-                &to_owner
-                    .normalize()
-                    .multiply(acceleration, acceleration, acceleration),
-            ),
+            entity
+                .velocity
+                .load()
+                .multiply(0.95, 0.95, 0.95)
+                .add(
+                    &to_owner
+                        .normalize()
+                        .multiply(acceleration, acceleration, acceleration),
+                ),
         );
         if self.return_ticks.fetch_add(1, Ordering::Relaxed) == 0 {
             caller.play_entity_sound(Sound::ItemTridentReturn, 10.0, 1.0);

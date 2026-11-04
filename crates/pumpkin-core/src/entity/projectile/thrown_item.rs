@@ -13,7 +13,7 @@ use crate::entity::EntityBase;
 use crate::server::Server;
 
 /// Vanilla `hurt(damageSources().thrown(this, getOwner()), amount)`.
-pub(crate) fn hurt_thrown(projectile: &dyn EntityBase, target: &Arc<dyn EntityBase>, amount: f32) {
+pub fn hurt_thrown(projectile: &dyn EntityBase, target: &Arc<dyn EntityBase>, amount: f32) {
     let owner = projectile.get_owner_entity();
     target.damage_with_context(
         &**target,
@@ -26,7 +26,7 @@ pub(crate) fn hurt_thrown(projectile: &dyn EntityBase, target: &Arc<dyn EntityBa
 }
 
 /// Vanilla `ThrowableItemProjectile.addAdditionalSaveData`.
-pub(crate) fn write_thrown_item(stack: &RwLock<ItemStack>, nbt: &mut NbtCompound) {
+pub fn write_thrown_item(stack: &RwLock<ItemStack>, nbt: &mut NbtCompound) {
     let mut item = NbtCompound::new();
     stack
         .read()
@@ -37,7 +37,7 @@ pub(crate) fn write_thrown_item(stack: &RwLock<ItemStack>, nbt: &mut NbtCompound
 
 /// Vanilla `ThrowableItemProjectile.readAdditionalSaveData`, keeping the item when the key is
 /// missing.
-pub(crate) fn read_thrown_item(stack: &RwLock<ItemStack>, nbt: &NbtCompound) {
+pub fn read_thrown_item(stack: &RwLock<ItemStack>, nbt: &NbtCompound) {
     if let Some(item) = nbt.get_compound("Item")
         && let Some(item) = ItemStack::read_item_stack(item)
     {
@@ -76,11 +76,13 @@ impl ThrownItemEntity {
         self.set_velocity_from(pitch, yaw, roll, speed, divergence);
         let movement = crate::entity::known_movement(source);
         let on_ground = source.get_entity().on_ground.load(Ordering::Relaxed);
-        self.entity.velocity.store(self.entity.velocity.load().add_raw(
-            movement.x,
-            if on_ground { 0.0 } else { movement.y },
-            movement.z,
-        ));
+        self.entity
+            .velocity
+            .store(self.entity.velocity.load().add_raw(
+                movement.x,
+                if on_ground { 0.0 } else { movement.y },
+                movement.z,
+            ));
         apply_on_projectile_spawned(&self.entity, stack, None, None);
     }
 

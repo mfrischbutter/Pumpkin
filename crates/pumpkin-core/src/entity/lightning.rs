@@ -378,7 +378,10 @@ fn is_alive(entity: &dyn EntityBase) -> bool {
 }
 
 fn entity_type_name(entity: &dyn EntityBase) -> String {
-    format!("minecraft:{}", entity.get_entity().entity_type.resource_name)
+    format!(
+        "minecraft:{}",
+        entity.get_entity().entity_type.resource_name
+    )
 }
 
 fn random_in_cube(count: usize, center: &BlockPos, radius: i32) -> Vec<BlockPos> {

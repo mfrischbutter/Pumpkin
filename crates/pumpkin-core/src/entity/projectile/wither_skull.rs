@@ -132,29 +132,32 @@ impl WitherSkullEntity {
             .owner
             .get(world)
             .filter(|owner| owner.get_living_entity().is_some());
-        let was_hurt = if let Some(owner) = owner.as_deref() {
-            let hurt = target.damage_with_context(
-                target,
-                OWNED_HIT_DAMAGE,
-                DamageType::WITHER_SKULL,
-                Some(position),
-                Some(self),
-                Some(owner),
-            );
-            if hurt && !hurting::is_alive(target) {
-                heal(owner, KILL_HEAL);
-            }
-            hurt
-        } else {
-            target.damage_with_context(
-                target,
-                OWNERLESS_HIT_DAMAGE,
-                DamageType::MAGIC,
-                None,
-                None,
-                None,
-            )
-        };
+        let was_hurt = owner.as_deref().map_or_else(
+            || {
+                target.damage_with_context(
+                    target,
+                    OWNERLESS_HIT_DAMAGE,
+                    DamageType::MAGIC,
+                    None,
+                    None,
+                    None,
+                )
+            },
+            |owner| {
+                let hurt = target.damage_with_context(
+                    target,
+                    OWNED_HIT_DAMAGE,
+                    DamageType::WITHER_SKULL,
+                    Some(position),
+                    Some(self),
+                    Some(owner),
+                );
+                if hurt && !hurting::is_alive(target) {
+                    heal(owner, KILL_HEAL);
+                }
+                hurt
+            },
+        );
         if !was_hurt {
             return;
         }
@@ -275,7 +278,7 @@ impl EntityBase for WitherSkullEntity {
             entity.pos.load(),
             EXPLOSION_POWER,
             ExplosionInteraction::Mob,
-            ExplosionSettings {
+            &ExplosionSettings {
                 calculator,
                 ..ExplosionSettings::default()
             },

@@ -136,7 +136,13 @@ pub trait BlockAttached: EntityBase + Sized {
         if entity.is_invulnerable_to(&damage_type, cause) {
             return false;
         }
-        let griefing = entity.world.load().level_info.load().game_rules.mob_griefing;
+        let griefing = entity
+            .world
+            .load()
+            .level_info
+            .load()
+            .game_rules
+            .mob_griefing;
         if !griefing && cause.is_some_and(|cause| cause.get_mob().is_some()) {
             return false;
         }
@@ -189,11 +195,7 @@ pub(super) fn may_interact(world: &World, player: &Player, pos: &BlockPos) -> bo
 }
 
 /// Vanilla `Entity.gameEvent(event, sourceEntity)`.
-pub(super) fn emit_game_event(
-    entity: &Entity,
-    event: GameEvent,
-    source: Option<&dyn EntityBase>,
-) {
+pub(crate) fn emit_game_event(entity: &Entity, event: GameEvent, source: Option<&dyn EntityBase>) {
     entity.world.load().emit_game_event_with_context(
         event.name(),
         entity.pos.load(),
@@ -235,10 +237,7 @@ pub(super) fn spawn_hanging_drop(entity: &Entity, direction: BlockDirection, sta
 pub(super) fn sync_direction(entity: &Entity, direction: BlockDirection) {
     let index = i32::from(direction.to_index());
     entity.data.store(index, Ordering::Relaxed);
-    entity.set_synced_data(
-        tracked_data::hanging_entity::DATA_DIRECTION,
-        VarInt(index),
-    );
+    entity.set_synced_data(tracked_data::hanging_entity::DATA_DIRECTION, VarInt(index));
 }
 
 /// Vanilla `recalculateBoundingBox`: the entity's position follows from its box.

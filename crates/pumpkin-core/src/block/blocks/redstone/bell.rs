@@ -5,9 +5,8 @@ use crate::block::entities::bell::BellBlockEntity;
 use crate::block::registry::BlockActionResult;
 use crate::block::{
     BlockBehaviour, BlockHitResult, BrokenArgs, CanPlaceAtArgs, ExplodeArgs,
-    GetStateForNeighborUpdateArgs,
-    NormalUseArgs, OnNeighborUpdateArgs, OnPlaceArgs, OnProjectileHitArgs, PathComputationType,
-    PlacedArgs,
+    GetStateForNeighborUpdateArgs, NormalUseArgs, OnNeighborUpdateArgs, OnPlaceArgs,
+    OnProjectileHitArgs, PathComputationType, PlacedArgs,
 };
 use crate::entity::EntityBase;
 use crate::world::World;

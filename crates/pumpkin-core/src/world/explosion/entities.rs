@@ -1,7 +1,6 @@
 //! Vanilla `ServerExplosion.hurtEntities` with the entities' `ignoreExplosion` overrides.
 
 use std::sync::Arc;
-use std::sync::atomic::Ordering::Relaxed;
 
 use pumpkin_data::{
     damage::DamageType,

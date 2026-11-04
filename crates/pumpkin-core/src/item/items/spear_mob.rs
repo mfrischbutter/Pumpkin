@@ -23,7 +23,7 @@ const MOB_ACTION_FACTOR: f64 = 0.2;
 
 /// Vanilla `LivingEntity.updatingUsingItem` for a mob's kinetic weapon: it stops when the weapon
 /// left the hand, else it strikes on its own.
-pub(crate) fn mob_use_tick(living: &LivingEntity, caller: &dyn EntityBase) {
+pub fn mob_use_tick(living: &LivingEntity, caller: &dyn EntityBase) {
     let Some(used) = living
         .item_in_use
         .lock()
@@ -62,7 +62,8 @@ fn targets_along(
     stack: &ItemStack,
 ) -> (Vec<Arc<dyn EntityBase>>, Vector3<f64>) {
     let entity = &living.entity;
-    let look = Vector3::rotation_vector(f64::from(entity.pitch.load()), f64::from(entity.yaw.load()));
+    let look =
+        Vector3::rotation_vector(f64::from(entity.pitch.load()), f64::from(entity.yaw.load()));
     let Some(range) = stack.get_data_component::<AttackRangeImpl>() else {
         return (Vec::new(), look);
     };
@@ -88,9 +89,8 @@ fn damage_entities(
     stack: &ItemStack,
     weapon: &KineticWeaponImpl,
 ) {
-    let ticks_used = SpearItem::USE_DURATION
-        - living.item_use_time.load(Ordering::Relaxed)
-        - weapon.delay_ticks;
+    let ticks_used =
+        SpearItem::USE_DURATION - living.item_use_time.load(Ordering::Relaxed) - weapon.delay_ticks;
     if ticks_used < 0 {
         return;
     }
@@ -103,7 +103,8 @@ fn damage_entities(
 
     for target in targets {
         let target_entity = target.get_entity();
-        if living.was_recently_stabbed(target_entity.entity_id, now, weapon.contact_cooldown_ticks) {
+        if living.was_recently_stabbed(target_entity.entity_id, now, weapon.contact_cooldown_ticks)
+        {
             continue;
         }
         living.remember_stabbed_entity(target_entity.entity_id, now);
@@ -112,7 +113,12 @@ fn damage_entities(
         let relative_speed = (attacker_speed - target_speed).max(0.0);
         let test = |condition: Option<&pumpkin_data::data_component_impl::KineticConditionImpl>| {
             condition.is_some_and(|condition| {
-                condition.test(ticks_used, attacker_speed, relative_speed, MOB_ACTION_FACTOR)
+                condition.test(
+                    ticks_used,
+                    attacker_speed,
+                    relative_speed,
+                    MOB_ACTION_FACTOR,
+                )
             })
         };
         let effects = StabEffects {

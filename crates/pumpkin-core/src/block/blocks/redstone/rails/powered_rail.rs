@@ -18,11 +18,11 @@ use pumpkin_data::Block;
 use pumpkin_util::math::position::BlockPos;
 
 use super::super::block_receives_redstone_power;
-use super::{HorizontalFacingRailExt, RailProperties};
 use super::common::{
     can_place_rail_at, compute_placed_rail_shape, rail_placement_is_valid,
     reshape_placed_straight_rail, update_flanking_rails_shape,
 };
+use super::{HorizontalFacingRailExt, RailProperties};
 
 #[pumpkin_block("minecraft:powered_rail")]
 pub struct PoweredRailBlock;

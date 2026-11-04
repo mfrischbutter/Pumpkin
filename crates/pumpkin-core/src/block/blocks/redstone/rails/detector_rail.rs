@@ -26,12 +26,12 @@ use crate::entity::EntityBase;
 use crate::entity::vehicle::minecart::{MinecartEntity, redstone_signal_from_container};
 use crate::world::World;
 
-use super::{HorizontalFacingRailExt, RailProperties};
 use super::StraightRailShapeExt;
 use super::common::{
     can_place_rail_at, compute_placed_rail_shape, rail_placement_is_valid,
     reshape_placed_straight_rail, update_flanking_rails_shape,
 };
+use super::{HorizontalFacingRailExt, RailProperties};
 use pumpkin_data::block_properties::DetectorRailProperties;
 
 #[pumpkin_block("minecraft:detector_rail")]

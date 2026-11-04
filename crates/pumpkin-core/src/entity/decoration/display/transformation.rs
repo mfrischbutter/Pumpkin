@@ -65,7 +65,7 @@ impl Transformation {
     }
 
     /// Vanilla always saves the decomposed form.
-    pub fn to_nbt(&self) -> NbtCompound {
+    pub fn write_nbt(&self) -> NbtCompound {
         let mut compound = NbtCompound::new();
         compound.put_list("translation", float_tags(&self.translation));
         compound.put_list("left_rotation", float_tags(&self.left_rotation));
@@ -153,7 +153,7 @@ struct GivensParameters {
 
 impl GivensParameters {
     fn from_unnormalized(sin_half: f32, cos_half: f32) -> Self {
-        let inverse_norm = 1.0 / (sin_half * sin_half + cos_half * cos_half).sqrt();
+        let inverse_norm = 1.0 / sin_half.hypot(cos_half);
         Self {
             sin_half: inverse_norm * sin_half,
             cos_half: inverse_norm * cos_half,
@@ -239,17 +239,17 @@ fn similarity_transform(a: &Matrix3, q: &Matrix3) -> Matrix3 {
 /// Vanilla `MatrixUtil.stepJacobi`.
 fn step_jacobi(m: &mut Matrix3, output: &mut Quaternion) {
     if m[0][1] * m[0][1] + m[1][0] * m[1][0] > EPSILON {
-        let p = approx_givens_quat(m[0][0], 0.5 * (m[0][1] + m[1][0]), m[1][1]);
+        let p = approx_givens_quat(m[0][0], f32::midpoint(m[0][1], m[1][0]), m[1][1]);
         *output = multiply_quaternions(*output, p.quaternion_z());
         *m = similarity_transform(m, &p.matrix_z());
     }
     if m[0][2] * m[0][2] + m[2][0] * m[2][0] > EPSILON {
-        let p = approx_givens_quat(m[0][0], 0.5 * (m[0][2] + m[2][0]), m[2][2]).inverse();
+        let p = approx_givens_quat(m[0][0], f32::midpoint(m[0][2], m[2][0]), m[2][2]).inverse();
         *output = multiply_quaternions(*output, p.quaternion_y());
         *m = similarity_transform(m, &p.matrix_y());
     }
     if m[1][2] * m[1][2] + m[2][1] * m[2][1] > EPSILON {
-        let p = approx_givens_quat(m[1][1], 0.5 * (m[1][2] + m[2][1]), m[2][2]);
+        let p = approx_givens_quat(m[1][1], f32::midpoint(m[1][2], m[2][1]), m[2][2]);
         *output = multiply_quaternions(*output, p.quaternion_x());
         *m = similarity_transform(m, &p.matrix_x());
     }

@@ -39,7 +39,7 @@ const PARTICLE_COUNT: i32 = 10;
 const PARTICLE_SPEED: f32 = 0.05;
 
 /// Vanilla `AABB.nextDeflated`.
-fn next_deflated(bounding_box: &BoundingBox) -> BoundingBox {
+const fn next_deflated(bounding_box: &BoundingBox) -> BoundingBox {
     let (min, max) = (bounding_box.min, bounding_box.max);
     BoundingBox::new(
         Vector3::new(min.x.next_up(), min.y.next_up(), min.z.next_up()),
@@ -89,7 +89,10 @@ fn is_anchor_buried(world: &World, bounding_box: &BoundingBox) -> bool {
     ));
     let mut exposed = vec![slice];
     for pos in BlockPos::iterate(slice.min_block_pos(), slice.max_block_pos()) {
-        for shape in world.get_block_state(&pos).get_block_collision_shapes_at(&pos) {
+        for shape in world
+            .get_block_state(&pos)
+            .get_block_collision_shapes_at(&pos)
+        {
             let collider = shape.at_pos(pos);
             exposed = exposed
                 .iter()
@@ -246,7 +249,14 @@ impl CushionEntity {
         let entity = &self.entity;
         self.play_sound(Sound::EntityCushionBreak);
         self.show_breaking_particles();
-        if !entity.world.load().level_info.load().game_rules.entity_drops {
+        if !entity
+            .world
+            .load()
+            .level_info
+            .load()
+            .game_rules
+            .entity_drops
+        {
             return;
         }
         if caused_by

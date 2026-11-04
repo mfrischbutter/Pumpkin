@@ -80,12 +80,10 @@ fn mounted_distance(mob: &dyn Mob) -> f64 {
 
 /// The `chargeSpeedModifier` of `getRootVehicle()`, which is the mob itself when it walks.
 fn charge_speed_modifier(mob: &dyn Mob) -> f64 {
-    let modifier = match mob.get_entity().get_root_vehicle() {
-        Some(root) => root
-            .get_mob()
-            .map_or(1.0f32, |vehicle| vehicle.charge_speed_modifier()),
-        None => mob.charge_speed_modifier(),
-    };
+    let modifier = mob.get_entity().get_root_vehicle().map_or_else(
+        || mob.charge_speed_modifier(),
+        |root| root.get_mob().map_or(1.0f32, Mob::charge_speed_modifier),
+    );
     f64::from(modifier)
 }
 

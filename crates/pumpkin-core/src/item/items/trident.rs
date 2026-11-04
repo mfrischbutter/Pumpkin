@@ -92,9 +92,12 @@ impl TridentItem {
         if sq > 0.0 {
             let mult = riptide_strength / sq;
             let entity = player.get_entity();
-            entity
-                .velocity
-                .store(entity.velocity.load().add_raw(vx * mult, vy * mult, vz * mult));
+            entity.velocity.store(
+                entity
+                    .velocity
+                    .load()
+                    .add_raw(vx * mult, vy * mult, vz * mult),
+            );
         }
         player.start_auto_spin_attack(
             Self::SPIN_ATTACK_TICKS,

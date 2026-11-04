@@ -1,10 +1,8 @@
 use std::sync::Arc;
 
 use pumpkin_data::{
-    Block, BlockDirection, BlockState, BlockStateId,
-    block_properties::CandleCakeProperties,
-    item::Item,
-    item_stack::ItemStack,
+    Block, BlockDirection, BlockState, BlockStateId, block_properties::CandleCakeProperties,
+    item::Item, item_stack::ItemStack,
 };
 use pumpkin_macros::pumpkin_block_from_tag;
 use pumpkin_util::math::position::BlockPos;
@@ -90,7 +88,11 @@ impl BlockBehaviour for CandleCakeBlock {
             CandleCakeProperties::from_state_id(args.world.get_block_state_id(args.position));
         if properties.lit {
             properties.lit = false;
-            extinguish(args.world, args.position, properties.to_state_id(args.block));
+            extinguish(
+                args.world,
+                args.position,
+                properties.to_state_id(args.block),
+            );
         }
     }
 
@@ -103,7 +105,11 @@ impl BlockBehaviour for CandleCakeBlock {
         let mut properties = CandleCakeProperties::from_state_id(state_id);
         if args.hit.cursor_pos.y > 0.5 && args.item_stack.is_empty() && properties.lit {
             properties.lit = false;
-            extinguish(args.world, args.position, properties.to_state_id(args.block));
+            extinguish(
+                args.world,
+                args.position,
+                properties.to_state_id(args.block),
+            );
             return BlockActionResult::Success;
         }
         BlockActionResult::PassToDefaultBlockAction

@@ -18,7 +18,7 @@ use pumpkin_util::math::position::BlockPos;
 use pumpkin_world::world::BlockFlags;
 
 use super::ProjectileHit;
-use crate::entity::{Entity, EntityBase};
+use crate::entity::EntityBase;
 use crate::item::potion::{PotionContents, PotionEffect};
 use crate::world::World;
 use crate::world::game_event::GameEventContext;
@@ -92,8 +92,10 @@ pub(super) fn on_hit(
 /// Vanilla `AbstractThrownPotion.affectEntitiesAround`: a water bottle hurts the water
 /// sensitive, puts out what burns and wets axolotls.
 fn affect_entities_around(world: &Arc<World>, potion: &dyn EntityBase, stack: &ItemStack) {
-    let hurts =
-        PotionContents::is_in_tag(stack, &tag::Potion::MINECRAFT_HURTS_WATER_SENSITIVE_ENTITIES);
+    let hurts = PotionContents::is_in_tag(
+        stack,
+        &tag::Potion::MINECRAFT_HURTS_WATER_SENSITIVE_ENTITIES,
+    );
     let extinguishes =
         PotionContents::is_in_tag(stack, &tag::Potion::MINECRAFT_EXTINGUISHES_ENTITIES);
     let rehydrates = PotionContents::is_in_tag(stack, &tag::Potion::MINECRAFT_REHYDRATES_AXOLOTLS);

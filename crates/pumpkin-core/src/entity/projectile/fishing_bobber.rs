@@ -30,7 +30,6 @@ use crate::entity::projectile::owner::ProjectileOwner;
 use crate::entity::projectile_deflection::ProjectileDeflectionType;
 use crate::plugin::api::events::player::fish::{PlayerFishEvent, PlayerFishState};
 use crate::world::World;
-use crate::world::level_accessor::LevelAccessor;
 use crate::world::loot::{LootContextParameters, LootTableHandle, generate_loot_from_handle};
 use crate::{
     entity::{Entity, EntityBase, living::LivingEntity, player::Player},
@@ -138,7 +137,7 @@ impl FishingBobberEntity {
             .hooked_in
             .load()
             .and_then(|id| world.get_entity_by_id(id));
-        let mut dmg = if let Some(hooked) = hooked {
+        let dmg = if let Some(hooked) = hooked {
             match self.reel_in_entity(player, hand, &*hooked) {
                 Some(dmg) => dmg,
                 None => return 0,
@@ -152,9 +151,10 @@ impl FishingBobberEntity {
             0
         };
         if self.entity.on_ground.load(Ordering::Relaxed) {
-            dmg = 2;
+            2
+        } else {
+            dmg
         }
-        dmg
     }
 
     /// The hooked branch of vanilla `retrieve`. `None` if a plugin cancelled it.
@@ -262,8 +262,8 @@ impl FishingBobberEntity {
     /// Vanilla's `BuiltInLootTables.FISHING` with the hook's luck and the owner's.
     fn generate_fishing_loot(&self, player: &Player, rod: &ItemStack) -> Vec<ItemStack> {
         let world = self.entity.world.load();
-        let luck = self.luck as f32
-            + player.living_entity.get_attribute_value(&Attributes::LUCK) as f32;
+        let luck =
+            self.luck as f32 + player.living_entity.get_attribute_value(&Attributes::LUCK) as f32;
         let params = LootContextParameters {
             position: Some(self.entity.pos.load()),
             tool: Some(rod.clone()),
@@ -365,8 +365,10 @@ impl FishingBobberEntity {
     /// Vanilla `setBiting` by `DATA_BITING` and `onSyncedDataUpdated`.
     fn set_biting(&self, biting: bool, synchronized: &mut LegacyRand) {
         self.biting.store(biting, Ordering::Relaxed);
-        self.entity
-            .set_synced_data(pumpkin_data::tracked_data::fishing_bobber::DATA_BITING, biting);
+        self.entity.set_synced_data(
+            pumpkin_data::tracked_data::fishing_bobber::DATA_BITING,
+            biting,
+        );
         if biting {
             let velocity = self.entity.velocity.load();
             let jerk = -0.4 * synchronized.next_f32().mul_add(0.4, 0.6);
@@ -428,9 +430,7 @@ impl FishingBobberEntity {
             }
         }
 
-        if !is_water
-            && !entity.on_ground.load(Ordering::Relaxed)
-            && self.hooked_in.load().is_none()
+        if !is_water && !entity.on_ground.load(Ordering::Relaxed) && self.hooked_in.load().is_none()
         {
             entity
                 .velocity
@@ -495,9 +495,8 @@ impl FishingBobberEntity {
     ) {
         let entity = &self.entity;
         let movement = entity.velocity.load();
-        let mut force = entity.pos.load().y + movement.y
-            - f64::from(block_pos.0.y)
-            - f64::from(liquid_height);
+        let mut force =
+            entity.pos.load().y + movement.y - f64::from(block_pos.0.y) - f64::from(liquid_height);
         if force.abs() < 0.01 && force != 0.0 {
             force += force.signum() * 0.1;
         }
@@ -519,9 +518,8 @@ impl FishingBobberEntity {
             self.out_of_water_time
                 .store((out_of_water_time - 1).max(0), Ordering::Relaxed);
             if self.biting.load(Ordering::Relaxed) {
-                let pull = -0.1
-                    * f64::from(synchronized.next_f32())
-                    * f64::from(synchronized.next_f32());
+                let pull =
+                    -0.1 * f64::from(synchronized.next_f32()) * f64::from(synchronized.next_f32());
                 entity
                     .velocity
                     .store(entity.velocity.load().add_raw(0.0, pull, 0.0));
@@ -594,8 +592,8 @@ impl FishingBobberEntity {
         self.time_until_hooked.store(time, Ordering::Relaxed);
         let pos = entity.pos.load();
         if time > 0 {
-            let angle_degrees = self.fish_angle.load()
-                + triangle(&mut rand::rng(), 0.0, 9.188) as f32;
+            let angle_degrees =
+                self.fish_angle.load() + triangle(&mut rand::rng(), 0.0, 9.188) as f32;
             self.fish_angle.store(angle_degrees);
             let angle = angle_degrees.to_radians();
             let (sin, cos) = (angle.sin(), angle.cos());

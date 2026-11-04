@@ -19,7 +19,6 @@ const SPLASH_MIN_DURATION: i32 = 20;
 /// Utilities for reading potion contents from an `ItemStack` and applying effects.
 pub struct PotionContents;
 
-
 /// Source context for applying potion effects (affects scaling rules).
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub enum PotionApplicationSource {
@@ -182,7 +181,7 @@ impl PotionContents {
 
     /// The effect instance of an entry.
     #[must_use]
-    pub fn to_effect(entry: &PotionEffect) -> Effect {
+    pub const fn to_effect(entry: &PotionEffect) -> Effect {
         let &(effect_type, duration, amplifier, ambient, show_particles, show_icon) = entry;
         Effect {
             effect_type,

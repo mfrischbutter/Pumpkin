@@ -1,6 +1,6 @@
 pub mod advancement;
-mod ender_pearls;
 pub mod auto_spin_attack;
+mod ender_pearls;
 mod mount_screen;
 pub mod statistics;
 

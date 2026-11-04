@@ -1,7 +1,7 @@
 //! Vanilla `FireworkRocketEntity`.
 
-use std::sync::atomic::{AtomicBool, AtomicU32, Ordering};
 use std::sync::RwLock;
+use std::sync::atomic::{AtomicBool, AtomicU32, Ordering};
 
 use pumpkin_data::damage::DamageType;
 use pumpkin_data::data_component_impl::FireworksImpl;
@@ -224,8 +224,7 @@ impl FireworkRocketEntity {
         };
         let entity = self.get_entity();
         let shooter = attached.get_entity();
-        let mut hand_angle = Vector3::new(0.0, 0.0, 0.0);
-        if shooter.is_fall_flying() {
+        let hand_angle = if shooter.is_fall_flying() {
             if !self.is_boost_cancelled(world) {
                 let look = shooter.rotation().to_f64();
                 let movement = shooter.velocity.load();
@@ -233,8 +232,10 @@ impl FireworkRocketEntity {
                     .velocity
                     .store(movement + (look * 0.1 + (look * 1.5 - movement) * 0.5));
             }
-            hand_angle = Self::hand_holding_rocket_angle(&*attached);
-        }
+            Self::hand_holding_rocket_angle(&*attached)
+        } else {
+            Vector3::new(0.0, 0.0, 0.0)
+        };
         entity.set_pos(shooter.pos.load().add(&hand_angle));
         entity.velocity.store(shooter.velocity.load());
     }
@@ -414,12 +415,13 @@ impl EntityBase for FireworkRocketEntity {
         self.entity.owner.check_left_owner(entity);
         entity.tick(caller, server);
 
-        let hit = if let Some(attached_id) = self.attached_to_entity {
-            self.tick_attached(attached_id, &world);
-            self.hit_on_move()
-        } else {
-            self.tick_free_flight(caller)
-        };
+        let hit = self.attached_to_entity.map_or_else(
+            || self.tick_free_flight(caller),
+            |attached_id| {
+                self.tick_attached(attached_id, &world);
+                self.hit_on_move()
+            },
+        );
         if entity.is_alive()
             && !entity.no_physics.load(Ordering::Relaxed)
             && let MoveHit::Hit(hit) = hit

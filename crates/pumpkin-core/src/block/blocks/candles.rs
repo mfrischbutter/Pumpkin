@@ -45,7 +45,11 @@ impl BlockBehaviour for CandleBlock {
             CandleLikeProperties::from_state_id(args.world.get_block_state_id(args.position));
         if properties.lit {
             properties.lit = false;
-            extinguish(args.world, args.position, properties.to_state_id(args.block));
+            extinguish(
+                args.world,
+                args.position,
+                properties.to_state_id(args.block),
+            );
         }
     }
 
@@ -69,7 +73,11 @@ impl BlockBehaviour for CandleBlock {
 
         if args.player.may_build() && properties.lit {
             properties.lit = false;
-            extinguish(args.world, args.position, properties.to_state_id(args.block));
+            extinguish(
+                args.world,
+                args.position,
+                properties.to_state_id(args.block),
+            );
             return BlockActionResult::Success;
         }
 

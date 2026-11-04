@@ -373,7 +373,11 @@ impl ItemEntity {
             friction *= block_affecting_velo.slipperiness;
         }
 
-        velo = velo.multiply(f64::from(friction), f64::from(AIR_DRAG), f64::from(friction));
+        velo = velo.multiply(
+            f64::from(friction),
+            f64::from(AIR_DRAG),
+            f64::from(friction),
+        );
 
         // a landing item bounces back up with half its speed
         if on_ground && velo.y < 0.0 {

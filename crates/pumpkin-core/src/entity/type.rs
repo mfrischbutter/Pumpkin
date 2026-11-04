@@ -13,10 +13,10 @@ use crate::entity::decoration::{
     armor_stand::ArmorStandEntity,
     cushion::CushionEntity,
     display::{BlockDisplayEntity, ItemDisplayEntity, TextDisplayEntity},
-    mannequin::MannequinEntity,
     end_crystal::EndCrystalEntity,
     item_frame::ItemFrameEntity,
     leash_knot::LeashKnotEntity,
+    mannequin::MannequinEntity,
     painting::PaintingEntity,
 };
 use crate::entity::experience_orb::ExperienceOrbEntity;

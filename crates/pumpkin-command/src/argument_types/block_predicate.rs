@@ -157,7 +157,9 @@ fn parse_properties(
     Ok(properties)
 }
 
-pub(crate) fn parse_nbt(reader: &mut StringReader) -> Result<Option<NbtCompound>, CommandSyntaxError> {
+pub(crate) fn parse_nbt(
+    reader: &mut StringReader,
+) -> Result<Option<NbtCompound>, CommandSyntaxError> {
     if reader.peek() == Some('{') {
         let tag =
             ArgumentType::<crate::source::DummySource>::parse(&NbtCompoundArgumentType, reader)?;

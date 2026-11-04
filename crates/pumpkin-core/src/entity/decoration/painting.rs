@@ -199,14 +199,7 @@ impl PaintingEntity {
             Self::calculate_bounding_box(pos, direction, variant.width(), variant.height());
         !has_level_collision(world, bounds)
             && is_supported(world, bounds, direction)
-            && can_coexist(
-                world,
-                own,
-                &EntityType::PAINTING,
-                direction,
-                &bounds,
-                false,
-            )
+            && can_coexist(world, own, &EntityType::PAINTING, direction, &bounds, false)
     }
 
     /// Vanilla `Painting.create`: of the placeable variants that survive in the block `pos`, a

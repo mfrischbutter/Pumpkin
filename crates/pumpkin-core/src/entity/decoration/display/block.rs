@@ -26,7 +26,9 @@ pub struct BlockDisplayEntity {
 impl BlockDisplayEntity {
     pub fn new(entity: Entity) -> Arc<Self> {
         let air = i32::from(Block::AIR.default_state.id.as_u16());
-        entity.synched_data.define(tracked::BLOCK_STATE, VarInt(air));
+        entity
+            .synched_data
+            .define(tracked::BLOCK_STATE, VarInt(air));
         Arc::new(Self {
             display: DisplayEntity::new(entity),
             block_state: AtomicI32::new(air),

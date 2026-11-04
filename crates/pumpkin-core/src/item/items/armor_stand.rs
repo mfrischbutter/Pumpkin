@@ -94,7 +94,11 @@ impl ItemBehaviour for ArmorStandItem {
                 0.75,
                 0.8,
             );
-            emit_game_event(armor_stand.get_entity(), GameEvent::EntityPlace, Some(player));
+            emit_game_event(
+                armor_stand.get_entity(),
+                GameEvent::EntityPlace,
+                Some(player),
+            );
             item.decrement_unless_creative(player.gamemode.load(), 1);
             BlockActionResult::Success
         } else {

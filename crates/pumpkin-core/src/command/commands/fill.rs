@@ -109,9 +109,8 @@ impl Fill<'_> {
         if self.mode == FillMode::Keep {
             return state_id.to_state().is_air();
         }
-        self.filter.is_none_or(|filter| {
-            filter.test(state_id, || self.world.get_block_entity_nbt(pos))
-        })
+        self.filter
+            .is_none_or(|filter| filter.test(state_id, || self.world.get_block_entity_nbt(pos)))
     }
 
     /// Vanilla `FillCommand.Mode.filter`.

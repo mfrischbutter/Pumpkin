@@ -26,7 +26,7 @@ const FLAG_NOPHYSICS: u8 = 2;
 const DEGREES_PER_RADIAN: f32 = 57.295_776;
 
 /// The methods vanilla's arrow classes override in the tick of [`AbstractArrow`].
-pub(crate) trait ArrowHooks {
+pub trait ArrowHooks {
     /// Vanilla `getWaterInertia`.
     fn water_inertia(&self) -> f64 {
         AbstractArrow::WATER_INERTIA

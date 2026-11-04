@@ -105,7 +105,9 @@ impl JavaClient {
                 target
                     .cast_any()
                     .downcast_ref::<CushionEntity>()
-                    .map(|cushion| ItemStack::new(1, CushionEntity::item_for_color(cushion.color())))
+                    .map(|cushion| {
+                        ItemStack::new(1, CushionEntity::item_for_color(cushion.color()))
+                    })
             });
 
         if let Some(server) = world.server.upgrade() {

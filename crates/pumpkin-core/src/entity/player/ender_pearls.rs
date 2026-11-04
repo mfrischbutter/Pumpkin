@@ -32,9 +32,10 @@ impl Player {
             .lock()
             .unwrap_or_else(PoisonError::into_inner);
         flying.retain(|known| known.strong_count() > 0);
-        let known = flying.iter().filter_map(Weak::upgrade).any(|known| {
-            known.get_entity().entity_id == pearl.get_entity().entity_id
-        });
+        let known = flying
+            .iter()
+            .filter_map(Weak::upgrade)
+            .any(|known| known.get_entity().entity_id == pearl.get_entity().entity_id);
         if !known {
             flying.push(Arc::downgrade(pearl));
         }
@@ -97,7 +98,11 @@ impl Player {
     /// not go to their chunks.
     pub fn unload_ender_pearls(&self) {
         for pearl in self.live_ender_pearls() {
-            pearl.get_entity().world.load().remove_entity(pearl.as_ref());
+            pearl
+                .get_entity()
+                .world
+                .load()
+                .remove_entity(pearl.as_ref());
         }
     }
 
@@ -120,7 +125,9 @@ impl Player {
                 .iter()
                 .find(|world| Some(world.dimension.minecraft_name) == dimension)
             else {
-                warn!("Trying to load ender pearl without level ({dimension:?}) being loaded, skipping");
+                warn!(
+                    "Trying to load ender pearl without level ({dimension:?}) being loaded, skipping"
+                );
                 continue;
             };
             let Some(pearl) = load_entity_from_nbt(pearl_nbt, Vector3::default(), world) else {

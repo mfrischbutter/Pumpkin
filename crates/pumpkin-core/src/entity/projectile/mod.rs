@@ -8,6 +8,7 @@ use pumpkin_data::game_event::GameEvent;
 use pumpkin_protocol::java::client::play::CEntityVelocity;
 use pumpkin_util::math::boundingbox::BoundingBox;
 use pumpkin_util::math::{position::BlockPos, vector3::Vector3};
+use pumpkin_world::clip::{ClipBlock, ClipContext, ClipFluid};
 use std::{
     sync::Arc,
     sync::atomic::{AtomicBool, Ordering},
@@ -23,8 +24,8 @@ pub mod eye_of_ender;
 pub mod fireball;
 pub mod firework_rocket;
 pub mod fishing_bobber;
-pub mod hurting;
 pub(crate) mod hit_result;
+pub mod hurting;
 pub mod lingering_potion;
 pub mod llama_spit;
 pub mod owner;

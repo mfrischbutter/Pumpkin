@@ -39,7 +39,7 @@ const PICKABLE_TYPES: [&EntityType; 8] = [
 ];
 
 /// An entity a projectile's path goes through: vanilla `EntityHitResult`.
-pub(crate) struct EntityHit {
+pub struct EntityHit {
     pub(crate) entity: Arc<dyn EntityBase>,
     pub(crate) location: Vector3<f64>,
 }
@@ -55,7 +55,7 @@ impl EntityHit {
 }
 
 /// Vanilla `Level.clipIncludingBorder`.
-pub(crate) struct ClipResult {
+pub struct ClipResult {
     pub(crate) hit: BlockHitResult,
     /// Vanilla `BlockHitResult.isWorldBorderHit`.
     pub(crate) world_border: bool,
@@ -73,7 +73,7 @@ impl ClipResult {
 }
 
 /// What vanilla `ProjectileUtil.getHitResultOnMoveVector` found along the movement.
-pub(crate) enum MoveHit {
+pub enum MoveHit {
     Miss,
     WorldBorder,
     Hit(ProjectileHit),
@@ -81,7 +81,7 @@ pub(crate) enum MoveHit {
 
 /// How vanilla `Projectile.hitTargetOrDeflectSelf` went.
 #[derive(Clone, Copy, PartialEq, Eq)]
-pub(crate) enum HitOutcome {
+pub enum HitOutcome {
     Hit,
     Deflected,
     /// A plugin cancelled the hit, which vanilla does not know: the projectile flies on.
@@ -93,13 +93,13 @@ fn hit_normal(velocity: Vector3<f64>) -> Vector3<f64> {
 }
 
 /// Vanilla `ProjectileUtil.computeMargin`: young projectiles need a closer hit.
-pub(crate) fn compute_margin(source: &Entity) -> f64 {
+pub fn compute_margin(source: &Entity) -> f64 {
     let age = source.tick_count.load(Ordering::Relaxed) - 2;
     f64::from((age as f32 / 20.0).clamp(0.0, DEFAULT_ENTITY_HIT_RESULT_MARGIN))
 }
 
 /// Vanilla `Projectile.lerpRotation`.
-pub(crate) fn lerp_rotation(mut previous: f32, target: f32) -> f32 {
+pub fn lerp_rotation(mut previous: f32, target: f32) -> f32 {
     while target - previous < -180.0 {
         previous -= 360.0;
     }
@@ -110,7 +110,7 @@ pub(crate) fn lerp_rotation(mut previous: f32, target: f32) -> f32 {
 }
 
 /// Vanilla `Projectile.updateRotation`.
-pub(crate) fn update_rotation(entity: &Entity) {
+pub fn update_rotation(entity: &Entity) {
     let movement = entity.velocity.load();
     let yaw = (movement.x.atan2(movement.z) as f32).to_degrees();
     let pitch = (movement.y.atan2(movement.horizontal_length()) as f32).to_degrees();
@@ -121,7 +121,7 @@ pub(crate) fn update_rotation(entity: &Entity) {
 }
 
 /// The first steps of vanilla `Projectile.tick`: the shot's game event, once.
-pub(crate) fn emit_shoot_event(projectile: &dyn EntityBase, has_been_shot: &AtomicBool) {
+pub fn emit_shoot_event(projectile: &dyn EntityBase, has_been_shot: &AtomicBool) {
     if has_been_shot.swap(true, Ordering::Relaxed) {
         return;
     }
@@ -137,11 +137,7 @@ pub(crate) fn emit_shoot_event(projectile: &dyn EntityBase, has_been_shot: &Atom
 }
 
 /// Vanilla `Level.clipIncludingBorder` with `Block.COLLIDER` and `Fluid.NONE`.
-pub(crate) fn clip_including_border(
-    world: &World,
-    from: Vector3<f64>,
-    to: Vector3<f64>,
-) -> ClipResult {
+pub fn clip_including_border(world: &World, from: Vector3<f64>, to: Vector3<f64>) -> ClipResult {
     let hit = world.clip(&ClipContext::new(
         from,
         to,
@@ -157,33 +153,31 @@ pub(crate) fn clip_including_border(
         (border.contains(from.x, from.z) && !border.contains(hit.location.x, hit.location.z)).then(
             || {
                 Vector3::new(
-                    hit.location.x.clamp(
-                        border.center_x - half,
-                        border.center_x + half - 1.0e-5,
-                    ),
+                    hit.location
+                        .x
+                        .clamp(border.center_x - half, border.center_x + half - 1.0e-5),
                     hit.location.y,
-                    hit.location.z.clamp(
-                        border.center_z - half,
-                        border.center_z + half - 1.0e-5,
-                    ),
+                    hit.location
+                        .z
+                        .clamp(border.center_z - half, border.center_z + half - 1.0e-5),
                 )
             },
         )
     };
-    match clamped {
-        Some(location) => {
+    clamped.map_or(
+        ClipResult {
+            hit,
+            world_border: false,
+        },
+        |location| {
             let delta = location.sub(&from);
             let direction = BlockDirection::get_nearest(delta.x, delta.y, delta.z);
             ClipResult {
                 hit: BlockHitResult::hit(location, direction, BlockPos::floored_v(location), true),
                 world_border: true,
             }
-        }
-        None => ClipResult {
-            hit,
-            world_border: false,
         },
-    }
+    )
 }
 
 /// Vanilla `AABB.clip`: where the segment enters the box, nothing when it starts inside.
@@ -199,7 +193,7 @@ fn clip_box(
 }
 
 /// Vanilla `getBoundingBox().expandTowards(getDeltaMovement()).inflate(1.0)`.
-pub(crate) fn search_area(source: &Entity) -> BoundingBox {
+pub fn search_area(source: &Entity) -> BoundingBox {
     let velocity = source.velocity.load();
     source
         .bounding_box
@@ -225,7 +219,7 @@ fn candidates(
 }
 
 /// Vanilla `ProjectileUtil.getEntityHitResult`: the nearest entity along the segment.
-pub(crate) fn nearest_entity_hit(
+pub fn nearest_entity_hit(
     world: &World,
     source: &Entity,
     (from, to): (Vector3<f64>, Vector3<f64>),
@@ -253,7 +247,7 @@ pub(crate) fn nearest_entity_hit(
 
 /// Vanilla `ProjectileUtil.getManyEntityHitResult` without the from-entity and surface options:
 /// every entity along the segment, those only in the margin when no block is in between.
-pub(crate) fn many_entity_hits(
+pub fn many_entity_hits(
     world: &World,
     source: &Entity,
     (from, to): (Vector3<f64>, Vector3<f64>),
@@ -286,7 +280,7 @@ pub(crate) fn many_entity_hits(
 }
 
 /// Vanilla `ProjectileUtil.getHitResultOnMoveVector`.
-pub(crate) fn hit_result_on_move_vector(
+pub fn hit_result_on_move_vector(
     source: &Entity,
     can_hit: &dyn Fn(&dyn EntityBase) -> bool,
 ) -> MoveHit {
@@ -315,7 +309,7 @@ pub(crate) fn hit_result_on_move_vector(
 
 /// Vanilla `Entity.canBeHitByProjectile`: alive and `isPickable`, which the engine splits over
 /// [`EntityBase::can_be_hit_by_projectile`], [`EntityBase::can_hit`] and the living check.
-pub(crate) fn can_be_hit(target: &dyn EntityBase) -> bool {
+pub fn can_be_hit(target: &dyn EntityBase) -> bool {
     if !target.can_be_hit_by_projectile() {
         return false;
     }
@@ -336,10 +330,7 @@ pub(crate) fn can_be_hit(target: &dyn EntityBase) -> bool {
 }
 
 /// Vanilla `Projectile.hitTargetOrDeflectSelf` and `onHit`, the world border aside.
-pub(crate) fn hit_target_or_deflect_self(
-    projectile: &dyn EntityBase,
-    hit: ProjectileHit,
-) -> HitOutcome {
+pub fn hit_target_or_deflect_self(projectile: &dyn EntityBase, hit: ProjectileHit) -> HitOutcome {
     if deflected_by_target(projectile, &hit) {
         return HitOutcome::Deflected;
     }

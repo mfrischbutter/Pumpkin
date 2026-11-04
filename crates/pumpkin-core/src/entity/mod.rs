@@ -267,8 +267,6 @@ impl dyn EntityBase + '_ {
     }
 }
 
-/// Maps Java entity types to Bedrock runtime entity identifiers where the naming differs.
-#[must_use]
 /// The types overriding vanilla `Entity.isIgnoringBlockTriggers` with true.
 const IGNORES_BLOCK_TRIGGERS: [&EntityType; 7] = [
     &EntityType::BAT,
@@ -280,6 +278,8 @@ const IGNORES_BLOCK_TRIGGERS: [&EntityType; 7] = [
     &EntityType::TEXT_DISPLAY,
 ];
 
+/// Maps Java entity types to Bedrock runtime entity identifiers where the naming differs.
+#[must_use]
 pub const fn entity_type_to_bedrock_identifier(entity_type: &EntityType) -> &'static str {
     if entity_type.id == EntityType::EXPERIENCE_ORB.id {
         "minecraft:xp_orb"

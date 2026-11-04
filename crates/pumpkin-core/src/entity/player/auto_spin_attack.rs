@@ -64,7 +64,7 @@ impl AutoSpinAttack {
 }
 
 /// Vanilla `AABB.minmax`.
-fn union(a: &BoundingBox, b: &BoundingBox) -> BoundingBox {
+const fn union(a: &BoundingBox, b: &BoundingBox) -> BoundingBox {
     BoundingBox::new(
         Vector3::new(
             a.min.x.min(b.min.x),

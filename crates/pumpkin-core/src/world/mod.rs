@@ -4317,7 +4317,7 @@ impl World {
             position,
             power,
             interaction,
-            explosion::ExplosionSettings {
+            &explosion::ExplosionSettings {
                 calculator: damage_calculator,
                 ..explosion::ExplosionSettings::default()
             },
@@ -4331,7 +4331,7 @@ impl World {
         position: Vector3<f64>,
         power: f32,
         interaction: ExplosionInteraction,
-        settings: explosion::ExplosionSettings,
+        settings: &explosion::ExplosionSettings,
     ) {
         let block_interaction = self.get_block_interaction(interaction);
         let mut explosion = Explosion::new(power, position, block_interaction)
@@ -4340,7 +4340,7 @@ impl World {
         if let Some(calc) = settings.calculator.clone() {
             explosion = explosion.with_damage_calculator(calc);
         }
-        self.run_explosion(&explosion, position, power, &settings);
+        self.run_explosion(&explosion, position, power, settings);
     }
 
     pub fn explode_tnt_minecart(
@@ -5222,7 +5222,7 @@ impl World {
             0 => false,
             -1 => true,
             radius => self
-                .get_closest_player(pos.to_centered_f64(), f64::from(radius))
+                .get_closest_player(pos.to_centered_f64(), radius as f64)
                 .is_some(),
         }
     }

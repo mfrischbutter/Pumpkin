@@ -44,12 +44,14 @@ impl ItemEntity {
         let item_id = offered.item.id;
         let count_before = offered.item_count;
         let mut local_stack = offered;
-        let mut inserted = player.inventory.insert_stack_anywhere(&mut local_stack);
+        let added = player.inventory.insert_stack_anywhere(&mut local_stack);
         // Vanilla `Inventory.add`: with infinite materials what does not fit is gone as well.
-        if player.is_creative() && !local_stack.is_empty() {
+        let inserted = if player.is_creative() && !local_stack.is_empty() {
             local_stack.item_count = 0;
-            inserted = true;
-        }
+            true
+        } else {
+            added
+        };
         let is_empty = local_stack.is_empty();
         *self
             .item_stack

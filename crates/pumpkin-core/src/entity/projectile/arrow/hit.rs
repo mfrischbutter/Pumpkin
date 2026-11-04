@@ -243,7 +243,9 @@ impl AbstractArrow {
                 return;
             }
         }
-        player.living_entity.pickup(&self.entity, Some(&picked_up), 1);
+        player
+            .living_entity
+            .pickup(&self.entity, Some(&picked_up), 1);
         self.entity.remove();
     }
 

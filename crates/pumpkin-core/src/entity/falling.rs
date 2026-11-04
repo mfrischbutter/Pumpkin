@@ -200,7 +200,9 @@ impl FallingEntity {
                 .get_living_entity()
                 .is_some_and(|living| !living.is_dead_or_dying());
             let exempt = target.is_spectator()
-                || target.get_player().is_some_and(|player| player.is_creative());
+                || target
+                    .get_player()
+                    .is_some_and(crate::entity::player::Player::is_creative);
             if alive && !exempt && target.get_entity().entity_id != entity.entity_id {
                 target.damage_with_context(
                     target.as_ref(),

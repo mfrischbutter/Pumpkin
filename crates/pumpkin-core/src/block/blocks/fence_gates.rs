@@ -3,8 +3,8 @@ use std::sync::Arc;
 use crate::block::blocks::redstone::block_receives_redstone_power;
 use crate::block::registry::BlockActionResult;
 use crate::block::{
-    BlockBehaviour, ExplodeArgs, GetStateForNeighborUpdateArgs, NormalUseArgs, OnNeighborUpdateArgs,
-    OnPlaceArgs, PathComputationType,
+    BlockBehaviour, ExplodeArgs, GetStateForNeighborUpdateArgs, NormalUseArgs,
+    OnNeighborUpdateArgs, OnPlaceArgs, PathComputationType,
 };
 use crate::entity::EntityBase;
 use crate::entity::player::Player;
