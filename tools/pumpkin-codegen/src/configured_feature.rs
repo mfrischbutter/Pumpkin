@@ -837,10 +837,18 @@ pub fn value_to_configured_feature(v: &Value) -> TokenStream {
         "minecraft:lake" => {
             let fluid = value_to_block_state_provider(&config["fluid"]);
             let barrier = value_to_block_state_provider(&config["barrier"]);
+            let can_place_feature = value_to_block_predicate(&config["can_place_feature"]);
+            let can_replace_with_air_or_fluid =
+                value_to_block_predicate(&config["can_replace_with_air_or_fluid"]);
+            let can_replace_with_barrier =
+                value_to_block_predicate(&config["can_replace_with_barrier"]);
             quote! {
                 ConfiguredFeature::Lake(crate::generation::feature::features::lake::LakeFeature {
                     fluid: #fluid,
                     barrier: #barrier,
+                    can_place_feature: #can_place_feature,
+                    can_replace_with_air_or_fluid: #can_replace_with_air_or_fluid,
+                    can_replace_with_barrier: #can_replace_with_barrier,
                 })
             }
         }

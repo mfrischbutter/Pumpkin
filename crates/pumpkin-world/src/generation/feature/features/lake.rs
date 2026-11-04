@@ -1,15 +1,21 @@
-use pumpkin_data::{Block, BlockState, tag};
+use pumpkin_data::Block;
 use pumpkin_util::{
     math::position::BlockPos,
     random::{RandomGenerator, RandomImpl},
 };
 
-use crate::generation::{block_state_provider::BlockStateProvider, proto_chunk::GenerationCache};
+use crate::generation::{
+    block_predicate::BlockPredicate, block_state_provider::BlockStateProvider,
+    proto_chunk::GenerationCache,
+};
 use crate::world::WorldPortalExt;
 
 pub struct LakeFeature {
     pub fluid: BlockStateProvider,
     pub barrier: BlockStateProvider,
+    pub can_place_feature: BlockPredicate,
+    pub can_replace_with_air_or_fluid: BlockPredicate,
+    pub can_replace_with_barrier: BlockPredicate,
 }
 
 impl LakeFeature {
@@ -79,6 +85,13 @@ impl LakeFeature {
                         if yyx < 4 && !block_state.is_solid() && block_state != fluid_state {
                             return false;
                         }
+
+                        if !self
+                            .can_place_feature
+                            .test(block_registry, chunk, &check_pos)
+                        {
+                            return false;
+                        }
                     }
                 }
             }
@@ -91,9 +104,11 @@ impl LakeFeature {
                 for yyx in 0..8 {
                     if grid[(xx * 16 + zz) * 8 + yyx] {
                         let place_pos = origin.add(xx as i32, yyx as i32, zz as i32);
-                        let current_state =
-                            GenerationCache::get_block_state(chunk, &place_pos.0).to_state();
-                        if Self::can_replace_block(current_state) {
+                        if self.can_replace_with_air_or_fluid.test(
+                            block_registry,
+                            chunk,
+                            &place_pos,
+                        ) {
                             let place_air = yyx >= 4;
                             chunk.set_block_state(
                                 &place_pos.0,
@@ -128,10 +143,11 @@ impl LakeFeature {
                             let block_state =
                                 GenerationCache::get_block_state(chunk, &barrier_pos.0).to_state();
                             if block_state.is_solid()
-                                && !block_state
-                                    .id
-                                    .to_block_id()
-                                    .has_tag(tag::Block::MINECRAFT_LAVA_POOL_STONE_CANNOT_REPLACE)
+                                && self.can_replace_with_barrier.test(
+                                    block_registry,
+                                    chunk,
+                                    &barrier_pos,
+                                )
                             {
                                 chunk.set_block_state(&barrier_pos.0, barrier_state);
                                 chunk.mark_above_for_post_processing(&barrier_pos.0);
@@ -158,12 +174,13 @@ impl LakeFeature {
                         freeze_pos.0.z as f64,
                         63,
                     ) < 0.15
+                        && self.can_replace_with_air_or_fluid.test(
+                            block_registry,
+                            chunk,
+                            &freeze_pos,
+                        )
                     {
-                        let current_state =
-                            GenerationCache::get_block_state(chunk, &freeze_pos.0).to_state();
-                        if Self::can_replace_block(current_state) {
-                            chunk.set_block_state(&freeze_pos.0, Block::ICE.default_state);
-                        }
+                        chunk.set_block_state(&freeze_pos.0, Block::ICE.default_state);
                     }
                 }
             }
@@ -171,11 +188,81 @@ impl LakeFeature {
 
         true
     }
+}
 
-    fn can_replace_block(state: &BlockState) -> bool {
-        !state
-            .id
-            .to_block_id()
-            .has_tag(tag::Block::MINECRAFT_FEATURES_CANNOT_REPLACE)
+#[cfg(test)]
+mod tests {
+    use pumpkin_data::configured_feature::ConfiguredFeature as FeatureKey;
+    use pumpkin_data::{BlockId, BlockState};
+    use pumpkin_util::math::vector3::Vector3;
+    use pumpkin_util::random::legacy_rand::LegacyRand;
+
+    use super::*;
+    use crate::chunk_system::Cache;
+    use crate::generation::feature::configured_features::{CONFIGURED_FEATURES, ConfiguredFeature};
+    use crate::generation::feature::features::sculk::test_utils::{empty_region, set};
+    use crate::generation::feature::placed_features::Feature;
+    use crate::generation::proto_chunk_test::stage_parity::TestBlockRegistry;
+
+    /// The middle of the region's centre chunk; the lake fills the 16 by 8 by 16 blocks from
+    /// 16 60 16.
+    const ORIGIN: BlockPos = BlockPos::new(24, 64, 24);
+
+    /// The lake vanilla's sulfur pool starts with.
+    fn sulfur_pool_lake() -> Option<&'static LakeFeature> {
+        let ConfiguredFeature::Sequence(pool) = CONFIGURED_FEATURES.get(&FeatureKey::SulfurPool)?
+        else {
+            return None;
+        };
+        let Feature::Inlined(lake) = &pool.features.first()?.get()?.feature else {
+            return None;
+        };
+        match lake.as_ref() {
+            ConfiguredFeature::Lake(lake) => Some(lake),
+            _ => None,
+        }
+    }
+
+    /// A region whose blocks where the lake goes are all `state`.
+    fn region_of(state: &BlockState) -> Cache {
+        let mut level = empty_region();
+        for x in 16..32 {
+            for y in 60..68 {
+                for z in 16..32 {
+                    set(&mut level, BlockPos::new(x, y, z), state);
+                }
+            }
+        }
+        level
+    }
+
+    fn count(level: &Cache, block: BlockId) -> usize {
+        let mut count = 0;
+        for x in 0..48 {
+            for y in 56..72 {
+                for z in 0..48 {
+                    let state = GenerationCache::get_block_state(level, &Vector3::new(x, y, z));
+                    if state.to_block_id() == block {
+                        count += 1;
+                    }
+                }
+            }
+        }
+        count
+    }
+
+    #[test]
+    fn sulfur_pools_keep_away_from_sulfur_spikes() {
+        // A sulfur spike counts as solid, so only the pool's own check keeps it from forming.
+        let lake = sulfur_pool_lake();
+        assert!(lake.is_some(), "the sulfur pool starts with a lake");
+        let Some(lake) = lake else {
+            return;
+        };
+        let mut level = region_of(Block::SULFUR_SPIKE.default_state);
+        let mut random = RandomGenerator::Legacy(LegacyRand::from_seed(1));
+
+        assert!(!lake.generate(&TestBlockRegistry, &mut level, &mut random, ORIGIN));
+        assert_eq!(count(&level, BlockId::WATER), 0);
     }
 }
