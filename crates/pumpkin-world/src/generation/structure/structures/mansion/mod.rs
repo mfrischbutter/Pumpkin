@@ -51,10 +51,10 @@ impl StructureGenerator for MansionGenerator {
         let y = {
             let sampler = context.height_sampler.as_deref_mut()?;
             [
-                sampler.estimate_height(x, z),
-                sampler.estimate_height(x, z + offset_z),
-                sampler.estimate_height(x + offset_x, z),
-                sampler.estimate_height(x + offset_x, z + offset_z),
+                sampler.estimate_height(x, z) - 1,
+                sampler.estimate_height(x, z + offset_z) - 1,
+                sampler.estimate_height(x + offset_x, z) - 1,
+                sampler.estimate_height(x + offset_x, z + offset_z) - 1,
             ]
             .into_iter()
             .min()?
@@ -647,7 +647,7 @@ mod tests {
             .unwrap();
         let x = 3 * 16 + 7;
         let z = -2 * 16 + 7;
-        assert_eq!(position.start_pos, BlockPos::new(x, 70, z));
+        assert_eq!(position.start_pos, BlockPos::new(x, 69, z));
         assert_eq!(
             sampler.calls,
             [
