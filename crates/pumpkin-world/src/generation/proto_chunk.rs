@@ -1896,6 +1896,10 @@ impl BlockPlacer for ProtoChunk {
     fn get_height(&self, heightmap: HeightMap, x: i32, z: i32) -> Option<i32> {
         Some(self.get_top_y(&heightmap, x, z))
     }
+
+    fn schedule_fluid_tick(&mut self, pos: &Vector3<i32>, fluid: &'static Fluid, delay: u8) {
+        Self::schedule_fluid_tick(self, pos.x, pos.y, pos.z, fluid, delay);
+    }
 }
 
 impl GenerationCache for ProtoChunk {

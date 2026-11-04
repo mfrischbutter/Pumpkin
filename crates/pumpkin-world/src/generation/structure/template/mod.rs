@@ -33,6 +33,7 @@ mod template_piece;
 use pumpkin_data::BlockStateId;
 use pumpkin_data::Mirror;
 use pumpkin_data::Rotation;
+use pumpkin_data::fluid::Fluid;
 use pumpkin_nbt::{compound::NbtCompound, tag::NbtTag};
 use pumpkin_util::HeightMap;
 use pumpkin_util::math::vector3::Vector3;
@@ -65,6 +66,28 @@ pub trait BlockPlacer {
     /// The first free y above the heightmap column, like vanilla `LevelReader.getHeight`, or
     /// `None` if this placer has no such heightmap.
     fn get_height(&self, heightmap: HeightMap, x: i32, z: i32) -> Option<i32>;
+    /// Schedules a fluid tick, like vanilla's `scheduleTick`; a placer without ticks ignores it.
+    fn schedule_fluid_tick(&mut self, _pos: &Vector3<i32>, _fluid: &'static Fluid, _delay: u8) {}
+}
+
+/// Whether the block holds a water source: still water or a waterlogged block.
+fn holds_water_source(state_id: BlockStateId) -> bool {
+    state_id == pumpkin_data::Block::WATER.default_state.id || state_id.is_waterlogged()
+}
+
+/// Whether the block holds a fluid source of any kind.
+fn holds_fluid_source(state_id: BlockStateId) -> bool {
+    holds_water_source(state_id) || state_id == pumpkin_data::Block::LAVA.default_state.id
+}
+
+/// Vanilla's `SimpleWaterloggedBlock.placeLiquid` for water from a source: the block becomes
+/// waterlogged and the water ticks.
+fn waterlog(placer: &mut impl BlockPlacer, pos: &Vector3<i32>, state: &'static BlockState) {
+    if let Some(waterlogged) = state.set_waterlogged(true) {
+        placer.set_block_state(pos, waterlogged);
+        let water = &Fluid::WATER;
+        placer.schedule_fluid_tick(pos, water, water.flow_speed as u8);
+    }
 }
 
 /// Places a template at a world origin with an un-rotated XZ offset.
@@ -195,13 +218,6 @@ pub fn place_template_with_options(
             world_z + local_pos.z,
         );
 
-        if apply_waterlogging
-            && placer.get_block_state(&world_pos).to_block_id() == pumpkin_data::Block::WATER.id
-            && let Some(waterlogged_state) = state.set_waterlogged(true)
-        {
-            state = waterlogged_state;
-        }
-
         // Apply processors; each one seeds its own random from the block's position, like
         // vanilla's processors (`RandomSource.create(Mth.getSeed(pos))`).
         let mut should_place = true;
@@ -255,6 +271,11 @@ pub fn place_template_with_options(
         }
     }
 
+    // Vanilla's waterlogging: a block that holds a source locks it, a waterloggable block takes
+    // the water source it replaces, and one that replaced no source fills from a neighbouring
+    // source once the whole template stands.
+    let mut locked_fluids = Vec::new();
+    let mut to_fill = Vec::new();
     for ProcessedBlock {
         pos: world_pos,
         state,
@@ -269,7 +290,20 @@ pub fn place_template_with_options(
             continue;
         }
 
+        let previous = apply_waterlogging.then(|| placer.get_block_state(&world_pos));
         placer.set_block_state(&world_pos, state);
+        if let Some(previous) = previous {
+            if holds_fluid_source(state.id) {
+                locked_fluids.push(world_pos);
+            } else if state.set_waterlogged(true).is_some() {
+                if holds_water_source(previous) {
+                    waterlog(placer, &world_pos, state);
+                }
+                if !holds_fluid_source(previous) {
+                    to_fill.push(world_pos);
+                }
+            }
+        }
 
         // Create block entities for interactive blocks (furnaces, chests, etc.)
         let final_block = pumpkin_data::Block::from_id(state.id.to_block_id());
@@ -303,6 +337,33 @@ pub fn place_template_with_options(
 
             placer.add_block_entity(placed_nbt);
         }
+    }
+
+    let mut filled = true;
+    while filled && !to_fill.is_empty() {
+        filled = false;
+        to_fill.retain(|pos: &Vector3<i32>| {
+            let current = placer.get_block_state(pos);
+            let mut source = holds_fluid_source(current).then_some(current);
+            for offset in [(0, 1, 0), (0, 0, -1), (1, 0, 0), (0, 0, 1), (-1, 0, 0)] {
+                if source.is_some() {
+                    break;
+                }
+                let neighbor = Vector3::new(pos.x + offset.0, pos.y + offset.1, pos.z + offset.2);
+                let neighbor_state = placer.get_block_state(&neighbor);
+                if holds_fluid_source(neighbor_state) && !locked_fluids.contains(&neighbor) {
+                    source = Some(neighbor_state);
+                }
+            }
+            let Some(source) = source else {
+                return true;
+            };
+            if holds_water_source(source) {
+                waterlog(placer, pos, current.to_state());
+            }
+            filled = true;
+            false
+        });
     }
 }
 
