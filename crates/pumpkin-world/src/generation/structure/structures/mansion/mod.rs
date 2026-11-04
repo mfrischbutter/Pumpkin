@@ -21,8 +21,8 @@ use crate::{
                 StructurePiecesCollector, StructurePosition,
             },
             template::{
-                BlockStateResolver, PaletteEntry, StructureTemplate, get_block_entity_id,
-                get_template, is_randomizable_container,
+                BlockStateResolver, PaletteEntry, StructurePlaceSettings, StructureTemplate,
+                get_template, place_template_piece, processor::StructureProcessor,
             },
         },
     },
@@ -35,8 +35,6 @@ use self::{
 };
 
 const LOOT_TABLE: &str = "minecraft:chests/woodland_mansion";
-/// The data markers; vanilla's `BlockIgnoreProcessor.STRUCTURE_BLOCK` keeps them out of the world.
-const STRUCTURE_BLOCK: &str = "minecraft:structure_block";
 
 pub struct MansionGenerator;
 
@@ -223,7 +221,7 @@ pub(crate) struct MansionTemplatePiece {
     template: Arc<StructureTemplate>,
     template_position: Vector3<i32>,
     rotation: Rotation,
-    mirror: TemplateMirror,
+    place_settings: StructurePlaceSettings,
 }
 
 impl MansionTemplatePiece {
@@ -253,18 +251,8 @@ impl MansionTemplatePiece {
             template,
             template_position: descriptor.position,
             rotation: descriptor.rotation,
-            mirror: descriptor.mirror,
+            place_settings: make_settings(descriptor.mirror.state_mirror(), descriptor.rotation),
         })
-    }
-
-    const fn world_position(&self, local: Vector3<i32>) -> Vector3<i32> {
-        let transformed = transform(local, self.mirror, self.rotation);
-        offset(
-            self.template_position,
-            transformed.x,
-            transformed.y,
-            transformed.z,
-        )
     }
 
     /// Vanilla's `TemplateStructurePiece.postProcess`: the template's blocks, then its data
@@ -274,110 +262,24 @@ impl MansionTemplatePiece {
         chunk: &mut ProtoChunk,
         random: &mut RandomGenerator,
         region_random: &mut RandomGenerator,
+        seed: i64,
         chunk_box: &BlockBox,
     ) {
-        self.place_blocks(chunk, random, chunk_box);
-        self.handle_data_markers(chunk, random, region_random, chunk_box);
-    }
-
-    /// Vanilla's `StructureTemplate.placeInWorld` with the mansion's settings: every block inside
-    /// the chunk but the structure blocks.
-    fn place_blocks(
-        &self,
-        chunk: &mut ProtoChunk,
-        random: &mut RandomGenerator,
-        chunk_box: &BlockBox,
-    ) {
-        for template_block in &self.template.blocks {
-            let palette = &self.template.palette[template_block.state as usize];
-            if palette.name == STRUCTURE_BLOCK {
-                continue;
-            }
-            let position = self.world_position(template_block.pos);
-            if !chunk_box.contains_pos(&position) {
-                continue;
-            }
-            let Some(mut state) =
-                BlockStateResolver::resolve(palette, self.rotation, self.mirror.state_mirror())
-            else {
-                continue;
-            };
-            if chunk.get_block_state(&position).to_block_id() == Block::WATER.id
-                && let Some(waterlogged) = state.set_waterlogged(true)
-            {
-                state = waterlogged;
-            }
-            chunk.set_block_state(position.x, position.y, position.z, state);
-            Self::place_block_entity(
-                chunk,
-                palette,
-                template_block.nbt.as_ref(),
-                position,
-                random,
-            );
-        }
-    }
-
-    fn place_block_entity(
-        chunk: &mut ProtoChunk,
-        palette: &PaletteEntry,
-        template_nbt: Option<&NbtCompound>,
-        position: Vector3<i32>,
-        random: &mut RandomGenerator,
-    ) {
-        let block_entity_id = get_block_entity_id(&palette.name);
-        if template_nbt.is_none() && block_entity_id.is_none() {
-            return;
-        }
-        let mut nbt = NbtCompound::new();
-        nbt.put_string("id", block_entity_id.unwrap_or(&palette.name).to_string());
-        nbt.put_int("x", position.x);
-        nbt.put_int("y", position.y);
-        nbt.put_int("z", position.z);
-        if let Some(template_nbt) = template_nbt {
-            for (key, value) in &template_nbt.child_tags {
-                if !matches!(key.as_ref(), "x" | "y" | "z" | "id") {
-                    nbt.child_tags.insert(key.clone(), value.clone());
-                }
-            }
-            // Vanilla draws the seed for every container with template data, also for one
-            // without a loot table to roll it.
-            if block_entity_id.is_some_and(is_randomizable_container) {
-                let seed = random.next_i64();
-                if nbt.get_string("LootTable").is_some() {
-                    nbt.put_long("LootTableSeed", seed);
-                }
-            }
-        }
-        chunk.add_block_entity(nbt);
-    }
-
-    /// The template's data markers inside the chunk, in the template's order.
-    fn handle_data_markers(
-        &self,
-        chunk: &mut ProtoChunk,
-        random: &mut RandomGenerator,
-        region_random: &mut RandomGenerator,
-        chunk_box: &BlockBox,
-    ) {
-        for template_block in &self.template.blocks {
-            if self.template.palette[template_block.state as usize].name != STRUCTURE_BLOCK {
-                continue;
-            }
-            let Some(nbt) = &template_block.nbt else {
-                continue;
-            };
-            let position = self.world_position(template_block.pos);
-            if nbt.get_string("mode") == Some("DATA") && chunk_box.contains_pos(&position) {
-                self.handle_data_marker(
-                    chunk,
-                    random,
-                    region_random,
-                    nbt.get_string("metadata").unwrap_or_default(),
-                    position,
-                );
-            }
-        }
+        let settings = self
+            .place_settings
+            .clone()
+            .set_bounding_box(Some(*chunk_box));
+        place_template_piece(
+            chunk,
+            &self.template,
+            self.template_position,
+            &settings,
+            random,
+            seed,
+            |chunk, random, marker, position| {
+                self.handle_data_marker(chunk, random, region_random, marker, position);
+            },
+        );
     }
 
     /// Vanilla's `WoodlandMansionPiece.handleDataMarker`.
@@ -493,11 +395,21 @@ impl StructurePieceBase for MansionTemplatePiece {
         let taken = chunk.region_random.take();
         let in_region = taken.is_some();
         let mut region_random = taken.unwrap_or_else(|| region_random(seed, chunk));
-        self.place_in_chunk(chunk, random, &mut region_random, chunk_box);
+        self.place_in_chunk(chunk, random, &mut region_random, seed, chunk_box);
         if in_region {
             chunk.region_random = Some(region_random);
         }
     }
+}
+
+/// Vanilla's `WoodlandMansionPiece.makeSettings`.
+fn make_settings(mirror: Mirror, rotation: Rotation) -> StructurePlaceSettings {
+    StructurePlaceSettings::new()
+        .set_ignore_entities(true)
+        .set_rotation(rotation)
+        .set_mirror(mirror)
+        .add_processor(StructureProcessor::ignore_structure_blocks())
+        .set_apply_waterlogging(true)
 }
 
 /// The level's `minecraft:worldgen_region_random` factory at the chunk, vanilla's region random
@@ -773,7 +685,13 @@ mod tests {
             let mut region_random = RandomGenerator::Legacy(LegacyRand::from_seed(0));
             for piece in &pieces {
                 if piece.piece.bounding_box.intersects(&chunk_box) {
-                    piece.place_in_chunk(&mut chunk, &mut random, &mut region_random, &chunk_box);
+                    piece.place_in_chunk(
+                        &mut chunk,
+                        &mut random,
+                        &mut region_random,
+                        SEED,
+                        &chunk_box,
+                    );
                 }
             }
             let seeds = chunk
@@ -817,7 +735,7 @@ mod tests {
         .unwrap();
         let mut random = RandomGenerator::Legacy(LegacyRand::from_seed(0));
         let mut region_random = RandomGenerator::Legacy(LegacyRand::from_seed(0));
-        roof.place_in_chunk(&mut chunk, &mut random, &mut region_random, &chunk_box);
+        roof.place_in_chunk(&mut chunk, &mut random, &mut region_random, 0, &chunk_box);
         chunk.set_block_state(6, 70, 6, Block::AIR.default_state);
         chunk.set_block_state(2, 70, 2, Block::DARK_OAK_PLANKS.default_state);
         let mut collector = StructurePiecesCollector::default();
