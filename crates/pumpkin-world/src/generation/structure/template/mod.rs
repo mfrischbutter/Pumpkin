@@ -36,7 +36,7 @@ use pumpkin_data::Rotation;
 use pumpkin_nbt::{compound::NbtCompound, tag::NbtTag};
 use pumpkin_util::HeightMap;
 use pumpkin_util::math::vector3::Vector3;
-use pumpkin_util::random::{RandomImpl, hash_block_pos, legacy_rand::LegacyRand};
+use pumpkin_util::random::{RandomGenerator, RandomImpl, hash_block_pos, legacy_rand::LegacyRand};
 
 use crate::ProtoChunk;
 
@@ -100,6 +100,9 @@ pub fn place_template(
         processors,
         chunk_box,
         false,
+        &mut RandomGenerator::Legacy(LegacyRand::from_seed(hash_block_pos(
+            origin.x, origin.y, origin.z,
+        ) as u64)),
         TemplatePlacement {
             position: origin,
             level_seed: 0,
@@ -134,6 +137,7 @@ pub fn place_template_with_options(
     processors: &[StructureProcessor],
     chunk_box: Option<&pumpkin_util::math::block_box::BlockBox>,
     keep_jigsaws: bool,
+    random: &mut RandomGenerator,
     placement: TemplatePlacement,
 ) {
     let (rotated_ox, rotated_oz) = rotation.rotate_offset(offset.0, offset.1);
@@ -287,13 +291,11 @@ pub fn place_template_with_options(
                 }
             }
 
-            if placed_nbt.get_string("LootTable").is_some()
-                && placed_nbt.get_long("LootTableSeed").is_none()
+            // Vanilla seeds the loot of every container the template gives data, from the
+            // placement's random in placement order.
+            if block_entity_nbt.is_some()
+                && block_entity_id.is_some_and(|id| RANDOMIZABLE_CONTAINERS.contains(&id))
             {
-                let mut random =
-                    LegacyRand::from_seed(
-                        hash_block_pos(world_pos.x, world_pos.y, world_pos.z) as u64
-                    );
                 placed_nbt.put_long("LootTableSeed", random.next_i64());
             }
 
@@ -429,6 +431,19 @@ pub(crate) fn get_block_entity_id(block_name: &str) -> Option<&'static str> {
     let name = block_name.strip_prefix("minecraft:").unwrap_or(block_name);
     block_entity_id(pumpkin_data::Block::from_name(name)?)
 }
+
+/// The block entities vanilla's `RandomizableContainer` covers.
+const RANDOMIZABLE_CONTAINERS: [&str; 9] = [
+    "minecraft:chest",
+    "minecraft:trapped_chest",
+    "minecraft:barrel",
+    "minecraft:dispenser",
+    "minecraft:dropper",
+    "minecraft:hopper",
+    "minecraft:shulker_box",
+    "minecraft:crafter",
+    "minecraft:decorated_pot",
+];
 
 /// [`get_block_entity_id`] for a block.
 pub(crate) fn block_entity_id(block: &pumpkin_data::Block) -> Option<&'static str> {

@@ -877,6 +877,7 @@ impl StructurePieceBase for PoolElementStructurePiece {
                     processors.as_ref(),
                     Some(chunk_box),
                     false,
+                    random,
                     crate::generation::structure::template::TemplatePlacement {
                         position: origin,
                         level_seed: seed,
@@ -916,6 +917,13 @@ pub fn place_pool_element_templates(
     level_seed: i64,
 ) {
     let origin = Vector3::new(piece.pos.0.x, piece.pos.0.y, piece.pos.0.z);
+    // Outside of world generation there is no piece random: one of the seed and the position.
+    let mut random = pumpkin_util::random::RandomGenerator::Legacy(
+        pumpkin_util::random::legacy_rand::LegacyRand::from_seed(
+            (level_seed ^ pumpkin_util::random::hash_block_pos(origin.x, origin.y, origin.z))
+                as u64,
+        ),
+    );
 
     piece
         .element
@@ -941,6 +949,7 @@ pub fn place_pool_element_templates(
                 processors.as_ref(),
                 chunk_box,
                 keep_jigsaws,
+                &mut random,
                 crate::generation::structure::template::TemplatePlacement {
                     position: origin,
                     level_seed,
