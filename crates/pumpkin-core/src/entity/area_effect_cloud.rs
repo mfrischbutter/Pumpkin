@@ -364,6 +364,11 @@ impl EntityBase for AreaEffectCloudEntity {
                 continue;
             }
 
+            // Vanilla `AreaEffectCloud.serverTick`.
+            if !cand_clone.is_affected_by_potions() {
+                continue;
+            }
+
             // Determine candidate id early
             let ent_id = cand_clone.get_entity().entity_id;
 

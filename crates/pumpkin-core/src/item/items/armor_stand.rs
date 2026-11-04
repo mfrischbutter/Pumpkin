@@ -1,9 +1,9 @@
 use crate::block::registry::BlockActionResult;
-use std::sync::Arc;
 
-use crate::entity::Entity;
-use crate::entity::decoration::armor_stand::ArmorStandEntity;
+use crate::entity::decoration::block_attached::emit_game_event;
+use crate::entity::mob::spawn::create_at;
 use crate::entity::player::Player;
+use crate::item::items::spawn_egg::apply_entity_variant;
 use crate::item::{ItemBehaviour, ItemMetadata};
 use crate::server::Server;
 use pumpkin_data::entity::EntityType;
@@ -73,26 +73,28 @@ impl ItemBehaviour for ArmorStandItem {
             && world.get_entities_at_box(&bounding_box).is_empty()
             && world.get_players_at_box(&bounding_box).is_empty()
         {
+            // Vanilla `EntityType.create` with `tryMoveDown` and `movedUp`: the stand drops
+            // onto what is below the block, like a slab.
+            let armor_stand = create_at(&EntityType::ARMOR_STAND, &world, &target_pos, true, true);
+            apply_entity_variant(item, armor_stand.as_ref(), Some(player));
+
             let (player_yaw, _) = player.rotation();
             let rotation = ((wrap_degrees(player_yaw - 180.0) + 22.5) / 45.0).floor() * 45.0;
-
-            let entity = Entity::new(world.clone(), bottom_center, &EntityType::ARMOR_STAND);
-
+            let entity = armor_stand.get_entity();
             entity.set_rotation(rotation, 0.0);
+            // Vanilla `ArmorStand.setYBodyRot`: body and head always face the stand's way.
+            entity.head_yaw.store(rotation);
+            entity.body_yaw.store(rotation);
 
-            let pos = entity.pos.load();
+            world.spawn_entity(armor_stand.clone());
             world.play_sound_fine(
                 Sound::EntityArmorStandPlace,
                 SoundCategory::Blocks,
-                &pos,
+                &armor_stand.get_entity().pos.load(),
                 0.75,
                 0.8,
             );
-
-            let armor_stand = ArmorStandEntity::new(entity);
-
-            world.spawn_entity(Arc::new(armor_stand));
-            world.emit_game_event(GameEvent::EntityPlace.name(), pos);
+            emit_game_event(armor_stand.get_entity(), GameEvent::EntityPlace, Some(player));
             item.decrement_unless_creative(player.gamemode.load(), 1);
             BlockActionResult::Success
         } else {

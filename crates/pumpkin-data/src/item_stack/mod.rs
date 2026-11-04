@@ -482,13 +482,13 @@ impl ItemStack {
     }
 
     pub fn set_custom_name(&mut self, name: String) {
+        self.set_custom_name_component(pumpkin_util::text::TextComponent::text(name));
+    }
+
+    /// Vanilla `set(DataComponents.CUSTOM_NAME, name)`, keeping the name's style.
+    pub fn set_custom_name_component(&mut self, name: pumpkin_util::text::TextComponent) {
         use crate::data_component_impl::CustomNameImpl;
-        let component = Some(
-            CustomNameImpl {
-                name: pumpkin_util::text::TextComponent::text(name),
-            }
-            .to_dyn(),
-        );
+        let component = Some(CustomNameImpl { name }.to_dyn());
         if let Some(pos) = self
             .patch
             .iter()

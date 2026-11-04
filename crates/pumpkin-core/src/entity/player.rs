@@ -1878,8 +1878,10 @@ impl Player {
                     let knockback_z = -yaw.cos();
                     let victims = world.get_all_at_box(&search_box);
                     for other_victim in victims {
+                        // Vanilla `Player.doSweepAttack` only looks at living entities.
                         if other_victim.get_entity().entity_id != victim_entity.entity_id
                             && other_victim.get_entity().entity_id != attacker_entity.entity_id
+                            && other_victim.get_living_entity().is_some()
                         {
                             let hurt = other_victim.damage_with_context(
                                 other_victim.as_ref(),

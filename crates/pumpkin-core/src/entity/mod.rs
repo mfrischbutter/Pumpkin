@@ -483,6 +483,36 @@ pub trait EntityBase: Send + Sync + std::any::Any {
         false
     }
 
+    /// Vanilla `Entity.ignoreExplosion`. `affects_blocklike_entities` is the explosion's
+    /// `shouldAffectBlocklikeEntities`, `source_in_water` whether its direct source is in water.
+    fn ignore_explosion(&self, _affects_blocklike_entities: bool, _source_in_water: bool) -> bool {
+        self.is_immune_to_explosion()
+    }
+
+    /// Vanilla `Entity.pushFromExplosion`.
+    fn push_from_explosion(&self, impulse: Vector3<f64>) {
+        self.get_entity().add_velocity(impulse);
+    }
+
+    /// Vanilla `Entity.notifyLeasheeRemoved`: a leash on this entity came off.
+    fn notify_leashee_removed(&self) {}
+
+    /// Vanilla `LivingEntity.pushEntities` for the entities overriding it. True when this entity
+    /// did its own pushing, so the common one is skipped.
+    fn push_entities_itself(&self) -> bool {
+        false
+    }
+
+    /// Vanilla `Entity.blocksBuilding`, for the entities where it changes with their state.
+    fn blocks_building(&self) -> bool {
+        self.get_entity().blocks_building
+    }
+
+    /// Vanilla `LivingEntity.isAffectedByPotions`.
+    fn is_affected_by_potions(&self) -> bool {
+        true
+    }
+
     fn get_gravity(&self) -> f64 {
         0.0
     }
@@ -1008,6 +1038,18 @@ pub trait EntityBase: Send + Sync + std::any::Any {
         _hand: pumpkin_util::Hand,
     ) -> Option<bool> {
         None
+    }
+
+    /// [`Self::interact_with_hand`] with vanilla `Entity.interact`'s `location`: the clicked
+    /// point relative to the entity, when the client sent one.
+    fn interact_at(
+        &self,
+        player: &Arc<Player>,
+        item_stack: &mut ItemStack,
+        hand: pumpkin_util::Hand,
+        _location: Option<Vector3<f64>>,
+    ) -> Option<bool> {
+        self.interact_with_hand(player, item_stack, hand)
     }
 
     fn set_on_fire_for(&self, seconds: f32) {
@@ -4614,10 +4656,11 @@ impl Entity {
             .delayed_leash
             .lock()
             .unwrap_or_else(std::sync::PoisonError::into_inner) = None;
-        *self
+        let old_holder = self
             .leashed_to
             .lock()
-            .unwrap_or_else(std::sync::PoisonError::into_inner) = Some(holder);
+            .unwrap_or_else(std::sync::PoisonError::into_inner)
+            .replace(holder);
 
         let je_packet = pumpkin_protocol::java::client::play::CSetEntityLink::new(
             self.entity_id,
@@ -4647,6 +4690,13 @@ impl Entity {
             &je_packet,
             &be_packet,
         );
+
+        // Vanilla `Leashable.setLeashedTo`.
+        if let Some(old_holder) = old_holder
+            && old_holder.get_entity().entity_id != holder_entity_id
+        {
+            old_holder.notify_leashee_removed();
+        }
     }
 
     /// Vanilla `Leashable.dropLeash`: the leash comes off and its lead falls to the ground.
@@ -4707,6 +4757,9 @@ impl Entity {
         }
 
         self.send_leash_removed();
+        if let Some(holder) = old_holder {
+            holder.notify_leashee_removed();
+        }
     }
 
     pub fn remove_leash(&self) {
@@ -4715,8 +4768,9 @@ impl Entity {
             .lock()
             .unwrap_or_else(std::sync::PoisonError::into_inner)
             .take();
-        if old_holder.is_some() {
+        if let Some(holder) = old_holder {
             self.send_leash_removed();
+            holder.notify_leashee_removed();
         }
     }
 
@@ -4833,8 +4887,13 @@ impl Entity {
         };
         let holder_entity = holder.get_entity();
 
+        // Vanilla `Leashable.tickLeash`: a broken knot or a gone holder drops the lead here.
         if !self.is_alive() || !holder_entity.is_alive() {
-            self.unleash();
+            if self.world.load().level_info.load().game_rules.entity_drops {
+                self.drop_leash();
+            } else {
+                self.remove_leash();
+            }
             return LeashTick::NotLeashed;
         }
 

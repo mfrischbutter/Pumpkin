@@ -197,7 +197,7 @@ impl MinecartEntity {
     }
 
     /// Vanilla `isRideable`.
-    const fn is_rideable(&self) -> bool {
+    pub(crate) const fn is_rideable(&self) -> bool {
         matches!(self.kind, MinecartKind::Rideable(_))
     }
 

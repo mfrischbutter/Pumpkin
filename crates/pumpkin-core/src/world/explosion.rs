@@ -236,6 +236,9 @@ pub struct Explosion {
     damage_calculator: Option<Arc<dyn ExplosionDamageCalculator>>,
     preserve_rails: bool,
     source_entity_id: Option<i32>,
+    /// The source is gone from the world by the time entities are hit, like an exploded TNT.
+    source_is_wind_charge: bool,
+    source_in_water: bool,
 }
 
 impl Explosion {
@@ -248,6 +251,8 @@ impl Explosion {
             damage_calculator: None,
             preserve_rails: false,
             source_entity_id: None,
+            source_is_wind_charge: false,
+            source_in_water: false,
         }
     }
 
@@ -255,6 +260,11 @@ impl Explosion {
     #[must_use]
     pub fn with_source(mut self, source: Option<&Entity>) -> Self {
         self.source_entity_id = source.map(|entity| entity.entity_id);
+        self.source_is_wind_charge = source.is_some_and(|entity| {
+            entity.entity_type == &EntityType::WIND_CHARGE
+                || entity.entity_type == &EntityType::BREEZE_WIND_CHARGE
+        });
+        self.source_in_water = source.is_some_and(Entity::is_in_water);
         self
     }
 
@@ -433,8 +443,9 @@ impl Explosion {
         let source_entity = self
             .source_entity_id
             .and_then(|id| world.get_entity_by_id(id));
+        let affects_blocklike = self.should_affect_blocklike_entities(world);
         for entity_base in entities {
-            if entity_base.is_immune_to_explosion()
+            if entity_base.ignore_explosion(affects_blocklike, self.source_in_water)
                 || entity_base
                     .cast_any()
                     .downcast_ref::<MinecartEntity>()
@@ -500,8 +511,18 @@ impl Explosion {
             {
                 continue;
             }
-            entity.add_velocity(knockback);
+            entity_base.push_from_explosion(knockback);
         }
+    }
+
+    /// Vanilla `ServerExplosion.shouldAffectBlocklikeEntities`.
+    fn should_affect_blocklike_entities(&self, world: &World) -> bool {
+        !self.source_is_wind_charge
+            && (world.level_info.load().game_rules.mob_griefing
+                || matches!(
+                    self.block_interaction,
+                    BlockInteraction::Destroy | BlockInteraction::DestroyWithDecay
+                ))
     }
 
     fn calculate_exposure(

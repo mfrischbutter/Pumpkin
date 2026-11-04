@@ -3,6 +3,7 @@ use std::sync::Arc;
 use crate::block::registry::BlockActionResult;
 use crate::entity::Entity;
 use crate::entity::decoration::end_crystal::EndCrystalEntity;
+use crate::world::game_event::GameEventContext;
 use crate::entity::player::Player;
 use crate::item::{ItemBehaviour, ItemMetadata};
 use crate::server::Server;
@@ -63,7 +64,13 @@ impl ItemBehaviour for EndCrystalItem {
         let end_crystal = Arc::new(EndCrystalEntity::new(entity));
         end_crystal.set_show_bottom(false);
         world.spawn_entity(end_crystal);
-        world.emit_game_event(GameEvent::EntityPlace.name(), location.to_f64());
+        world.emit_game_event_with_context(
+            GameEvent::EntityPlace.name(),
+            location.to_centered_f64(),
+            &GameEventContext {
+                source_entity: Some(player),
+            },
+        );
         item.decrement_unless_creative(player.gamemode.load(), 1);
 
         if let Some(ref fight_mutex) = world.dragon_fight

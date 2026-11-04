@@ -1,17 +1,27 @@
-use core::f32;
+use std::sync::Arc;
 use std::sync::atomic::{AtomicU32, Ordering};
 
+use crate::entity::decoration::block_attached::{
+    BlockAttached, BlockAttachment, DEPTH, apply_bounding_box, attached_ignore_explosion,
+    can_coexist, copy_custom_name, has_level_collision, is_creative_player, is_supported,
+    send_spawn_at_block, spawn_hanging_drop, sync_direction, wall_center,
+};
 use crate::entity::player::Player;
 use crate::entity::{Entity, EntityBase, living::LivingEntity};
+use crate::net::java::JavaClient;
+use crate::server::Server;
+use crate::world::World;
 use pumpkin_data::BlockDirection;
 use pumpkin_data::damage::DamageType;
+use pumpkin_data::entity::EntityType;
 use pumpkin_data::item::Item;
 use pumpkin_data::item_stack::ItemStack;
 use pumpkin_data::painting_variant::PaintingVariant;
-use pumpkin_data::sound::{Sound, SoundCategory};
+use pumpkin_data::sound::Sound;
 use pumpkin_nbt::compound::NbtCompound;
 use pumpkin_protocol::codec::var_int::VarInt;
 use pumpkin_protocol::java::client::play::Metadata;
+use pumpkin_util::math::boundingbox::BoundingBox;
 use pumpkin_util::math::position::BlockPos;
 use pumpkin_util::math::vector3::Vector3;
 use pumpkin_util::version::JavaMinecraftVersion;
@@ -36,7 +46,8 @@ fn facing_from_nbt(nbt: &NbtCompound) -> BlockDirection {
     facing_from_horizontal(nbt.get_byte("facing").unwrap_or(0) as u8)
 }
 
-const fn facing_to_horizontal(direction: BlockDirection) -> u8 {
+/// Vanilla `Direction.get2DDataValue`.
+pub(super) const fn facing_to_horizontal(direction: BlockDirection) -> u8 {
     match direction {
         BlockDirection::West => 1,
         BlockDirection::North => 2,
@@ -45,23 +56,49 @@ const fn facing_to_horizontal(direction: BlockDirection) -> u8 {
     }
 }
 
+/// Vanilla `offsetForPaintingSize`.
+const fn offset_for_painting_size(size: u32) -> f64 {
+    if size.is_multiple_of(2) { 0.5 } else { 0.0 }
+}
+
 pub struct PaintingEntity {
     pub entity: Entity,
+    attachment: BlockAttachment,
     variant_id: AtomicU32,
 }
 
 impl PaintingEntity {
     #[must_use]
-    pub const fn new(entity: Entity) -> Self {
+    pub fn new(entity: Entity) -> Self {
         Self::new_with_variant(entity, PaintingVariant::Alban)
     }
 
     #[must_use]
-    pub const fn new_with_variant(entity: Entity, variant: PaintingVariant) -> Self {
+    pub fn new_with_variant(entity: Entity, variant: PaintingVariant) -> Self {
+        // Vanilla `HangingEntity.DEFAULT_DIRECTION`; the client refuses a vertical one.
+        sync_direction(&entity, BlockDirection::South);
+        let pos = entity.block_pos.load();
         Self {
             entity,
+            attachment: BlockAttachment::new(pos),
             variant_id: AtomicU32::new(variant.id()),
         }
+    }
+
+    /// Vanilla `Painting(Level, BlockPos, Direction, Holder)`, attached in the block `pos`.
+    #[must_use]
+    pub fn create(
+        world: &Arc<World>,
+        pos: BlockPos,
+        direction: BlockDirection,
+        variant: PaintingVariant,
+    ) -> Self {
+        let center = Self::calculate_center(pos, direction, variant.width(), variant.height());
+        let entity = Entity::new(world.clone(), center, &EntityType::PAINTING);
+        let painting = Self::new_with_variant(entity, variant);
+        painting.attachment.set_pos(pos);
+        painting.set_direction(direction);
+        painting
     }
 
     #[must_use]
@@ -76,6 +113,7 @@ impl PaintingEntity {
     pub fn set_variant(&self, variant: PaintingVariant) {
         self.variant_id.store(variant.id(), Ordering::Relaxed);
         self.sync_variant();
+        self.recalculate_bounding_box();
     }
 
     pub fn sync_variant(&self) {
@@ -85,85 +123,99 @@ impl PaintingEntity {
         );
     }
 
-    /// Calculates the exact floating-point center position for a painting of given width and height (in blocks),
-    /// placed on `face` of `location`.
+    /// Vanilla `HangingEntity.getDirection`.
     #[must_use]
-    pub fn calculate_center_pos(
-        location: BlockPos,
-        face: BlockDirection,
+    pub fn direction(&self) -> BlockDirection {
+        BlockDirection::from_index(self.entity.data.load(Ordering::Relaxed) as u8)
+            .unwrap_or(BlockDirection::South)
+    }
+
+    /// Vanilla `HangingEntity.setDirection`.
+    pub fn set_direction(&self, direction: BlockDirection) {
+        sync_direction(&self.entity, direction);
+        self.entity
+            .set_rotation(f32::from(facing_to_horizontal(direction)) * 90.0, 0.0);
+        self.recalculate_bounding_box();
+    }
+
+    /// Vanilla `recalculateBoundingBox`.
+    fn recalculate_bounding_box(&self) {
+        let variant = self.variant();
+        let (width, height) = (variant.width(), variant.height());
+        let (pos, direction) = (self.attachment.pos(), self.direction());
+        apply_bounding_box(
+            &self.entity,
+            Self::calculate_center(pos, direction, width, height),
+            Self::calculate_bounding_box(pos, direction, width, height),
+        );
+    }
+
+    /// The center of vanilla `calculateBoundingBox` for a painting attached in the block `pos`.
+    #[must_use]
+    pub fn calculate_center(
+        pos: BlockPos,
+        direction: BlockDirection,
         width: u32,
         height: u32,
     ) -> Vector3<f64> {
-        let target_pos = location.offset(face.to_offset());
-        let face_ccw = face.rotate_counter_clockwise();
-        let step_x = f64::from(face.to_offset().x);
-        let step_z = f64::from(face.to_offset().z);
-        let ccw_step_x = f64::from(face_ccw.to_offset().x);
-        let ccw_step_z = f64::from(face_ccw.to_offset().z);
-
-        let mut x = f64::from(target_pos.0.x) + 0.5 - step_x * 0.46875;
-        let mut y = f64::from(target_pos.0.y) + 0.5;
-        let mut z = f64::from(target_pos.0.z) + 0.5 - step_z * 0.46875;
-
-        let width_offset = if width.is_multiple_of(2) { 0.5 } else { 0.0 };
-        let height_offset = if height.is_multiple_of(2) { 0.5 } else { 0.0 };
-
-        x += width_offset * ccw_step_x;
-        z += width_offset * ccw_step_z;
-        y += height_offset;
-
-        Vector3::new(x, y, z)
+        let attached_to_wall = wall_center(pos, direction);
+        let horizontal_offset = offset_for_painting_size(width);
+        let left = direction.rotate_counter_clockwise().to_offset().to_f64();
+        Vector3::new(
+            attached_to_wall.x + left.x * horizontal_offset,
+            attached_to_wall.y + offset_for_painting_size(height),
+            attached_to_wall.z + left.z * horizontal_offset,
+        )
     }
 
-    /// Checks if a painting of the specified variant fits on the wall at `location` facing `face`.
-    /// The wall blocks behind the painting must be solid, and the blocks in front must not be solid.
+    /// Vanilla `calculateBoundingBox`.
     #[must_use]
-    pub fn painting_fits(
-        world: &crate::world::World,
-        location: BlockPos,
-        face: BlockDirection,
+    pub fn calculate_bounding_box(
+        pos: BlockPos,
+        direction: BlockDirection,
+        width: u32,
+        height: u32,
+    ) -> BoundingBox {
+        let step = direction.to_offset();
+        let x_size = if step.x == 0 { f64::from(width) } else { DEPTH };
+        let z_size = if step.z == 0 { f64::from(width) } else { DEPTH };
+        BoundingBox::of_size(
+            Self::calculate_center(pos, direction, width, height),
+            x_size,
+            f64::from(height),
+            z_size,
+        )
+    }
+
+    /// Vanilla `HangingEntity.survives` for a painting of `variant` in the block `pos`.
+    fn variant_survives(
+        world: &World,
+        own: Option<i32>,
+        pos: BlockPos,
+        direction: BlockDirection,
         variant: PaintingVariant,
     ) -> bool {
-        let width = variant.width();
-        let height = variant.height();
-        let face_ccw = face.rotate_counter_clockwise();
-        let ccw_offset = face_ccw.to_offset();
-        let face_offset = face.to_offset();
-
-        let k = -((width as i32 - 1) / 2);
-        let l = -((height as i32 - 1) / 2);
-
-        for x_idx in 0..width {
-            for y_idx in 0..height {
-                let wall_pos = BlockPos(Vector3::new(
-                    location.0.x + ccw_offset.x * (x_idx as i32 + k),
-                    location.0.y + (y_idx as i32 + l),
-                    location.0.z + ccw_offset.z * (x_idx as i32 + k),
-                ));
-                let front_pos = wall_pos.offset(face_offset);
-
-                let wall_state = world.get_block_state(&wall_pos);
-                if !wall_state.is_solid() {
-                    return false;
-                }
-
-                let front_state = world.get_block_state(&front_pos);
-                if front_state.is_solid() {
-                    return false;
-                }
-            }
-        }
-        true
+        let bounds =
+            Self::calculate_bounding_box(pos, direction, variant.width(), variant.height());
+        !has_level_collision(world, bounds)
+            && is_supported(world, bounds, direction)
+            && can_coexist(
+                world,
+                own,
+                &EntityType::PAINTING,
+                direction,
+                &bounds,
+                false,
+            )
     }
 
-    /// Chooses a placeable painting variant that fits the wall at `location` facing `face`.
-    /// Matches vanilla Minecraft: filters to variants that fit, selects the subset with
-    /// the largest area (width * height), and randomly picks one from that subset.
+    /// Vanilla `Painting.create`: of the placeable variants that survive in the block `pos`, a
+    /// random one with the largest area.
     #[must_use]
     pub fn choose_variant(
-        world: &crate::world::World,
-        location: BlockPos,
-        face: BlockDirection,
+        world: &World,
+        pos: BlockPos,
+        direction: BlockDirection,
     ) -> Option<PaintingVariant> {
         use rand::seq::IndexedRandom;
 
@@ -171,7 +223,7 @@ impl PaintingEntity {
         let mut max_area = 0;
 
         for &variant in PaintingVariant::all_placeable() {
-            if Self::painting_fits(world, location, face, variant) {
+            if Self::variant_survives(world, None, pos, direction, variant) {
                 let area = variant.width() * variant.height();
                 if area > max_area {
                     max_area = area;
@@ -187,34 +239,66 @@ impl PaintingEntity {
         fitting_variants.choose(&mut rng).copied()
     }
 
-    fn drop_and_remove(&self, caused_by: Option<&dyn EntityBase>) {
-        let entity = &self.entity;
-        let world = entity.world.load();
-        world.play_sound(
-            Sound::EntityPaintingBreak,
-            SoundCategory::Blocks,
-            &entity.pos.load(),
-        );
+    /// The attached block of a save from before `block_pos` was stored: undoes the size offsets
+    /// of [`Self::calculate_center`] on the saved position.
+    fn block_pos_from_center(&self) -> BlockPos {
+        let center = self.entity.pos.load();
+        let variant = self.variant();
+        let horizontal_offset = offset_for_painting_size(variant.width());
+        let left = self
+            .direction()
+            .rotate_counter_clockwise()
+            .to_offset()
+            .to_f64();
+        BlockPos::floored(
+            center.x - left.x * horizontal_offset,
+            center.y - offset_for_painting_size(variant.height()),
+            center.z - left.z * horizontal_offset,
+        )
+    }
+}
 
-        let is_creative = caused_by.is_some_and(|c| {
-            c.cast_any()
-                .downcast_ref::<Player>()
-                .is_some_and(Player::is_creative)
-        });
+impl BlockAttached for PaintingEntity {
+    fn attachment(&self) -> &BlockAttachment {
+        &self.attachment
+    }
 
-        if !is_creative {
-            world.drop_stack(&entity.block_pos.load(), ItemStack::new(1, &Item::PAINTING));
+    fn survives(&self) -> bool {
+        Self::variant_survives(
+            &self.entity.world.load(),
+            Some(self.entity.entity_id),
+            self.attachment.pos(),
+            self.direction(),
+            self.variant(),
+        )
+    }
+
+    /// Vanilla `Painting.dropItem`.
+    fn drop_attached_item(&self, caused_by: Option<&dyn EntityBase>) {
+        let entity_drops = self
+            .entity
+            .world
+            .load()
+            .level_info
+            .load()
+            .game_rules
+            .entity_drops;
+        if !entity_drops {
+            return;
         }
-
-        entity.remove();
+        self.play_entity_sound(Sound::EntityPaintingBreak, 1.0, 1.0);
+        if !is_creative_player(caused_by) {
+            let mut stack = ItemStack::new(1, &Item::PAINTING);
+            copy_custom_name(&self.entity, &mut stack);
+            spawn_hanging_drop(&self.entity, self.direction(), stack);
+        }
     }
 }
 
 impl EntityBase for PaintingEntity {
     fn write_custom_nbt(&self, nbt: &mut NbtCompound) {
-        let index = self.entity.data.load(Ordering::Relaxed) as u8;
-        let direction = BlockDirection::from_index(index).unwrap_or(BlockDirection::South);
-        nbt.put_byte("facing", facing_to_horizontal(direction) as i8);
+        nbt.put_byte("facing", facing_to_horizontal(self.direction()) as i8);
+        self.attachment.write_nbt(nbt);
         let variant_id = self.variant_id.load(Ordering::Relaxed);
         let variant_str =
             self.entity
@@ -226,9 +310,7 @@ impl EntityBase for PaintingEntity {
 
     fn read_custom_nbt(&self, nbt: &NbtCompound) {
         let facing = facing_from_nbt(nbt);
-        self.entity
-            .data
-            .store(i32::from(facing.to_index()), Ordering::Relaxed);
+        sync_direction(&self.entity, facing);
         if let Some(variant_str) = nbt
             .get_string("variant")
             .or_else(|| nbt.get_string("Motive"))
@@ -241,6 +323,10 @@ impl EntityBase for PaintingEntity {
             self.variant_id.store(raw_id, Ordering::Relaxed);
             self.sync_variant();
         }
+        if !self.attachment.read_nbt(nbt, self.entity.block_pos.load()) {
+            self.attachment.set_pos(self.block_pos_from_center());
+        }
+        self.set_direction(facing);
     }
 
     fn get_entity(&self) -> &Entity {
@@ -251,8 +337,13 @@ impl EntityBase for PaintingEntity {
         None
     }
 
+    fn tick(&self, caller: &dyn EntityBase, _server: &Server) {
+        self.tick_attached(caller);
+    }
+
     fn init_data_tracker(&self) {
         self.sync_variant();
+        self.recalculate_bounding_box();
     }
 
     fn java_spawn_metadata(&self, version: JavaMinecraftVersion) -> Option<Box<[u8]>> {
@@ -267,6 +358,10 @@ impl EntityBase for PaintingEntity {
         Some(metadata.into_boxed_slice())
     }
 
+    fn send_java_spawn_packet(&self, client: &JavaClient) {
+        send_spawn_at_block(self, self.attachment.pos(), client);
+    }
+
     fn set_variant_name(&self, name: &str) {
         if let Some(variant) = PaintingVariant::from_name(name) {
             self.set_variant(variant);
@@ -277,24 +372,52 @@ impl EntityBase for PaintingEntity {
         {
             self.variant_id.store(raw_id, Ordering::Relaxed);
             self.sync_variant();
+            self.recalculate_bounding_box();
         }
     }
 
     fn damage_with_context(
         &self,
-        caller: &dyn EntityBase,
+        _caller: &dyn EntityBase,
         _amount: f32,
-        _damage_type: DamageType,
+        damage_type: DamageType,
         _position: Option<Vector3<f64>>,
         _source: Option<&dyn EntityBase>,
-        _cause: Option<&dyn EntityBase>,
+        cause: Option<&dyn EntityBase>,
     ) -> bool {
-        self.drop_and_remove(Some(caller));
-        true
+        self.hurt_attached(damage_type, cause)
+    }
+
+    fn kill(&self, _caller: &dyn EntityBase) {
+        self.kill_attached(None);
     }
 
     fn can_hit(&self) -> bool {
         self.entity.is_alive()
+    }
+
+    fn move_entity(&self, _caller: &dyn EntityBase, motion: Vector3<f64>) {
+        self.moved_off_block(motion);
+    }
+
+    fn push_from_explosion(&self, impulse: Vector3<f64>) {
+        self.moved_off_block(impulse);
+    }
+
+    fn ignore_explosion(&self, affects_blocklike_entities: bool, source_in_water: bool) -> bool {
+        attached_ignore_explosion(affects_blocklike_entities, source_in_water)
+    }
+
+    fn skip_attack_interaction(&self, player: &Player) -> bool {
+        self.skip_attack_on_attached(player)
+    }
+
+    /// Vanilla `BlockAttachedEntity.thunderHit` does nothing.
+    fn on_lightning_strike(
+        &self,
+        _caller: &dyn EntityBase,
+        _lightning: &crate::entity::lightning::LightningBoltEntity,
+    ) {
     }
 
     fn cast_any(&self) -> &dyn std::any::Any {
@@ -341,38 +464,50 @@ mod tests {
     }
 
     #[test]
-    fn calculate_center_pos_works() {
-        let location = BlockPos(Vector3::new(10, 64, 20));
+    fn calculate_center_works() {
+        // Attached in the block north of a wall at (10, 64, 20).
+        let location = BlockPos(Vector3::new(10, 64, 19));
 
-        // 1x1 painting facing North: placed against block at (10, 64, 20)
-        let pos_1x1 = PaintingEntity::calculate_center_pos(location, BlockDirection::North, 1, 1);
+        // 1x1 painting facing North
+        let pos_1x1 = PaintingEntity::calculate_center(location, BlockDirection::North, 1, 1);
         assert_eq!(pos_1x1.x, 10.5);
         assert_eq!(pos_1x1.y, 64.5);
         assert!((pos_1x1.z - 19.96875).abs() < 1e-6);
 
         // 2x1 painting facing North: width is 2, shifts along counter-clockwise (West = -X)
-        let pos_2x1 = PaintingEntity::calculate_center_pos(location, BlockDirection::North, 2, 1);
+        let pos_2x1 = PaintingEntity::calculate_center(location, BlockDirection::North, 2, 1);
         assert_eq!(pos_2x1.x, 10.0);
         assert_eq!(pos_2x1.y, 64.5);
         assert!((pos_2x1.z - 19.96875).abs() < 1e-6);
 
         // 2x2 painting facing North: height is 2, shifts +0.5 along Y
-        let pos_2x2 = PaintingEntity::calculate_center_pos(location, BlockDirection::North, 2, 2);
+        let pos_2x2 = PaintingEntity::calculate_center(location, BlockDirection::North, 2, 2);
         assert_eq!(pos_2x2.x, 10.0);
         assert_eq!(pos_2x2.y, 65.0);
         assert!((pos_2x2.z - 19.96875).abs() < 1e-6);
 
         // 4x4 painting facing North
-        let pos_4x4 = PaintingEntity::calculate_center_pos(location, BlockDirection::North, 4, 4);
+        let pos_4x4 = PaintingEntity::calculate_center(location, BlockDirection::North, 4, 4);
         assert_eq!(pos_4x4.x, 10.0);
         assert_eq!(pos_4x4.y, 65.0);
         assert!((pos_4x4.z - 19.96875).abs() < 1e-6);
 
-        // 1x1 painting facing South: placed on south face of (10, 64, 20) -> target is (10, 64, 21)
-        let pos_south = PaintingEntity::calculate_center_pos(location, BlockDirection::South, 1, 1);
+        // 1x1 painting facing South, attached in the block south of the same wall
+        let south_of_wall = BlockPos(Vector3::new(10, 64, 21));
+        let pos_south =
+            PaintingEntity::calculate_center(south_of_wall, BlockDirection::South, 1, 1);
         assert_eq!(pos_south.x, 10.5);
         assert_eq!(pos_south.y, 64.5);
         assert!((pos_south.z - 21.03125).abs() < 1e-6);
+    }
+
+    #[test]
+    fn bounding_box_is_thin_on_the_facing_axis() {
+        let pos = BlockPos(Vector3::new(10, 64, 19));
+        let bounds = PaintingEntity::calculate_bounding_box(pos, BlockDirection::North, 4, 3);
+        assert!((bounds.max.x - bounds.min.x - 4.0).abs() < 1e-9);
+        assert!((bounds.max.y - bounds.min.y - 3.0).abs() < 1e-9);
+        assert!((bounds.max.z - bounds.min.z - DEPTH).abs() < 1e-9);
     }
 
     #[test]

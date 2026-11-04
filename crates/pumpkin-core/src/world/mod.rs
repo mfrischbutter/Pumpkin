@@ -2525,8 +2525,9 @@ impl World {
         let bounds = entity.bounding_box.load();
         let root_vehicle = entity.root_vehicle_id();
         let unobstructed = |other: &dyn EntityBase| {
+            let blocks_building = other.blocks_building();
             let other = other.get_entity();
-            !other.is_alive() || !other.blocks_building || other.root_vehicle_id() == root_vehicle
+            !other.is_alive() || !blocks_building || other.root_vehicle_id() == root_vehicle
         };
         self.get_entities_at_box(&bounds)
             .iter()
