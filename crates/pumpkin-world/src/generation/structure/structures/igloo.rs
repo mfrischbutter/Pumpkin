@@ -3,7 +3,7 @@ use std::sync::Arc;
 use pumpkin_data::{Block, BlockState, Mirror, Rotation};
 use pumpkin_util::{
     math::{block_box::BlockBox, position::BlockPos, vector3::Vector3},
-    random::{RandomGenerator, RandomImpl, hash_block_pos, legacy_rand::LegacyRand},
+    random::{RandomGenerator, RandomImpl},
 };
 
 use crate::{
@@ -17,8 +17,8 @@ use crate::{
                 StructurePiecesCollector, StructurePosition, WorldPortalExt,
             },
             template::{
-                BlockStateResolver, StructurePlaceSettings, StructureTemplate, get_template,
-                processor::{IgnoredBlock, ProcessorContext, StructureProcessor},
+                StructurePlaceSettings, StructureTemplate, block_entity_id, get_template,
+                place_template_piece, processor::StructureProcessor, set_loot_table,
             },
         },
     },
@@ -28,6 +28,7 @@ pub const GENERATION_HEIGHT: i32 = 90;
 pub const STRUCTURE_LOCATION_IGLOO: &str = "igloo/top";
 pub const STRUCTURE_LOCATION_LADDER: &str = "igloo/middle";
 pub const STRUCTURE_LOCATION_LABORATORY: &str = "igloo/bottom";
+const LOOT_TABLE: &str = "minecraft:chests/igloo_chest";
 
 #[must_use]
 pub const fn get_pivot(location: &str) -> Vector3<i32> {
@@ -167,137 +168,6 @@ impl IglooPiece {
             template_position,
         }
     }
-
-    #[expect(clippy::too_many_lines)]
-    fn place_blocks(
-        &self,
-        chunk: &mut ProtoChunk,
-        chunk_box: &BlockBox,
-        random: &mut RandomGenerator,
-    ) {
-        let rotation = self.place_settings.get_rotation();
-        let mirror = self.place_settings.get_mirror();
-        let pivot = self.place_settings.get_rotation_pivot();
-
-        let mut context = ProcessorContext::new(self.template_position);
-
-        for block in &self.template.blocks {
-            let palette_entry = &self.template.palette[block.state as usize];
-
-            let local_pos =
-                StructureTemplate::transform_block_pos(block.pos, mirror, rotation, pivot);
-            let world_pos = self.template_position + local_pos;
-
-            if !chunk_box.contains_pos(&world_pos) {
-                continue;
-            }
-
-            if palette_entry.name == "minecraft:structure_block"
-                && let Some(nbt) = &block.nbt
-            {
-                let mode = nbt.get_string("mode").unwrap_or("");
-                let metadata = nbt.get_string("metadata").unwrap_or("");
-                if mode == "DATA" && metadata == "chest" {
-                    chunk.set_block_state(
-                        world_pos.x,
-                        world_pos.y,
-                        world_pos.z,
-                        Block::AIR.default_state,
-                    );
-                    let below_pos = world_pos - Vector3::new(0, 1, 0);
-                    let mut chest_nbt = pumpkin_nbt::compound::NbtCompound::new();
-                    chest_nbt.put_string("id", "minecraft:chest".to_string());
-                    chest_nbt.put_int("x", below_pos.x);
-                    chest_nbt.put_int("y", below_pos.y);
-                    chest_nbt.put_int("z", below_pos.z);
-                    chest_nbt.put_string("LootTable", "minecraft:chests/igloo_chest".to_string());
-                    chest_nbt.put_long("LootTableSeed", random.next_i64());
-                    chunk.add_block_entity(chest_nbt);
-                }
-                continue;
-            }
-
-            let mut block_entity_nbt = block.nbt.clone();
-            let placed_entry = palette_entry.clone();
-
-            let Some(state) = BlockStateResolver::resolve(&placed_entry, rotation, mirror) else {
-                continue;
-            };
-
-            let mut processed_state = Some(state);
-            for processor in self.place_settings.get_processors() {
-                let Some(current_state) = processed_state else {
-                    break;
-                };
-                // Each processor seeds its own random from the block, like vanilla's
-                // `StructurePlaceSettings.getRandom(pos)` without a random of its own.
-                let mut rng =
-                    LegacyRand::from_seed(
-                        hash_block_pos(world_pos.x, world_pos.y, world_pos.z) as u64
-                    );
-                processed_state = processor.process_with_context(
-                    chunk,
-                    world_pos,
-                    current_state,
-                    &mut block_entity_nbt,
-                    &mut context,
-                    &mut rng,
-                );
-            }
-
-            let Some(final_state) = processed_state else {
-                continue;
-            };
-
-            chunk.set_block_state(world_pos.x, world_pos.y, world_pos.z, final_state);
-
-            let final_block = Block::from_id(final_state.id.to_block_id());
-            let block_entity_id =
-                crate::generation::structure::template::get_block_entity_id(final_block.name);
-            if block_entity_nbt.is_some() || block_entity_id.is_some() {
-                let fallback_id = block_entity_id.unwrap_or(final_block.name);
-                let mut placed_nbt = pumpkin_nbt::compound::NbtCompound::new();
-
-                placed_nbt.put_string("id", fallback_id.to_string());
-                placed_nbt.put_int("x", world_pos.x);
-                placed_nbt.put_int("y", world_pos.y);
-                placed_nbt.put_int("z", world_pos.z);
-
-                if let Some(template_nbt) = &block_entity_nbt {
-                    for (key, value) in &template_nbt.child_tags {
-                        if key.as_ref() != "x"
-                            && key.as_ref() != "y"
-                            && key.as_ref() != "z"
-                            && key.as_ref() != "id"
-                        {
-                            placed_nbt.child_tags.insert(key.clone(), value.clone());
-                        }
-                    }
-                }
-
-                if placed_nbt.get_string("LootTable").is_some()
-                    && placed_nbt.get_long("LootTableSeed").is_none()
-                {
-                    let mut rng =
-                        LegacyRand::from_seed(
-                            hash_block_pos(world_pos.x, world_pos.y, world_pos.z) as u64,
-                        );
-                    placed_nbt.put_long("LootTableSeed", rng.next_i64());
-                }
-
-                chunk.add_block_entity(placed_nbt);
-            }
-        }
-
-        crate::generation::structure::template::place_template_entities(
-            chunk,
-            &self.template,
-            self.template_position,
-            rotation,
-            chunk_box,
-            false,
-        );
-    }
 }
 
 impl StructurePieceBase for IglooPiece {
@@ -315,7 +185,7 @@ impl StructurePieceBase for IglooPiece {
         chunk: &mut ProtoChunk,
         _block_registry: &dyn WorldPortalExt,
         random: &mut RandomGenerator,
-        _seed: i64,
+        seed: i64,
         chunk_box: &BlockBox,
     ) {
         let settings = make_settings(self.place_settings.get_rotation(), &self.template_name);
@@ -333,11 +203,32 @@ impl StructurePieceBase for IglooPiece {
 
         let old_template_pos = self.template_position;
         self.template_position.y += height - GENERATION_HEIGHT - 1;
+        self.place_settings.bounding_box = Some(*chunk_box);
         self.piece.bounding_box = self
             .template
             .get_bounding_box(&self.place_settings, self.template_position);
-
-        self.place_blocks(chunk, chunk_box, random);
+        place_template_piece(
+            chunk,
+            &self.template,
+            self.template_position,
+            &self.place_settings,
+            random,
+            seed,
+            |chunk, random, marker, position| {
+                if marker != "chest" {
+                    return;
+                }
+                chunk.set_block_state(position.x, position.y, position.z, Block::AIR.default_state);
+                let below = Vector3::new(position.x, position.y - 1, position.z);
+                // `ChestBlockEntity`, which the trapped chest's block entity extends.
+                if matches!(
+                    block_entity_id(Block::from_state_id(chunk.get_block_state(&below))),
+                    Some("minecraft:chest" | "minecraft:trapped_chest")
+                ) {
+                    set_loot_table(chunk, below, LOOT_TABLE, random.next_i64());
+                }
+            },
+        );
 
         if self.template_name == STRUCTURE_LOCATION_IGLOO {
             let trap_door_rel =
@@ -362,15 +253,14 @@ impl StructurePieceBase for IglooPiece {
     }
 }
 
+/// Vanilla's `IglooPiece.makeSettings`.
 fn make_settings(rotation: Rotation, template_location: &str) -> StructurePlaceSettings {
     StructurePlaceSettings::new()
         .set_rotation(rotation)
         .set_mirror(Mirror::None)
         .set_rotation_pivot(get_pivot(template_location))
-        .add_processor(StructureProcessor::BlockIgnore(vec![IgnoredBlock {
-            block_id: Block::STRUCTURE_BLOCK.id,
-            properties: None,
-        }]))
+        .add_processor(StructureProcessor::ignore_structure_blocks())
+        .set_apply_waterlogging(false)
 }
 
 fn make_position(template_location: &str, position: Vector3<i32>, depth: i32) -> Vector3<i32> {
