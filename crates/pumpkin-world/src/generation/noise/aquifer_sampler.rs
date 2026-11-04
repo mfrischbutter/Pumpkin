@@ -396,6 +396,10 @@ impl WorldAquiferSampler {
         ])
     }
 
+    /// Vanilla's `FLOWING_UPDATE_SIMULARITY`, the similarity of the squared distances 10² and 12²:
+    /// aquifers this alike or closer may flow into each other.
+    const FLOWING_UPDATE_SIMILARITY: f32 = 1.0 - (12 * 12 - 10 * 10) as f32 / 25.0;
+
     #[inline]
     fn max_distance(i: i32, a: i32) -> f32 {
         1.0 - ((a - i).abs() as f32) / 25.0
@@ -709,8 +713,7 @@ impl WorldAquiferSampler {
         let sim12 = Self::max_distance(nearest[0].1, nearest[1].1);
 
         if sim12 <= 0.0 {
-            let should_schedule = if sim12 >= -0.12 {
-                // FLOWING_UPDATE_SIMILARITY
+            let should_schedule = if sim12 >= Self::FLOWING_UPDATE_SIMILARITY {
                 let fluid_level3 = self.get_water_level(nearest[1].0, router, height_estimator);
                 fluid_level2.block != fluid_level3.block || fluid_level2.max_y != fluid_level3.max_y
             } else {
@@ -779,10 +782,10 @@ impl WorldAquiferSampler {
 
         let may_flow12 =
             fluid_level2.block != fluid_level3.block || fluid_level2.max_y != fluid_level3.max_y;
-        let may_flow23 = sim23 >= -0.12
+        let may_flow23 = sim23 >= Self::FLOWING_UPDATE_SIMILARITY
             && (fluid_level3.block != fluid_level4.block
                 || fluid_level3.max_y != fluid_level4.max_y);
-        let may_flow13 = sim13 >= -0.12
+        let may_flow13 = sim13 >= Self::FLOWING_UPDATE_SIMILARITY
             && (fluid_level2.block != fluid_level4.block
                 || fluid_level2.max_y != fluid_level4.max_y);
 
@@ -790,8 +793,8 @@ impl WorldAquiferSampler {
             true
         } else {
             let fluid_level5 = self.get_water_level(nearest[3].0, router, height_estimator);
-            sim13 >= -0.12
-                && Self::max_distance(nearest[0].1, nearest[3].1) >= -0.12
+            sim13 >= Self::FLOWING_UPDATE_SIMILARITY
+                && Self::max_distance(nearest[0].1, nearest[3].1) >= Self::FLOWING_UPDATE_SIMILARITY
                 && (fluid_level2.block != fluid_level5.block
                     || fluid_level2.max_y != fluid_level5.max_y)
         };
