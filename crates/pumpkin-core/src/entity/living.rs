@@ -1754,9 +1754,10 @@ impl LivingEntity {
         let touching_water = self.entity.touching_water.load(SeqCst);
 
         // Vanilla Mob.isEffectiveAi: NoAI mobs don't travel, so they neither move nor fall.
-        let effective_ai = caller
-            .get_mob()
-            .is_none_or(|mob| !mob.get_mob_entity().is_no_ai());
+        let effective_ai = caller.is_effective_ai()
+            && caller
+                .get_mob()
+                .is_none_or(|mob| !mob.get_mob_entity().is_no_ai());
 
         // Vanilla `shouldTravelInFluid`: not in a fluid the mob stands on, like a strider in lava.
         let stands_on_fluid = caller.get_mob().is_some_and(|mob| {

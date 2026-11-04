@@ -170,6 +170,30 @@ pub const fn equipment_break_status(slot: &EquipmentSlot) -> EntityStatus {
     }
 }
 
+/// Vanilla `ComponentSerialization.CODEC` as a tag. A literal starting with '{' stays a compound,
+/// since [`text_component_from_nbt`] would read it back as legacy JSON.
+pub(crate) fn text_component_to_nbt(text: &TextComponent) -> NbtTag {
+    let tag = text.to_nbt_tag_for_version(&pumpkin_util::version::JavaMinecraftVersion::V_26_3);
+    if let NbtTag::String(text) = &tag
+        && text.starts_with('{')
+    {
+        let mut literal = NbtCompound::new();
+        literal.put_string("text", text.to_string());
+        return NbtTag::Compound(literal);
+    }
+    tag
+}
+
+/// Vanilla stores a text component tag and a string is literal text. Older Pumpkin saves hold a
+/// JSON string (same data version, so it can't be told apart by version).
+pub(crate) fn text_component_from_nbt(tag: &NbtTag) -> TextComponent {
+    match tag {
+        NbtTag::String(json) if json.starts_with('{') => pumpkin_util::serde_json::from_str(json)
+            .unwrap_or_else(|_| TextComponent::from_nbt(tag)),
+        _ => TextComponent::from_nbt(tag),
+    }
+}
+
 /// Vanilla `Entity.push(Entity)`: moves `this` and `entity` apart, each when pushable.
 pub fn push_apart<E: EntityBase + ?Sized>(this: &E, entity: &dyn EntityBase) {
     let self_entity = this.get_entity();
@@ -650,6 +674,11 @@ pub trait EntityBase: Send + Sync + std::any::Any {
             .is_some_and(LivingEntity::is_dead_or_dying)
     }
 
+    /// Vanilla `LivingEntity.isEffectiveAi`, for what `Mob.isNoAi` does not cover.
+    fn is_effective_ai(&self) -> bool {
+        true
+    }
+
     fn get_controlling_passenger(&self) -> Option<Arc<dyn EntityBase>> {
         None
     }
@@ -956,6 +985,12 @@ pub trait EntityBase: Send + Sync + std::any::Any {
                 cause,
             );
         }
+        false
+    }
+
+    /// Vanilla `Entity.skipAttackInteraction`: `true` ends `Player.attack` before anything of it
+    /// happens.
+    fn skip_attack_interaction(&self, _source: &Player) -> bool {
         false
     }
 
@@ -1939,7 +1974,8 @@ impl Entity {
         {
             return EntityDimensions::new(0.9, 1.0, 0.85);
         }
-        if self.entity_type == &EntityType::PLAYER {
+        // Vanilla `Avatar.POSES`.
+        if self.entity_type == &EntityType::PLAYER || self.entity_type == &EntityType::MANNEQUIN {
             match pose {
                 EntityPose::FallFlying | EntityPose::Swimming | EntityPose::SpinAttack => {
                     return EntityDimensions::new(0.6, 0.6, 0.4).scale(self.scale.load());
@@ -5307,6 +5343,11 @@ impl Entity {
             let vehicle_box = self.bounding_box.load();
             let passenger_entity = passenger.get_entity();
 
+            // Vanilla `Cushion.removePassenger`: not when the cushion itself is going.
+            if self.entity_type == &EntityType::CUSHION && !self.is_removed() && !self.is_silent() {
+                self.play_sound(Sound::EntityCushionGetUp);
+            }
+
             // Vanilla: ridingCooldown = 60 (prevents immediate re-mount)
             passenger_entity.riding_cooldown.store(60, Relaxed);
             self.world.load().emit_game_event_with_context(
@@ -5734,17 +5775,7 @@ impl Entity {
         nbt.put_bool("Invulnerable", self.invulnerable.load(Relaxed));
         nbt.put_int("PortalCooldown", self.portal_cooldown.load(Relaxed) as i32);
         if let Some(custom_name) = &**self.custom_name.load() {
-            let mut tag = custom_name
-                .to_nbt_tag_for_version(&pumpkin_util::version::JavaMinecraftVersion::V_26_3);
-            // A literal string starting with '{' would read back as legacy JSON, so keep it a compound.
-            if let NbtTag::String(text) = &tag
-                && text.starts_with('{')
-            {
-                let mut literal = NbtCompound::new();
-                literal.put_string("text", text.to_string());
-                tag = NbtTag::Compound(literal);
-            }
-            nbt.put("CustomName", tag);
+            nbt.put("CustomName", text_component_to_nbt(custom_name));
         }
         if self.custom_name_visible.load(Relaxed) {
             nbt.put_bool("CustomNameVisible", true);
@@ -5862,18 +5893,8 @@ impl Entity {
         self.portal_cooldown
             .store(nbt.get_int("PortalCooldown").unwrap_or(0) as u32, Relaxed);
         if let Some(name) = nbt.get("CustomName") {
-            // Vanilla stores a text component tag; a string is literal text. Older
-            // Pumpkin saves hold a JSON string (same data version, so it can't be told
-            // apart by version); the writer never emits a literal starting with '{'.
-            let component = match name {
-                NbtTag::String(json) if json.starts_with('{') => {
-                    pumpkin_util::serde_json::from_str(json)
-                        .unwrap_or_else(|_| TextComponent::from_nbt(name))
-                }
-                _ => TextComponent::from_nbt(name),
-            };
             // set_custom_name also updates the synced tracked data
-            self.set_custom_name(component);
+            self.set_custom_name(text_component_from_nbt(name));
         } else {
             self.clear_custom_name();
         }

@@ -13,6 +13,7 @@ use crate::command::argument_builder::{
     ArgumentBuilder, RequiredArgumentBuilder, argument, command, literal,
 };
 use crate::command::argument_types::argument_type::JavaClientArgumentType;
+use crate::entity::decoration::display::ItemDisplayEntity;
 use crate::command::argument_types::client_parsed::ClientParsed;
 use crate::command::argument_types::coordinates::block_pos::BlockPosArgumentType;
 use crate::command::argument_types::core::integer::IntegerArgumentType;
@@ -107,6 +108,9 @@ impl CommandExecutor for BlockReplaceExecutor {
 struct EntityReplaceExecutor {
     has_count: bool,
 }
+
+/// Vanilla `SlotRanges` names slot 0 `contents`.
+const ITEM_DISPLAY_CONTENTS_SLOT: usize = 0;
 
 impl CommandExecutor for EntityReplaceExecutor {
     #[expect(clippy::too_many_lines)]
@@ -222,6 +226,12 @@ impl CommandExecutor for EntityReplaceExecutor {
                     living.send_equipment_changes(&[(eq, item_stack.clone())]);
                     modified_count += 1;
                 }
+            } else if mojang_slot == ITEM_DISPLAY_CONTENTS_SLOT
+                && let Some(display) = target.cast_any().downcast_ref::<ItemDisplayEntity>()
+            {
+                // Vanilla `ItemDisplay.getSlot`.
+                display.set_item(item_stack.clone());
+                modified_count += 1;
             }
         }
 

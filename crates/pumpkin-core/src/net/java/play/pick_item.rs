@@ -98,7 +98,15 @@ impl JavaClient {
 
         let mut stack = found_egg
             .and_then(Item::from_id)
-            .map(|item| ItemStack::new(1, item));
+            .map(|item| ItemStack::new(1, item))
+            .or_else(|| {
+                // Vanilla `Cushion.getPickResult`.
+                use crate::entity::decoration::cushion::CushionEntity;
+                target
+                    .cast_any()
+                    .downcast_ref::<CushionEntity>()
+                    .map(|cushion| ItemStack::new(1, CushionEntity::item_for_color(cushion.color())))
+            });
 
         if let Some(server) = world.server.upgrade() {
             let mut event = crate::plugin::player::player_pick_entity::PlayerPickEntityEvent::new(

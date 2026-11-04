@@ -36,6 +36,7 @@ pub enum AdvancementTrigger {
     LaunchedEyeOfEnder,
     GlowedSign,
     DealtOverkillDamage,
+    AttackedInteractionEntity,
     Bullseye,
     CuredZombieVillager,
     TradedWithVillager,
@@ -418,6 +419,17 @@ impl Player {
                 self.trigger_criterion_event("minecraft:player_hurt_entity", |cond| match cond {
                     CriterionConditions::PlayerHurtEntity(pred) => {
                         pred.matches(false, false, Some(100.0))
+                    }
+                    CriterionConditions::Custom { .. } => true,
+                    _ => false,
+                });
+            }
+
+            // Vanilla `Interaction.skipAttackInteraction` counts as 1 damage.
+            AdvancementTrigger::AttackedInteractionEntity => {
+                self.trigger_criterion_event("minecraft:player_hurt_entity", |cond| match cond {
+                    CriterionConditions::PlayerHurtEntity(pred) => {
+                        pred.matches(false, false, Some(1.0))
                     }
                     CriterionConditions::Custom { .. } => true,
                     _ => false,

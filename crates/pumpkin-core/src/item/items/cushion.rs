@@ -4,6 +4,7 @@ use std::sync::Arc;
 use crate::entity::Entity;
 use crate::entity::decoration::cushion::CushionEntity;
 use crate::entity::player::Player;
+use crate::item::items::spawn_egg::apply_entity_variant;
 use crate::item::{ItemBehaviour, ItemMetadata};
 use crate::server::Server;
 use pumpkin_data::entity::EntityType;
@@ -11,13 +12,43 @@ use pumpkin_data::game_event::GameEvent;
 use pumpkin_data::item::Item;
 use pumpkin_data::item_stack::ItemStack;
 use pumpkin_data::sound::{Sound, SoundCategory};
+use pumpkin_data::tag::{self, Taggable};
 use pumpkin_data::{Block, BlockDirection};
-use pumpkin_util::math::boundingbox::BoundingBox;
+use pumpkin_util::math::boundingbox::{BoundingBox, EntityDimensions};
 use pumpkin_util::math::position::BlockPos;
 use pumpkin_util::math::vector3::Vector3;
-use pumpkin_util::math::wrap_degrees;
+use pumpkin_world::clip::intersects_aabb_with_hit;
+
+/// Vanilla `CushionItem.COLLISION_SHAPE_RAYCAST_EPSILON`.
+const COLLISION_SHAPE_RAYCAST_EPSILON: f64 = 0.001;
 
 pub struct CushionItem;
+
+/// Vanilla `CushionItem.recalculateContextForSpecialCollisionShapes`: on a block whose collision
+/// is taller than its outline, like a fence, the click moves to the collision shape.
+fn recalculate_hit(
+    player: &Player,
+    location: BlockPos,
+    block: &Block,
+    face: BlockDirection,
+    click: Vector3<f64>,
+) -> (BlockDirection, Vector3<f64>) {
+    if !block.has_tag(&tag::Block::MINECRAFT_CUSHION_USES_COLLISION_SHAPE) {
+        return (face, click);
+    }
+    let from = player.get_entity().get_eye_pos();
+    let ray = click.sub(&from).normalize();
+    let to = click.add(&(ray * COLLISION_SHAPE_RAYCAST_EPSILON));
+    let state = player.world().get_block_state(&location);
+    state
+        .get_block_collision_shapes_at(&location)
+        .filter_map(|shape| {
+            let shape = shape.at_pos(location);
+            intersects_aabb_with_hit(from, to, shape.min, shape.max)
+        })
+        .min_by(|a, b| a.0.total_cmp(&b.0))
+        .map_or((face, click), |(_, hit_face, hit_pos, _)| (hit_face, hit_pos))
+}
 
 impl ItemMetadata for CushionItem {
     fn ids() -> Box<[u16]> {
@@ -51,9 +82,15 @@ impl ItemBehaviour for CushionItem {
         location: BlockPos,
         face: BlockDirection,
         cursor_pos: Vector3<f32>,
-        _block: &Block,
+        block: &Block,
         _server: &Server,
     ) -> BlockActionResult {
+        let click = Vector3::new(
+            f64::from(location.0.x) + f64::from(cursor_pos.x),
+            f64::from(location.0.y) + f64::from(cursor_pos.y),
+            f64::from(location.0.z) + f64::from(cursor_pos.z),
+        );
+        let (face, click) = recalculate_hit(player, location, block, face, click);
         if face != BlockDirection::Up {
             return BlockActionResult::Fail;
         }
@@ -66,27 +103,19 @@ impl ItemBehaviour for CushionItem {
         };
         let bottom_center = Vector3::new(
             f64::from(target_pos.0.x) + 0.5,
-            f64::from(location.0.y) + f64::from(cursor_pos.y),
+            click.y,
             f64::from(target_pos.0.z) + 0.5,
         );
 
-        let dimensions = EntityType::CUSHION.dimension;
-        let width = f64::from(dimensions[0]);
-        let height = f64::from(dimensions[1]);
-        let bounding_box = BoundingBox::new(
-            Vector3::new(
-                bottom_center.x - width / 2.0,
-                bottom_center.y,
-                bottom_center.z - width / 2.0,
-            ),
-            Vector3::new(
-                bottom_center.x + width / 2.0,
-                bottom_center.y + height,
-                bottom_center.z + width / 2.0,
-            ),
+        let [width, height] = EntityType::CUSHION.dimension;
+        let bounding_box = BoundingBox::new_from_pos(
+            bottom_center.x,
+            bottom_center.y,
+            bottom_center.z,
+            &EntityDimensions::new(width, height, height),
         );
 
-        if !world.is_space_empty(bounding_box)
+        if !CushionEntity::can_be_placed_at(&world, &bounding_box)
             || world
                 .get_entities_at_box(&bounding_box)
                 .iter()
@@ -96,9 +125,10 @@ impl ItemBehaviour for CushionItem {
         }
 
         let (player_yaw, _) = player.rotation();
-        let rotation = ((wrap_degrees(player_yaw) + 45.0) / 90.0).floor() * 90.0;
+        // Vanilla `Direction.fromYRot(...).toYRot()`.
+        let rotation = ((f64::from(player_yaw) / 90.0 + 0.5).floor() as i32 & 3) * 90;
         let entity = Entity::new(world.clone(), bottom_center, &EntityType::CUSHION);
-        entity.set_rotation(rotation, 0.0);
+        entity.set_rotation(rotation as f32, 0.0);
 
         let pos = entity.pos.load();
         world.play_sound_fine(
@@ -109,8 +139,15 @@ impl ItemBehaviour for CushionItem {
             0.8,
         );
 
-        let cushion = CushionEntity::new(entity, CushionEntity::color_from_stack(item));
-        world.spawn_entity(Arc::new(cushion));
+        let cushion = Arc::new(CushionEntity::new(
+            entity,
+            CushionEntity::color_from_stack(item),
+        ));
+        // Vanilla `EntityType.createDefaultStackConfig`: the custom name and `entity_data`.
+        apply_entity_variant(item, &*cushion, Some(player));
+        if world.spawn_entity(cushion.clone()) {
+            cushion.destroy_if_in_fire();
+        }
         world.emit_game_event(GameEvent::EntityPlace.name(), pos);
         item.decrement_unless_creative(player.gamemode.load(), 1);
         BlockActionResult::Success

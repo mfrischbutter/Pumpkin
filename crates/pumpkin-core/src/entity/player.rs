@@ -1628,6 +1628,10 @@ impl Player {
 
     #[expect(clippy::too_many_lines)]
     pub fn attack(&self, victim: &Arc<dyn EntityBase>) {
+        // Vanilla `Player.cannotAttack`.
+        if victim.skip_attack_interaction(self) {
+            return;
+        }
         let world = self.world();
         let Some(server) = world.server.upgrade() else {
             return;
