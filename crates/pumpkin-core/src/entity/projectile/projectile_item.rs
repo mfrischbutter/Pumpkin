@@ -163,6 +163,7 @@ pub fn shoot_projectile_item(
         // shot then sets its movement.
         let entity = Entity::new(world.clone(), position, &EntityType::SMALL_FIREBALL);
         let fireball = SmallFireballEntity::new(entity);
+        fireball.set_item(stack);
         fireball.thrown.owner.set(owner);
         fireball
             .thrown

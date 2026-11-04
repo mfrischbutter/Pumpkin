@@ -17,6 +17,7 @@ use std::sync::Arc;
 use crate::block::BlockBehaviour;
 use crate::block::BrokenArgs;
 use crate::block::CanPlaceAtArgs;
+use crate::block::ExplodeArgs;
 use crate::block::GetStateForNeighborUpdateArgs;
 use crate::block::NormalUseArgs;
 use crate::block::OnNeighborUpdateArgs;
@@ -224,6 +225,17 @@ impl DoorBlock {
 }
 
 impl BlockBehaviour for DoorBlock {
+    /// Vanilla `DoorBlock.onExplosionHit`.
+    fn on_explosion_trigger(&self, args: ExplodeArgs<'_>) {
+        let props = DoorProperties::from_state_id(args.world.get_block_state_id(args.position));
+        if matches!(props.half, DoubleBlockHalf::Lower)
+            && can_open_door(args.block)
+            && !props.powered
+        {
+            Self::set_open(args.world, args.position, !props.open);
+        }
+    }
+
     fn on_place(&self, args: OnPlaceArgs<'_>) -> BlockStateId {
         let mut door_props = DoorProperties::default(args.block);
         let facing = args.player.living_entity.entity.get_horizontal_facing();

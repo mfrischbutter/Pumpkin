@@ -337,8 +337,6 @@ fn shoot_fireball(mob: &dyn Mob, target: &Entity) {
 
     let base_entity = Entity::new(world.clone(), spawn_pos, &EntityType::FIREBALL);
     let fireball = FireballEntity::new_shot(base_entity, entity, direction);
-    // `ThrownItemEntity::new` puts the projectile at the shooter's eye, re-anchor it.
-    fireball.thrown.entity.pos.store(spawn_pos);
     let power = as_ghast(mob).map_or(DEFAULT_EXPLOSION_POWER, GhastEntity::explosion_power);
     fireball.set_explosion_power(power);
     world.spawn_entity(Arc::new(fireball));

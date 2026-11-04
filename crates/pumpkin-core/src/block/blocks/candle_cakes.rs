@@ -3,20 +3,21 @@ use std::sync::Arc;
 use pumpkin_data::{
     Block, BlockDirection, BlockState, BlockStateId,
     block_properties::CandleCakeProperties,
-    game_event::GameEvent,
     item::Item,
     item_stack::ItemStack,
-    sound::{Sound, SoundCategory},
 };
 use pumpkin_macros::pumpkin_block_from_tag;
 use pumpkin_util::math::position::BlockPos;
-use pumpkin_world::world::{BlockAccessor, BlockFlags};
+use pumpkin_world::world::BlockAccessor;
 
 use crate::{
     block::{
-        BlockBehaviour, CanPlaceAtArgs, GetComparatorOutputArgs, GetStateForNeighborUpdateArgs,
-        NormalUseArgs, PathComputationType, UseWithItemArgs,
-        blocks::cake::{CakeBlock, FULL_CAKE_SIGNAL},
+        BlockBehaviour, CanPlaceAtArgs, ExplodeArgs, GetComparatorOutputArgs,
+        GetStateForNeighborUpdateArgs, NormalUseArgs, PathComputationType, UseWithItemArgs,
+        blocks::{
+            cake::{CakeBlock, FULL_CAKE_SIGNAL},
+            candles::extinguish,
+        },
         registry::BlockActionResult,
     },
     entity::player::Player,
@@ -83,6 +84,16 @@ impl CandleCakeBlock {
 }
 
 impl BlockBehaviour for CandleCakeBlock {
+    /// Vanilla `AbstractCandleBlock.onExplosionHit`.
+    fn on_explosion_trigger(&self, args: ExplodeArgs<'_>) {
+        let mut properties =
+            CandleCakeProperties::from_state_id(args.world.get_block_state_id(args.position));
+        if properties.lit {
+            properties.lit = false;
+            extinguish(args.world, args.position, properties.to_state_id(args.block));
+        }
+    }
+
     fn use_with_item(&self, args: UseWithItemArgs<'_>) -> BlockActionResult {
         let item_id = args.item_stack.item.id;
         if item_id == Item::FIRE_CHARGE.id || item_id == Item::FLINT_AND_STEEL.id {
@@ -92,20 +103,7 @@ impl BlockBehaviour for CandleCakeBlock {
         let mut properties = CandleCakeProperties::from_state_id(state_id);
         if args.hit.cursor_pos.y > 0.5 && args.item_stack.is_empty() && properties.lit {
             properties.lit = false;
-            args.world.set_block_state(
-                args.position,
-                properties.to_state_id(args.block),
-                BlockFlags::NOTIFY_ALL,
-            );
-            args.world.play_sound(
-                Sound::BlockCandleExtinguish,
-                SoundCategory::Blocks,
-                &args.position.to_centered_f64(),
-            );
-            args.world.emit_game_event(
-                GameEvent::BlockChange.name(),
-                args.position.to_centered_f64(),
-            );
+            extinguish(args.world, args.position, properties.to_state_id(args.block));
             return BlockActionResult::Success;
         }
         BlockActionResult::PassToDefaultBlockAction

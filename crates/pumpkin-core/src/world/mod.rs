@@ -4312,12 +4312,35 @@ impl World {
         interaction: ExplosionInteraction,
         damage_calculator: Option<Arc<dyn ExplosionDamageCalculator>>,
     ) {
+        self.explode_with_settings(
+            source,
+            position,
+            power,
+            interaction,
+            explosion::ExplosionSettings {
+                calculator: damage_calculator,
+                ..explosion::ExplosionSettings::default()
+            },
+        );
+    }
+
+    /// Vanilla `Level.explode` with its fire, calculator, particles and sound.
+    pub fn explode_with_settings(
+        self: &Arc<Self>,
+        source: Option<&Entity>,
+        position: Vector3<f64>,
+        power: f32,
+        interaction: ExplosionInteraction,
+        settings: explosion::ExplosionSettings,
+    ) {
         let block_interaction = self.get_block_interaction(interaction);
-        let mut explosion = Explosion::new(power, position, block_interaction).with_source(source);
-        if let Some(calc) = damage_calculator {
+        let mut explosion = Explosion::new(power, position, block_interaction)
+            .with_source(source)
+            .with_fire(settings.fire);
+        if let Some(calc) = settings.calculator.clone() {
             explosion = explosion.with_damage_calculator(calc);
         }
-        self.run_explosion(&explosion, position, power);
+        self.run_explosion(&explosion, position, power, &settings);
     }
 
     pub fn explode_tnt_minecart(
@@ -4330,7 +4353,12 @@ impl World {
         let explosion = Explosion::new(power, position, block_interaction)
             .with_source(Some(source))
             .preserving_rails();
-        self.run_explosion(&explosion, position, power);
+        self.run_explosion(
+            &explosion,
+            position,
+            power,
+            &explosion::ExplosionSettings::default(),
+        );
     }
 
     #[must_use]
@@ -4364,28 +4392,37 @@ impl World {
         }
     }
 
-    fn run_explosion(self: &Arc<Self>, explosion: &Explosion, position: Vector3<f64>, power: f32) {
-        let Some(block_count) = explosion.explode(self) else {
+    /// Vanilla `ServerLevel.explode`: the explosion, then the packet to the players near it.
+    fn run_explosion(
+        self: &Arc<Self>,
+        explosion: &Explosion,
+        position: Vector3<f64>,
+        power: f32,
+        settings: &explosion::ExplosionSettings,
+    ) {
+        let Some(outcome) = explosion.explode(self) else {
             return;
         };
-        let particle = if power < 2.0 {
-            Particle::Explosion
+        let particle = if explosion.is_small() {
+            settings.small_particle
         } else {
-            Particle::ExplosionEmitter
+            settings.large_particle
         };
-        let sound = IdOr::<SoundEvent>::Id(Sound::EntityGenericExplode as u16);
+        let sound = IdOr::<SoundEvent>::Id(settings.sound as u16);
         for player in self.players.load().iter() {
             if player.position().squared_distance_to_vec(&position) > 4096.0 {
                 continue;
             }
-            player.try_send_client_packet(&CExplosion::new(
+            let packet = CExplosion::new(
                 position,
                 power,
-                block_count as i32,
-                None,
+                outcome.block_count as i32,
+                outcome.hit_players.get(&player.entity_id()).copied(),
                 VarInt(particle as i32),
                 sound.clone(),
-            ));
+            )
+            .with_plays_sound(explosion.plays_sound());
+            player.try_send_client_packet(&packet);
         }
     }
 

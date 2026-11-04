@@ -103,6 +103,8 @@ pub struct LivingEntity {
     pub dead: AtomicBool,
     /// The distance the entity has been falling.
     pub fall_distance: AtomicCell<f32>,
+    /// Vanilla `currentImpulseImpactPos`: where a launch started, for the fall after it.
+    pub current_impulse: crate::entity::current_impulse::CurrentImpulse,
     pub active_effects: std::sync::Mutex<FxHashMap<&'static StatusEffect, Effect>>,
     pub entity_equipment: Arc<std::sync::Mutex<EntityEquipment>>,
     pub equipment_drop_chances: Arc<std::sync::Mutex<FxHashMap<EquipmentSlot, f32>>>,
@@ -350,6 +352,7 @@ impl LivingEntity {
             last_damage_taken: AtomicCell::new(0.0),
             absorption: AtomicCell::new(0.0),
             fall_distance: AtomicCell::new(0.0),
+            current_impulse: crate::entity::current_impulse::CurrentImpulse::default(),
             death_time: AtomicU8::new(0),
             dead: AtomicBool::new(false),
             item_use_time: AtomicI32::new(0),
@@ -2362,6 +2365,25 @@ impl LivingEntity {
         }
     }
 
+    /// Vanilla `LivingEntity.hurtServer`: towards what hit it, or against the flight of a
+    /// projectile (`Projectile.calculateHorizontalHurtKnockbackDirection`), except for fireworks
+    /// and potions, whose overrides push away from where they are.
+    fn knockback_direction(&self, source: &dyn EntityBase) -> (f64, f64) {
+        let source_entity = source.get_entity();
+        let kind = source_entity.entity_type;
+        if source.get_projectile_owner().is_some()
+            && kind != &EntityType::FIREWORK_ROCKET
+            && kind != &EntityType::SPLASH_POTION
+            && kind != &EntityType::LINGERING_POTION
+        {
+            let velocity = source_entity.velocity.load();
+            return (-velocity.x, -velocity.z);
+        }
+        let source_pos = source_entity.pos.load();
+        let target_pos = self.entity.pos.load();
+        (source_pos.x - target_pos.x, source_pos.z - target_pos.z)
+    }
+
     /// Applies fall damage through the mob's override when it has one.
     pub fn handle_fall_damage(
         &self,
@@ -2382,6 +2404,9 @@ impl LivingEntity {
         fall_distance: f32,
         damage_per_distance: f32,
     ) {
+        let fall_distance = self
+            .current_impulse
+            .effective_fall_distance(fall_distance, self.entity.pos.load().y);
         // Vanilla `Entity.causeFallDamage`: the passengers fall with it.
         if !self.is_immune_to_fall_damage() {
             self.propagate_fall_to_passengers(fall_distance, damage_per_distance);
@@ -2429,6 +2454,7 @@ impl LivingEntity {
             .map_or(0.0, crate::entity::mob::Mob::mob_fall_damage_reduction);
         let damage = (unsafe_fall_distance * damage_per_distance).floor() - reduction;
         if damage > 0.0 {
+            self.current_impulse.reset();
             caller.play_entity_sound(Self::get_fall_damage_sound(caller, damage), 1.0, 1.0);
             self.play_block_fall_sound(caller);
             // Through the caller, so the player checks its abilities like vanilla `hurtServer`.
@@ -4038,11 +4064,10 @@ impl LivingEntity {
             }
             self.make_voice_sound(caller, self.hurt_sound(caller));
 
-            if let Some(source) = source {
-                let source_pos = source.get_entity().pos.load();
-                let target_pos = self.entity.pos.load();
-                let dx = source_pos.x - target_pos.x;
-                let dz = source_pos.z - target_pos.z;
+            if let Some(source) = source
+                && !damage_type.has_tag(&tag::DamageType::MINECRAFT_NO_KNOCKBACK)
+            {
+                let (dx, dz) = self.knockback_direction(source);
                 let moved_itself = caller.get_mob().is_some_and(|mob| {
                     mob.mob_knockback(
                         0.4,
@@ -4184,6 +4209,7 @@ impl EntityBase for LivingEntity {
     #[allow(clippy::too_many_lines)]
     fn tick(&self, caller: &dyn EntityBase, server: &Server) {
         self.entity.tick(caller, server);
+        self.current_impulse.tick();
         self.tick_last_hurt_by_mob();
         if let Some(mob) = caller.get_mob() {
             mob.tick_ambient_sound();

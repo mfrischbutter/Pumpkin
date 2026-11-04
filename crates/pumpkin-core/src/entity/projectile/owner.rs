@@ -114,6 +114,7 @@ impl EntityReference {
 pub struct ProjectileOwner {
     owner: EntityReference,
     left_owner: AtomicBool,
+    has_been_shot: AtomicBool,
 }
 
 impl ProjectileOwner {
@@ -122,6 +123,7 @@ impl ProjectileOwner {
         Self {
             owner: EntityReference::none(),
             left_owner: AtomicBool::new(false),
+            has_been_shot: AtomicBool::new(false),
         }
     }
 
@@ -130,12 +132,18 @@ impl ProjectileOwner {
         Self {
             owner: EntityReference::new(owner),
             left_owner: AtomicBool::new(false),
+            has_been_shot: AtomicBool::new(false),
         }
     }
 
     /// Vanilla `Projectile.setOwner`.
     pub fn set(&self, owner: Option<&Entity>) {
         self.owner.set(owner);
+    }
+
+    /// Vanilla `hasBeenShot`: whether this is the first call for the projectile.
+    pub fn mark_shot(&self) -> bool {
+        !self.has_been_shot.swap(true, Relaxed)
     }
 
     /// Vanilla `checkLeftOwner`, once per tick before moving.
@@ -193,6 +201,7 @@ impl ProjectileOwner {
         if self.left_owner.load(Relaxed) {
             nbt.put_bool("LeftOwner", true);
         }
+        nbt.put_bool("HasBeenShot", self.has_been_shot.load(Relaxed));
     }
 
     /// Updates only the keys present, so a partial read keeps the rest.
@@ -202,6 +211,9 @@ impl ProjectileOwner {
             self.left_owner
                 .store(nbt.get_bool("LeftOwner").unwrap_or(false), Relaxed);
         }
+        if let Some(shot) = nbt.get_bool("HasBeenShot") {
+            self.has_been_shot.store(shot, Relaxed);
+        }
     }
 
     /// Resets the removed keys to vanilla's defaults.
@@ -210,6 +222,7 @@ impl ProjectileOwner {
             match &**key {
                 "Owner" => self.owner.clear(),
                 "LeftOwner" => self.left_owner.store(false, Relaxed),
+                "HasBeenShot" => self.has_been_shot.store(false, Relaxed),
                 _ => {}
             }
         }

@@ -185,7 +185,5 @@ fn shoot_fireball(mob: &dyn Mob, offset: Vector3<f64>, distance_sq: f64) {
     let base_entity = Entity::new(world.clone(), spawn_pos, &EntityType::SMALL_FIREBALL);
 
     let fireball = SmallFireballEntity::new_shot(base_entity, blaze, direction);
-    // `ThrownItemEntity::new` puts the projectile at the shooter's eye, re-anchor it.
-    fireball.thrown.entity.pos.store(spawn_pos);
     world.spawn_entity(Arc::new(fireball));
 }

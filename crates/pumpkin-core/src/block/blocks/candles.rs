@@ -11,8 +11,10 @@ use pumpkin_util::math::position::BlockPos;
 use pumpkin_world::tick::TickPriority;
 use pumpkin_world::world::BlockAccessor;
 use pumpkin_world::world::BlockFlags;
+use std::sync::Arc;
 
-use crate::block::{GetStateForNeighborUpdateArgs, can_support_center};
+use crate::block::{ExplodeArgs, GetStateForNeighborUpdateArgs, can_support_center};
+use crate::world::World;
 use crate::{
     block::{
         BlockIsReplacing,
@@ -22,10 +24,31 @@ use crate::{
     entity::EntityBase,
 };
 
+/// Vanilla `AbstractCandleBlock.extinguish`; the smoke is the client's.
+pub(crate) fn extinguish(world: &Arc<World>, position: &BlockPos, unlit_state: BlockStateId) {
+    world.set_block_state(position, unlit_state, BlockFlags::NOTIFY_ALL);
+    world.play_sound(
+        Sound::BlockCandleExtinguish,
+        SoundCategory::Blocks,
+        &position.to_centered_f64(),
+    );
+    world.emit_game_event(GameEvent::BlockChange.name(), position.to_centered_f64());
+}
+
 #[pumpkin_block_from_tag("minecraft:candles")]
 pub struct CandleBlock;
 
 impl BlockBehaviour for CandleBlock {
+    /// Vanilla `AbstractCandleBlock.onExplosionHit`.
+    fn on_explosion_trigger(&self, args: ExplodeArgs<'_>) {
+        let mut properties =
+            CandleLikeProperties::from_state_id(args.world.get_block_state_id(args.position));
+        if properties.lit {
+            properties.lit = false;
+            extinguish(args.world, args.position, properties.to_state_id(args.block));
+        }
+    }
+
     fn on_place(&self, args: OnPlaceArgs<'_>) -> BlockStateId {
         if let BlockIsReplacing::Itself(state_id) = args.replacing {
             let mut properties = CandleLikeProperties::from_state_id(state_id);
@@ -46,20 +69,7 @@ impl BlockBehaviour for CandleBlock {
 
         if args.player.may_build() && properties.lit {
             properties.lit = false;
-            args.world.set_block_state(
-                args.position,
-                properties.to_state_id(args.block),
-                BlockFlags::NOTIFY_ALL,
-            );
-            args.world.play_sound(
-                Sound::BlockCandleExtinguish,
-                SoundCategory::Blocks,
-                &args.position.to_centered_f64(),
-            );
-            args.world.emit_game_event(
-                GameEvent::BlockChange.name(),
-                args.position.to_centered_f64(),
-            );
+            extinguish(args.world, args.position, properties.to_state_id(args.block));
             return BlockActionResult::Success;
         }
 

@@ -1,7 +1,7 @@
 use crate::block::blocks::redstone::block_receives_redstone_power;
 use crate::block::registry::BlockActionResult;
 use crate::block::{
-    BlockBehaviour, GetStateForNeighborUpdateArgs, NormalUseArgs, OnNeighborUpdateArgs,
+    BlockBehaviour, ExplodeArgs, GetStateForNeighborUpdateArgs, NormalUseArgs, OnNeighborUpdateArgs,
     OnPlaceArgs, PathComputationType,
 };
 use crate::entity::EntityBase;
@@ -21,17 +21,17 @@ use std::sync::Arc;
 
 type TrapDoorProperties = pumpkin_data::block_properties::OakTrapdoorLikeProperties;
 
-fn toggle_trapdoor(player: &Player, world: &Arc<World>, block_pos: &BlockPos) {
+fn toggle_trapdoor(player: Option<&Player>, world: &Arc<World>, block_pos: &BlockPos) {
     let (block, block_state) = world.get_block_and_state_id(block_pos);
     let mut trapdoor_props = TrapDoorProperties::from_state_id(block_state);
     trapdoor_props.open = !trapdoor_props.open;
 
-    world.play_block_sound_expect(
-        player,
-        get_sound(block, trapdoor_props.open),
-        SoundCategory::Blocks,
-        *block_pos,
-    );
+    let sound = get_sound(block, trapdoor_props.open);
+    if let Some(player) = player {
+        world.play_block_sound_expect(player, sound, SoundCategory::Blocks, *block_pos);
+    } else {
+        world.play_block_sound(sound, SoundCategory::Blocks, *block_pos);
+    }
 
     let game_event = if trapdoor_props.open {
         pumpkin_data::game_event::GameEvent::BlockOpen
@@ -76,13 +76,21 @@ fn get_sound(block: &Block, open: bool) -> Sound {
 pub struct TrapDoorBlock;
 
 impl BlockBehaviour for TrapDoorBlock {
+    /// Vanilla `TrapDoorBlock.onExplosionHit`.
+    fn on_explosion_trigger(&self, args: ExplodeArgs<'_>) {
+        let state = args.world.get_block_state_id(args.position);
+        if can_open_trapdoor(args.block) && !TrapDoorProperties::from_state_id(state).powered {
+            toggle_trapdoor(None, args.world, args.position);
+        }
+    }
+
     fn normal_use(&self, args: NormalUseArgs<'_>) -> BlockActionResult {
         {
             if !can_open_trapdoor(args.block) {
                 return BlockActionResult::Pass;
             }
 
-            toggle_trapdoor(args.player, args.world, args.position);
+            toggle_trapdoor(Some(&**args.player), args.world, args.position);
 
             BlockActionResult::Success
         }

@@ -29,6 +29,8 @@ pub struct CExplosion {
     pub sound: IdOr<SoundEvent>,
     /// The size of the block particles pool, used for debris visuals in 1.21.9+.
     pub block_particles_pool_size: VarInt,
+    /// Whether the client plays the sound, false for a silent source. Sent since 26.3.
+    pub plays_sound: bool,
 }
 
 impl CExplosion {
@@ -49,7 +51,14 @@ impl CExplosion {
             particle,
             sound,
             block_particles_pool_size: VarInt(0),
+            plays_sound: true,
         }
+    }
+
+    #[must_use]
+    pub const fn with_plays_sound(mut self, plays_sound: bool) -> Self {
+        self.plays_sound = plays_sound;
+        self
     }
 }
 
@@ -95,7 +104,7 @@ impl ClientPacket for CExplosion {
 
             // Whether the explosion sound is played, added in 26.3
             if *version >= JavaMinecraftVersion::V_26_3 {
-                write.write_bool(true)?;
+                write.write_bool(self.plays_sound)?;
             }
         } else {
             write.write_f32_be(self.radius)?;

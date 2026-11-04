@@ -152,6 +152,9 @@ impl JavaClient {
                         player.gamemode.load() == GameMode::Creative,
                     );
                 }
+                if packet.collision & FLAG_ON_GROUND != 0 {
+                    player.living_entity.current_impulse.try_reset();
+                }
                 chunker::update_position(player);
                 let delta = Vector3::new(
                     pos.x - last_pos.x,
@@ -308,6 +311,9 @@ impl JavaClient {
                         (packet.collision & FLAG_ON_GROUND) != 0,
                         player.gamemode.load() == GameMode::Creative,
                     );
+                }
+                if (packet.collision & FLAG_ON_GROUND) != 0 {
+                    player.living_entity.current_impulse.try_reset();
                 }
                 chunker::update_position(player);
                 let delta = Vector3::new(

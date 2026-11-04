@@ -2,18 +2,23 @@ use crate::entity::projectile::owner::ProjectileOwner;
 use std::sync::atomic::{AtomicBool, Ordering};
 
 use pumpkin_data::damage::DamageType;
-use pumpkin_util::math::vector3::Vector3;
+use pumpkin_util::math::{position::BlockPos, vector3::Vector3};
 
 use crate::{
     entity::{
         Entity, EntityBase,
         living::LivingEntity,
-        projectile::{ProjectileHit, ThrownItemEntity},
+        projectile::{ProjectileHit, ThrownItemEntity, hurting},
     },
     server::Server,
+    world::World,
 };
 
 pub const LLAMA_SPIT_GRAVITY: f64 = 0.06;
+/// Vanilla `LlamaSpit.getAirDrag`.
+const AIR_DRAG: f32 = 0.99;
+/// Vanilla `LlamaSpit.onHitEntity` damage.
+const HIT_DAMAGE: f32 = 1.0;
 
 pub struct LlamaSpitEntity {
     pub thrown: ThrownItemEntity,
@@ -56,17 +61,56 @@ impl LlamaSpitEntity {
     }
 }
 
+/// Vanilla `findBlocksIn(box).filterState(isAir).noneMatched()`: no air anywhere in its box.
+fn touches_no_air(world: &World, entity: &Entity) -> bool {
+    let bounds = entity.bounding_box.load();
+    for pos in BlockPos::iterate(bounds.min_block_pos(), bounds.max_block_pos()) {
+        if world.get_block_state(&pos).is_air() {
+            return false;
+        }
+    }
+    true
+}
+
 impl EntityBase for LlamaSpitEntity {
     fn get_projectile_owner(&self) -> Option<&ProjectileOwner> {
         Some(&self.thrown.owner)
     }
 
-    fn tick(&self, caller: &dyn EntityBase, _server: &Server) {
-        if self.get_entity().touching_water.load(Ordering::Relaxed) {
-            self.get_entity().remove();
+    /// Vanilla `LlamaSpit.tick`. It moves by the velocity from before the drag and whatever
+    /// the hit did, and a hit on an entity does not end it.
+    fn tick(&self, caller: &dyn EntityBase, server: &Server) {
+        let entity = self.get_entity();
+        self.thrown.tick_projectile_state();
+        entity.tick(caller, server);
+        if entity.is_removed() {
             return;
         }
-        self.thrown.process_tick(caller);
+
+        let start = entity.pos.load();
+        let movement = entity.velocity.load();
+        if let Some(hit) = self.thrown.find_hit(caller, start, movement) {
+            self.thrown.hit_target_or_deflect_self(caller, hit);
+            if entity.is_removed() {
+                return;
+            }
+        }
+
+        hurting::update_rotation(entity);
+        if touches_no_air(&entity.world.load(), entity)
+            || entity.touching_water.load(Ordering::Relaxed)
+        {
+            entity.remove();
+            return;
+        }
+
+        let mut next = movement * f64::from(AIR_DRAG);
+        if !entity.has_no_gravity() {
+            next.y -= self.thrown.gravity;
+        }
+        entity.velocity.store(next);
+        entity.set_pos(start + movement);
+        self.thrown.broadcast_velocity();
     }
 
     fn get_entity(&self) -> &Entity {
@@ -81,24 +125,33 @@ impl EntityBase for LlamaSpitEntity {
         self
     }
 
+    /// Vanilla `LlamaSpit.onHitEntity`, only with a living owner, and `onHitBlock`.
     fn on_hit(&self, hit: ProjectileHit) {
-        if let ProjectileHit::Entity {
-            ref entity,
-            hit_pos,
-            ..
-        } = hit
-        {
-            let world = self.get_entity().world.load();
-            let owner = self.thrown.owner.get(&world);
-
-            let _ = entity.damage_with_context(
-                entity.as_ref(),
-                1.0,
-                DamageType::SPIT,
-                Some(hit_pos),
-                Some(self.get_entity()),
-                owner.as_deref(),
-            );
+        let entity = self.get_entity();
+        match &hit {
+            ProjectileHit::Entity {
+                entity: target,
+                hit_pos,
+                ..
+            } => {
+                let world = entity.world.load();
+                let owner = self
+                    .thrown
+                    .owner
+                    .get(&world)
+                    .filter(|owner| owner.get_living_entity().is_some());
+                if owner.is_some() {
+                    let _ = target.damage_with_context(
+                        target.as_ref(),
+                        HIT_DAMAGE,
+                        DamageType::SPIT,
+                        Some(*hit_pos),
+                        Some(self),
+                        owner.as_deref(),
+                    );
+                }
+            }
+            ProjectileHit::Block { .. } => entity.remove(),
         }
     }
 }

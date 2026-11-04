@@ -172,6 +172,11 @@ impl SpearItem {
         base_damage: f32,
         effects: StabEffects,
     ) -> bool {
+        if effects.knockback
+            && crate::entity::projectile::hurting::deflect_by_player(player, target.as_ref())
+        {
+            return true;
+        }
         let target_entity = target.get_entity();
         let mut base_damage = base_damage;
         let mut magic_boost = Self::enchantment_damage(stack, target_entity) as f32;

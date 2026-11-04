@@ -1716,6 +1716,10 @@ impl Player {
         };
         self.last_attacked_ticks.store(0, Ordering::Relaxed);
 
+        if crate::entity::projectile::hurting::deflect_by_player(self, victim.as_ref()) {
+            return;
+        }
+
         // Only reduce attack damage if in cooldown
         // TODO: Enchantments are reduced in the same way, just without the square.
         if attack_cooldown_progress < 1.0 {

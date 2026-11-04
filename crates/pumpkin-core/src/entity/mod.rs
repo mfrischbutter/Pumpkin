@@ -80,6 +80,7 @@ pub mod attributes;
 pub mod boss;
 pub mod breath;
 pub mod bucketable;
+pub mod current_impulse;
 pub mod custom_sound;
 pub mod decoration;
 pub mod effect;
@@ -1108,6 +1109,19 @@ pub trait EntityBase: Send + Sync + std::any::Any {
     }
 
     fn on_hit(&self, _hit: crate::entity::projectile::ProjectileHit) {}
+
+    /// Vanilla `Projectile.onDeflection`.
+    fn on_deflection(&self, _by_attack: bool) {}
+
+    /// Vanilla `WindCharge.deflect`: whether a deflection takes effect now.
+    fn can_be_deflected(&self) -> bool {
+        true
+    }
+
+    /// Vanilla `Projectile.canHitEntity` overrides, for what this projectile rules out itself.
+    fn projectile_can_hit(&self, _target: &dyn EntityBase) -> bool {
+        true
+    }
 
     /// Returns the item stack a projectile carries, like vanilla's `ItemSupplier::getItem`.
     fn get_projectile_item(&self) -> Option<ItemStack> {

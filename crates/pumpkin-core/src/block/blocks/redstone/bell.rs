@@ -4,7 +4,8 @@ use crate::block::blocks::redstone::block_receives_redstone_power;
 use crate::block::entities::bell::BellBlockEntity;
 use crate::block::registry::BlockActionResult;
 use crate::block::{
-    BlockBehaviour, BlockHitResult, BrokenArgs, CanPlaceAtArgs, GetStateForNeighborUpdateArgs,
+    BlockBehaviour, BlockHitResult, BrokenArgs, CanPlaceAtArgs, ExplodeArgs,
+    GetStateForNeighborUpdateArgs,
     NormalUseArgs, OnNeighborUpdateArgs, OnPlaceArgs, OnProjectileHitArgs, PathComputationType,
     PlacedArgs,
 };
@@ -283,6 +284,11 @@ impl BlockBehaviour for BellBlock {
                 ring_bell(*args.position, args.world, None, None);
             }
         }
+    }
+
+    /// Vanilla `BellBlock.onExplosionHit`.
+    fn on_explosion_trigger(&self, args: ExplodeArgs<'_>) {
+        ring_bell(*args.position, args.world, None, None);
     }
 
     fn on_projectile_hit(&self, args: OnProjectileHitArgs<'_>) {

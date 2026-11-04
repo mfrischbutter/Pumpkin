@@ -1,8 +1,10 @@
 use super::{Entity, EntityBase, living::LivingEntity};
 use crate::plugin::api::events::entity::projectile_hit::ProjectileHitEvent;
 use crate::world::World;
+use crate::world::game_event::GameEventContext;
 use pumpkin_data::BlockDirection;
 use pumpkin_data::entity::EntityType;
+use pumpkin_data::game_event::GameEvent;
 use pumpkin_protocol::java::client::play::CEntityVelocity;
 use pumpkin_util::math::boundingbox::BoundingBox;
 use pumpkin_util::math::{position::BlockPos, vector3::Vector3};
@@ -20,6 +22,7 @@ pub mod eye_of_ender;
 pub mod fireball;
 pub mod firework_rocket;
 pub mod fishing_bobber;
+pub mod hurting;
 pub mod lingering_potion;
 pub mod llama_spit;
 pub mod owner;
@@ -182,23 +185,60 @@ impl ThrownItemEntity {
     /// hit event, runs `on_hit` of `caller` and removes the projectile.
     pub(crate) fn move_and_collide(&self, caller: &dyn EntityBase) {
         let entity = self.get_entity();
-        let world = entity.world.load();
 
-        self.owner.check_left_owner(entity);
+        self.tick_projectile_state();
         entity.update_last_pos();
 
         let velocity = entity.velocity.load();
         let start_pos = entity.pos.load();
-        let delta = velocity;
 
         // Update position
-        let new_pos = start_pos.add(&delta);
-        entity.set_pos(new_pos);
+        entity.set_pos(start_pos.add(&velocity));
+        self.broadcast_velocity();
 
-        // Send updated velocity to clients
-        let packet = CEntityVelocity::new(entity.entity_id.into(), velocity);
-        let chunk_pos = entity.chunk_pos.load();
-        world.broadcast_to_chunk(chunk_pos, &packet);
+        // Handle hit or continue
+        if let Some(h) = self.find_hit(caller, start_pos, velocity) {
+            self.hit_and_remove(caller, h);
+        }
+    }
+
+    /// Vanilla `Projectile.tick`: the game event of the shot once, then `checkLeftOwner`.
+    pub(crate) fn tick_projectile_state(&self) {
+        let entity = self.get_entity();
+        if self.owner.mark_shot() {
+            let world = entity.world.load();
+            let owner = self.owner.get(&world);
+            world.emit_game_event_with_context(
+                GameEvent::ProjectileShoot.name(),
+                entity.pos.load(),
+                &GameEventContext {
+                    source_entity: owner.as_deref(),
+                },
+            );
+        }
+        self.owner.check_left_owner(entity);
+    }
+
+    /// Sends the velocity to clients.
+    pub(crate) fn broadcast_velocity(&self) {
+        let entity = self.get_entity();
+        let packet = CEntityVelocity::new(entity.entity_id.into(), entity.velocity.load());
+        entity
+            .world
+            .load()
+            .broadcast_to_chunk(entity.chunk_pos.load(), &packet);
+    }
+
+    /// Vanilla `ProjectileUtil.getHitResultOnMoveVector`: the first block or entity on the way.
+    pub(crate) fn find_hit(
+        &self,
+        caller: &dyn EntityBase,
+        start_pos: Vector3<f64>,
+        delta: Vector3<f64>,
+    ) -> Option<ProjectileHit> {
+        let entity = self.get_entity();
+        let world = entity.world.load();
+        let new_pos = start_pos.add(&delta);
 
         // Calculate search box for collisions
         let search_box = BoundingBox::new(
@@ -231,7 +271,7 @@ impl ThrownItemEntity {
                         let hit_pos = start_pos.add(&delta.multiply(t, t, t));
                         hit = Some(ProjectileHit::Block {
                             pos: *pos,
-                            face: get_hit_face(hit_pos, *pos),
+                            face: get_hit_face(hit_pos, bb),
                             hit_pos,
                             normal: delta.normalize().multiply(-1.0, -1.0, -1.0),
                         });
@@ -246,12 +286,23 @@ impl ThrownItemEntity {
             .get_all_at_box(&search_box)
             .into_iter()
             .flat_map(|entity| crate::entity::boss::ender_dragon::projectile_targets(&entity));
+        let margin = compute_margin(entity);
         for cand in candidates {
-            if self.should_skip_collision(&world, entity, &cand) {
+            if self.should_skip_collision(&world, entity, &cand)
+                || !caller.projectile_can_hit(cand.as_ref())
+            {
                 continue;
             }
 
-            let ebb = cand.get_entity().bounding_box.load().expand(0.3, 0.3, 0.3);
+            let ebb = cand
+                .get_entity()
+                .bounding_box
+                .load()
+                .expand(margin, margin, margin);
+            // Vanilla `AABB.clip` finds no way into a box from inside it.
+            if contains(&ebb, &start_pos) {
+                continue;
+            }
             if let Some(t) = calculate_ray_intersection(&start_pos, &delta, &ebb)
                 && t < closest_t
             {
@@ -265,34 +316,52 @@ impl ThrownItemEntity {
             }
         }
 
-        // Handle hit or continue
-        if let Some(h) = hit {
-            if deflected_by_target(caller, &h) {
-                return;
-            }
-            if !fire_projectile_hit_event(caller, &h) {
-                return;
-            }
+        hit
+    }
 
-            // Ensure hit is only processed once per projectile
-            if self.has_hit.swap(true, Ordering::SeqCst) {
-                return;
-            }
-
-            if let ProjectileHit::Block { pos, hit_pos, .. } = &h {
-                let block = world.get_block(pos);
-                let state = world.get_block_state(pos);
-                if let Some(server) = world.server.upgrade() {
-                    world
-                        .block_registry
-                        .on_projectile_hit(block, &world, caller, pos, state, hit_pos, &server);
-                }
-            }
-
-            // Just trigger hit effects and remove
-            caller.on_hit(h);
-            entity.remove();
+    /// Handles a hit that ends the projectile.
+    pub(crate) fn hit_and_remove(&self, caller: &dyn EntityBase, hit: ProjectileHit) {
+        // Ensure hit is only processed once per projectile
+        if self.has_hit.load(Ordering::SeqCst) {
+            return;
         }
+        if self.hit_target_or_deflect_self(caller, hit) {
+            self.has_hit.store(true, Ordering::SeqCst);
+            self.get_entity().remove();
+        }
+    }
+
+    /// Vanilla `Projectile.hitTargetOrDeflectSelf` and `onHit`. Returns whether `onHit` ran:
+    /// not when the target deflected the projectile or a plugin cancelled the hit.
+    pub(crate) fn hit_target_or_deflect_self(
+        &self,
+        caller: &dyn EntityBase,
+        hit: ProjectileHit,
+    ) -> bool {
+        if deflected_by_target(caller, &hit) || !fire_projectile_hit_event(caller, &hit) {
+            return false;
+        }
+        let world = self.get_entity().world.load();
+        if let ProjectileHit::Block { pos, hit_pos, .. } = &hit {
+            let block = world.get_block(pos);
+            let state = world.get_block_state(pos);
+            if let Some(server) = world.server.upgrade() {
+                world
+                    .block_registry
+                    .on_projectile_hit(block, &world, caller, pos, state, hit_pos, &server);
+            }
+        }
+        hurting::redirect_hit_projectile(caller, &hit);
+        let landed_at = hit.hit_pos();
+        caller.on_hit(hit);
+        world.emit_game_event_with_context(
+            GameEvent::ProjectileLand.name(),
+            landed_at,
+            &GameEventContext {
+                source_entity: Some(caller),
+            },
+        );
+        true
     }
 
     /// Returns if collision should be skipped (e.g. owner or projectile vs projectile)
@@ -337,7 +406,7 @@ impl ThrownItemEntity {
         }
 
         // Projectile vs projectile logic
-        if !self.collides_with_projectiles && is_projectile(other_ent.entity_type) {
+        if !self.collides_with_projectiles && !hurting::is_pickable(other.as_ref()) {
             return true;
         }
 
@@ -417,20 +486,32 @@ fn calculate_ray_intersection(
     (t_min <= t_max && (0.0..=1.0).contains(&t_min)).then_some(t_min)
 }
 
-/// Get the face of the block that was hit
-fn get_hit_face(hit_pos: Vector3<f64>, block_pos: BlockPos) -> BlockDirection {
-    let local = hit_pos.sub(&block_pos.0.to_f64());
+/// Vanilla `ProjectileUtil.computeMargin`: a young projectile hits only what it really touches.
+fn compute_margin(entity: &Entity) -> f64 {
+    let age = entity.tick_count.load(Ordering::Relaxed) - 2;
+    f64::from((age as f32 / 20.0).clamp(0.0, 0.3))
+}
+
+/// Vanilla `AABB.contains`.
+fn contains(bb: &BoundingBox, point: &Vector3<f64>) -> bool {
+    (bb.min.x..bb.max.x).contains(&point.x)
+        && (bb.min.y..bb.max.y).contains(&point.y)
+        && (bb.min.z..bb.max.z).contains(&point.z)
+}
+
+/// Get the face of the collision box that was hit
+fn get_hit_face(hit_pos: Vector3<f64>, bb: &BoundingBox) -> BlockDirection {
     let eps = 1.0e-4;
 
-    if local.x <= eps {
+    if hit_pos.x <= bb.min.x + eps {
         BlockDirection::West
-    } else if local.x >= 1.0 - eps {
+    } else if hit_pos.x >= bb.max.x - eps {
         BlockDirection::East
-    } else if local.y <= eps {
+    } else if hit_pos.y <= bb.min.y + eps {
         BlockDirection::Down
-    } else if local.y >= 1.0 - eps {
+    } else if hit_pos.y >= bb.max.y - eps {
         BlockDirection::Up
-    } else if local.z <= eps {
+    } else if hit_pos.z <= bb.min.z + eps {
         BlockDirection::North
     } else {
         BlockDirection::South
@@ -508,5 +589,6 @@ pub(crate) fn deflected_by_target(projectile: &dyn EntityBase, hit: &ProjectileH
         &target.pos.load(),
     );
     super::projectile_deflection::ProjectileDeflectionType::Simple.deflect(projectile, None);
+    projectile.on_deflection(false);
     true
 }

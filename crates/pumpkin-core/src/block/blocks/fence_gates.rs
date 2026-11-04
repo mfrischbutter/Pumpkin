@@ -3,7 +3,7 @@ use std::sync::Arc;
 use crate::block::blocks::redstone::block_receives_redstone_power;
 use crate::block::registry::BlockActionResult;
 use crate::block::{
-    BlockBehaviour, GetStateForNeighborUpdateArgs, NormalUseArgs, OnNeighborUpdateArgs,
+    BlockBehaviour, ExplodeArgs, GetStateForNeighborUpdateArgs, NormalUseArgs, OnNeighborUpdateArgs,
     OnPlaceArgs, PathComputationType,
 };
 use crate::entity::EntityBase;
@@ -86,6 +86,33 @@ pub fn toggle_fence_gate(
 pub struct FenceGateBlock;
 
 impl BlockBehaviour for FenceGateBlock {
+    /// Vanilla `FenceGateBlock.onExplosionHit`: it swings without turning to anybody.
+    fn on_explosion_trigger(&self, args: ExplodeArgs<'_>) {
+        let state = args.world.get_block_state_id(args.position);
+        let mut props = FenceGateProperties::from_state_id(state);
+        if props.powered {
+            return;
+        }
+        props.open = !props.open;
+        args.world.set_block_state(
+            args.position,
+            props.to_state_id(args.block),
+            BlockFlags::NOTIFY_ALL,
+        );
+        args.world.play_block_sound(
+            get_sound(args.block, props.open),
+            SoundCategory::Blocks,
+            *args.position,
+        );
+        let game_event = if props.open {
+            pumpkin_data::game_event::GameEvent::BlockOpen
+        } else {
+            pumpkin_data::game_event::GameEvent::BlockClose
+        };
+        args.world
+            .emit_game_event(game_event.name(), args.position.to_centered_f64());
+    }
+
     fn on_place(&self, args: OnPlaceArgs<'_>) -> BlockStateId {
         let mut fence_gate_props = FenceGateProperties::default(args.block);
         fence_gate_props.facing = args.player.get_entity().get_horizontal_facing();
