@@ -827,6 +827,7 @@ impl Server {
                         Some(player.gameprofile.name.clone()),
                     );
                     self.management_hub.broadcast_player_joined(&player_dto);
+                    player.load_and_spawn_ender_pearls();
 
                     (player, world)
                 })

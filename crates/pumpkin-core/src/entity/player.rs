@@ -1,4 +1,5 @@
 pub mod advancement;
+mod ender_pearls;
 mod mount_screen;
 pub mod statistics;
 
@@ -796,6 +797,7 @@ pub struct Player {
     pub fishing_bobber: AtomicI32,
     pub bedrock_skin: arc_swap::ArcSwap<pumpkin_protocol::bedrock::client::Skin>,
     pub seen_credits: AtomicBool,
+    ender_pearls: ender_pearls::EnderPearls,
     pub warden_spawn_tracker: std::sync::Mutex<WardenSpawnTracker>,
     pub score: AtomicI32,
     pub spawn_extra_particles_on_fall: AtomicBool,
@@ -1138,6 +1140,7 @@ impl Player {
             fishing_bobber: AtomicI32::new(-1),
             bedrock_skin: ArcSwap::new(Arc::new(bedrock_skin)),
             seen_credits: AtomicBool::new(false),
+            ender_pearls: ender_pearls::EnderPearls::default(),
             warden_spawn_tracker: std::sync::Mutex::new(WardenSpawnTracker::default()),
             score: AtomicI32::new(0),
             spawn_extra_particles_on_fall: AtomicBool::new(false),
@@ -7932,6 +7935,7 @@ impl EntityBase for Player {
         }
 
         nbt.put_bool("seenCredits", self.seen_credits.load(Ordering::Relaxed));
+        self.save_ender_pearls(nbt);
         nbt.put_compound(
             "warden_spawn_tracker",
             self.warden_spawn_tracker
@@ -8069,6 +8073,7 @@ impl EntityBase for Player {
             nbt.get_bool("seenCredits").unwrap_or(false),
             Ordering::Relaxed,
         );
+        self.read_ender_pearls(nbt);
         *self
             .warden_spawn_tracker
             .lock()

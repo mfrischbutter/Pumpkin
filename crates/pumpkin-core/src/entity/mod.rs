@@ -2129,6 +2129,17 @@ impl Entity {
         let Some(this) = world.get_entity_by_id(self.entity_id) else {
             return false;
         };
+        self.fudge_position_for(this.as_ref(), previous_dimensions)
+    }
+
+    /// Vanilla `fudgePositionAfterSizeChange` for `this`, this entity's full form, which may not
+    /// be in the world yet.
+    pub(crate) fn fudge_position_for(
+        &self,
+        this: &dyn EntityBase,
+        previous_dimensions: EntityDimensions,
+    ) -> bool {
+        let world = self.world.load();
         let new_dimensions = self.get_dimensions(self.pose.load());
         let old_center =
             self.pos
@@ -2145,7 +2156,7 @@ impl Entity {
         let allowed_centers =
             BoundingBox::of_size(old_center, width_delta, height_delta, width_delta);
         if let Some(free_position) = world.find_free_position(
-            this.as_ref(),
+            this,
             &allowed_centers,
             old_center,
             Vector3::new(new_width, new_height, new_width),
@@ -2159,7 +2170,7 @@ impl Entity {
             let allowed_centers_ignoring_y =
                 BoundingBox::of_size(old_center, width_delta, 1.0E-6, width_delta);
             if let Some(free_position) = world.find_free_position(
-                this.as_ref(),
+                this,
                 &allowed_centers_ignoring_y,
                 old_center,
                 Vector3::new(new_width, previous_height, new_width),

@@ -122,6 +122,15 @@ impl EntityBase for DragonFireballEntity {
             (CLOUD_FINAL_RADIUS - CLOUD_RADIUS) / CLOUD_DURATION as f32,
             1,
         );
+        let owner = self
+            .thrown
+            .owner
+            .get(&world)
+            .filter(|owner| owner.get_living_entity().is_some());
+        AreaEffectCloudEntity::set_owner_of(
+            cloud.as_ref(),
+            owner.as_deref().map(EntityBase::get_entity),
+        );
         world.sync_world_event(
             WorldEvent::ParticlesDragonFireballSplash,
             entity.block_pos.load(),

@@ -111,29 +111,13 @@ impl ItemBehaviour for GlassBottleItem {
                 .cast_any()
                 .downcast_ref::<crate::entity::area_effect_cloud::AreaEffectCloudEntity>(
             ) && cloud.entity.is_alive()
-                && cloud
-                    .item_stack
-                    .lock()
-                    .unwrap_or_else(std::sync::PoisonError::into_inner)
-                    .item
-                    .id
-                    == Item::DRAGON_BREATH.id
+                && cloud.owner.get(&world).is_some_and(|owner| {
+                    owner.get_entity().entity_type
+                        == &pumpkin_data::entity::EntityType::ENDER_DRAGON
+                })
             {
-                let mut radius = cloud
-                    .radius
-                    .lock()
-                    .unwrap_or_else(std::sync::PoisonError::into_inner);
-                *radius -= 0.5;
-                let new_radius = *radius;
-                drop(radius);
-                if new_radius <= 0.0 {
-                    cloud.entity.remove();
-                } else {
-                    cloud.entity.set_synced_data(
-                        pumpkin_data::tracked_data::area_effect_cloud::RADIUS,
-                        new_radius,
-                    );
-                }
+                // Vanilla `BottleItem.use`.
+                cloud.set_radius(cloud.radius() - 0.5);
 
                 world.play_sound(
                     Sound::ItemBottleFillDragonbreath,

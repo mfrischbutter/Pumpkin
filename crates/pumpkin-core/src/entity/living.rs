@@ -1241,8 +1241,14 @@ impl LivingEntity {
         self.entity.entity_id
     }
 
+    /// Vanilla `isAffectedByPotions`, with `ArmorStand`'s override folded in.
+    #[must_use]
+    pub fn is_affected_by_potions(&self) -> bool {
+        !self.is_dead_or_dying() && self.entity.entity_type != &EntityType::ARMOR_STAND
+    }
+
     // canBeAffected, with the mob overrides folded in
-    fn can_be_affected(&self, effect: &Effect) -> bool {
+    pub(crate) fn can_be_affected(&self, effect: &Effect) -> bool {
         let entity_type = self.entity.entity_type;
         // Vanilla `EnderDragon.addEffect` refuses everything.
         if entity_type == &EntityType::ENDER_DRAGON {

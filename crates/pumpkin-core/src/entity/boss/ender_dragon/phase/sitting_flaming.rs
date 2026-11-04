@@ -62,6 +62,10 @@ impl SittingFlamingPhase {
             0.0,
             0,
         );
+        AreaEffectCloudEntity::set_owner_of(
+            cloud.as_ref(),
+            Some(&dragon.mob_entity.living_entity.entity),
+        );
         *self.flame() = Some(cloud.clone());
         world.spawn_entity(cloud);
     }

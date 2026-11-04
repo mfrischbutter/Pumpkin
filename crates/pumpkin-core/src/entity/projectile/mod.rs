@@ -16,6 +16,7 @@ pub mod arrow;
 pub mod dragon_fireball;
 pub mod egg;
 pub mod ender_pearl;
+mod ender_pearl_ticket;
 pub mod evoker_fangs;
 pub mod experience_bottle;
 pub mod eye_of_ender;
@@ -31,6 +32,8 @@ pub mod shulker_bullet;
 pub mod small_fireball;
 pub mod snowball;
 pub mod splash_potion;
+pub(crate) mod thrown_item;
+pub mod thrown_potion;
 pub mod trident;
 pub mod wind_charge;
 pub mod wither_skull;
@@ -93,7 +96,7 @@ impl ThrownItemEntity {
     pub fn new(entity: Entity, owner: &Entity, gravity: f64) -> Self {
         let mut owner_pos = owner.pos.load();
         owner_pos.y += owner.get_eye_height() - 0.1;
-        entity.pos.store(owner_pos);
+        entity.set_pos(owner_pos);
         Self {
             entity,
             owner: owner::ProjectileOwner::new(Some(owner)),

@@ -3,18 +3,20 @@ use std::sync::atomic::{AtomicBool, Ordering};
 
 use crate::entity::experience_orb::ExperienceOrbEntity;
 use crate::entity::projectile::owner::ProjectileOwner;
+use crate::entity::projectile::thrown_item::{read_thrown_item, write_thrown_item};
 use crate::entity::projectile::{ProjectileHit, ThrownItemEntity};
 use crate::entity::{Entity, EntityBase};
+use crate::item::potion::BASE_POTION_COLOR;
 use crate::server::Server;
 use pumpkin_data::item::Item;
 use pumpkin_data::item_stack::ItemStack;
 use pumpkin_data::world::WorldEvent;
+use pumpkin_nbt::compound::NbtCompound;
 use pumpkin_protocol::codec::item_stack_seralizer::ItemStackSerializer;
 use pumpkin_util::math::position::BlockPos;
 use rand::RngExt;
 
 const GRAVITY: f64 = 0.07;
-const WATER_COLOR: i32 = -13_083_194; // 0xFF385DC6
 
 pub struct ExperienceBottleEntity {
     pub thrown: ThrownItemEntity,
@@ -78,8 +80,8 @@ impl EntityBase for ExperienceBottleEntity {
         );
     }
 
-    fn tick(&self, caller: &dyn EntityBase, _server: &Server) {
-        self.thrown.process_tick(caller);
+    fn tick(&self, caller: &dyn EntityBase, server: &Server) {
+        self.thrown.process_throwable_tick(caller, server);
     }
 
     fn get_entity(&self) -> &Entity {
@@ -90,16 +92,26 @@ impl EntityBase for ExperienceBottleEntity {
         None
     }
 
+    fn write_custom_nbt(&self, nbt: &mut NbtCompound) {
+        write_thrown_item(&self.item_stack, nbt);
+    }
+
+    fn read_custom_nbt(&self, nbt: &NbtCompound) {
+        read_thrown_item(&self.item_stack, nbt);
+    }
+
+    /// Vanilla `ThrownExperienceBottle.onHit`: the orbs fly off the face it hit, or back
+    /// along its flight from an entity.
     fn on_hit(&self, hit: ProjectileHit) {
         let entity = self.get_entity();
-        let world = entity.world.load();
+        let world = entity.world.load_full();
         let hit_pos = hit.hit_pos();
-        let block_pos = BlockPos::floored(hit_pos.x, hit_pos.y, hit_pos.z);
+        let block_pos = BlockPos::floored_v(hit_pos);
 
         world.sync_world_event(
             WorldEvent::ParticlesSpellPotionSplash,
             block_pos,
-            WATER_COLOR,
+            BASE_POTION_COLOR,
         );
         if !entity.silent.load(Ordering::Relaxed) {
             world.sync_world_event(WorldEvent::SoundSpellPotionSplash, block_pos, 0);
@@ -107,7 +119,11 @@ impl EntityBase for ExperienceBottleEntity {
 
         let mut rng = rand::rng();
         let xp_count = 3 + rng.random_range(0..5) + rng.random_range(0..5);
-        ExperienceOrbEntity::spawn(&world, hit_pos, xp_count);
+        let direction = hit.face().map_or_else(
+            || entity.velocity.load().multiply(-1.0, -1.0, -1.0),
+            |face| face.to_offset().to_f64(),
+        );
+        ExperienceOrbEntity::spawn_with_direction(&world, hit_pos, direction, xp_count);
     }
 
     fn cast_any(&self) -> &dyn std::any::Any {

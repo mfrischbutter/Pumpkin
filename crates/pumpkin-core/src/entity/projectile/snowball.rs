@@ -3,19 +3,21 @@ use std::sync::RwLock;
 use std::sync::atomic::AtomicBool;
 
 use crate::entity::projectile::ProjectileHit;
+use crate::entity::projectile::thrown_item::{hurt_thrown, read_thrown_item, write_thrown_item};
 use crate::{
     entity::{Entity, EntityBase, projectile::ThrownItemEntity},
     server::Server,
 };
-use pumpkin_data::damage::DamageType;
 use pumpkin_data::entity::{EntityStatus, EntityType};
 use pumpkin_data::item::Item;
 use pumpkin_data::item_stack::ItemStack;
+use pumpkin_nbt::compound::NbtCompound;
 use pumpkin_protocol::bedrock::server::actor_event::ActorEventID;
 use pumpkin_protocol::codec::item_stack_seralizer::ItemStackSerializer;
-use pumpkin_util::math::vector3::Vector3;
 
 const GRAVITY: f64 = 0.03;
+/// Vanilla `Snowball.onHitEntity`: blazes take this, everything else a hit of zero.
+const BLAZE_DAMAGE: f32 = 3.0;
 
 pub struct SnowballEntity {
     pub thrown: ThrownItemEntity,
@@ -24,9 +26,6 @@ pub struct SnowballEntity {
 
 impl SnowballEntity {
     pub fn new(entity: Entity) -> Self {
-        // Keep the velocity initialization
-        entity.set_velocity(Vector3::new(0.0, 0.1, 0.0));
-
         // Initialize without owner
         let thrown = ThrownItemEntity {
             entity,
@@ -44,7 +43,6 @@ impl SnowballEntity {
 
     pub fn new_shot(entity: Entity, shooter: &Entity) -> Self {
         let thrown = ThrownItemEntity::new(entity, shooter, GRAVITY);
-        thrown.entity.set_velocity(Vector3::new(0.0, 0.1, 0.0));
         Self {
             thrown,
             item_stack: RwLock::new(ItemStack::new(1, &Item::SNOWBALL)),
@@ -87,8 +85,8 @@ impl EntityBase for SnowballEntity {
         );
     }
 
-    fn tick(&self, caller: &dyn EntityBase, _server: &Server) {
-        self.thrown.process_tick(caller);
+    fn tick(&self, caller: &dyn EntityBase, server: &Server) {
+        self.thrown.process_throwable_tick(caller, server);
     }
 
     fn get_entity(&self) -> &Entity {
@@ -102,18 +100,22 @@ impl EntityBase for SnowballEntity {
         self
     }
 
-    fn on_hit(&self, hit: crate::entity::projectile::ProjectileHit) {
-        let world = self.get_entity().world.load();
+    fn write_custom_nbt(&self, nbt: &mut NbtCompound) {
+        write_thrown_item(&self.item_stack, nbt);
+    }
 
-        // Always send particle status regardless of what was hit
-        world.send_entity_status(self.get_entity(), EntityStatus::Death, ActorEventID::Death);
+    fn read_custom_nbt(&self, nbt: &NbtCompound) {
+        read_thrown_item(&self.item_stack, nbt);
+    }
 
-        // Handle entity-specific damage
-        if let ProjectileHit::Entity { ref entity, .. } = hit {
-            let is_blaze = entity.get_entity().entity_type.id == EntityType::BLAZE.id;
-            let damage = if is_blaze { 3.0 } else { 0.0 }; // Only damage blazes
-
-            entity.damage(entity.as_ref(), damage, DamageType::THROWN);
+    /// Vanilla `Snowball.onHitEntity` and `onHit`.
+    fn on_hit(&self, hit: ProjectileHit) {
+        if let ProjectileHit::Entity { entity: target, .. } = &hit {
+            let is_blaze = target.get_entity().entity_type.id == EntityType::BLAZE.id;
+            hurt_thrown(self, target, if is_blaze { BLAZE_DAMAGE } else { 0.0 });
         }
+
+        let world = self.get_entity().world.load();
+        world.send_entity_status(self.get_entity(), EntityStatus::Death, ActorEventID::Death);
     }
 }
