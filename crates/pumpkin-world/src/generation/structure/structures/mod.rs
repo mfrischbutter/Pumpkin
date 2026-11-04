@@ -742,14 +742,15 @@ impl StructurePiecesCollector {
             .map(|v| v.as_ref() as &dyn StructurePieceBase)
     }
 
-    /// Iterates over all pieces and generates them if they intersect the current chunk.
-    pub fn generate_in_chunk(
+    /// Iterates over all pieces and generates them if they intersect the cache's center chunk.
+    pub fn generate_in_chunk<T: GenerationCache>(
         &mut self,
-        chunk: &mut ProtoChunk,
+        cache: &mut T,
         block_registry: &dyn WorldPortalExt,
         random: &mut RandomGenerator,
         seed: i64,
     ) {
+        let chunk = cache.get_center_chunk();
         let chunk_x = start_block_x(chunk.x);
         let chunk_z = start_block_z(chunk.z);
         let chunk_box = BlockBox::new(
@@ -763,11 +764,24 @@ impl StructurePiecesCollector {
 
         for piece in &mut self.pieces {
             if piece.bounding_box().intersects(&chunk_box) {
-                piece.place(chunk, block_registry, random, seed, &chunk_box);
+                piece.place(
+                    cache.get_center_chunk_mut(),
+                    block_registry,
+                    random,
+                    seed,
+                    &chunk_box,
+                );
+                if let Some(pool_piece) = piece
+                    .as_any()
+                    .downcast_ref::<jigsaw::PoolElementStructurePiece>()
+                {
+                    pool_piece.place_feature(cache, block_registry, random);
+                }
             }
         }
         // Vanilla's `Structure.afterPlace`, which the desert pyramid and the woodland mansion
         // override.
+        let chunk = cache.get_center_chunk_mut();
         desert_pyramid::after_place(&self.pieces, chunk, &chunk_box, seed);
         if self
             .pieces

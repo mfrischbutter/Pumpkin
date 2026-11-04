@@ -49,37 +49,6 @@ pub enum Feature {
 }
 
 impl PlacedFeature {
-    pub fn generate_in_proto_chunk(
-        &self,
-        chunk: &mut crate::ProtoChunk,
-        block_registry: &dyn crate::world::WorldPortalExt,
-        feature_name: pumpkin_data::placed_feature::PlacedFeature,
-        random: &mut RandomGenerator,
-        pos: BlockPos,
-    ) -> bool {
-        let Some(feature) = (match &self.feature {
-            Feature::Named(name) => CONFIGURED_FEATURES.get(name),
-            Feature::Inlined(feature) => Some(feature.as_ref()),
-        }) else {
-            return false;
-        };
-        if let ConfiguredFeature::SculkPatch(feature) = feature {
-            feature.generate_in_proto_chunk(chunk, random, pos)
-        } else {
-            let min_y = chunk.generation_bottom_y();
-            let height = chunk.generation_height();
-            self.generate(
-                chunk,
-                block_registry,
-                min_y,
-                height,
-                feature_name,
-                random,
-                pos,
-            )
-        }
-    }
-
     #[expect(clippy::too_many_arguments)]
     pub fn generate<T: GenerationCache>(
         &self,

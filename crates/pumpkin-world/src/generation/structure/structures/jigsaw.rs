@@ -1,6 +1,8 @@
 use super::jigsaw_placement::{
     DimensionPadding, JigsawPlacement, LiquidSettings, MaxDistance, PoolAliasLookup,
 };
+use crate::generation::feature::placed_features::PLACED_FEATURES;
+use crate::generation::proto_chunk::GenerationCache;
 use crate::generation::structure::structures::{
     StructureGenerator, StructureGeneratorContext, StructurePieceBase, StructurePosition,
 };
@@ -846,7 +848,7 @@ impl StructurePieceBase for PoolElementStructurePiece {
     fn place(
         &mut self,
         chunk: &mut crate::ProtoChunk,
-        block_registry: &dyn crate::world::WorldPortalExt,
+        _block_registry: &dyn crate::world::WorldPortalExt,
         random: &mut pumpkin_util::random::RandomGenerator,
         seed: i64,
         chunk_box: &pumpkin_util::math::block_box::BlockBox,
@@ -893,19 +895,6 @@ impl StructurePieceBase for PoolElementStructurePiece {
                     true,
                 );
             });
-
-        if let Some(feature) = self.element.feature()
-            && let Some(placed_feature) =
-                crate::generation::feature::placed_features::PLACED_FEATURES.get(&feature)
-        {
-            placed_feature.generate_in_proto_chunk(
-                chunk,
-                block_registry,
-                feature,
-                random,
-                self.pos,
-            );
-        }
     }
 }
 
@@ -961,6 +950,32 @@ pub fn place_pool_element_templates(
 impl PoolElementStructurePiece {
     pub fn add_junction(&mut self, junction: JigsawJunction) {
         self.junctions.push(junction);
+    }
+
+    /// Places the piece's feature, which vanilla's `FeaturePoolElement` puts into the whole
+    /// generation region, not only into the chunk it is placed for.
+    pub fn place_feature<T: GenerationCache>(
+        &self,
+        cache: &mut T,
+        block_registry: &dyn crate::world::WorldPortalExt,
+        random: &mut pumpkin_util::random::RandomGenerator,
+    ) {
+        if let Some(feature) = self.element.feature()
+            && let Some(placed_feature) = PLACED_FEATURES.get(&feature)
+        {
+            let chunk = cache.get_center_chunk();
+            let min_y = chunk.generation_bottom_y();
+            let height = chunk.generation_height();
+            placed_feature.generate(
+                cache,
+                block_registry,
+                min_y,
+                height,
+                feature,
+                random,
+                self.pos,
+            );
+        }
     }
 }
 

@@ -515,6 +515,11 @@ impl CommandExecutor for PlaceStructureExecutor {
                                         seed as i64,
                                         &chunk_box,
                                     );
+                                    if let Some(pool_piece) =
+                                        piece.as_any().downcast_ref::<PoolElementStructurePiece>()
+                                    {
+                                        pool_piece.place_feature(&mut chunk, &reg, &mut rng);
+                                    }
                                 }
                             }
 

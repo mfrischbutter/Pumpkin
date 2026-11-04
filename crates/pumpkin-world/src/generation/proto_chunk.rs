@@ -1681,7 +1681,6 @@ impl ProtoChunk {
         };
 
         let structures = &STRUCTURES_PER_STEP[step];
-        let mut region_heights = None;
         for (index, &structure_key) in structures.iter().enumerate() {
             let mut tasks = Vec::new();
             {
@@ -1749,20 +1748,17 @@ impl ProtoChunk {
             let decorator_seed = get_decorator_seed(population_seed, index as u64, step as u64);
             let mut random = RandomGenerator::Worldgen(WorldgenRandom::from_seed(decorator_seed));
 
-            // Only this chunk changes while its structures are placed, so one snapshot of the
-            // neighbours' heights serves the whole step.
-            let heights = region_heights
-                .take()
-                .unwrap_or_else(|| Box::new(RegionHeights::snapshot(cache, center_x, center_z)));
-            let chunk = cache.get_center_chunk_mut();
-            chunk.region_heights = Some(heights);
             for collector_arc in tasks {
+                // The neighbours change only through the features of jigsaw pieces, so a fresh
+                // snapshot of their heights per structure follows them closely enough.
+                cache.get_center_chunk_mut().region_heights =
+                    Some(Box::new(RegionHeights::snapshot(cache, center_x, center_z)));
                 let mut collector = collector_arc
                     .lock()
                     .unwrap_or_else(std::sync::PoisonError::into_inner);
-                collector.generate_in_chunk(chunk, block_registry, &mut random, world_seed);
+                collector.generate_in_chunk(cache, block_registry, &mut random, world_seed);
+                cache.get_center_chunk_mut().region_heights = None;
             }
-            region_heights = chunk.region_heights.take();
         }
     }
 
@@ -1918,7 +1914,12 @@ impl GenerationCache for ProtoChunk {
     fn try_get_proto_chunk(&self, cx: i32, cz: i32) -> Option<&ProtoChunk> {
         self.get_chunk(cx, cz)
     }
+    // A lone chunk is a cache of one chunk: like `Cache` outside its chunks, it reads air around
+    // itself and ignores writes there.
     fn get_block_state(&self, pos: &Vector3<i32>) -> BlockStateId {
+        if GenerationCache::get_chunk(self, pos.x >> 4, pos.z >> 4).is_none() {
+            return BlockStateId::AIR;
+        }
         Self::get_block_state(self, pos)
     }
     fn get_fluid_and_fluid_state(&self, pos: &Vector3<i32>) -> (Fluid, FluidState) {
@@ -1944,10 +1945,14 @@ impl GenerationCache for ProtoChunk {
         (fluid.clone(), state)
     }
     fn set_block_state_raw(&mut self, pos: &Vector3<i32>, block_state: &BlockState) {
-        Self::set_block_state(self, pos.x, pos.y, pos.z, block_state);
+        if GenerationCache::get_chunk(self, pos.x >> 4, pos.z >> 4).is_some() {
+            Self::set_block_state(self, pos.x, pos.y, pos.z, block_state);
+        }
     }
-    fn add_block_entity(&mut self, _pos: &Vector3<i32>, nbt: NbtCompound) {
-        self.add_block_entity(nbt);
+    fn add_block_entity(&mut self, pos: &Vector3<i32>, nbt: NbtCompound) {
+        if GenerationCache::get_chunk(self, pos.x >> 4, pos.z >> 4).is_some() {
+            self.add_block_entity(nbt);
+        }
     }
     fn top_motion_blocking_block_height_exclusive(&self, x: i32, z: i32) -> i32 {
         Self::top_motion_blocking_block_height_exclusive(self, x, z)
@@ -1971,7 +1976,7 @@ impl GenerationCache for ProtoChunk {
         Self::ocean_floor_wg_height_exclusive(self, x, z)
     }
     fn is_air(&self, local_pos: &Vector3<i32>) -> bool {
-        self.is_air(local_pos)
+        is_air(GenerationCache::get_block_state(self, local_pos))
     }
     fn get_biome_for_terrain_gen(&self, x: i32, y: i32, z: i32) -> &'static Biome {
         let biome_pos = self.get_terrain_gen_biome_pos(x, y, z);
