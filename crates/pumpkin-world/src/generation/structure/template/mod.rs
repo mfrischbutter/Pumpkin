@@ -457,6 +457,23 @@ pub(crate) fn block_entity_id(block: &pumpkin_data::Block) -> Option<&'static st
         .map(String::as_str)
 }
 
+/// Whether the block entity is a vanilla `RandomizableContainer`, which draws a loot table seed
+/// from the structure's random when a template places it with its data.
+pub(crate) fn is_randomizable_container(block_entity_id: &str) -> bool {
+    matches!(
+        block_entity_id,
+        "minecraft:barrel"
+            | "minecraft:chest"
+            | "minecraft:crafter"
+            | "minecraft:decorated_pot"
+            | "minecraft:dispenser"
+            | "minecraft:dropper"
+            | "minecraft:hopper"
+            | "minecraft:shulker_box"
+            | "minecraft:trapped_chest"
+    )
+}
+
 /// Vanilla's `DUMMY` block entity: a block entity block set during generation gets an empty
 /// block entity, which the chunk turns into the block's default one. A caller with real data
 /// adds it afterwards, and the last entry for a position wins.

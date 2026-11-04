@@ -1042,14 +1042,14 @@ impl MansionPiecePlacer<'_> {
 mod tests {
     use pumpkin_util::random::legacy_rand::LegacyRand;
 
+    use crate::generation::structure::structures::create_chunk_random;
+
     use super::*;
 
-    fn layout(seed: u64) -> (usize, u64) {
-        let mut random = RandomGenerator::Legacy(LegacyRand::from_seed(seed));
+    fn layout(mut random: RandomGenerator, origin: Vector3<i32>) -> (usize, u64) {
         let rotation = Rotation::from_index(random.next_bounded_i32(4) as u8);
         let grid = MansionGrid::new(&mut random);
-        let pieces =
-            MansionPiecePlacer::create(&mut random, Vector3::new(0, 64, 0), rotation, &grid);
+        let pieces = MansionPiecePlacer::create(&mut random, origin, rotation, &grid);
         let mut hash = 0xcbf2_9ce4_8422_2325u64;
         for piece in &pieces {
             let rotation = match piece.rotation {
@@ -1082,9 +1082,27 @@ mod tests {
 
     #[test]
     fn layouts_match_java_26_2() {
-        assert_eq!(layout(0), (590, 0xfc1e_ca03_a5d7_b852));
-        assert_eq!(layout(1), (579, 0x1b41_bf3a_4fd9_020c));
-        assert_eq!(layout(42), (519, 0xe367_67ff_2580_643e));
-        assert_eq!(layout(8_675_309), (557, 0x8120_b948_7d0b_eb80));
+        let seeded = |seed| RandomGenerator::Legacy(LegacyRand::from_seed(seed));
+        let origin = Vector3::new(0, 64, 0);
+        assert_eq!(layout(seeded(0), origin), (590, 0xfc1e_ca03_a5d7_b852));
+        assert_eq!(layout(seeded(1), origin), (579, 0x1b41_bf3a_4fd9_020c));
+        assert_eq!(layout(seeded(42), origin), (519, 0xe367_67ff_2580_643e));
+        assert_eq!(
+            layout(seeded(8_675_309), origin),
+            (557, 0x8120_b948_7d0b_eb80)
+        );
+    }
+
+    /// The pieces a world vanilla 26.3 generated saved for the woodland mansion of seed
+    /// 1657324430, which starts in chunk 37, 105 at y 62.
+    #[test]
+    fn layout_matches_a_vanilla_26_3_world() {
+        assert_eq!(
+            layout(
+                create_chunk_random(1_657_324_430, 37, 105),
+                Vector3::new(599, 62, 1687)
+            ),
+            (557, 0x1de9_2379_31e0_782d)
+        );
     }
 }
