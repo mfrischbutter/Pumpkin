@@ -1,8 +1,8 @@
 use std::sync::Arc;
 
 use pumpkin_data::{
-    Block, BlockId, BlockState, Mirror, Rotation, block_properties::blocks_movement,
-    structures::StructureKeys,
+    Block, BlockDirection, BlockId, BlockState, Mirror, Rotation,
+    block_properties::blocks_movement, structures::StructureKeys,
 };
 use pumpkin_util::{
     HeightMap,
@@ -495,7 +495,7 @@ impl RuinedPortalPiece {
         let block_id = GenerationCache::get_block_state(cache, &pos).to_block_id();
         block_id != Block::AIR.id
             && block_id != Block::OBSIDIAN.id
-            && block_id != Block::BEDROCK.id
+            && !block_id.has_tag(pumpkin_data::tag::Block::MINECRAFT_FEATURES_CANNOT_REPLACE)
             && (self.vertical_placement == VerticalPlacement::InNether
                 || block_id != Block::LAVA.id)
     }
@@ -506,6 +506,9 @@ impl RuinedPortalPiece {
         cache: &mut dyn GenerationCache,
         pos: Vector3<i32>,
     ) {
+        if !self.can_block_be_replaced_by_netherrack_or_magma(cache, pos) {
+            return;
+        }
         if !self.properties.cold && random.next_f32() < 0.07 {
             cache.set_block_state(&pos, Block::MAGMA_BLOCK.default_state);
         } else {
@@ -557,17 +560,21 @@ impl RuinedPortalPiece {
         pos: Vector3<i32>,
     ) {
         use pumpkin_data::Property;
-        let block_id = GenerationCache::get_block_state(cache, &pos).to_block_id();
-        if block_id != Block::AIR.id && block_id != Block::VINE.id {
-            let dir_idx = random.next_bounded_i32(4);
-            let (dir_offset, vine_face) = match dir_idx {
-                0 => (Vector3::new(0, 0, -1), Property::South(true)),
-                1 => (Vector3::new(0, 0, 1), Property::North(true)),
-                2 => (Vector3::new(-1, 0, 0), Property::East(true)),
-                _ => (Vector3::new(1, 0, 0), Property::West(true)),
+        let state = GenerationCache::get_block_state(cache, &pos);
+        if !state.to_state().is_air() && state.to_block_id() != Block::VINE.id {
+            // `Direction.Plane.HORIZONTAL`, with the vine's face towards the block.
+            let (direction, vine_face) = match random.next_bounded_i32(4) {
+                0 => (BlockDirection::North, Property::South(true)),
+                1 => (BlockDirection::East, Property::West(true)),
+                2 => (BlockDirection::South, Property::North(true)),
+                _ => (BlockDirection::West, Property::East(true)),
             };
-            let neighbor_pos = pos + dir_offset;
-            if GenerationCache::get_block_state(cache, &neighbor_pos).to_block_id() == Block::AIR.id
+            let neighbor_pos = pos + direction.to_offset();
+            // `Block.isFaceFull` of the block's collision shape, which is its support shape here.
+            if GenerationCache::get_block_state(cache, &neighbor_pos)
+                .to_state()
+                .is_air()
+                && state.is_side_solid(direction)
             {
                 let entry =
                     PaletteEntry::with_properties("minecraft:vine".to_string(), vec![vine_face]);
@@ -589,7 +596,10 @@ impl RuinedPortalPiece {
             && GenerationCache::get_block_state(cache, &pos).to_block_id() == Block::NETHERRACK.id
         {
             let above = pos + Vector3::new(0, 1, 0);
-            if GenerationCache::get_block_state(cache, &above).to_block_id() == Block::AIR.id {
+            if GenerationCache::get_block_state(cache, &above)
+                .to_state()
+                .is_air()
+            {
                 let entry = PaletteEntry::with_properties(
                     "minecraft:jungle_leaves".to_string(),
                     vec![pumpkin_data::Property::Persistent(true)],
@@ -659,9 +669,10 @@ impl StructurePieceBase for RuinedPortalPiece {
         self.add_netherrack_drip_columns_below_portal(random, cache);
 
         if self.properties.vines || self.properties.overgrown {
-            for x in self.piece.bounding_box.min.x..=self.piece.bounding_box.max.x {
+            // `BlockPos.betweenClosedStream`: x changes fastest, then y, then z.
+            for z in self.piece.bounding_box.min.z..=self.piece.bounding_box.max.z {
                 for y in self.piece.bounding_box.min.y..=self.piece.bounding_box.max.y {
-                    for z in self.piece.bounding_box.min.z..=self.piece.bounding_box.max.z {
+                    for x in self.piece.bounding_box.min.x..=self.piece.bounding_box.max.x {
                         let pos = Vector3::new(x, y, z);
                         if self.properties.vines {
                             Self::maybe_add_vines(random, cache, pos);
