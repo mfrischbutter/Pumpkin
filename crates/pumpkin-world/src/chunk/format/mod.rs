@@ -751,12 +751,13 @@ impl ChunkData {
         }
         root_compound.put_list("fluid_ticks", fluid_ticks_list);
 
-        if let Some(post_processing) = write_post_processing(
+        let post_processing = write_post_processing(
             &self
                 .post_processing
                 .lock()
                 .unwrap_or_else(std::sync::PoisonError::into_inner),
-        ) {
+        );
+        if let Some(post_processing) = post_processing {
             root_compound.put_list("PostProcessing", post_processing);
         }
 

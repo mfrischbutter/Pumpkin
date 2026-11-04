@@ -149,7 +149,7 @@ const AIR_BLOCK: Block = Block::AIR;
 /// Vanilla's `BlockBehaviour.getPostProcessPos`: a mushroom checks it can stay where it was put,
 /// magma and soul sand mark the block above, where a bubble column may start.
 #[must_use]
-pub fn post_process_pos(state: &BlockState, pos: &Vector3<i32>) -> Option<Vector3<i32>> {
+pub const fn post_process_pos(state: &BlockState, pos: &Vector3<i32>) -> Option<Vector3<i32>> {
     match state.id.to_block_id() {
         pumpkin_data::BlockId::BROWN_MUSHROOM | pumpkin_data::BlockId::RED_MUSHROOM => Some(*pos),
         pumpkin_data::BlockId::MAGMA_BLOCK | pumpkin_data::BlockId::SOUL_SAND => {
