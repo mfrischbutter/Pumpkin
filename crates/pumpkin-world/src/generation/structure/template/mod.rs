@@ -91,9 +91,10 @@ fn waterlog(placer: &mut impl BlockPlacer, pos: &Vector3<i32>, state: &'static B
     }
 }
 
-/// Where vanilla's `StructureTemplate.placeInWorld` happens besides its settings: the
-/// `referencePos` the processors' position rules measure from, the level seed a capped processor's
-/// random starts from, and the flags of a jigsaw pool element.
+/// Where vanilla's `StructureTemplate.placeInWorld` happens besides its settings.
+///
+/// The `referencePos` the processors' position rules measure from, the level seed a capped
+/// processor's random starts from, and the flags of a jigsaw pool element.
 #[derive(Clone, Copy, Debug)]
 pub struct TemplatePlacement {
     pub reference: Vector3<i32>,
@@ -125,10 +126,12 @@ struct ProcessedBlock {
     nbt: Option<NbtCompound>,
 }
 
-/// Vanilla's `StructureTemplate.placeInWorld`: the blocks of the palette the position picks, moved
-/// to `position` with the settings' mirror, rotation and pivot, run through the processors and kept
-/// to the settings' bounding box, then the template's entities unless the settings ignore them.
-/// Returns `false`, like vanilla, when the template has nothing to place.
+/// Vanilla's `StructureTemplate.placeInWorld`.
+///
+/// The blocks of the palette the position picks, moved to `position` with the settings' mirror,
+/// rotation and pivot, run through the processors and kept to the settings' bounding box, then the
+/// template's entities unless the settings ignore them. Returns `false`, like vanilla, when the
+/// template has nothing to place.
 #[expect(clippy::too_many_lines)]
 pub fn place_template_with_options(
     placer: &mut impl BlockPlacer,
