@@ -6477,10 +6477,18 @@ impl Player {
     }
 
     pub fn apply_mending_from_xp(&self, mut xp: i32) -> i32 {
-        if xp <= 0 {
-            return xp;
+        while xp > 0 {
+            let Some(remaining) = self.mend_random_item(xp) else {
+                return xp;
+            };
+            xp = remaining;
         }
+        xp
+    }
 
+    /// One step of vanilla `ExperienceOrb.repairPlayerItems`: a random damaged mending item
+    /// takes 2 durability per point. Returns what is left, `None` when nothing was mended.
+    fn mend_random_item(&self, xp: i32) -> Option<i32> {
         let mut candidates: Vec<(usize, EquipmentSlot, ItemStack)> = Vec::new();
 
         let selected_slot = self.inventory.get_selected_slot() as usize;
@@ -6502,18 +6510,20 @@ impl Player {
         }
 
         if candidates.is_empty() {
-            return xp;
+            return None;
         }
 
         let idx = rand::random::<u32>() as usize % candidates.len();
         let (slot_index, equipment_slot, mut stack) = candidates.swap_remove(idx);
 
-        let repaired = stack.repair_item(xp.saturating_mul(2));
+        let to_repair = xp.saturating_mul(2);
+        let repaired = stack.repair_item(to_repair);
         if repaired <= 0 {
-            return xp;
+            return None;
         }
 
-        let xp_used = (repaired + 1) / 2;
+        // Java's int division, so a step that repairs 1 for 1 experience uses none of it.
+        let xp_used = (i64::from(repaired) * i64::from(xp) / i64::from(to_repair)) as i32;
 
         if let Some(player_arc) = self.world().get_player_by_uuid(self.gameprofile.id)
             && let Some(server) = self.world().server.upgrade()
@@ -6528,14 +6538,12 @@ impl Player {
                 };
             server.plugin_manager.fire_blocking(&server, &mut event);
             if event.cancelled {
-                return xp;
+                return None;
             }
         }
 
         let updated_stack = stack.clone();
         self.inventory.set_slot(slot_index, updated_stack.clone());
-
-        xp = xp.saturating_sub(xp_used);
 
         self.try_send_slot_set_packet(&CSetPlayerInventory::new(
             (slot_index as i32).into(),
@@ -6546,7 +6554,7 @@ impl Player {
         self.living_entity
             .send_equipment_changes(&[(equipment_slot, updated_stack)]);
 
-        xp
+        Some(xp.saturating_sub(xp_used))
     }
 
     pub fn increment_screen_handler_sync_id(&self) {

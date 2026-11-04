@@ -115,20 +115,17 @@ impl EntityBase for DragonFireballEntity {
         }
         let at = entity.pos.load();
         let position = self.cloud_position(at);
+        let owner = self
+            .thrown
+            .owner
+            .get(&world)
+            .filter(|owner| owner.get_living_entity().is_some());
         let cloud = AreaEffectCloudEntity::dragon_breath(
             Entity::new(world.clone(), position, &EntityType::AREA_EFFECT_CLOUD),
             CLOUD_RADIUS,
             CLOUD_DURATION,
             (CLOUD_FINAL_RADIUS - CLOUD_RADIUS) / CLOUD_DURATION as f32,
             1,
-        );
-        let owner = self
-            .thrown
-            .owner
-            .get(&world)
-            .filter(|owner| owner.get_living_entity().is_some());
-        AreaEffectCloudEntity::set_owner_of(
-            cloud.as_ref(),
             owner.as_deref().map(EntityBase::get_entity),
         );
         world.sync_world_event(

@@ -8,6 +8,7 @@ use pumpkin_data::data_component_impl::{
 };
 use pumpkin_data::effect::StatusEffect;
 use pumpkin_data::item_stack::ItemStack;
+use pumpkin_data::particle::Particle;
 use pumpkin_data::potion::Potion;
 use pumpkin_nbt::compound::NbtCompound;
 use pumpkin_nbt::tag::NbtTag;
@@ -38,10 +39,67 @@ const LINGERING_WAIT_TIME: i32 = 10;
 /// `DragonFireball.onHit` and `DragonSittingFlamingPhase.doServerTick`.
 const DRAGON_BREATH_DURATION_SCALE: f32 = 0.25;
 
+/// Particle types whose NBT carries options this server cannot read back yet.
+const PARTICLES_WITH_OPTIONS: &[&str] = &[
+    "block",
+    "block_crumble",
+    "block_marker",
+    "dust",
+    "dust_color_transition",
+    "dust_pillar",
+    "effect",
+    "entity_effect",
+    "falling_dust",
+    "flash",
+    "instant_effect",
+    "item",
+    "sculk_charge",
+    "shriek",
+    "tinted_leaves",
+    "trail",
+    "vibration",
+];
+
 #[derive(Clone)]
 struct ParticleMeta {
     particle_id: VarInt,
     data: Box<[u8]>,
+}
+
+impl ParticleMeta {
+    /// Vanilla `ColorParticleOption` of `ENTITY_EFFECT`.
+    fn entity_effect(argb: i32) -> Self {
+        Self {
+            particle_id: VarInt(Particle::EntityEffect as i32),
+            data: Box::new(argb.to_be_bytes()),
+        }
+    }
+
+    /// Vanilla `PowerParticleOption` of `DRAGON_BREATH`.
+    fn dragon_breath(power: f32) -> Self {
+        Self {
+            particle_id: VarInt(Particle::DragonBreath as i32),
+            data: Box::new(power.to_be_bytes()),
+        }
+    }
+
+    /// Reads vanilla's `custom_particle` tag, if its options are understood here.
+    fn from_nbt(nbt: &NbtCompound) -> Option<Self> {
+        let name = nbt.get_string("type")?;
+        let name = name.strip_prefix("minecraft:").unwrap_or(name);
+        if name == Particle::DragonBreath.to_name() {
+            return Some(Self::dragon_breath(
+                nbt.get_numeric_float("power").unwrap_or(1.0),
+            ));
+        }
+        if PARTICLES_WITH_OPTIONS.contains(&name) {
+            return None;
+        }
+        Particle::from_name(name).map(|particle| Self {
+            particle_id: VarInt(particle as i32),
+            data: Box::new([]),
+        })
+    }
 }
 
 impl pumpkin_protocol::java::client::play::MetadataSerializer for ParticleMeta {
@@ -63,8 +121,8 @@ pub struct AreaEffectCloudEntity {
     pub owner: EntityReference,
     contents: Mutex<PotionContentsImpl>,
     potion_duration_scale: AtomicCell<f32>,
-    /// The power of vanilla `customParticle`; dragon's breath is the one custom particle here.
-    dragon_breath_power: AtomicCell<Option<f32>>,
+    /// Vanilla `customParticle`: the saved tag, and what it means when it could be read.
+    custom_particle: Mutex<Option<(NbtCompound, Option<ParticleMeta>)>>,
     /// Vanilla `victims`: entity id to the tick it can be affected again.
     victims: Mutex<HashMap<i32, i32>>,
     radius: AtomicCell<f32>,
@@ -89,7 +147,7 @@ impl AreaEffectCloudEntity {
                 custom_name: None,
             }),
             potion_duration_scale: AtomicCell::new(1.0),
-            dragon_breath_power: AtomicCell::new(None),
+            custom_particle: Mutex::new(None),
             victims: Mutex::new(HashMap::new()),
             radius: AtomicCell::new(DEFAULT_RADIUS),
             duration: AtomicI32::new(INFINITE_DURATION),
@@ -140,15 +198,20 @@ impl AreaEffectCloudEntity {
         duration: i32,
         radius_per_tick: f32,
         amplifier: u8,
+        owner: Option<&Entity>,
     ) -> Arc<dyn EntityBase> {
         let cloud = Self::build(entity);
+        cloud.owner.set(owner);
         cloud.set_radius(radius);
         cloud.duration.store(duration, Relaxed);
         cloud.radius_per_tick.store(radius_per_tick);
         cloud
             .potion_duration_scale
             .store(DRAGON_BREATH_DURATION_SCALE);
-        cloud.dragon_breath_power.store(Some(1.0));
+        let mut particle = NbtCompound::new();
+        particle.put_string("type", "minecraft:dragon_breath".to_string());
+        particle.put_float("power", 1.0);
+        cloud.set_custom_particle(Some(particle));
         cloud
             .contents
             .lock()
@@ -165,11 +228,15 @@ impl AreaEffectCloudEntity {
         Arc::new(cloud)
     }
 
-    /// Vanilla `setOwner` on a cloud behind its trait object.
-    pub fn set_owner_of(cloud: &dyn EntityBase, owner: Option<&Entity>) {
-        if let Some(cloud) = cloud.cast_any().downcast_ref::<Self>() {
-            cloud.owner.set(owner);
-        }
+    /// Vanilla `setCustomParticle`.
+    fn set_custom_particle(&self, nbt: Option<NbtCompound>) {
+        *self
+            .custom_particle
+            .lock()
+            .unwrap_or_else(PoisonError::into_inner) = nbt.map(|nbt| {
+            let meta = ParticleMeta::from_nbt(&nbt);
+            (nbt, meta)
+        });
     }
 
     #[must_use]
@@ -187,22 +254,20 @@ impl AreaEffectCloudEntity {
         self.entity.set_dimensions(radius * 2.0, HEIGHT);
     }
 
-    /// Vanilla `updateParticle`.
+    /// Vanilla `updateParticle`: the custom particle, else an opaque potion color.
     fn sync_particle(&self) {
-        let meta = if let Some(power) = self.dragon_breath_power.load() {
-            ParticleMeta {
-                particle_id: VarInt(pumpkin_data::particle::Particle::DragonBreath as i32),
-                data: Box::new(power.to_be_bytes()),
-            }
-        } else {
+        let custom = self
+            .custom_particle
+            .lock()
+            .unwrap_or_else(PoisonError::into_inner)
+            .as_ref()
+            .and_then(|(_, meta)| meta.clone());
+        let meta = custom.unwrap_or_else(|| {
             let color = PotionContents::color(
                 &self.contents.lock().unwrap_or_else(PoisonError::into_inner),
-            ) | (0xFFi32 << 24);
-            ParticleMeta {
-                particle_id: VarInt(pumpkin_data::particle::Particle::EntityEffect as i32),
-                data: Box::new(color.to_be_bytes()),
-            }
-        };
+            );
+            ParticleMeta::entity_effect(color | (0xFFi32 << 24))
+        });
         self.entity.set_synced_data(
             pumpkin_data::tracked_data::area_effect_cloud::PARTICLE,
             meta,
@@ -419,11 +484,12 @@ impl EntityBase for AreaEffectCloudEntity {
         nbt.put_float("RadiusOnUse", self.radius_on_use.load());
         nbt.put_float("RadiusPerTick", self.radius_per_tick.load());
         nbt.put_float("Radius", self.radius());
-        if let Some(power) = self.dragon_breath_power.load() {
-            let mut particle = NbtCompound::new();
-            particle.put_string("type", "minecraft:dragon_breath".to_string());
-            particle.put_float("power", power);
-            nbt.put_compound("custom_particle", particle);
+        if let Some((particle, _)) = &*self
+            .custom_particle
+            .lock()
+            .unwrap_or_else(PoisonError::into_inner)
+        {
+            nbt.put_compound("custom_particle", particle.clone());
         }
         self.owner.write_nbt(nbt, "Owner");
         let contents = self.contents.lock().unwrap_or_else(PoisonError::into_inner);
@@ -458,22 +524,40 @@ impl EntityBase for AreaEffectCloudEntity {
             ("RadiusPerTick", &self.radius_per_tick),
             ("potion_duration_scale", &self.potion_duration_scale),
         ] {
-            if let Some(value) = nbt.get_float(key) {
+            if let Some(value) = nbt.get_numeric_float(key) {
                 field.store(value);
             }
         }
-        if let Some(radius) = nbt.get_float("Radius") {
+        if let Some(radius) = nbt.get_numeric_float("Radius") {
             self.set_radius(radius);
         }
         self.owner.read_nbt(nbt, "Owner");
-        if let Some(particle) = nbt.get_compound("custom_particle")
-            && particle.get_string("type") == Some("minecraft:dragon_breath")
-        {
-            self.dragon_breath_power
-                .store(Some(particle.get_float("power").unwrap_or(1.0)));
+        if let Some(particle) = nbt.get_compound("custom_particle") {
+            self.set_custom_particle(Some(particle.clone()));
         }
         if let Some(contents) = Self::read_contents(nbt) {
             *self.contents.lock().unwrap_or_else(PoisonError::into_inner) = contents;
+        }
+        self.sync_particle();
+    }
+
+    fn remove_custom_nbt(&self, removed: &[Box<str>]) {
+        for key in removed {
+            match &**key {
+                "Owner" => self.owner.clear(),
+                "custom_particle" => self.set_custom_particle(None),
+                "potion_contents" => {
+                    *self.contents.lock().unwrap_or_else(PoisonError::into_inner) =
+                        PotionContentsImpl {
+                            potion_id: None,
+                            custom_color: None,
+                            custom_effects: Vec::new(),
+                            custom_name: None,
+                        };
+                }
+                "potion_duration_scale" => self.potion_duration_scale.store(1.0),
+                _ => {}
+            }
         }
         self.sync_particle();
     }

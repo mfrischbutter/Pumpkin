@@ -1,10 +1,13 @@
+use super::mob::enderman::{block_state_from_nbt, block_state_to_nbt};
+use super::projectile::owner::EntityReference;
 use super::{Entity, EntityBase, living::LivingEntity};
 use crate::server::Server;
 use crate::world::World;
+use crate::world::explosion::UsedPortalDamageCalculator;
 use core::f32;
 use crossbeam::atomic::AtomicCell;
-use pumpkin_data::Block;
 use pumpkin_data::entity::EntityType;
+use pumpkin_data::{Block, BlockStateId};
 use pumpkin_nbt::compound::NbtCompound;
 use pumpkin_protocol::codec::var_int::VarInt;
 use pumpkin_util::math::position::BlockPos;
@@ -14,7 +17,7 @@ use std::{
     sync::{
         Arc,
         atomic::{
-            AtomicU32,
+            AtomicBool, AtomicU32,
             Ordering::{self, Relaxed},
         },
     },
@@ -23,12 +26,17 @@ use std::{
 /// Vanilla `Entity.getAirDrag`, applied every tick.
 const AIR_DRAG: f32 = 0.98;
 
-// TODO: `owner` (igniter, projectile owner or explosion source): NBT, kill credit, damage source.
-// TODO: `block_state` NBT tag and `usedPortal` damage calculator.
+/// Vanilla `PrimedTnt`.
 pub struct TNTEntity {
     entity: Entity,
     power: AtomicCell<f32>,
     fuse: AtomicU32,
+    /// Vanilla `DATA_BLOCK_STATE_ID`, what clients draw.
+    block_state: AtomicCell<BlockStateId>,
+    /// Vanilla `owner`: who lit it, credited for what the explosion does.
+    owner: EntityReference,
+    /// Vanilla `usedPortal`: a teleported TNT leaves nether portals standing.
+    used_portal: AtomicBool,
 }
 
 impl TNTEntity {
@@ -43,7 +51,50 @@ impl TNTEntity {
             entity,
             power: AtomicCell::new(power),
             fuse: AtomicU32::new(fuse),
+            block_state: AtomicCell::new(Block::TNT.default_state.id),
+            owner: EntityReference::none(),
+            used_portal: AtomicBool::new(false),
         }
+    }
+
+    /// Vanilla constructor argument `owner`.
+    pub fn set_owner(&self, owner: Option<&Entity>) {
+        self.owner.set(owner);
+    }
+
+    /// Vanilla `PrimedTnt.setBlockState`.
+    fn set_block_state(&self, state: BlockStateId) {
+        self.block_state.store(state);
+        self.entity.set_synced_data(
+            pumpkin_data::tracked_data::tnt::BLOCK_STATE_ID,
+            VarInt(i32::from(state.as_u16())),
+        );
+    }
+
+    /// Vanilla `PrimedTnt.explode`: at `getY(0.0625)`. Vanilla discards the TNT first; here that
+    /// comes last, because the explosion finds its source by id to credit the owner.
+    fn explode(&self) {
+        let entity = &self.entity;
+        let world = entity.world.load_full();
+        if !world.level_info.load().game_rules.tnt_explodes {
+            entity.remove();
+            return;
+        }
+        let pos = entity.pos.load();
+        let y = f64::from(entity.entity_type.dimension[1]).mul_add(0.0625, pos.y);
+        let position = Vector3::new(pos.x, y, pos.z);
+        let calculator: Option<Arc<dyn crate::world::ExplosionDamageCalculator>> = self
+            .used_portal
+            .load(Relaxed)
+            .then(|| Arc::new(UsedPortalDamageCalculator) as _);
+        world.explode_with_calculator(
+            Some(entity),
+            position,
+            self.power.load(),
+            crate::world::ExplosionInteraction::Tnt,
+            calculator,
+        );
+        entity.remove();
     }
 
     pub(crate) fn is_about_to_explode(&self) -> bool {
@@ -59,9 +110,11 @@ impl TNTEntity {
         );
         let entity = Entity::new(world.clone(), pos, &EntityType::TNT);
         let rot = rand::random::<f64>() * TAU;
-        entity
-            .velocity
-            .store(Vector3::new(-rot.sin() * 0.02, 0.2, -rot.cos() * 0.02));
+        entity.velocity.store(Vector3::new(
+            -rot.sin() * 0.02,
+            f64::from(0.2f32),
+            -rot.cos() * 0.02,
+        ));
         Arc::new(Self::new(entity, Self::DEFAULT_POWER, fuse))
     }
 
@@ -77,10 +130,12 @@ impl EntityBase for TNTEntity {
     /// nearly-detonated fuse and the TNT explodes late.
     fn write_custom_nbt(&self, nbt: &mut NbtCompound) {
         nbt.put_short("fuse", self.fuse.load(Relaxed) as i16);
+        nbt.put("block_state", block_state_to_nbt(self.block_state.load()));
         let power = self.power.load();
         if (power - Self::DEFAULT_POWER).abs() > f32::EPSILON {
             nbt.put_float("explosion_power", power);
         }
+        self.owner.write_nbt(nbt, "owner");
     }
 
     /// Vanilla `PrimedTnt.readAdditionalSaveData`.
@@ -94,13 +149,51 @@ impl EntityBase for TNTEntity {
                 .unwrap_or(Self::DEFAULT_POWER)
                 .clamp(0.0, 128.0),
         );
+        if let Some(state) = nbt.get("block_state").and_then(block_state_from_nbt) {
+            self.set_block_state(state);
+        }
+        self.owner.read_nbt(nbt, "owner");
+    }
+
+    fn remove_custom_nbt(&self, removed: &[Box<str>]) {
+        if removed.iter().any(|key| &**key == "owner") {
+            self.owner.clear();
+        }
+    }
+
+    /// Vanilla `PrimedTnt.getOwner`: a living entity, or nobody.
+    fn get_owner_entity(&self) -> Option<Arc<dyn EntityBase>> {
+        self.owner
+            .get(&self.entity.world.load())
+            .filter(|owner| owner.get_living_entity().is_some())
+    }
+
+    /// Vanilla `PrimedTnt.teleport`.
+    fn teleport(
+        &self,
+        position: Vector3<f64>,
+        yaw: Option<f32>,
+        pitch: Option<f32>,
+        world: Arc<World>,
+    ) {
+        self.entity.teleport(position, yaw, pitch, &world);
+        self.used_portal.store(true, Relaxed);
+    }
+
+    /// Vanilla `PrimedTnt.isPickable`.
+    fn can_hit(&self) -> bool {
+        !self.entity.is_removed()
     }
 
     fn tick(&self, caller: &dyn EntityBase, _server: &Server) {
         let entity = &self.entity;
 
+        // Vanilla `PrimedTnt.tick` skips the base tick and only handles the portal from it.
+        entity.tick_portal(caller);
+
         let mut velo = entity.velocity.load();
         velo.y -= self.get_gravity();
+        entity.velocity.store(velo);
 
         entity.move_entity(caller, velo);
         entity.tick_block_collisions(caller);
@@ -126,19 +219,7 @@ impl EntityBase for TNTEntity {
         );
 
         if fuse == 0 {
-            entity.remove();
-            let world = entity.world.load_full();
-            if world.level_info.load().game_rules.tnt_explodes {
-                // Vanilla `PrimedTnt.explode`: `getY(0.0625)`.
-                let pos = entity.pos.load();
-                let y = f64::from(entity.entity_type.dimension[1]).mul_add(0.0625, pos.y);
-                world.explode(
-                    Some(entity),
-                    Vector3::new(pos.x, y, pos.z),
-                    self.power.load(),
-                    crate::world::ExplosionInteraction::Tnt,
-                );
-            }
+            self.explode();
         } else {
             entity.update_fluid_state(caller);
         }
@@ -151,7 +232,7 @@ impl EntityBase for TNTEntity {
         );
         self.entity.set_synced_data(
             pumpkin_data::tracked_data::tnt::BLOCK_STATE_ID,
-            VarInt(i32::from(Block::TNT.default_state.id.as_u16())),
+            VarInt(i32::from(self.block_state.load().as_u16())),
         );
     }
 
@@ -164,7 +245,11 @@ impl EntityBase for TNTEntity {
     }
 
     fn get_gravity(&self) -> f64 {
-        0.04
+        if self.entity.has_no_gravity() {
+            0.0
+        } else {
+            0.04
+        }
     }
 
     fn entity_bedrock_spawn_metadata(

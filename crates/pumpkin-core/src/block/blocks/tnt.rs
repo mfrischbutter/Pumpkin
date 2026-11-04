@@ -18,16 +18,21 @@ use crate::block::{
     BlockBehaviour, BrokenArgs, ExplodeArgs, OnNeighborUpdateArgs, OnProjectileHitArgs, PlacedArgs,
     UseWithItemArgs,
 };
-use crate::entity::EntityBase;
 use crate::entity::tnt::TNTEntity;
+use crate::entity::{Entity, EntityBase};
 use crate::world::World;
 
 #[pumpkin_block("minecraft:tnt")]
 pub struct TNTBlock;
 
 impl TNTBlock {
-    /// Vanilla `TntBlock.prime` plus the block removal its callers do.
+    /// Vanilla `TntBlock.prime` without an igniter, plus the block removal its callers do.
     pub fn prime(world: &Arc<World>, location: &BlockPos) -> bool {
+        Self::prime_by(world, location, None)
+    }
+
+    /// Vanilla `TntBlock.prime`: `igniter` owns the TNT and gets the credit for its explosion.
+    pub fn prime_by(world: &Arc<World>, location: &BlockPos, igniter: Option<&Entity>) -> bool {
         if !world.level_info.load().game_rules.tnt_explodes {
             return false;
         }
@@ -43,7 +48,9 @@ impl TNTBlock {
             return false;
         };
 
-        if Self::spawn_primed(world, location) {
+        if let Some(tnt) = Self::prepare(world, location) {
+            tnt.set_owner(igniter);
+            Self::ignite(world, location, tnt);
             return true;
         }
 
@@ -122,7 +129,7 @@ impl BlockBehaviour for TNTBlock {
             return BlockActionResult::PassToDefaultBlockAction;
         }
 
-        if Self::prime(args.world, args.position) {
+        if Self::prime_by(args.world, args.position, Some(args.player.get_entity())) {
             if args.player.gamemode.load() != GameMode::Creative {
                 if item_id == Item::FLINT_AND_STEEL.id {
                     let _ = args.item_stack.damage_item(1);
@@ -168,7 +175,16 @@ impl BlockBehaviour for TNTBlock {
 
     fn on_projectile_hit(&self, args: OnProjectileHitArgs<'_>) {
         if args.projectile.get_entity().is_on_fire() {
-            Self::prime(args.world, args.position);
+            // Vanilla: only a living owner counts as the igniter.
+            let owner = args
+                .projectile
+                .get_owner_entity()
+                .filter(|owner| owner.get_living_entity().is_some());
+            Self::prime_by(
+                args.world,
+                args.position,
+                owner.as_deref().map(EntityBase::get_entity),
+            );
         }
     }
 

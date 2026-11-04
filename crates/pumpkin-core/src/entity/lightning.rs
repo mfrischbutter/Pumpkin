@@ -1,12 +1,15 @@
+//! Vanilla `LightningBolt`.
+
 use rustc_hash::FxHashSet;
 use std::sync::{
     Arc, Mutex,
     atomic::{AtomicBool, AtomicI32, AtomicI64, Ordering},
 };
 
-use pumpkin_data::sound::{Sound, SoundCategory};
+use pumpkin_data::game_event::GameEvent;
+use pumpkin_data::tag::{self, Taggable};
 use pumpkin_data::world::WorldEvent;
-use pumpkin_data::{Block, BlockId, BlockStateId};
+use pumpkin_data::{Block, BlockStateId};
 use pumpkin_util::Difficulty;
 use pumpkin_util::math::boundingbox::BoundingBox;
 use pumpkin_util::math::position::BlockPos;
@@ -14,11 +17,26 @@ use pumpkin_util::math::vector3::Vector3;
 use pumpkin_world::world::BlockFlags;
 use rand::RngExt;
 
-use crate::block::blocks::fire::FireBlockBase;
+use crate::block::blocks::fire::{FireBlockBase, fire::FireBlock};
+use crate::block::blocks::weathering_copper::{
+    get_first_state, get_previous_state, get_weather_state,
+};
 use crate::entity::player::Player;
+use crate::entity::player::advancement::trigger::AdvancementTrigger;
 use crate::entity::{Entity, EntityBase};
 use crate::server::Server;
 use crate::world::World;
+
+/// Vanilla `START_LIFE`.
+const START_LIFE: i32 = 2;
+/// Vanilla `DAMAGE_RADIUS`.
+const DAMAGE_RADIUS: f64 = 3.0;
+/// Vanilla `DETECTION_RADIUS`.
+const DETECTION_RADIUS: f64 = 15.0;
+/// What vanilla adds to the top of its damage and detection boxes.
+const BOX_EXTRA_HEIGHT: f64 = 6.0;
+/// Vanilla `tick`: the distance within which players count the strike for the advancement.
+const ADVANCEMENT_PLAYER_DISTANCE: f64 = 256.0;
 
 pub struct LightningBoltEntity {
     entity: Entity,
@@ -33,12 +51,11 @@ pub struct LightningBoltEntity {
 
 impl LightningBoltEntity {
     pub fn new(entity: Entity) -> Self {
-        entity.no_physics.store(true, Ordering::Relaxed);
         let seed = rand::rng().random::<i64>();
         let flashes = rand::rng().random_range(1..=3);
         Self {
             entity,
-            life: AtomicI32::new(2),
+            life: AtomicI32::new(START_LIFE),
             seed: AtomicI64::new(seed),
             flashes: AtomicI32::new(flashes),
             visual_only: AtomicBool::new(false),
@@ -83,10 +100,11 @@ impl LightningBoltEntity {
         Vector3::new(pos.x, pos.y - 1.0e-6, pos.z).to_block_pos()
     }
 
+    /// Vanilla `powerLightningRod`, for every rod including the oxidized ones.
     fn power_lightning_rod(&self, world: &Arc<World>) {
         let strike_pos = self.get_strike_position();
         let block = world.get_block(&strike_pos);
-        if block == &Block::LIGHTNING_ROD {
+        if block.has_tag(&tag::Block::MINECRAFT_LIGHTNING_RODS) {
             crate::block::blocks::redstone::lightning_rod::LightningRodBlock::trigger(
                 world,
                 &strike_pos,
@@ -94,17 +112,32 @@ impl LightningBoltEntity {
         }
     }
 
+    /// Vanilla `BaseFireBlock.getState`, soul fire on its soil and else a fire facing what
+    /// burns around it.
+    fn fire_state_at(world: &Arc<World>, pos: &BlockPos) -> BlockStateId {
+        let fire = FireBlockBase::get_fire_type(world, pos);
+        if fire == Block::FIRE {
+            FireBlock.get_state_for_position(world, &Block::FIRE, pos)
+        } else {
+            fire.default_state.id
+        }
+    }
+
+    /// Vanilla `spawnFire`.
     fn spawn_fire(&self, world: &Arc<World>, additional_sources: i32) {
         if self.visual_only.load(Ordering::Relaxed) {
             return;
         }
 
         let pos = self.entity.block_pos.load();
+        if !world.can_spread_fire_around(&pos) {
+            return;
+        }
 
         let try_place = |p: BlockPos| {
             if world.get_block_state(&p).is_air() && FireBlockBase::can_place_at(world, &p) {
-                let fire_block = FireBlockBase::get_fire_type(world, &p);
-                world.set_block_state(&p, fire_block.default_state.id, BlockFlags::NOTIFY_ALL);
+                let fire_state = Self::fire_state_at(world, &p);
+                world.set_block_state(&p, fire_state, BlockFlags::NOTIFY_ALL);
                 self.blocks_set_on_fire.fetch_add(1, Ordering::Relaxed);
             }
         };
@@ -120,33 +153,29 @@ impl LightningBoltEntity {
         }
     }
 
-    fn clear_copper_on_lightning_strike(&self, world: &Arc<World>) {
-        let strike_pos = self.get_strike_position();
-        let struck_state = world.get_block_state(&strike_pos);
-        let struck_block = struck_state.id.to_block();
+    /// Vanilla `clearCopperOnLightningStrike`: the struck copper back to its first stage, and
+    /// random walks that scrape one stage off what they cross. Waxed copper keeps its stage but
+    /// still starts the walks.
+    fn clear_copper_on_lightning_strike(world: &Arc<World>, struck_pos: &BlockPos) {
+        let (struck_block, struck_state) = world.get_block_and_state_id(struck_pos);
+        // Vanilla `HoneycombItem.WAX_OFF_BY_BLOCK` holds every waxed copper block.
+        let is_waxed = struck_block.name.starts_with("waxed_");
+        let is_weathering = get_weather_state(struck_block).is_some();
+        if !is_weathering && !is_waxed {
+            return;
+        }
+        if is_weathering {
+            world.set_block_state(
+                struck_pos,
+                get_first_state(struck_block, struck_state),
+                BlockFlags::NOTIFY_ALL,
+            );
+        }
 
-        let is_waxed = is_waxed_copper(struck_block.id);
-        let is_weathering = is_weathering_copper(struck_block.id);
-
-        if is_weathering || is_waxed {
-            if is_weathering && let Some(first_block_id) = get_first_stage_copper(struck_block.id) {
-                let first_block = first_block_id.to_block();
-                let offset = struck_state
-                    .id
-                    .as_u16()
-                    .saturating_sub(struck_block.default_state.id.as_u16());
-                let new_state_id =
-                    BlockStateId::new(first_block.default_state.id.as_u16() + offset)
-                        .unwrap_or(first_block.default_state.id);
-                world.set_block_state(&strike_pos, new_state_id, BlockFlags::NOTIFY_ALL);
-            }
-
-            let strikes_count = rand::rng().random_range(3..=5);
-
-            for _ in 0..strikes_count {
-                let step_count = rand::rng().random_range(1..=8);
-                Self::random_walk_cleaning_copper(world, &strike_pos, step_count);
-            }
+        let strikes_count = rand::rng().random_range(3..=5);
+        for _ in 0..strikes_count {
+            let step_count = rand::rng().random_range(1..=8);
+            Self::random_walk_cleaning_copper(world, struck_pos, step_count);
         }
     }
 
@@ -166,64 +195,142 @@ impl LightningBoltEntity {
         }
     }
 
+    /// Vanilla `randomStepCleaningCopper`: unoxidized copper is a step as well, it only has
+    /// nothing to lose.
     fn random_step_cleaning_copper(world: &Arc<World>, pos: &BlockPos) -> Option<BlockPos> {
-        let candidates = random_in_cube(10, pos, 1);
-        for candidate in candidates {
-            let state = world.get_block_state(&candidate);
-            let block = state.id.to_block();
-
-            if is_weathering_copper(block.id)
-                && let Some(prev_block_id) = get_previous_stage_copper(block.id)
-            {
-                let prev_block = prev_block_id.to_block();
-                let offset = state
-                    .id
-                    .as_u16()
-                    .saturating_sub(block.default_state.id.as_u16());
-                let new_state_id = BlockStateId::new(prev_block.default_state.id.as_u16() + offset)
-                    .unwrap_or(prev_block.default_state.id);
-                world.set_block_state(&candidate, new_state_id, BlockFlags::NOTIFY_ALL);
+        for candidate in random_in_cube(10, pos, 1) {
+            let (block, state_id) = world.get_block_and_state_id(&candidate);
+            if get_weather_state(block).is_some() {
+                if let Some(previous) = get_previous_state(block, state_id) {
+                    world.set_block_state(&candidate, previous, BlockFlags::NOTIFY_ALL);
+                }
                 world.sync_world_event(WorldEvent::ParticlesElectricSpark, candidate, -1);
                 return Some(candidate);
             }
         }
         None
     }
+
+    /// The first tick of vanilla `tick`. The thunder and impact sounds are not here: the client
+    /// plays them itself when its copy of the bolt ticks, so sending them would double them.
+    fn strike(&self) {
+        let entity = &self.entity;
+        let world = entity.world.load_full();
+        let difficulty = world.level_info.load().difficulty;
+        if difficulty == Difficulty::Normal || difficulty == Difficulty::Hard {
+            self.spawn_fire(&world, 4);
+        }
+
+        self.power_lightning_rod(&world);
+        Self::clear_copper_on_lightning_strike(&world, &self.get_strike_position());
+        world.emit_game_event(GameEvent::LightningStrike.name(), entity.pos.load());
+    }
+
+    /// Vanilla `tick` on a live tick: every alive entity in the box is hit again, also those
+    /// from earlier flashes, and the channeling player gets the advancement.
+    fn hit_entities_in_box(&self) {
+        let entity = &self.entity;
+        let world = entity.world.load_full();
+        let pos = entity.pos.load();
+        let damage_box = BoundingBox::new(
+            Vector3::new(
+                pos.x - DAMAGE_RADIUS,
+                pos.y - DAMAGE_RADIUS,
+                pos.z - DAMAGE_RADIUS,
+            ),
+            Vector3::new(
+                pos.x + DAMAGE_RADIUS,
+                pos.y + BOX_EXTRA_HEIGHT + DAMAGE_RADIUS,
+                pos.z + DAMAGE_RADIUS,
+            ),
+        );
+        let cause = self.get_cause();
+
+        for hit_entity in world.get_all_at_box(&damage_box) {
+            if !is_alive(hit_entity.as_ref()) {
+                continue;
+            }
+            let hit_id = hit_entity.get_entity().entity_id;
+            if hit_id == entity.entity_id {
+                continue;
+            }
+            hit_entity.on_lightning_strike(hit_entity.as_ref(), self);
+            self.hit_entities
+                .lock()
+                .unwrap_or_else(std::sync::PoisonError::into_inner)
+                .insert(hit_id);
+            if let Some(player) = &cause {
+                player.trigger_advancement(AdvancementTrigger::ChanneledLightning {
+                    victim_type: entity_type_name(hit_entity.as_ref()),
+                });
+            }
+        }
+    }
+
+    /// The end of vanilla `tick`: `LIGHTNING_STRIKE` for every player near enough, naming the
+    /// bystanders the bolt did not hit.
+    fn trigger_strike_advancement(&self) {
+        let entity = &self.entity;
+        let world = entity.world.load_full();
+        let pos = entity.pos.load();
+        let detection_box = BoundingBox::new(
+            Vector3::new(
+                pos.x - DETECTION_RADIUS,
+                pos.y - DETECTION_RADIUS,
+                pos.z - DETECTION_RADIUS,
+            ),
+            Vector3::new(
+                pos.x + DETECTION_RADIUS,
+                pos.y + BOX_EXTRA_HEIGHT + DETECTION_RADIUS,
+                pos.z + DETECTION_RADIUS,
+            ),
+        );
+        let bystanders: Vec<String> = {
+            let hit_entities = self
+                .hit_entities
+                .lock()
+                .unwrap_or_else(std::sync::PoisonError::into_inner);
+            world
+                .get_all_at_box(&detection_box)
+                .iter()
+                .filter(|viewer| {
+                    let id = viewer.get_entity().entity_id;
+                    id != entity.entity_id
+                        && is_alive(viewer.as_ref())
+                        && !hit_entities.contains(&id)
+                })
+                .map(|viewer| entity_type_name(viewer.as_ref()))
+                .collect()
+        };
+        let blocks_set_on_fire = self.blocks_set_on_fire.load(Ordering::Relaxed);
+        for player in world.players.load().iter() {
+            let distance = player.position().squared_distance_to_vec(&pos).sqrt();
+            if distance >= ADVANCEMENT_PLAYER_DISTANCE {
+                continue;
+            }
+            let trigger = |bystander_type| {
+                player.trigger_advancement(AdvancementTrigger::LightningStrike {
+                    bystander_type,
+                    blocks_set_on_fire,
+                    distance,
+                });
+            };
+            trigger(None);
+            for bystander in &bystanders {
+                trigger(Some(bystander.clone()));
+            }
+        }
+    }
 }
 
 impl EntityBase for LightningBoltEntity {
-    fn tick(&self, _caller: &dyn EntityBase, _server: &Server) {
+    fn tick(&self, caller: &dyn EntityBase, server: &Server) {
         let entity = &self.entity;
+        entity.tick(caller, server);
+
         let life = self.life.load(Ordering::Relaxed);
-
-        if life == 2 {
-            let world = entity.world.load();
-            let pos = entity.pos.load();
-
-            let pitch_thunder = 0.8 + rand::rng().random::<f32>() * 0.2;
-            world.play_sound_fine(
-                Sound::EntityLightningBoltThunder,
-                SoundCategory::Weather,
-                &pos,
-                10000.0,
-                pitch_thunder,
-            );
-            let pitch_impact = 0.5 + rand::rng().random::<f32>() * 0.2;
-            world.play_sound_fine(
-                Sound::EntityLightningBoltImpact,
-                SoundCategory::Weather,
-                &pos,
-                2.0,
-                pitch_impact,
-            );
-
-            let difficulty = world.level_info.load().difficulty;
-            if difficulty == Difficulty::Normal || difficulty == Difficulty::Hard {
-                self.spawn_fire(&world, 4);
-            }
-
-            self.power_lightning_rod(&world);
-            self.clear_copper_on_lightning_strike(&world);
+        if life == START_LIFE {
+            self.strike();
         }
 
         let new_life = life - 1;
@@ -232,61 +339,19 @@ impl EntityBase for LightningBoltEntity {
         if new_life < 0 {
             let flashes = self.flashes.load(Ordering::Relaxed);
             if flashes == 0 {
+                self.trigger_strike_advancement();
                 entity.remove();
                 return;
             } else if new_life < -rand::rng().random_range(0..10) {
                 self.flashes.store(flashes - 1, Ordering::Relaxed);
                 self.life.store(1, Ordering::Relaxed);
                 self.seed.store(rand::random::<i64>(), Ordering::Relaxed);
-                let world = entity.world.load();
-                self.spawn_fire(&world, 0);
+                self.spawn_fire(&entity.world.load_full(), 0);
             }
         }
 
-        let current_life = self.life.load(Ordering::Relaxed);
-        if current_life >= 0 && !self.visual_only.load(Ordering::Relaxed) {
-            let world = entity.world.load();
-            let pos = entity.pos.load();
-
-            let damage_box = BoundingBox::new(
-                Vector3::new(pos.x - 3.0, pos.y - 3.0, pos.z - 3.0),
-                Vector3::new(pos.x + 3.0, pos.y + 9.0, pos.z + 3.0),
-            );
-
-            let entities = world.get_all_at_box(&damage_box);
-            if let Ok(mut hit_guard) = self.hit_entities.lock() {
-                for hit_entity in entities {
-                    if hit_entity.get_entity().entity_id == entity.entity_id {
-                        continue;
-                    }
-                    let hit_id = hit_entity.get_entity().entity_id;
-                    if hit_guard.insert(hit_id) {
-                        hit_entity.on_lightning_strike(hit_entity.as_ref(), self);
-                        if let Some(player) = self.get_cause() {
-                            let type_name = format!(
-                                "minecraft:{}",
-                                hit_entity.get_entity().entity_type.resource_name
-                            );
-                            player.trigger_advancement(
-                                crate::entity::player::advancement::trigger::AdvancementTrigger::ChanneledLightning {
-                                    victim_type: type_name.clone(),
-                                },
-                            );
-                            let distance = (player
-                                .position()
-                                .squared_distance_to_vec(&self.entity.pos.load()))
-                            .sqrt();
-                            player.trigger_advancement(
-                                crate::entity::player::advancement::trigger::AdvancementTrigger::LightningStrike {
-                                    bystander_type: Some(type_name),
-                                    blocks_set_on_fire: self.blocks_set_on_fire.load(Ordering::Relaxed),
-                                    distance,
-                                },
-                            );
-                        }
-                    }
-                }
-            }
+        if self.life.load(Ordering::Relaxed) >= 0 && !self.visual_only.load(Ordering::Relaxed) {
+            self.hit_entities_in_box();
         }
     }
 
@@ -304,6 +369,18 @@ impl EntityBase for LightningBoltEntity {
     }
 }
 
+/// Vanilla `Entity.isAlive`, which for living entities also asks for health left.
+fn is_alive(entity: &dyn EntityBase) -> bool {
+    entity.get_entity().is_alive()
+        && entity
+            .get_living_entity()
+            .is_none_or(|living| !living.is_dead_or_dying())
+}
+
+fn entity_type_name(entity: &dyn EntityBase) -> String {
+    format!("minecraft:{}", entity.get_entity().entity_type.resource_name)
+}
+
 fn random_in_cube(count: usize, center: &BlockPos, radius: i32) -> Vec<BlockPos> {
     let mut list = Vec::with_capacity(count);
     for _ in 0..count {
@@ -313,185 +390,4 @@ fn random_in_cube(count: usize, center: &BlockPos, radius: i32) -> Vec<BlockPos>
         list.push(center.offset(Vector3::new(dx, dy, dz)));
     }
     list
-}
-
-#[must_use]
-pub const fn is_waxed_copper(id: BlockId) -> bool {
-    matches!(
-        id,
-        BlockId::WAXED_COPPER_BLOCK
-            | BlockId::WAXED_EXPOSED_COPPER
-            | BlockId::WAXED_WEATHERED_COPPER
-            | BlockId::WAXED_OXIDIZED_COPPER
-            | BlockId::WAXED_CHISELED_COPPER
-            | BlockId::WAXED_EXPOSED_CHISELED_COPPER
-            | BlockId::WAXED_WEATHERED_CHISELED_COPPER
-            | BlockId::WAXED_OXIDIZED_CHISELED_COPPER
-            | BlockId::WAXED_COPPER_GRATE
-            | BlockId::WAXED_EXPOSED_COPPER_GRATE
-            | BlockId::WAXED_WEATHERED_COPPER_GRATE
-            | BlockId::WAXED_OXIDIZED_COPPER_GRATE
-            | BlockId::WAXED_CUT_COPPER
-            | BlockId::WAXED_EXPOSED_CUT_COPPER
-            | BlockId::WAXED_WEATHERED_CUT_COPPER
-            | BlockId::WAXED_OXIDIZED_CUT_COPPER
-            | BlockId::WAXED_CUT_COPPER_STAIRS
-            | BlockId::WAXED_EXPOSED_CUT_COPPER_STAIRS
-            | BlockId::WAXED_WEATHERED_CUT_COPPER_STAIRS
-            | BlockId::WAXED_OXIDIZED_CUT_COPPER_STAIRS
-            | BlockId::WAXED_CUT_COPPER_SLAB
-            | BlockId::WAXED_EXPOSED_CUT_COPPER_SLAB
-            | BlockId::WAXED_WEATHERED_CUT_COPPER_SLAB
-            | BlockId::WAXED_OXIDIZED_CUT_COPPER_SLAB
-            | BlockId::WAXED_COPPER_BULB
-            | BlockId::WAXED_EXPOSED_COPPER_BULB
-            | BlockId::WAXED_WEATHERED_COPPER_BULB
-            | BlockId::WAXED_OXIDIZED_COPPER_BULB
-            | BlockId::WAXED_COPPER_DOOR
-            | BlockId::WAXED_EXPOSED_COPPER_DOOR
-            | BlockId::WAXED_WEATHERED_COPPER_DOOR
-            | BlockId::WAXED_OXIDIZED_COPPER_DOOR
-            | BlockId::WAXED_COPPER_TRAPDOOR
-            | BlockId::WAXED_EXPOSED_COPPER_TRAPDOOR
-            | BlockId::WAXED_WEATHERED_COPPER_TRAPDOOR
-            | BlockId::WAXED_OXIDIZED_COPPER_TRAPDOOR
-    )
-}
-
-#[must_use]
-pub const fn is_weathering_copper(id: BlockId) -> bool {
-    matches!(
-        id,
-        BlockId::COPPER_BLOCK
-            | BlockId::EXPOSED_COPPER
-            | BlockId::WEATHERED_COPPER
-            | BlockId::OXIDIZED_COPPER
-            | BlockId::CHISELED_COPPER
-            | BlockId::EXPOSED_CHISELED_COPPER
-            | BlockId::WEATHERED_CHISELED_COPPER
-            | BlockId::OXIDIZED_CHISELED_COPPER
-            | BlockId::COPPER_GRATE
-            | BlockId::EXPOSED_COPPER_GRATE
-            | BlockId::WEATHERED_COPPER_GRATE
-            | BlockId::OXIDIZED_COPPER_GRATE
-            | BlockId::CUT_COPPER
-            | BlockId::EXPOSED_CUT_COPPER
-            | BlockId::WEATHERED_CUT_COPPER
-            | BlockId::OXIDIZED_CUT_COPPER
-            | BlockId::CUT_COPPER_STAIRS
-            | BlockId::EXPOSED_CUT_COPPER_STAIRS
-            | BlockId::WEATHERED_CUT_COPPER_STAIRS
-            | BlockId::OXIDIZED_CUT_COPPER_STAIRS
-            | BlockId::CUT_COPPER_SLAB
-            | BlockId::EXPOSED_CUT_COPPER_SLAB
-            | BlockId::WEATHERED_CUT_COPPER_SLAB
-            | BlockId::OXIDIZED_CUT_COPPER_SLAB
-            | BlockId::COPPER_BULB
-            | BlockId::EXPOSED_COPPER_BULB
-            | BlockId::WEATHERED_COPPER_BULB
-            | BlockId::OXIDIZED_COPPER_BULB
-            | BlockId::COPPER_DOOR
-            | BlockId::EXPOSED_COPPER_DOOR
-            | BlockId::WEATHERED_COPPER_DOOR
-            | BlockId::OXIDIZED_COPPER_DOOR
-            | BlockId::COPPER_TRAPDOOR
-            | BlockId::EXPOSED_COPPER_TRAPDOOR
-            | BlockId::WEATHERED_COPPER_TRAPDOOR
-            | BlockId::OXIDIZED_COPPER_TRAPDOOR
-    )
-}
-
-#[must_use]
-pub const fn get_first_stage_copper(id: BlockId) -> Option<BlockId> {
-    match id {
-        BlockId::COPPER_BLOCK
-        | BlockId::EXPOSED_COPPER
-        | BlockId::WEATHERED_COPPER
-        | BlockId::OXIDIZED_COPPER => Some(BlockId::COPPER_BLOCK),
-
-        BlockId::CHISELED_COPPER
-        | BlockId::EXPOSED_CHISELED_COPPER
-        | BlockId::WEATHERED_CHISELED_COPPER
-        | BlockId::OXIDIZED_CHISELED_COPPER => Some(BlockId::CHISELED_COPPER),
-
-        BlockId::COPPER_GRATE
-        | BlockId::EXPOSED_COPPER_GRATE
-        | BlockId::WEATHERED_COPPER_GRATE
-        | BlockId::OXIDIZED_COPPER_GRATE => Some(BlockId::COPPER_GRATE),
-
-        BlockId::CUT_COPPER
-        | BlockId::EXPOSED_CUT_COPPER
-        | BlockId::WEATHERED_CUT_COPPER
-        | BlockId::OXIDIZED_CUT_COPPER => Some(BlockId::CUT_COPPER),
-
-        BlockId::CUT_COPPER_STAIRS
-        | BlockId::EXPOSED_CUT_COPPER_STAIRS
-        | BlockId::WEATHERED_CUT_COPPER_STAIRS
-        | BlockId::OXIDIZED_CUT_COPPER_STAIRS => Some(BlockId::CUT_COPPER_STAIRS),
-
-        BlockId::CUT_COPPER_SLAB
-        | BlockId::EXPOSED_CUT_COPPER_SLAB
-        | BlockId::WEATHERED_CUT_COPPER_SLAB
-        | BlockId::OXIDIZED_CUT_COPPER_SLAB => Some(BlockId::CUT_COPPER_SLAB),
-
-        BlockId::COPPER_BULB
-        | BlockId::EXPOSED_COPPER_BULB
-        | BlockId::WEATHERED_COPPER_BULB
-        | BlockId::OXIDIZED_COPPER_BULB => Some(BlockId::COPPER_BULB),
-
-        BlockId::COPPER_DOOR
-        | BlockId::EXPOSED_COPPER_DOOR
-        | BlockId::WEATHERED_COPPER_DOOR
-        | BlockId::OXIDIZED_COPPER_DOOR => Some(BlockId::COPPER_DOOR),
-
-        BlockId::COPPER_TRAPDOOR
-        | BlockId::EXPOSED_COPPER_TRAPDOOR
-        | BlockId::WEATHERED_COPPER_TRAPDOOR
-        | BlockId::OXIDIZED_COPPER_TRAPDOOR => Some(BlockId::COPPER_TRAPDOOR),
-
-        _ => None,
-    }
-}
-
-#[must_use]
-pub const fn get_previous_stage_copper(id: BlockId) -> Option<BlockId> {
-    match id {
-        BlockId::OXIDIZED_COPPER => Some(BlockId::WEATHERED_COPPER),
-        BlockId::WEATHERED_COPPER => Some(BlockId::EXPOSED_COPPER),
-        BlockId::EXPOSED_COPPER => Some(BlockId::COPPER_BLOCK),
-
-        BlockId::OXIDIZED_CHISELED_COPPER => Some(BlockId::WEATHERED_CHISELED_COPPER),
-        BlockId::WEATHERED_CHISELED_COPPER => Some(BlockId::EXPOSED_CHISELED_COPPER),
-        BlockId::EXPOSED_CHISELED_COPPER => Some(BlockId::CHISELED_COPPER),
-
-        BlockId::OXIDIZED_COPPER_GRATE => Some(BlockId::WEATHERED_COPPER_GRATE),
-        BlockId::WEATHERED_COPPER_GRATE => Some(BlockId::EXPOSED_COPPER_GRATE),
-        BlockId::EXPOSED_COPPER_GRATE => Some(BlockId::COPPER_GRATE),
-
-        BlockId::OXIDIZED_CUT_COPPER => Some(BlockId::WEATHERED_CUT_COPPER),
-        BlockId::WEATHERED_CUT_COPPER => Some(BlockId::EXPOSED_CUT_COPPER),
-        BlockId::EXPOSED_CUT_COPPER => Some(BlockId::CUT_COPPER),
-
-        BlockId::OXIDIZED_CUT_COPPER_STAIRS => Some(BlockId::WEATHERED_CUT_COPPER_STAIRS),
-        BlockId::WEATHERED_CUT_COPPER_STAIRS => Some(BlockId::EXPOSED_CUT_COPPER_STAIRS),
-        BlockId::EXPOSED_CUT_COPPER_STAIRS => Some(BlockId::CUT_COPPER_STAIRS),
-
-        BlockId::OXIDIZED_CUT_COPPER_SLAB => Some(BlockId::WEATHERED_CUT_COPPER_SLAB),
-        BlockId::WEATHERED_CUT_COPPER_SLAB => Some(BlockId::EXPOSED_CUT_COPPER_SLAB),
-        BlockId::EXPOSED_CUT_COPPER_SLAB => Some(BlockId::CUT_COPPER_SLAB),
-
-        BlockId::OXIDIZED_COPPER_BULB => Some(BlockId::WEATHERED_COPPER_BULB),
-        BlockId::WEATHERED_COPPER_BULB => Some(BlockId::EXPOSED_COPPER_BULB),
-        BlockId::EXPOSED_COPPER_BULB => Some(BlockId::COPPER_BULB),
-
-        BlockId::OXIDIZED_COPPER_DOOR => Some(BlockId::WEATHERED_COPPER_DOOR),
-        BlockId::WEATHERED_COPPER_DOOR => Some(BlockId::EXPOSED_COPPER_DOOR),
-        BlockId::EXPOSED_COPPER_DOOR => Some(BlockId::COPPER_DOOR),
-
-        BlockId::OXIDIZED_COPPER_TRAPDOOR => Some(BlockId::WEATHERED_COPPER_TRAPDOOR),
-        BlockId::WEATHERED_COPPER_TRAPDOOR => Some(BlockId::EXPOSED_COPPER_TRAPDOOR),
-        BlockId::EXPOSED_COPPER_TRAPDOOR => Some(BlockId::COPPER_TRAPDOOR),
-
-        _ => None,
-    }
 }

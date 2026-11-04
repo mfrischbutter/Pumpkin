@@ -95,7 +95,9 @@ impl OminousItemSpawnerEntity {
         }
         if tick_count >= spawn_item_after_ticks {
             self.spawn_item(world);
+            // Vanilla `Entity.kill`.
             self.entity.remove();
+            world.emit_game_event(GameEvent::EntityDie.name(), self.entity.pos.load());
         }
     }
 
@@ -125,8 +127,11 @@ impl OminousItemSpawnerEntity {
                 world.spawn_entity(projectile);
             }
         } else {
+            // Vanilla's plain `ItemEntity` constructor sets no pickup delay.
             let entity = Entity::new(world.clone(), position, &EntityType::ITEM);
-            world.spawn_entity(Arc::new(ItemEntity::new(entity, item)));
+            let item_entity = ItemEntity::new(entity, item);
+            item_entity.set_pickup_delay(0);
+            world.spawn_entity(Arc::new(item_entity));
         }
         world.sync_world_event(WorldEvent::ParticlesTrialSpawnerSpawnItem, block_pos, 1);
         world.emit_game_event(GameEvent::EntityPlace.name(), position);

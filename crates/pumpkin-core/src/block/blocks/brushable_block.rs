@@ -130,6 +130,9 @@ impl BlockBehaviour for BrushableBlock {
             return;
         }
         let state = args.world.get_block_state(args.position);
-        FallingEntity::replace_spawn(args.world, *args.position, state.id);
+        // Vanilla `BrushableBlock.tick`: it falls without ever dropping.
+        if let Some(falling) = FallingEntity::replace_spawn(args.world, *args.position, state.id) {
+            falling.disable_drop();
+        }
     }
 }

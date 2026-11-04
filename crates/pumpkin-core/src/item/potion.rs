@@ -19,6 +19,9 @@ const SPLASH_MIN_DURATION: i32 = 20;
 /// Utilities for reading potion contents from an `ItemStack` and applying effects.
 pub struct PotionContents;
 
+/// Vanilla `PotionContents.getColor`'s default, the color of water.
+const BASE_POTION_COLOR: i32 = 0x0038_5DC6;
+
 /// Source context for applying potion effects (affects scaling rules).
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub enum PotionApplicationSource {

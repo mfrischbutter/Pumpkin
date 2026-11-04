@@ -621,22 +621,23 @@ pub trait EntityBase: Send + Sync + std::any::Any {
         caller.damage_with_context(caller, amount, damage_type, None, None, None)
     }
 
+    /// Vanilla `Entity.thunderHit`: 5 damage from no entity, and only what never burned before
+    /// (fire ticks at -1) catches fire. It runs on every tick a bolt is live.
     fn on_lightning_strike(
         &self,
         caller: &dyn EntityBase,
-        lightning: &lightning::LightningBoltEntity,
+        _lightning: &lightning::LightningBoltEntity,
     ) {
-        // Vanilla `Entity.thunderHit` hits entities with 5 damage and sets them on fire for 8 seconds.
-        self.set_on_fire_for(8.0);
-        let cause = lightning.get_cause();
-        self.damage_with_context(
-            caller,
-            5.0,
-            DamageType::LIGHTNING_BOLT,
-            None,
-            Some(lightning),
-            cause.as_deref().map(|p| p as &dyn EntityBase),
-        );
+        let fire_ticks = self.get_entity().fire_ticks.fetch_add(1, Ordering::Relaxed) + 1;
+        if fire_ticks == 0 {
+            self.set_on_fire_for(8.0);
+        }
+        self.damage_with_context(caller, 5.0, DamageType::LIGHTNING_BOLT, None, None, None);
+    }
+
+    /// Vanilla `Entity.shouldPlayLavaHurtSound`.
+    fn should_play_lava_hurt_sound(&self) -> bool {
+        true
     }
 
     /// Leashed by four points when the holder supports it (horses, sniffers).

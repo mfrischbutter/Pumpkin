@@ -5209,6 +5209,24 @@ impl World {
             })
     }
 
+    /// Vanilla `ServerLevel.canSpreadFireAround`: the gamerule's radius around a player, every
+    /// position at -1 and none at 0.
+    #[must_use]
+    pub fn can_spread_fire_around(&self, pos: &BlockPos) -> bool {
+        let spread_radius = self
+            .level_info
+            .load()
+            .game_rules
+            .fire_spread_radius_around_player;
+        match spread_radius {
+            0 => false,
+            -1 => true,
+            radius => self
+                .get_closest_player(pos.to_centered_f64(), f64::from(radius))
+                .is_some(),
+        }
+    }
+
     pub fn get_closest_player(&self, pos: Vector3<f64>, radius: f64) -> Option<Arc<Player>> {
         self.get_nearest_player(pos, radius, |_| true)
     }
