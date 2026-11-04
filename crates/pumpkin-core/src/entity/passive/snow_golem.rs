@@ -261,3 +261,115 @@ impl RangedAttackMob for SnowGolemEntity {
         self.throw_snowball(target);
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::entity::ai::test_support::{world, world_in_dimension};
+    use pumpkin_data::biome::Biome;
+    use pumpkin_data::dimension::Dimension;
+    use pumpkin_util::math::vector2::Vector2;
+    use pumpkin_util::math::vector3::Vector3;
+    use pumpkin_world::chunk::ChunkData;
+
+    /// Fills chunk 0,0 with `biome`, griefing off so that only melting is left of the step.
+    fn world_of_biome(world: &Arc<World>, biome: &Biome) {
+        let mut level_info = (**world.level_info.load()).clone();
+        level_info.game_rules.mob_griefing = false;
+        world.level_info.store(Arc::new(level_info));
+        let chunk = ChunkData::empty_sync(0, 0);
+        for y in (world.min_y..world.min_y + world.dimension.height).step_by(4) {
+            for x in (0..16).step_by(4) {
+                for z in (0..16).step_by(4) {
+                    chunk.section.set_biome_absolute_y(x, y, z, biome.id);
+                }
+            }
+        }
+        world.level.loaded_chunks.insert(Vector2::new(0, 0), chunk);
+    }
+
+    fn set_cell_biome(world: &World, x: usize, y: i32, z: usize, biome: &Biome) {
+        world
+            .level
+            .read_chunk_sync(&Vector2::new(0, 0), |chunk| {
+                chunk.section.set_biome_absolute_y(x, y, z, biome.id);
+            })
+            .expect("the chunk is loaded");
+    }
+
+    fn melts_at(world: &Arc<World>, x: f64, y: f64, z: f64) -> bool {
+        let golem = SnowGolemEntity::new(Entity::new(
+            world.clone(),
+            Vector3::new(x, y, z),
+            &EntityType::SNOW_GOLEM,
+        ));
+        golem.mob_ai_step();
+        // A world without a server stops the damage before the health changes.
+        golem.mob_entity.living_entity.last_damage_taken.load() > 0.0
+    }
+
+    /// Vanilla `SnowGolem.aiStep` reads `SNOW_GOLEM_MELTS` at its position, not per dimension.
+    #[tokio::test]
+    async fn melts_only_in_a_biome_that_melts_it() {
+        for (biome, melts) in [
+            (&Biome::DESERT, true),
+            (&Biome::SAVANNA, true),
+            (&Biome::BADLANDS, true),
+            (&Biome::PLAINS, false),
+            (&Biome::JUNGLE, false),
+            (&Biome::SNOWY_PLAINS, false),
+        ] {
+            let folder = tempfile::tempdir().expect("a temporary folder");
+            let world = world(&folder);
+            world_of_biome(&world, biome);
+            assert_eq!(
+                melts_at(&world, 4.5, 64.0, 4.5),
+                melts,
+                "{}",
+                biome.registry_id
+            );
+        }
+    }
+
+    /// The Nether melts it through its dimension attribute, whatever the biome.
+    #[tokio::test]
+    async fn the_nether_melts_it_in_every_biome() {
+        let folder = tempfile::tempdir().expect("a temporary folder");
+        let world = world_in_dimension(&folder, Dimension::THE_NETHER.clone());
+        world_of_biome(&world, &Biome::PLAINS);
+        assert!(melts_at(&world, 4.5, 64.0, 4.5));
+    }
+
+    /// `getNoiseBiomeAtPosition` floors to the 4x4x4 cell, without the zoom of `Level.getBiome`.
+    #[tokio::test]
+    async fn the_biome_is_the_cell_it_stands_in() {
+        let folder = tempfile::tempdir().expect("a temporary folder");
+        let world = world(&folder);
+        world_of_biome(&world, &Biome::PLAINS);
+        set_cell_biome(&world, 4, 64, 4, &Biome::DESERT);
+        for (x, z, melts) in [
+            (4.0, 4.0, true),
+            (7.9, 7.9, true),
+            (3.9, 4.5, false),
+            (8.0, 4.5, false),
+            (4.5, 8.0, false),
+        ] {
+            assert_eq!(melts_at(&world, x, 64.5, z), melts, "at {x} {z}");
+        }
+        assert!(melts_at(&world, 4.5, 67.9, 4.5));
+        assert!(!melts_at(&world, 4.5, 68.0, 4.5));
+    }
+
+    /// `ChunkAccess.getNoiseBiome` clamps the height to the world's.
+    #[tokio::test]
+    async fn out_of_the_world_it_takes_the_nearest_cell() {
+        let folder = tempfile::tempdir().expect("a temporary folder");
+        let world = world(&folder);
+        world_of_biome(&world, &Biome::PLAINS);
+        let top = world.min_y + world.dimension.height - 1;
+        set_cell_biome(&world, 4, top, 4, &Biome::DESERT);
+        set_cell_biome(&world, 8, world.min_y, 4, &Biome::DESERT);
+        assert!(melts_at(&world, 4.5, f64::from(top + 80), 4.5));
+        assert!(melts_at(&world, 8.5, f64::from(world.min_y - 30), 4.5));
+    }
+}
