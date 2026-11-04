@@ -18,10 +18,10 @@ use pumpkin_data::Block;
 use pumpkin_util::math::position::BlockPos;
 
 use super::super::block_receives_redstone_power;
-use super::RailProperties;
+use super::{HorizontalFacingRailExt, RailProperties};
 use super::common::{
     can_place_rail_at, compute_placed_rail_shape, rail_placement_is_valid,
-    update_flanking_rails_shape,
+    reshape_placed_straight_rail, update_flanking_rails_shape,
 };
 
 #[pumpkin_block("minecraft:activator_rail")]
@@ -36,14 +36,16 @@ impl BlockBehaviour for ActivatorRailBlock {
         rail_props.set_straight_shape(compute_placed_rail_shape(
             args.world,
             args.position,
-            player_facing,
+            player_facing.to_rail_shape_flat(),
         ));
 
         rail_props.to_state_id(args.block)
     }
 
     fn placed(&self, args: PlacedArgs<'_>) {
-        update_flanking_rails_shape(args.world, args.block, args.state_id, args.position);
+        let state_id =
+            reshape_placed_straight_rail(args.world, args.block, args.state_id, args.position);
+        update_flanking_rails_shape(args.world, args.block, state_id, args.position);
         self.update_powered_state(args.world, args.block, args.position);
     }
 

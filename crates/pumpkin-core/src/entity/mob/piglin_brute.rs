@@ -23,7 +23,6 @@ use crate::entity::mob::piglin_brain;
 use crate::entity::mob::spawn::SpawnGroupData;
 use crate::entity::{
     Entity, EntityBase,
-    ai::goal::open_door::OpenDoorGoal,
     mob::{Mob, MobEntity},
 };
 use crate::world::World;
@@ -63,12 +62,12 @@ impl PiglinBruteEntity {
             time_in_overworld: AtomicI32::new(0),
         };
         let mob_arc = Arc::new(piglin);
-        {
-            let goal_selector = &mob_arc.mob_entity.goals_selector;
-
-            // Vanilla `InteractWithDoor`, until the brain opens doors itself.
-            goal_selector.add_goal(0, Box::new(OpenDoorGoal::new(true)));
-        };
+        // Vanilla `AbstractPiglin.applyOpenDoorsAbility`.
+        mob_arc
+            .mob_entity
+            .steered()
+            .navigator()
+            .set_can_open_doors(true);
 
         mob_arc
     }

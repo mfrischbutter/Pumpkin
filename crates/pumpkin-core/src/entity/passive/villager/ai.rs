@@ -34,6 +34,7 @@ use crate::entity::ai::brain::behavior::village::{
     set_look_and_interact, set_walk_target_away_from_entity, socialize_at_bell,
     update_activity_from_schedule, village_bound_random_stroll, wake_up,
 };
+use crate::entity::ai::brain::behavior::interact_with_door;
 use crate::entity::ai::brain::behavior::{
     Behavior, BehaviorControl, DoNothing, GateBehavior, LookAtTargetSink, MoveToTargetSink,
     OneShot, OrderPolicy, RunningPolicy, Swim, Timed, go_to_wanted_item, run_one,
@@ -176,6 +177,7 @@ fn release_memory_poi(
 fn core_package() -> ActivityData {
     let packaged: Vec<(i32, Packaged)> = vec![
         (0, Box::new(Timed::new(Swim::new(0.8)))),
+        (0, Box::new(interact_with_door::create())),
         (0, Box::new(Timed::new(LookAtTargetSink::new(45, 90)))),
         (0, Box::new(Timed::new(VillagerPanicTrigger))),
         (0, Box::new(wake_up())),

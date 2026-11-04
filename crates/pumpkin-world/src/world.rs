@@ -40,6 +40,9 @@ bitflags! {
         /// change. Used when a multi-block structure such as a nether portal is written in
         /// one go, so the blocks are not removed again while the structure is incomplete.
         const UPDATE_KNOWN_SHAPE                    = 0b001_0000_0000;
+        /// The caller checks the light of this change itself, once for a whole batch. Applies
+        /// to this block only, not to the neighbours it updates.
+        const DEFER_LIGHT_UPDATE                    = 0b010_0000_0000;
     }
 }
 

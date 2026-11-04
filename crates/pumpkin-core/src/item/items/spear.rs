@@ -154,14 +154,14 @@ impl ItemBehaviour for SpearItem {
 }
 
 #[derive(Clone, Copy)]
-struct StabEffects {
-    damage: bool,
-    knockback: bool,
-    dismount: bool,
+pub(super) struct StabEffects {
+    pub(super) damage: bool,
+    pub(super) knockback: bool,
+    pub(super) dismount: bool,
 }
 
 impl SpearItem {
-    const USE_DURATION: i32 = 72_000;
+    pub(crate) const USE_DURATION: i32 = 72_000;
 
     fn stab_attack(
         player: &Player,
@@ -200,31 +200,14 @@ impl SpearItem {
             );
 
         let config = &server.advanced_config.pvp;
-        if effects.knockback && config.knockback && target.get_living_entity().is_some() {
-            let attacker = player.get_entity();
-            combat::handle_knockback_from_hit(attacker, target.as_ref(), 0.8, total_damage, false);
-            let knockback_level = Self::knockback_level(stack);
-            if knockback_level > 0 {
-                combat::handle_knockback_from_hit(
-                    attacker,
-                    target.as_ref(),
-                    f64::from(knockback_level),
-                    total_damage,
-                    true,
-                );
-            }
-            target_entity.send_velocity();
-        }
-
-        let mut dismounted = false;
-        if effects.dismount
-            && let Some(vehicle) = target_entity.get_vehicle()
-        {
-            dismounted = true;
-            vehicle
-                .get_entity()
-                .remove_passenger(target_entity.entity_id);
-        }
+        let dismounted = Self::apply_knockback_and_dismount(
+            player.get_entity(),
+            stack,
+            target,
+            total_damage,
+            effects.knockback && config.knockback,
+            effects.dismount,
+        );
 
         if !was_hurt && !effects.knockback && !dismounted {
             return false;
@@ -293,19 +276,19 @@ impl SpearItem {
             let relative_speed = (attacker_speed - target_speed).max(0.0);
             let effects = StabEffects {
                 damage: weapon.damage_conditions.as_ref().is_some_and(|condition| {
-                    condition.test(ticks_used, attacker_speed, relative_speed)
+                    condition.test(ticks_used, attacker_speed, relative_speed, 1.0)
                 }),
                 knockback: weapon
                     .knockback_conditions
                     .as_ref()
                     .is_some_and(|condition| {
-                        condition.test(ticks_used, attacker_speed, relative_speed)
+                        condition.test(ticks_used, attacker_speed, relative_speed, 1.0)
                     }),
                 dismount: weapon
                     .dismount_conditions
                     .as_ref()
                     .is_some_and(|condition| {
-                        condition.test(ticks_used, attacker_speed, relative_speed)
+                        condition.test(ticks_used, attacker_speed, relative_speed, 1.0)
                     }),
             };
             if !effects.damage && !effects.knockback && !effects.dismount {
@@ -326,12 +309,51 @@ impl SpearItem {
         }
     }
 
+    /// The knockback and dismount part of vanilla `LivingEntity.stabAttack`. Returns whether the
+    /// target was thrown off its vehicle.
+    pub(super) fn apply_knockback_and_dismount(
+        attacker: &Entity,
+        stack: &ItemStack,
+        target: &Arc<dyn EntityBase>,
+        total_damage: f32,
+        knockback: bool,
+        dismount: bool,
+    ) -> bool {
+        let target_entity = target.get_entity();
+        if knockback && target.get_living_entity().is_some() {
+            combat::handle_knockback_from_hit(attacker, target.as_ref(), 0.8, total_damage, false);
+            let knockback_level = Self::knockback_level(stack);
+            if knockback_level > 0 {
+                combat::handle_knockback_from_hit(
+                    attacker,
+                    target.as_ref(),
+                    f64::from(knockback_level),
+                    total_damage,
+                    true,
+                );
+            }
+            target_entity.send_velocity();
+        }
+        if dismount
+            && !target_entity
+                .entity_type
+                .has_tag(&tag::EntityType::MINECRAFT_CANNOT_BE_DISMOUNTED_BY_ITEM_USAGE)
+            && let Some(vehicle) = target_entity.get_vehicle()
+        {
+            vehicle
+                .get_entity()
+                .remove_passenger(target_entity.entity_id);
+            return true;
+        }
+        false
+    }
+
     fn look_vector(player: &Player) -> Vector3<f64> {
         let (yaw, pitch) = player.rotation();
         Vector3::rotation_vector(f64::from(pitch), f64::from(yaw))
     }
 
-    fn known_speed(entity: &Entity) -> Vector3<f64> {
+    pub(super) fn known_speed(entity: &Entity) -> Vector3<f64> {
         let mut movement = entity.movement.load();
         if entity.entity_type != &EntityType::PLAYER {
             let mut vehicle = entity.get_vehicle();
@@ -417,7 +439,7 @@ impl SpearItem {
             .fold(value, |value, modifier| value + modifier.amount)
     }
 
-    fn enchantment_damage(stack: &ItemStack, target: &Entity) -> f64 {
+    pub(super) fn enchantment_damage(stack: &ItemStack, target: &Entity) -> f64 {
         let Some(enchantments) = stack.get_data_component::<EnchantmentsImpl>() else {
             return 0.0;
         };
@@ -458,7 +480,7 @@ impl SpearItem {
             .unwrap_or(0)
     }
 
-    fn apply_post_damage_effects(stack: &ItemStack, target: &Entity) {
+    pub(super) fn apply_post_damage_effects(stack: &ItemStack, target: &Entity) {
         let Some(enchantments) = stack.get_data_component::<EnchantmentsImpl>() else {
             return;
         };
@@ -477,9 +499,6 @@ impl SpearItem {
         let Some(range) = stack.get_data_component::<AttackRangeImpl>() else {
             return Vec::new();
         };
-        let world = player.world();
-        let look = Self::look_vector(player);
-        let eye = player.eye_position();
         let (min_reach, max_reach) = if player.gamemode.load() == GameMode::Creative {
             (
                 f64::from(range.min_creative_reach),
@@ -488,8 +507,31 @@ impl SpearItem {
         } else {
             (f64::from(range.min_reach), f64::from(range.max_reach))
         };
+        Self::targets_along(
+            player.get_entity(),
+            Self::look_vector(player),
+            player.eye_position(),
+            min_reach,
+            max_reach,
+            f64::from(range.hitbox_margin),
+            |target| Self::can_hit(player, server, target),
+        )
+    }
+
+    /// Vanilla `ProjectileUtil.getHitEntitiesAlong`: what is hit along `look` from the eye,
+    /// unless a block stands closer than `min_reach`.
+    pub(super) fn targets_along(
+        attacker: &Entity,
+        look: Vector3<f64>,
+        eye: Vector3<f64>,
+        min_reach: f64,
+        max_reach: f64,
+        margin: f64,
+        can_hit: impl Fn(&dyn EntityBase) -> bool,
+    ) -> Vec<Arc<dyn EntityBase>> {
+        let world = attacker.world.load_full();
         let from = eye.add(&(look * min_reach));
-        let forward = player.get_entity().movement.load().dot(&look).max(0.0);
+        let forward = attacker.movement.load().dot(&look).max(0.0);
         let mut to = eye.add(&(look * (max_reach + forward)));
         if let Some(block_hit) = Self::clip_blocks(&world, eye, to) {
             if eye.squared_distance_to_vec(&block_hit) < eye.squared_distance_to_vec(&from) {
@@ -498,7 +540,6 @@ impl SpearItem {
             to = block_hit;
         }
 
-        let margin = f64::from(range.hitbox_margin);
         let half_margin = Vector3::new(margin / 2.0, margin / 2.0, margin / 2.0);
         let delta = to.sub(&from);
         let search_box = BoundingBox::new(from.sub(&half_margin), from.add(&half_margin))
@@ -509,7 +550,7 @@ impl SpearItem {
             .get_all_at_box(&search_box)
             .into_iter()
             .filter(|target| {
-                Self::can_hit(player, server, target.as_ref())
+                can_hit(target.as_ref())
                     && Self::hits_entity(
                         &world,
                         &target.get_entity().bounding_box.load(),
@@ -626,9 +667,10 @@ impl SpearItem {
             })
     }
 
-    fn can_hit(player: &Player, server: &Server, target: &dyn EntityBase) -> bool {
+    /// Vanilla `PiercingWeapon.canHitEntity`, without its rule for two players.
+    pub(super) fn can_be_stabbed_by(attacker: &Entity, target: &dyn EntityBase) -> bool {
         let entity = target.get_entity();
-        if entity.entity_id == player.entity_id()
+        if entity.entity_id == attacker.entity_id
             || entity.is_removed()
             || entity.invulnerable.load(Ordering::Relaxed)
             || target.is_spectator()
@@ -638,18 +680,18 @@ impl SpearItem {
         let Some(living) = target.get_living_entity() else {
             return false;
         };
-        if living.health.load() <= 0.0 {
+        living.health.load() > 0.0 && attacker.root_vehicle_id() != entity.root_vehicle_id()
+    }
+
+    fn can_hit(player: &Player, server: &Server, target: &dyn EntityBase) -> bool {
+        if !Self::can_be_stabbed_by(player.get_entity(), target) {
             return false;
         }
-        if let Some(other) = target.get_player() {
+        target.get_player().is_none_or(|other| {
             let config = &server.advanced_config.pvp;
-            if !config.enabled
-                || (config.protect_creative && other.gamemode.load() == GameMode::Creative)
-            {
-                return false;
-            }
-        }
-        player.get_entity().root_vehicle_id() != entity.root_vehicle_id()
+            config.enabled
+                && !(config.protect_creative && other.gamemode.load() == GameMode::Creative)
+        })
     }
 }
 

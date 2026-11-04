@@ -244,6 +244,17 @@ impl dyn EntityBase + '_ {
 
 /// Maps Java entity types to Bedrock runtime entity identifiers where the naming differs.
 #[must_use]
+/// The types overriding vanilla `Entity.isIgnoringBlockTriggers` with true.
+const IGNORES_BLOCK_TRIGGERS: [&EntityType; 7] = [
+    &EntityType::BAT,
+    &EntityType::BLOCK_DISPLAY,
+    &EntityType::INTERACTION,
+    &EntityType::ITEM_DISPLAY,
+    &EntityType::MARKER,
+    &EntityType::OMINOUS_ITEM_SPAWNER,
+    &EntityType::TEXT_DISPLAY,
+];
+
 pub const fn entity_type_to_bedrock_identifier(entity_type: &EntityType) -> &'static str {
     if entity_type.id == EntityType::EXPERIENCE_ORB.id {
         "minecraft:xp_orb"
@@ -585,6 +596,24 @@ pub trait EntityBase: Send + Sync + std::any::Any {
 
     fn is_spectator(&self) -> bool {
         false
+    }
+
+    /// Vanilla `Entity.isIgnoringBlockTriggers`: pressure plates and tripwires do not notice it.
+    fn is_ignoring_block_triggers(&self) -> bool {
+        IGNORES_BLOCK_TRIGGERS.contains(&self.get_entity().entity_type)
+            || self
+                .cast_any()
+                .downcast_ref::<decoration::armor_stand::ArmorStandEntity>()
+                .is_some_and(decoration::armor_stand::ArmorStandEntity::is_marker)
+    }
+
+    /// Vanilla `Entity.isSteppingCarefully`: sneaking, or a cat or ocelot crouching.
+    fn is_stepping_carefully(&self) -> bool {
+        let entity = self.get_entity();
+        entity.is_sneaking()
+            || ((entity.entity_type == &EntityType::CAT
+                || entity.entity_type == &EntityType::OCELOT)
+                && entity.pose.load() == EntityPose::Crouching)
     }
 
     fn can_be_seen_by_anyone(&self) -> bool {

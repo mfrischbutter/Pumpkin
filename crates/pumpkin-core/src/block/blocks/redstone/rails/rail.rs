@@ -27,7 +27,7 @@ pub struct RailBlock;
 fn compute_curved_rail_shape(
     world: &World,
     block_pos: &BlockPos,
-    default_flat: RailShape,
+    default_shape: RailShape,
     has_signal: bool,
 ) -> RailShape {
     let north = Rail::find_if_unlocked(world, block_pos, HorizontalFacing::North);
@@ -71,7 +71,7 @@ fn compute_curved_rail_shape(
 
     if shape.is_none() {
         if north_or_south && west_or_east {
-            shape = Some(default_flat);
+            shape = Some(default_shape);
         } else if north_or_south {
             shape = Some(RailShape::NorthSouth);
         } else if west_or_east {
@@ -107,7 +107,7 @@ fn compute_curved_rail_shape(
         }
     }
 
-    let mut final_shape = shape.unwrap_or(default_flat);
+    let mut final_shape = shape.unwrap_or(default_shape);
     if final_shape == RailShape::NorthSouth {
         if north.is_some_and(|r| r.elevation == RailElevation::Up) {
             final_shape = RailShape::AscendingNorth;
@@ -158,8 +158,27 @@ impl BlockBehaviour for RailBlock {
         rail_props.to_state_id(args.block)
     }
 
+    /// Vanilla `BaseRailBlock.onPlace`: a rail connects to the rails around it however it was
+    /// placed, without any it keeps its shape.
     fn placed(&self, args: PlacedArgs<'_>) {
-        update_flanking_rails_shape(args.world, args.block, args.state_id, args.position);
+        let mut rail_props = RailProperties::new(args.state_id, args.block);
+        let has_signal = block_receives_redstone_power(args.world, args.position);
+        let shape = compute_curved_rail_shape(
+            args.world,
+            args.position,
+            rail_props.shape(),
+            has_signal,
+        );
+        let state_id = if shape == rail_props.shape() {
+            args.state_id
+        } else {
+            rail_props.set_shape(shape);
+            let state_id = rail_props.to_state_id(args.block);
+            args.world
+                .set_block_state(args.position, state_id, BlockFlags::NOTIFY_ALL);
+            state_id
+        };
+        update_flanking_rails_shape(args.world, args.block, state_id, args.position);
     }
 
     fn get_state_for_neighbor_update(

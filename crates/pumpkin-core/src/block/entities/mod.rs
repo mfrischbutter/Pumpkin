@@ -369,6 +369,18 @@ pub fn has_block_block_entity(block: &Block) -> bool {
 
 #[must_use]
 #[allow(clippy::too_many_lines)]
+/// Creates the block entity a block should have and does not yet, as vanilla
+/// `LevelChunk.setBlockState` does.
+pub fn ensure_block_entity(world: &World, position: &BlockPos) {
+    let state = world.get_block_state(position);
+    if state.block_entity_type != u16::MAX
+        && world.get_block_entity(position).is_none()
+        && let Some(entity) = create_block_entity(state.block_entity_type, *position)
+    {
+        world.add_block_entity(entity);
+    }
+}
+
 pub fn create_block_entity(
     block_entity_type_id: u16,
     position: BlockPos,

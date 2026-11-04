@@ -7,7 +7,7 @@ use pumpkin_nbt::tag::NbtTag;
 use pumpkin_util::text::TextComponent;
 
 use crate::argument_types::argument_type::{ArgumentType, JavaClientArgumentType};
-use crate::argument_types::block::INVALID_BLOCK_ERROR_TYPE;
+use crate::argument_types::block::{INVALID_BLOCK_ERROR_TYPE, read_properties};
 use crate::argument_types::nbt::NbtCompoundArgumentType;
 use crate::argument_types::nbt_path::compare_nbt;
 use crate::context::command_context::CommandContext;
@@ -157,7 +157,7 @@ fn parse_properties(
     Ok(properties)
 }
 
-fn parse_nbt(reader: &mut StringReader) -> Result<Option<NbtCompound>, CommandSyntaxError> {
+pub(crate) fn parse_nbt(reader: &mut StringReader) -> Result<Option<NbtCompound>, CommandSyntaxError> {
     if reader.peek() == Some('{') {
         let tag =
             ArgumentType::<crate::source::DummySource>::parse(&NbtCompoundArgumentType, reader)?;
@@ -230,7 +230,16 @@ impl<S: crate::source::CommandSource> ArgumentType<S> for BlockPredicateArgument
                 INVALID_BLOCK_ERROR_TYPE.create(reader, TextComponent::text(normalized))
             })?;
 
-            let properties = parse_properties(reader)?;
+            // Unlike a tag, a block has known properties: vanilla checks them while parsing.
+            let properties = if reader.peek() == Some('[') {
+                read_properties(reader, block)?
+                    .values
+                    .into_iter()
+                    .map(|(key, value)| (key.to_string(), value))
+                    .collect()
+            } else {
+                HashMap::new()
+            };
             let nbt = parse_nbt(reader)?;
 
             Ok(BlockPredicate::Block {

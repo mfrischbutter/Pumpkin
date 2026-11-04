@@ -802,6 +802,12 @@ impl LivingEntity {
         );
     }
 
+    /// Vanilla `LivingEntity.isUsingItem`.
+    #[must_use]
+    pub fn is_using_item(&self) -> bool {
+        self.livings_flags.load(Ordering::Relaxed) & Self::USING_ITEM_FLAG != 0
+    }
+
     /// Sends the Hand animation to all others, used when Eating for example
     pub fn set_active_hand(&self, hand: Hand, stack: ItemStack, duration: i32) {
         let is_blocking = stack.get_data_component::<BlocksAttacksImpl>().is_some();
@@ -4277,6 +4283,8 @@ impl EntityBase for LivingEntity {
                         .on_use_tick(item, player, remaining_use_ticks);
                 }
             }
+        } else if self.item_use_time.load(Ordering::Relaxed) > 0 {
+            crate::item::items::spear_mob::mob_use_tick(self, caller);
         }
 
         // Current active item

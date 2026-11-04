@@ -103,6 +103,11 @@ impl AbstractHorse for ZombieHorseEntity {
 }
 
 impl Mob for ZombieHorseEntity {
+    /// Vanilla `ZombieHorse.chargeSpeedModifier`.
+    fn charge_speed_modifier(&self) -> f32 {
+        1.4f32
+    }
+
     /// Vanilla `AbstractHorse.isPushable`.
     fn mob_is_pushable(&self) -> bool {
         !self.get_entity().has_passengers()

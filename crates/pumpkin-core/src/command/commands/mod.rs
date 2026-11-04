@@ -11,6 +11,7 @@ mod attribute;
 mod ban;
 mod banip;
 mod banlist;
+mod block_input;
 mod bossbar;
 mod clear;
 mod clone;

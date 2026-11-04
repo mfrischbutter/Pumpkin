@@ -1890,6 +1890,11 @@ pub trait Mob: EntityBase + Send + Sync {
         false
     }
 
+    /// Vanilla `Mob.chargeSpeedModifier`: how much faster a spear rider charges on this mob.
+    fn charge_speed_modifier(&self) -> f32 {
+        1.0f32
+    }
+
     /// Vanilla `BehaviorUtils.isWithinAttackRange`'s projectile weapon range, for one in hand.
     fn mob_weapon_range(&self) -> Option<f64> {
         None

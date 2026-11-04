@@ -26,11 +26,11 @@ use crate::entity::EntityBase;
 use crate::entity::vehicle::minecart::{MinecartEntity, redstone_signal_from_container};
 use crate::world::World;
 
-use super::RailProperties;
+use super::{HorizontalFacingRailExt, RailProperties};
 use super::StraightRailShapeExt;
 use super::common::{
     can_place_rail_at, compute_placed_rail_shape, rail_placement_is_valid,
-    update_flanking_rails_shape,
+    reshape_placed_straight_rail, update_flanking_rails_shape,
 };
 use pumpkin_data::block_properties::DetectorRailProperties;
 
@@ -121,15 +121,17 @@ impl BlockBehaviour for DetectorRailBlock {
         rail_props.set_straight_shape(compute_placed_rail_shape(
             args.world,
             args.position,
-            player_facing,
+            player_facing.to_rail_shape_flat(),
         ));
 
         rail_props.to_state_id(args.block)
     }
 
     fn placed(&self, args: PlacedArgs<'_>) {
-        update_flanking_rails_shape(args.world, args.block, args.state_id, args.position);
-        self.check_pressed(args.world, args.position, args.block, args.state_id);
+        let state_id =
+            reshape_placed_straight_rail(args.world, args.block, args.state_id, args.position);
+        update_flanking_rails_shape(args.world, args.block, state_id, args.position);
+        self.check_pressed(args.world, args.position, args.block, state_id);
     }
 
     fn get_state_for_neighbor_update(

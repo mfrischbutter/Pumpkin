@@ -5971,6 +5971,7 @@ impl World {
                 let mut neighbour_update_flags = flags;
                 neighbour_update_flags.remove(BlockFlags::NOTIFY_NEIGHBORS);
                 neighbour_update_flags.remove(BlockFlags::SKIP_DROPS);
+                neighbour_update_flags.remove(BlockFlags::DEFER_LIGHT_UPDATE);
                 self.block_registry.prepare(
                     self,
                     position,
@@ -5998,9 +5999,11 @@ impl World {
 
         let old_state = replaced_block_state_id.to_state();
         let new_state = block_state_id.to_state();
-        if pumpkin_world::lighting::LightEngine::has_different_light_properties(
-            old_state, new_state,
-        ) {
+        if !flags.contains(BlockFlags::DEFER_LIGHT_UPDATE)
+            && pumpkin_world::lighting::LightEngine::has_different_light_properties(
+                old_state, new_state,
+            )
+        {
             self.level
                 .light_engine
                 .update_lighting_at(&self.level, *position);
@@ -6944,7 +6947,8 @@ impl World {
     ) -> BlockStateId {
         let mut current_state_id = state_id;
         let block = Block::from_state_id(state_id);
-        for direction in BlockDirection::all() {
+        // Vanilla `Block.UPDATE_SHAPE_ORDER`.
+        for direction in BlockDirection::abstract_block_update_order() {
             let neighbor_pos = pos.offset(direction.to_offset());
             let neighbor_state_id = self.get_block_state_id(&neighbor_pos);
             current_state_id = self.block_registry.get_state_for_neighbor_update(

@@ -38,7 +38,6 @@ use crate::entity::player::Player;
 use crate::entity::spawn_util::{SpawnStrategy, try_spawn_mob};
 use crate::entity::{
     Entity, EntityBase,
-    ai::goal::open_door::OpenDoorGoal,
     experience_orb::ExperienceOrbEntity,
     mob::{Mob, MobEntity},
 };
@@ -465,12 +464,11 @@ impl VillagerEntity {
             .self_weak
             .lock()
             .unwrap_or_else(std::sync::PoisonError::into_inner) = Some(Arc::downgrade(&mob_arc));
-        {
-            let goal_selector = &mob_arc.mob_entity.goals_selector;
-
-            // Vanilla `InteractWithDoor`, until the brain opens doors itself.
-            goal_selector.add_goal(0, Box::new(OpenDoorGoal::new(true)));
-        };
+        mob_arc
+            .mob_entity
+            .steered()
+            .navigator()
+            .set_can_open_doors(true);
 
         // Send initial metadata
         let bedrock_metadata = Self::bedrock_metadata(villager_data, 0);

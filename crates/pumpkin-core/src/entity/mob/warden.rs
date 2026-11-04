@@ -111,6 +111,7 @@ impl WardenEntity {
         let steered = mob_entity.steered();
         let mut navigator = steered.navigator();
         navigator.set_can_float(true);
+        navigator.use_xz_path_distance();
         navigator.set_pathfinding_malus(PathType::UnpassableRail, 0.0);
         navigator.set_pathfinding_malus(PathType::DamageOther, 8.0);
         navigator.set_pathfinding_malus(PathType::PowderSnow, 8.0);
@@ -129,6 +130,7 @@ impl WardenEntity {
     pub fn emerge(&self) {
         let entity = &self.mob_entity.living_entity.entity;
         entity.set_pose(EntityPose::Emerging);
+        self.sync_spawn_data();
         self.mob_entity.with_brain(self, |brain| {
             brain.set_with_expiry(types::IS_EMERGING, (), warden_ai::EMERGE_DURATION);
         });
@@ -169,6 +171,13 @@ impl WardenEntity {
         }
     }
 
+    /// Vanilla `getAddEntityPacket`: a client that starts tracking it mid-emerge plays the rest.
+    fn sync_spawn_data(&self) {
+        let entity = &self.mob_entity.living_entity.entity;
+        let emerging = entity.pose.load() == EntityPose::Emerging;
+        entity.data.store(i32::from(emerging), Ordering::Relaxed);
+    }
+
     fn is_digging_or_emerging(&self) -> bool {
         matches!(
             self.mob_entity.living_entity.entity.pose.load(),
@@ -193,6 +202,13 @@ impl WardenEntity {
             && target.entity_type != &EntityType::WARDEN
             && !target.invulnerable.load(Ordering::Relaxed)
             && !living.is_dead_or_dying()
+            && own
+                .world
+                .load()
+                .worldborder
+                .lock()
+                .unwrap_or_else(std::sync::PoisonError::into_inner)
+                .contains_box(&target.bounding_box.load())
     }
 
     fn active_anger(&self) -> i32 {
@@ -447,6 +463,7 @@ impl Mob for WardenEntity {
 
     /// Vanilla `Warden.tick`, the part before `super.tick`.
     fn mob_tick(&self, _caller: &dyn EntityBase) {
+        self.sync_spawn_data();
         tick_vibration(self);
         if self.mob_entity.persistence_required.load(Ordering::Relaxed)
             || self.requires_custom_persistence()

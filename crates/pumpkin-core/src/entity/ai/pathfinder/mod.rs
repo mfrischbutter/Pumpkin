@@ -39,6 +39,7 @@ pub struct PathFinder {
     max_visited_nodes: usize,
     open_set: BinaryHeap,
     neighbors_buf: Vec<Node>,
+    use_xz_distance: bool,
 }
 
 impl PathFinder {
@@ -48,7 +49,14 @@ impl PathFinder {
             max_visited_nodes,
             open_set: BinaryHeap::new(),
             neighbors_buf: Vec::with_capacity(32),
+            use_xz_distance: false,
         }
+    }
+
+    /// Vanilla's `PathFinder.distance` override in `Warden.createNavigation`: steps cost their
+    /// horizontal length.
+    pub const fn set_use_xz_distance(&mut self, use_xz_distance: bool) {
+        self.use_xz_distance = use_xz_distance;
     }
 
     pub const fn set_max_visited_nodes(&mut self, max_visited_nodes: usize) {
@@ -151,7 +159,11 @@ impl PathFinder {
                     if neighbor.closed {
                         continue;
                     }
-                    let distance = current.distance_to_node(&neighbor);
+                    let distance = if self.use_xz_distance {
+                        current.distance_to_xz_node(&neighbor)
+                    } else {
+                        current.distance_to_node(&neighbor)
+                    };
                     neighbor.walked_dist = current.walked_dist + distance;
                     let tentative_g = current.g + distance + neighbor.cost_malus;
 
@@ -435,6 +447,8 @@ pub trait PathNavigationTrait: Send + Sync {
     fn set_can_open_doors(&mut self, can_open: bool);
     fn set_can_pass_doors(&mut self, can_pass: bool);
     fn set_can_float(&mut self, can_float: bool);
+    /// See [`PathFinder::set_use_xz_distance`]; only ground navigation has a warden using it.
+    fn use_xz_path_distance(&mut self) {}
     fn can_float(&self) -> bool;
     fn can_navigate_ground(&self) -> bool;
     fn set_required_path_length(&mut self, length: f32);
@@ -478,6 +492,7 @@ pub struct PathNavigation {
     pub can_float: bool,
     pub can_walk_over_fences: bool,
     pub can_open_doors: bool,
+    xz_path_distance: bool,
     pub can_pass_doors: bool,
     pub avoid_sun: bool,
     pub can_path_to_targets_below_surface: bool,
@@ -528,6 +543,7 @@ impl PathNavigation {
             can_float: false,
             can_walk_over_fences: false,
             can_open_doors: false,
+            xz_path_distance: false,
             can_pass_doors: true,
             avoid_sun: false,
             can_path_to_targets_below_surface: false,
@@ -678,6 +694,7 @@ impl PathNavigation {
                 .floor() as usize,
             )
         });
+        finder.set_use_xz_distance(self.xz_path_distance);
         if self.update_pathfinder_max_visited_nodes {
             finder.set_max_visited_nodes(
                 (max_path_length * MAX_VISITED_NODES_MULTIPLIER).floor() as usize
@@ -726,6 +743,7 @@ impl PathNavigation {
                 .floor() as usize,
             )
         });
+        finder.set_use_xz_distance(self.xz_path_distance);
         if self.update_pathfinder_max_visited_nodes {
             finder.set_max_visited_nodes(
                 (max_path_length * MAX_VISITED_NODES_MULTIPLIER).floor() as usize
@@ -1369,6 +1387,10 @@ impl PathNavigationTrait for GroundPathNavigation {
 
     fn set_can_walk_over_fences(&mut self, can_walk: bool) {
         self.inner.can_walk_over_fences = can_walk;
+    }
+
+    fn use_xz_path_distance(&mut self) {
+        self.inner.xz_path_distance = true;
     }
 
     fn set_can_open_doors(&mut self, can_open: bool) {

@@ -30,7 +30,6 @@ use crate::entity::mob::{MobMetadata, equipment as mob_equipment};
 use crate::entity::player::Player;
 use crate::entity::{
     Entity, EntityBase,
-    ai::goal::open_door::OpenDoorGoal,
     mob::{
         Mob, MobEntity, crossbow_attack_mob::CrossbowAttackMob, equipment::RegionalDifficulty,
         piglin_ai::PiglinAi,
@@ -64,7 +63,7 @@ impl PiglinActivity {
     }
 }
 
-const MEMORIES: [MemoryModuleId; 24] = [
+const MEMORIES: [MemoryModuleId; 28] = [
     types::UNIVERSAL_ANGER.id(),
     types::ATE_RECENTLY.id(),
     types::ANGRY_AT.id(),
@@ -89,6 +88,10 @@ const MEMORIES: [MemoryModuleId; 24] = [
     types::NEARBY_ADULT_PIGLINS.id(),
     types::VISIBLE_ADULT_PIGLIN_COUNT.id(),
     types::VISIBLE_ADULT_HOGLIN_COUNT.id(),
+    types::SPEAR_FLEEING_TIME.id(),
+    types::SPEAR_FLEEING_POSITION.id(),
+    types::SPEAR_CHARGE_POSITION.id(),
+    types::SPEAR_ENGAGE_TIME.id(),
 ];
 
 pub struct PiglinEntity {
@@ -151,12 +154,12 @@ impl PiglinEntity {
         };
         let mob_arc = Arc::new(piglin);
         mob_arc.mob_entity.set_can_pick_up_loot(true);
-        {
-            let goal_selector = &mob_arc.mob_entity.goals_selector;
-
-            // Vanilla `InteractWithDoor`, until the brain opens doors itself.
-            goal_selector.add_goal(0, Box::new(OpenDoorGoal::new(true)));
-        };
+        // Vanilla `AbstractPiglin.applyOpenDoorsAbility`.
+        mob_arc
+            .mob_entity
+            .steered()
+            .navigator()
+            .set_can_open_doors(true);
 
         mob_arc
     }
@@ -631,8 +634,9 @@ impl Mob for PiglinEntity {
         self.is_holding_crossbow().then_some(8.0)
     }
 
+    /// Vanilla `isHolding(canUseNonMeleeWeapon)`.
     fn holds_non_melee_weapon(&self) -> bool {
-        self.is_holding_crossbow()
+        self.is_holding_crossbow() || self.is_holding_kinetic_weapon()
     }
 
     fn after_hurt(

@@ -23,6 +23,7 @@ pub mod random_stroll;
 pub mod set_entity_look_target_sometimes;
 pub mod set_walk_target_from_look_target;
 pub mod shuffling_list;
+pub mod spear;
 pub mod stay_close_to_target;
 pub mod swim;
 pub mod target_location;
