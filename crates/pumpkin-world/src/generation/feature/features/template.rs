@@ -227,6 +227,69 @@ mod tests {
     }
 
     #[test]
+    fn desert_wells_hide_suspicious_sand_with_loot() {
+        // One suspicious sand a block below the well's middle and one two blocks below, each on
+        // one of five spots and with the well's archaeology loot.
+        let well = CONFIGURED_FEATURES.get(&FeatureKey::DesertWell);
+        assert!(well.is_some(), "the desert well is configured");
+        let Some(well) = well else {
+            return;
+        };
+        let origin = BlockPos::new(24, 64, 24);
+        let mut level = empty_region();
+        let mut random = RandomGenerator::Legacy(LegacyRand::from_seed(3));
+        assert!(well.generate(
+            &mut level,
+            &TestBlockRegistry,
+            -64,
+            384,
+            pumpkin_data::placed_feature::PlacedFeature::DesertWell,
+            &mut random,
+            origin,
+        ));
+
+        let mut sand = Vec::new();
+        for x in 16..32 {
+            for y in 56..72 {
+                for z in 16..32 {
+                    let pos = Vector3::new(x, y, z);
+                    if GenerationCache::get_block_state(&level, &pos).to_block_id()
+                        == pumpkin_data::BlockId::SUSPICIOUS_SAND
+                    {
+                        sand.push(pos - origin.0);
+                    }
+                }
+            }
+        }
+        sand.sort_by_key(|offset| offset.y);
+        assert_eq!(sand.len(), 2, "{sand:?}");
+        for (offset, y) in sand.iter().zip([-2, -1]) {
+            assert_eq!(offset.y, y, "{sand:?}");
+            assert!(offset.x.abs() + offset.z.abs() <= 1, "{sand:?}");
+        }
+
+        let mut block_entities = Vec::new();
+        for chunk in &mut level.chunks {
+            if let crate::chunk_system::Chunk::Proto(chunk) = chunk {
+                block_entities.extend(chunk.take_pending_block_entities());
+            }
+        }
+        for offset in &sand {
+            let pos = origin.0 + *offset;
+            let loot_table = block_entities
+                .iter()
+                .rev()
+                .find(|nbt| {
+                    nbt.get_int("x") == Some(pos.x)
+                        && nbt.get_int("y") == Some(pos.y)
+                        && nbt.get_int("z") == Some(pos.z)
+                })
+                .and_then(|nbt| nbt.get_string("LootTable"));
+            assert_eq!(loot_table, Some("minecraft:archaeology/desert_well"));
+        }
+    }
+
+    #[test]
     fn written_out_processor_lists_are_read() {
         // The desert well gives its suspicious sand a loot table through such a list.
         let well = CONFIGURED_FEATURES.get(&FeatureKey::DesertWell);

@@ -2305,6 +2305,14 @@ fn value_to_placement_modifier_cf(v: &Value) -> TokenStream {
             let z = value_to_int_provider(&v["z"]);
             quote! { PlacementModifier::Offset(OffsetPlacementModifier { x: #x, y: #y, z: #z }) }
         }
+        "minecraft:randomly_selected" => {
+            let placements = v["placements"]
+                .as_array()
+                .expect("randomly selected placements are a list")
+                .iter()
+                .map(value_to_placement_modifier_cf);
+            quote! { PlacementModifier::RandomlySelected(vec![#(#placements),*]) }
+        }
         "minecraft:noise_based_count" => {
             let r = v["noise_to_count_ratio"].as_i64().unwrap_or(0) as i32;
             let f = v["noise_factor"].as_f64().unwrap_or(1.0);

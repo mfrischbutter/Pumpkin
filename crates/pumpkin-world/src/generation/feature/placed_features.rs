@@ -152,6 +152,7 @@ pub enum PlacementModifier {
     RandomOffset(RandomOffsetPlacementModifier),
     Offset(OffsetPlacementModifier),
     FixedPlacement(Vec<BlockPos>),
+    RandomlySelected(Vec<Self>),
 }
 
 impl PlacementModifier {
@@ -196,6 +197,24 @@ impl PlacementModifier {
             Self::RandomOffset(modifier) => modifier.get_positions(random, pos),
             Self::Offset(modifier) => modifier.get_positions(random, pos),
             Self::FixedPlacement(positions) => Box::new(positions.clone().into_iter()),
+            // Vanilla's `RandomlySelectedPlacement`: one of the placements, drawn before it runs.
+            Self::RandomlySelected(placements) => {
+                let index = random.next_bounded_i32(placements.len() as i32) as usize;
+                placements.get(index).map_or_else(
+                    || Box::new(iter::empty()) as Box<dyn Iterator<Item = BlockPos>>,
+                    |placement| {
+                        placement.get_positions(
+                            chunk,
+                            block_registry,
+                            min_y,
+                            height,
+                            feature,
+                            random,
+                            pos,
+                        )
+                    },
+                )
+            }
         }
     }
 }
