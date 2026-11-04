@@ -294,3 +294,77 @@ fn make_settings(rotation: Rotation) -> StructurePlaceSettings {
         .set_apply_waterlogging(true)
         .add_processor(StructureProcessor::ignore_structure_blocks_and_air())
 }
+
+#[cfg(test)]
+mod tests {
+    use pumpkin_data::dimension::Dimension;
+    use pumpkin_util::{random::legacy_rand::LegacyRand, world_seed::Seed};
+
+    use crate::generation::{
+        get_world_gen,
+        positions::chunk_pos::{start_block_x, start_block_z},
+        proto_chunk_test::stage_parity::TestBlockRegistry,
+    };
+
+    use super::*;
+
+    /// The wreck's data markers give the chests below them their loot tables, in every chunk the
+    /// wreck crosses.
+    #[test]
+    fn marker_chests_get_their_loot_tables() {
+        let world_gen = get_world_gen(
+            Seed(0),
+            Dimension::OVERWORLD,
+            false,
+            Vec::new(),
+            String::new(),
+        );
+        let template = get_template("shipwreck/rightsideup_full").unwrap();
+        let mut expected = template
+            .blocks
+            .iter()
+            .filter_map(|block| {
+                let metadata = block.nbt.as_ref()?.get_string("metadata")?;
+                MARKERS_TO_LOOT
+                    .iter()
+                    .find(|(id, _)| *id == metadata)
+                    .map(|(_, loot_table)| (*loot_table).to_string())
+            })
+            .collect::<Vec<_>>();
+        expected.sort();
+        assert!(!expected.is_empty());
+
+        let mut piece = ShipwreckPiece::new(
+            template,
+            Vector3::new(8, 90, -24),
+            Rotation::Clockwise90,
+            false,
+        );
+        piece.adjust_position_height(70);
+        let bounding_box = piece.piece.bounding_box;
+        let mut random = RandomGenerator::Legacy(LegacyRand::from_seed(0));
+        let mut loot_tables = Vec::new();
+        for chunk_x in (bounding_box.min.x >> 4)..=(bounding_box.max.x >> 4) {
+            for chunk_z in (bounding_box.min.z >> 4)..=(bounding_box.max.z >> 4) {
+                let mut chunk = ProtoChunk::new(chunk_x, chunk_z, &world_gen);
+                let chunk_box = BlockBox::new(
+                    start_block_x(chunk_x),
+                    -63,
+                    start_block_z(chunk_z),
+                    start_block_x(chunk_x) + 15,
+                    319,
+                    start_block_z(chunk_z) + 15,
+                );
+                piece.place(&mut chunk, &TestBlockRegistry, &mut random, 0, &chunk_box);
+                for nbt in chunk.take_pending_block_entities() {
+                    if let Some(loot_table) = nbt.get_string("LootTable") {
+                        assert!(nbt.get_long("LootTableSeed").is_some());
+                        loot_tables.push(loot_table.to_string());
+                    }
+                }
+            }
+        }
+        loot_tables.sort();
+        assert_eq!(loot_tables, expected);
+    }
+}

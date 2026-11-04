@@ -745,4 +745,96 @@ mod tests {
 
         assert!(placed_templates > 0);
     }
+
+    /// A world of still water that records what a placement writes and marks.
+    struct WaterPlacer {
+        blocks: rustc_hash::FxHashMap<Vector3<i32>, BlockStateId>,
+        marks: FxHashSet<Vector3<i32>>,
+    }
+
+    impl WaterPlacer {
+        fn new() -> Self {
+            Self {
+                blocks: rustc_hash::FxHashMap::default(),
+                marks: FxHashSet::default(),
+            }
+        }
+    }
+
+    impl BlockPlacer for WaterPlacer {
+        fn get_block_state(&self, pos: &Vector3<i32>) -> BlockStateId {
+            self.blocks
+                .get(pos)
+                .copied()
+                .unwrap_or(Block::WATER.default_state.id)
+        }
+
+        fn set_block_state(&mut self, pos: &Vector3<i32>, state: &BlockState) {
+            self.blocks.insert(*pos, state.id);
+        }
+
+        fn add_block_entity(&mut self, _pos: &Vector3<i32>, _nbt: NbtCompound) {}
+
+        fn get_height(&self, _heightmap: HeightMap, _x: i32, _z: i32) -> Option<i32> {
+            None
+        }
+
+        fn mark_pos_for_post_processing(&mut self, pos: &Vector3<i32>) {
+            self.marks.insert(*pos);
+        }
+    }
+
+    /// The shipwreck of the report: its template keeps dry `outer_right` stairs. Vanilla's
+    /// placement waterlogs the ones that replace water and, as the shape is not known, updates the
+    /// shape of every placed block and of the blocks around it, which post-processing does here.
+    #[test]
+    fn unknown_shapes_are_waterlogged_and_marked_for_post_processing() {
+        let template = get_template("shipwreck/rightsideup_full").unwrap();
+        let position = Vector3::new(3, 40, -7);
+        let settings = StructurePlaceSettings::new()
+            .set_rotation(Rotation::Clockwise90)
+            .set_rotation_pivot(Vector3::new(4, 0, 15))
+            .set_apply_waterlogging(true)
+            .add_processor(StructureProcessor::ignore_structure_blocks_and_air());
+        let place = |settings: &StructurePlaceSettings| {
+            let mut placer = WaterPlacer::new();
+            assert!(place_template_with_options(
+                &mut placer,
+                &template,
+                position,
+                settings,
+                &mut RandomGenerator::Legacy(LegacyRand::from_seed(0)),
+                TemplatePlacement::piece(position, 0),
+            ));
+            placer
+        };
+
+        let placer = place(&settings);
+        let stairs = placer
+            .blocks
+            .values()
+            .filter(|id| {
+                id.to_block_id()
+                    .has_tag(pumpkin_data::tag::Block::MINECRAFT_STAIRS)
+            })
+            .collect::<Vec<_>>();
+        assert!(!stairs.is_empty());
+        assert!(stairs.iter().all(|id| id.is_waterlogged()));
+        assert!(placer.blocks.keys().all(|pos| placer.marks.contains(pos)));
+        assert!(
+            placer
+                .marks
+                .iter()
+                .any(|pos| !placer.blocks.contains_key(pos))
+        );
+        assert!(placer.marks.iter().all(|pos| {
+            placer.blocks.contains_key(pos)
+                || BlockDirection::all()
+                    .iter()
+                    .any(|direction| placer.blocks.contains_key(&(*pos + direction.to_offset())))
+        }));
+
+        let known = place(&settings.clone().set_known_shape(true));
+        assert!(known.marks.is_empty());
+    }
 }
