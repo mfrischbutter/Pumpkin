@@ -205,10 +205,17 @@ impl<'a> EnvironmentAttributes<'a> {
         }
     }
 
-    /// Evaluates a boolean environment attribute at a position.
+    /// Evaluates a boolean environment attribute at a position. Only `SNOW_GOLEM_MELTS` reads
+    /// its biome layer so far.
     #[must_use]
-    pub fn get_value_bool(&self, attribute: EnvironmentAttribute, _pos: &BlockPos) -> bool {
-        self.get_dimension_value_bool(attribute)
+    pub fn get_value_bool(&self, attribute: EnvironmentAttribute, pos: &BlockPos) -> bool {
+        let dimension_value = self.get_dimension_value_bool(attribute);
+        match attribute {
+            EnvironmentAttribute::GameplaySnowGolemMelts => {
+                dimension_value || self.world.get_noise_biome(pos).snow_golem_melts
+            }
+            _ => dimension_value,
+        }
     }
 
     /// Evaluates a float environment attribute at a position.

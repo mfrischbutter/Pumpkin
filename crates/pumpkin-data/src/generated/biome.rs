@@ -20,6 +20,8 @@ pub struct Biome {
     pub creature_spawn_probability: f32,
     pub spawners: SpawnGroups,
     pub spawn_costs: phf::Map<&'static str, SpawnCosts>,
+    #[doc = r" Vanilla `EnvironmentAttributes.SNOW_GOLEM_MELTS` of this biome."]
+    pub snow_golem_melts: bool,
 }
 impl PartialEq<u8> for Biome {
     fn eq(&self, other: &u8) -> bool {
@@ -261,6 +263,7 @@ impl Biome {
             water_creature: &[],
         },
         spawn_costs: phf::phf_map! {},
+        snow_golem_melts: true,
     };
     pub const BAMBOO_JUNGLE: Biome = Biome {
         id: 1,
@@ -457,6 +460,7 @@ impl Biome {
             water_creature: &[],
         },
         spawn_costs: phf::phf_map! {},
+        snow_golem_melts: false,
     };
     pub const BASALT_DELTAS: Biome = Biome {
         id: 2,
@@ -524,6 +528,7 @@ impl Biome {
             water_creature: &[],
         },
         spawn_costs: phf::phf_map! {},
+        snow_golem_melts: false,
     };
     pub const BEACH: Biome = Biome {
         id: 3,
@@ -672,6 +677,7 @@ impl Biome {
             water_creature: &[],
         },
         spawn_costs: phf::phf_map! {},
+        snow_golem_melts: false,
     };
     pub const BIRCH_FOREST: Biome = Biome {
         id: 4,
@@ -844,6 +850,7 @@ impl Biome {
             water_creature: &[],
         },
         spawn_costs: phf::phf_map! {},
+        snow_golem_melts: false,
     };
     pub const CHERRY_GROVE: Biome = Biome {
         id: 5,
@@ -1004,6 +1011,7 @@ impl Biome {
             water_creature: &[],
         },
         spawn_costs: phf::phf_map! {},
+        snow_golem_melts: false,
     };
     pub const COLD_OCEAN: Biome = Biome {
         id: 6,
@@ -1182,6 +1190,7 @@ impl Biome {
             ],
         },
         spawn_costs: phf::phf_map! {},
+        snow_golem_melts: false,
     };
     pub const CRIMSON_FOREST: Biome = Biome {
         id: 7,
@@ -1257,6 +1266,7 @@ impl Biome {
             water_creature: &[],
         },
         spawn_costs: phf::phf_map! {},
+        snow_golem_melts: false,
     };
     pub const DAPPLED_FOREST: Biome = Biome {
         id: 8,
@@ -1434,6 +1444,7 @@ impl Biome {
             water_creature: &[],
         },
         spawn_costs: phf::phf_map! {},
+        snow_golem_melts: false,
     };
     pub const DARK_FOREST: Biome = Biome {
         id: 9,
@@ -1605,6 +1616,7 @@ impl Biome {
             water_creature: &[],
         },
         spawn_costs: phf::phf_map! {},
+        snow_golem_melts: false,
     };
     pub const DEEP_COLD_OCEAN: Biome = Biome {
         id: 10,
@@ -1783,6 +1795,7 @@ impl Biome {
             ],
         },
         spawn_costs: phf::phf_map! {},
+        snow_golem_melts: false,
     };
     pub const DEEP_DARK: Biome = Biome {
         id: 11,
@@ -1864,6 +1877,7 @@ impl Biome {
             water_creature: &[],
         },
         spawn_costs: phf::phf_map! {},
+        snow_golem_melts: false,
     };
     pub const DEEP_FROZEN_OCEAN: Biome = Biome {
         id: 12,
@@ -2041,6 +2055,7 @@ impl Biome {
             ],
         },
         spawn_costs: phf::phf_map! {},
+        snow_golem_melts: false,
     };
     pub const DEEP_LUKEWARM_OCEAN: Biome = Biome {
         id: 13,
@@ -2231,6 +2246,7 @@ impl Biome {
             ],
         },
         spawn_costs: phf::phf_map! {},
+        snow_golem_melts: false,
     };
     pub const DEEP_OCEAN: Biome = Biome {
         id: 14,
@@ -2407,6 +2423,7 @@ impl Biome {
             ],
         },
         spawn_costs: phf::phf_map! {},
+        snow_golem_melts: false,
     };
     pub const DESERT: Biome = Biome {
         id: 15,
@@ -2579,6 +2596,7 @@ impl Biome {
             water_creature: &[],
         },
         spawn_costs: phf::phf_map! {},
+        snow_golem_melts: true,
     };
     pub const DRIPSTONE_CAVES: Biome = Biome {
         id: 16,
@@ -2734,6 +2752,7 @@ impl Biome {
             water_creature: &[],
         },
         spawn_costs: phf::phf_map! {},
+        snow_golem_melts: false,
     };
     pub const END_BARRENS: Biome = Biome {
         id: 17,
@@ -2759,6 +2778,7 @@ impl Biome {
             water_creature: &[],
         },
         spawn_costs: phf::phf_map! {},
+        snow_golem_melts: false,
     };
     pub const END_HIGHLANDS: Biome = Biome {
         id: 18,
@@ -2795,6 +2815,7 @@ impl Biome {
             water_creature: &[],
         },
         spawn_costs: phf::phf_map! {},
+        snow_golem_melts: false,
     };
     pub const END_MIDLANDS: Biome = Biome {
         id: 19,
@@ -2820,6 +2841,7 @@ impl Biome {
             water_creature: &[],
         },
         spawn_costs: phf::phf_map! {},
+        snow_golem_melts: false,
     };
     pub const ERODED_BADLANDS: Biome = Biome {
         id: 20,
@@ -2997,6 +3019,7 @@ impl Biome {
             water_creature: &[],
         },
         spawn_costs: phf::phf_map! {},
+        snow_golem_melts: true,
     };
     pub const FLOWER_FOREST: Biome = Biome {
         id: 21,
@@ -3173,6 +3196,7 @@ impl Biome {
             water_creature: &[],
         },
         spawn_costs: phf::phf_map! {},
+        snow_golem_melts: false,
     };
     pub const FOREST: Biome = Biome {
         id: 22,
@@ -3350,6 +3374,7 @@ impl Biome {
             water_creature: &[],
         },
         spawn_costs: phf::phf_map! {},
+        snow_golem_melts: false,
     };
     pub const FROZEN_OCEAN: Biome = Biome {
         id: 23,
@@ -3527,6 +3552,7 @@ impl Biome {
             ],
         },
         spawn_costs: phf::phf_map! {},
+        snow_golem_melts: false,
     };
     pub const FROZEN_PEAKS: Biome = Biome {
         id: 24,
@@ -3668,6 +3694,7 @@ impl Biome {
             water_creature: &[],
         },
         spawn_costs: phf::phf_map! {},
+        snow_golem_melts: false,
     };
     pub const FROZEN_RIVER: Biome = Biome {
         id: 25,
@@ -3829,6 +3856,7 @@ impl Biome {
             }],
         },
         spawn_costs: phf::phf_map! {},
+        snow_golem_melts: false,
     };
     pub const GROVE: Biome = Biome {
         id: 26,
@@ -3988,6 +4016,7 @@ impl Biome {
             water_creature: &[],
         },
         spawn_costs: phf::phf_map! {},
+        snow_golem_melts: false,
     };
     pub const ICE_SPIKES: Biome = Biome {
         id: 27,
@@ -4154,6 +4183,7 @@ impl Biome {
             water_creature: &[],
         },
         spawn_costs: phf::phf_map! {},
+        snow_golem_melts: false,
     };
     pub const JAGGED_PEAKS: Biome = Biome {
         id: 28,
@@ -4295,6 +4325,7 @@ impl Biome {
             water_creature: &[],
         },
         spawn_costs: phf::phf_map! {},
+        snow_golem_melts: false,
     };
     pub const JUNGLE: Biome = Biome {
         id: 29,
@@ -4491,6 +4522,7 @@ impl Biome {
             water_creature: &[],
         },
         spawn_costs: phf::phf_map! {},
+        snow_golem_melts: false,
     };
     pub const LUKEWARM_OCEAN: Biome = Biome {
         id: 30,
@@ -4681,6 +4713,7 @@ impl Biome {
             ],
         },
         spawn_costs: phf::phf_map! {},
+        snow_golem_melts: false,
     };
     pub const LUSH_CAVES: Biome = Biome {
         id: 31,
@@ -4836,6 +4869,7 @@ impl Biome {
             water_creature: &[],
         },
         spawn_costs: phf::phf_map! {},
+        snow_golem_melts: false,
     };
     pub const MANGROVE_SWAMP: Biome = Biome {
         id: 32,
@@ -5001,6 +5035,7 @@ impl Biome {
             water_creature: &[],
         },
         spawn_costs: phf::phf_map! {},
+        snow_golem_melts: false,
     };
     pub const MEADOW: Biome = Biome {
         id: 33,
@@ -5162,6 +5197,7 @@ impl Biome {
             water_creature: &[],
         },
         spawn_costs: phf::phf_map! {},
+        snow_golem_melts: false,
     };
     pub const MUSHROOM_FIELDS: Biome = Biome {
         id: 34,
@@ -5259,6 +5295,7 @@ impl Biome {
             water_creature: &[],
         },
         spawn_costs: phf::phf_map! {},
+        snow_golem_melts: false,
     };
     pub const NETHER_WASTES: Biome = Biome {
         id: 35,
@@ -5346,6 +5383,7 @@ impl Biome {
             water_creature: &[],
         },
         spawn_costs: phf::phf_map! {},
+        snow_golem_melts: false,
     };
     pub const OCEAN: Biome = Biome {
         id: 36,
@@ -5522,6 +5560,7 @@ impl Biome {
             ],
         },
         spawn_costs: phf::phf_map! {},
+        snow_golem_melts: false,
     };
     pub const OLD_GROWTH_BIRCH_FOREST: Biome = Biome {
         id: 37,
@@ -5694,6 +5733,7 @@ impl Biome {
             water_creature: &[],
         },
         spawn_costs: phf::phf_map! {},
+        snow_golem_melts: false,
     };
     pub const OLD_GROWTH_PINE_TAIGA: Biome = Biome {
         id: 38,
@@ -5889,6 +5929,7 @@ impl Biome {
             water_creature: &[],
         },
         spawn_costs: phf::phf_map! {},
+        snow_golem_melts: false,
     };
     pub const OLD_GROWTH_SPRUCE_TAIGA: Biome = Biome {
         id: 39,
@@ -6084,6 +6125,7 @@ impl Biome {
             water_creature: &[],
         },
         spawn_costs: phf::phf_map! {},
+        snow_golem_melts: false,
     };
     pub const PALE_GARDEN: Biome = Biome {
         id: 40,
@@ -6228,6 +6270,7 @@ impl Biome {
             water_creature: &[],
         },
         spawn_costs: phf::phf_map! {},
+        snow_golem_melts: false,
     };
     pub const PLAINS: Biome = Biome {
         id: 41,
@@ -6417,6 +6460,7 @@ impl Biome {
             water_creature: &[],
         },
         spawn_costs: phf::phf_map! {},
+        snow_golem_melts: false,
     };
     pub const RIVER: Biome = Biome {
         id: 42,
@@ -6579,6 +6623,7 @@ impl Biome {
             }],
         },
         spawn_costs: phf::phf_map! {},
+        snow_golem_melts: false,
     };
     pub const SAVANNA: Biome = Biome {
         id: 43,
@@ -6773,6 +6818,7 @@ impl Biome {
             water_creature: &[],
         },
         spawn_costs: phf::phf_map! {},
+        snow_golem_melts: true,
     };
     pub const SAVANNA_PLATEAU: Biome = Biome {
         id: 44,
@@ -6979,6 +7025,7 @@ impl Biome {
             water_creature: &[],
         },
         spawn_costs: phf::phf_map! {},
+        snow_golem_melts: true,
     };
     pub const SMALL_END_ISLANDS: Biome = Biome {
         id: 45,
@@ -7004,6 +7051,7 @@ impl Biome {
             water_creature: &[],
         },
         spawn_costs: phf::phf_map! {},
+        snow_golem_melts: false,
     };
     pub const SNOWY_BEACH: Biome = Biome {
         id: 46,
@@ -7147,6 +7195,7 @@ impl Biome {
             water_creature: &[],
         },
         spawn_costs: phf::phf_map! {},
+        snow_golem_melts: false,
     };
     pub const SNOWY_PLAINS: Biome = Biome {
         id: 47,
@@ -7316,6 +7365,7 @@ impl Biome {
             water_creature: &[],
         },
         spawn_costs: phf::phf_map! {},
+        snow_golem_melts: false,
     };
     pub const SNOWY_SLOPES: Biome = Biome {
         id: 48,
@@ -7468,6 +7518,7 @@ impl Biome {
             water_creature: &[],
         },
         spawn_costs: phf::phf_map! {},
+        snow_golem_melts: false,
     };
     pub const SNOWY_TAIGA: Biome = Biome {
         id: 49,
@@ -7657,6 +7708,7 @@ impl Biome {
             water_creature: &[],
         },
         spawn_costs: phf::phf_map! {},
+        snow_golem_melts: false,
     };
     pub const SOUL_SAND_VALLEY: Biome = Biome {
         id: 50,
@@ -7728,6 +7780,7 @@ impl Biome {
             water_creature: &[],
         },
         spawn_costs: phf::phf_map! { "enderman" => SpawnCosts { energy_budget : 0.15f64 , charge : 0.7f64 , } , "ghast" => SpawnCosts { energy_budget : 0.15f64 , charge : 0.7f64 , } , "skeleton" => SpawnCosts { energy_budget : 0.15f64 , charge : 0.7f64 , } , "strider" => SpawnCosts { energy_budget : 0.15f64 , charge : 0.7f64 , } },
+        snow_golem_melts: false,
     };
     pub const SPARSE_JUNGLE: Biome = Biome {
         id: 51,
@@ -7911,6 +7964,7 @@ impl Biome {
             water_creature: &[],
         },
         spawn_costs: phf::phf_map! {},
+        snow_golem_melts: false,
     };
     pub const STONY_PEAKS: Biome = Biome {
         id: 52,
@@ -8046,6 +8100,7 @@ impl Biome {
             water_creature: &[],
         },
         spawn_costs: phf::phf_map! {},
+        snow_golem_melts: false,
     };
     pub const STONY_SHORE: Biome = Biome {
         id: 53,
@@ -8189,6 +8244,7 @@ impl Biome {
             water_creature: &[],
         },
         spawn_costs: phf::phf_map! {},
+        snow_golem_melts: false,
     };
     pub const SULFUR_CAVES: Biome = Biome {
         id: 54,
@@ -8332,6 +8388,7 @@ impl Biome {
             water_creature: &[],
         },
         spawn_costs: phf::phf_map! {},
+        snow_golem_melts: false,
     };
     pub const SUNFLOWER_PLAINS: Biome = Biome {
         id: 55,
@@ -8521,6 +8578,7 @@ impl Biome {
             water_creature: &[],
         },
         spawn_costs: phf::phf_map! {},
+        snow_golem_melts: false,
     };
     pub const SWAMP: Biome = Biome {
         id: 56,
@@ -8714,6 +8772,7 @@ impl Biome {
             water_creature: &[],
         },
         spawn_costs: phf::phf_map! {},
+        snow_golem_melts: false,
     };
     pub const TAIGA: Biome = Biome {
         id: 57,
@@ -8903,6 +8962,7 @@ impl Biome {
             water_creature: &[],
         },
         spawn_costs: phf::phf_map! {},
+        snow_golem_melts: false,
     };
     pub const THE_END: Biome = Biome {
         id: 58,
@@ -8940,6 +9000,7 @@ impl Biome {
             water_creature: &[],
         },
         spawn_costs: phf::phf_map! {},
+        snow_golem_melts: false,
     };
     pub const THE_VOID: Biome = Biome {
         id: 59,
@@ -8972,6 +9033,7 @@ impl Biome {
             water_creature: &[],
         },
         spawn_costs: phf::phf_map! {},
+        snow_golem_melts: false,
     };
     pub const WARM_OCEAN: Biome = Biome {
         id: 60,
@@ -9157,6 +9219,7 @@ impl Biome {
             ],
         },
         spawn_costs: phf::phf_map! {},
+        snow_golem_melts: false,
     };
     pub const WARPED_FOREST: Biome = Biome {
         id: 61,
@@ -9220,6 +9283,7 @@ impl Biome {
             water_creature: &[],
         },
         spawn_costs: phf::phf_map! { "enderman" => SpawnCosts { energy_budget : 0.12f64 , charge : 1f64 , } },
+        snow_golem_melts: false,
     };
     pub const WINDSWEPT_FOREST: Biome = Biome {
         id: 62,
@@ -9397,6 +9461,7 @@ impl Biome {
             water_creature: &[],
         },
         spawn_costs: phf::phf_map! {},
+        snow_golem_melts: false,
     };
     pub const WINDSWEPT_GRAVELLY_HILLS: Biome = Biome {
         id: 63,
@@ -9574,6 +9639,7 @@ impl Biome {
             water_creature: &[],
         },
         spawn_costs: phf::phf_map! {},
+        snow_golem_melts: false,
     };
     pub const WINDSWEPT_HILLS: Biome = Biome {
         id: 64,
@@ -9751,6 +9817,7 @@ impl Biome {
             water_creature: &[],
         },
         spawn_costs: phf::phf_map! {},
+        snow_golem_melts: false,
     };
     pub const WINDSWEPT_SAVANNA: Biome = Biome {
         id: 65,
@@ -9944,6 +10011,7 @@ impl Biome {
             water_creature: &[],
         },
         spawn_costs: phf::phf_map! {},
+        snow_golem_melts: true,
     };
     pub const WOODED_BADLANDS: Biome = Biome {
         id: 66,
@@ -10128,6 +10196,7 @@ impl Biome {
             water_creature: &[],
         },
         spawn_costs: phf::phf_map! {},
+        snow_golem_melts: true,
     };
     pub const ALL: &'static [&'static Self] = &[
         &Self::BADLANDS,

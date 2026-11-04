@@ -6411,6 +6411,22 @@ impl World {
             position.0.y,
             position.0.z,
         );
+        self.biome_of_cell(cell)
+    }
+
+    /// Vanilla `BiomeManager.getNoiseBiomeAtPosition`: the biome of the 4x4x4 cell holding the
+    /// position, without the zoom of [`Self::get_biome`]. The height is clamped to the world's,
+    /// as in `ChunkAccess.getNoiseBiome`.
+    pub fn get_noise_biome(&self, position: &BlockPos) -> &'static Biome {
+        let top_y = self.min_y + self.dimension.height - 1;
+        self.biome_of_cell(Vector3::new(
+            position.0.x >> 2,
+            position.0.y.clamp(self.min_y, top_y) >> 2,
+            position.0.z >> 2,
+        ))
+    }
+
+    fn biome_of_cell(&self, cell: Vector3<i32>) -> &'static Biome {
         let cell_pos = BlockPos::new(cell.x << 2, cell.y << 2, cell.z << 2);
         let loaded = self
             .level

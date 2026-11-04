@@ -139,7 +139,7 @@ impl SnowGolemEntity {
         let pos = entity.pos.load();
         if world.environment_attributes().get_value_bool(
             EnvironmentAttribute::GameplaySnowGolemMelts,
-            &pos.to_block_pos(),
+            &BlockPos::floored_v(pos),
         ) {
             self.damage(self, 1.0, DamageType::ON_FIRE);
         }
@@ -306,6 +306,28 @@ mod tests {
         golem.mob_ai_step();
         // A world without a server stops the damage before the health changes.
         golem.mob_entity.living_entity.last_damage_taken.load() > 0.0
+    }
+
+    /// Vanilla's seven: the data sets the attribute on these biomes and no others.
+    #[test]
+    fn the_biomes_that_melt_it_are_vanillas() {
+        let melting: Vec<_> = Biome::ALL
+            .iter()
+            .filter(|biome| biome.snow_golem_melts)
+            .map(|biome| biome.registry_id)
+            .collect();
+        assert_eq!(
+            melting,
+            [
+                "badlands",
+                "desert",
+                "eroded_badlands",
+                "savanna",
+                "savanna_plateau",
+                "windswept_savanna",
+                "wooded_badlands",
+            ]
+        );
     }
 
     /// Vanilla `SnowGolem.aiStep` reads `SNOW_GOLEM_MELTS` at its position, not per dimension.
