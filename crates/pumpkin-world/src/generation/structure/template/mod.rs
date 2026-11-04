@@ -30,6 +30,7 @@ pub mod processor;
 mod structure_template;
 mod template_piece;
 
+use pumpkin_data::BlockDirection;
 use pumpkin_data::BlockStateId;
 use pumpkin_data::Mirror;
 use pumpkin_data::Rotation;
@@ -39,7 +40,9 @@ use pumpkin_util::HeightMap;
 use pumpkin_util::math::{vector3::Vector3, wrap_degrees};
 use pumpkin_util::random::{RandomGenerator, RandomImpl, hash_block_pos, legacy_rand::LegacyRand};
 
-use crate::generation::proto_chunk::GenerationCache;
+use rustc_hash::FxHashSet;
+
+use crate::generation::proto_chunk::{GenerationCache, post_process_pos};
 
 pub use block_state_resolver::BlockStateResolver;
 pub use cache::{
@@ -71,6 +74,9 @@ pub trait BlockPlacer {
     /// Adds an entity of the template, which runs `finalizeSpawn` when `finalize` is set; a placer
     /// without entities ignores it.
     fn add_entity(&mut self, _nbt: NbtCompound, _finalize: bool) {}
+    /// Vanilla's `ChunkAccess.markPosForPostProcessing`: once its chunk ticks, the block takes the
+    /// shape its neighbours give it; a placer without generation post-processing ignores it.
+    fn mark_pos_for_post_processing(&mut self, _pos: &Vector3<i32>) {}
 }
 
 /// A [`BlockPlacer`] over the generation region around a chunk, for the pieces vanilla lets write
@@ -102,6 +108,10 @@ impl BlockPlacer for RegionPlacer<'_> {
         self.0
             .get_center_chunk_mut()
             .add_structure_entity(nbt, finalize);
+    }
+
+    fn mark_pos_for_post_processing(&mut self, pos: &Vector3<i32>) {
+        self.0.mark_pos_for_post_processing(pos);
     }
 }
 
@@ -291,6 +301,7 @@ pub fn place_template_with_options(
     // source once the whole template stands.
     let mut locked_fluids = Vec::new();
     let mut to_fill = Vec::new();
+    let mut placed = Vec::new();
     for ProcessedBlock {
         pos: world_pos,
         state,
@@ -312,6 +323,14 @@ pub fn place_template_with_options(
             .apply_waterlogging
             .then(|| placer.get_block_state(&world_pos));
         placer.set_block_state(&world_pos, state);
+        if !settings.known_shape {
+            // Vanilla's `WorldGenRegion.setBlock` without `UPDATE_KNOWN_SHAPE`: the block marks
+            // its `getPostProcessPos`.
+            if let Some(mark) = post_process_pos(state, &world_pos) {
+                placer.mark_pos_for_post_processing(&mark);
+            }
+            placed.push(world_pos);
+        }
         if let Some(previous) = previous {
             if holds_fluid_source(state.id) {
                 locked_fluids.push(world_pos);
@@ -386,10 +405,37 @@ pub fn place_template_with_options(
         });
     }
 
+    if !settings.known_shape {
+        mark_shape_updates(placer, &placed);
+    }
+
     if !settings.ignore_entities {
         place_entities(placer, template, position, settings);
     }
     true
+}
+
+/// Vanilla's shape updates of a placement whose shape is not known: `updateShapeAtEdge` on the
+/// faces between the placed blocks and the rest of the world, then
+/// `Block.updateFromNeighbourShapes` on every placed block.
+///
+/// The block behaviours need the running world, so the neighbours across those faces and then the
+/// placed blocks are marked for post-processing, which updates their shapes once their chunk
+/// ticks. A neighbour takes the shape all its neighbours give it, not only the placed one.
+fn mark_shape_updates(placer: &mut impl BlockPlacer, placed: &[Vector3<i32>]) {
+    let placed_set: FxHashSet<Vector3<i32>> = placed.iter().copied().collect();
+    let mut edges = FxHashSet::default();
+    for pos in placed {
+        for direction in BlockDirection::all() {
+            let neighbor = *pos + direction.to_offset();
+            if !placed_set.contains(&neighbor) && edges.insert(neighbor) {
+                placer.mark_pos_for_post_processing(&neighbor);
+            }
+        }
+    }
+    for pos in placed {
+        placer.mark_pos_for_post_processing(pos);
+    }
 }
 
 /// Vanilla's `TemplateStructurePiece.postProcess` once the piece has moved its template: the

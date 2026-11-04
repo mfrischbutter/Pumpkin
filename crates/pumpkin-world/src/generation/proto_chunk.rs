@@ -1904,6 +1904,10 @@ impl BlockPlacer for ProtoChunk {
     fn add_entity(&mut self, nbt: NbtCompound, finalize: bool) {
         self.add_structure_entity(nbt, finalize);
     }
+
+    fn mark_pos_for_post_processing(&mut self, pos: &Vector3<i32>) {
+        GenerationCache::mark_pos_for_post_processing(self, pos);
+    }
 }
 
 impl GenerationCache for ProtoChunk {
