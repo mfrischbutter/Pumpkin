@@ -94,10 +94,16 @@ pub trait GenerationCache: HeightLimitView + BlockAccessor {
         }
     }
     /// Vanilla's `WorldGenRegion.scheduleTick` for a fluid: the tick waits in the chunk of the
-    /// position until that chunk ticks.
-    fn schedule_fluid_tick_at(&mut self, pos: &Vector3<i32>, fluid: &'static Fluid) {
+    /// position until that chunk ticks, then runs `delay` ticks later.
+    fn schedule_fluid_tick_at(&mut self, pos: &Vector3<i32>, fluid: &'static Fluid, delay: u8) {
         if let Some(chunk) = self.get_chunk_mut(pos.x >> 4, pos.z >> 4) {
-            chunk.schedule_fluid_tick(pos.x, pos.y, pos.z, fluid);
+            chunk.schedule_fluid_tick(pos.x, pos.y, pos.z, fluid, delay);
+        }
+    }
+    /// [`Self::schedule_fluid_tick_at`] for a block.
+    fn schedule_block_tick_at(&mut self, pos: &Vector3<i32>, block: &'static Block, delay: u8) {
+        if let Some(chunk) = self.get_chunk_mut(pos.x >> 4, pos.z >> 4) {
+            chunk.schedule_block_tick(pos.x, pos.y, pos.z, block, delay);
         }
     }
     /// Vanilla's `Feature.markAboveForPostProcessing`: the up to two blocks above that are not
@@ -210,6 +216,7 @@ pub struct ProtoChunk {
     pub pending_block_entities: Vec<NbtCompound>,
     pending_structure_entities: Vec<StructureEntity>,
     pub fluid_ticks: Vec<ScheduledTick<&'static Fluid>>,
+    pub block_ticks: Vec<ScheduledTick<&'static Block>>,
     /// Blocks marked for post-processing, per section from the bottom, packed like vanilla
     /// (`x | y << 4 | z << 8` within the section).
     pub post_processing: Vec<Vec<u16>>,
@@ -342,6 +349,7 @@ impl ProtoChunk {
             pending_block_entities: Vec::new(),
             pending_structure_entities: Vec::new(),
             fluid_ticks: Vec::new(),
+            block_ticks: Vec::new(),
             post_processing: vec![Vec::new(); section_count],
             surface_height_cache: FxHashMap::default(),
             aquifer_sampler: None,
@@ -543,12 +551,35 @@ impl ProtoChunk {
         }
     }
 
-    pub fn schedule_fluid_tick(&mut self, x: i32, y: i32, z: i32, fluid: &'static Fluid) {
+    pub fn schedule_fluid_tick(
+        &mut self,
+        x: i32,
+        y: i32,
+        z: i32,
+        fluid: &'static Fluid,
+        delay: u8,
+    ) {
         self.fluid_ticks.push(ScheduledTick {
-            delay: 0,
+            delay,
             priority: TickPriority::Normal,
             position: BlockPos::new(x, y, z),
             value: fluid,
+        });
+    }
+
+    pub fn schedule_block_tick(
+        &mut self,
+        x: i32,
+        y: i32,
+        z: i32,
+        block: &'static Block,
+        delay: u8,
+    ) {
+        self.block_ticks.push(ScheduledTick {
+            delay,
+            priority: TickPriority::Normal,
+            position: BlockPos::new(x, y, z),
+            value: block,
         });
     }
 

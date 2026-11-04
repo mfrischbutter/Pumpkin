@@ -206,6 +206,7 @@ impl StructurePieceBase for CorridorExitPiece {
                 lava_pos.y,
                 lava_pos.z,
                 &pumpkin_data::fluid::Fluid::LAVA,
+                0,
             );
         }
     }

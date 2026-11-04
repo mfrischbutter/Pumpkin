@@ -162,7 +162,7 @@ impl GeodeFeature {
                 continue;
             }
             if let Some(fluid) = Fluid::from_id(fluid.id) {
-                chunk.schedule_fluid_tick_at(&adjacent.0, fluid);
+                chunk.schedule_fluid_tick_at(&adjacent.0, fluid, 0);
             }
         }
     }

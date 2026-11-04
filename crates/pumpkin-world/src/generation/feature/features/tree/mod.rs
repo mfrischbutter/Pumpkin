@@ -19,6 +19,18 @@ pub mod foliage;
 pub mod root;
 pub mod trunk;
 
+/// Vanilla's `LeavesBlock.getOptionalDistanceAt`: 0 next to what keeps leaves alive, a leaf's
+/// own distance, nothing for other blocks.
+fn leaf_distance_at(block: &pumpkin_data::Block, state: &BlockState) -> Option<u8> {
+    if block.has_tag(&tag::Block::MINECRAFT_PREVENTS_NEARBY_LEAF_DECAY) {
+        Some(0)
+    } else if OakLeavesLikeProperties::handles_block_id(block.id) {
+        Some(OakLeavesLikeProperties::from_state_id(state.id).distance)
+    } else {
+        None
+    }
+}
+
 pub struct TreeFeature {
     pub trunk_provider: BlockStateProvider,
     pub trunk_placer: TrunkPlacer,
@@ -189,20 +201,8 @@ impl TreeFeature {
                             && !shape[n_idx]
                         {
                             let (n_block, n_state) = chunk.get_block_and_state(&neighbor_pos);
-                            let distance = if n_block
-                                .has_tag(&tag::Block::MINECRAFT_PREVENTS_NEARBY_LEAF_DECAY)
-                            {
-                                Some(0)
-                            } else if OakLeavesLikeProperties::handles_block_id(n_block.id) {
-                                Some(
-                                    OakLeavesLikeProperties::from_state_id(n_state.id).distance
-                                        as usize,
-                                )
-                            } else {
-                                None
-                            };
-
-                            if let Some(dist) = distance {
+                            if let Some(dist) = leaf_distance_at(n_block, n_state) {
+                                let dist = usize::from(dist);
                                 let new_distance = dist.min(smallest_distance + 1);
                                 if new_distance < 7 {
                                     to_check[new_distance].insert(neighbor_pos);
@@ -307,13 +307,39 @@ impl TreeFeature {
         direction: pumpkin_data::BlockDirection,
         neighbor_pos: BlockPos,
     ) {
+        Self::schedule_leaf_update(chunk, pos, neighbor_pos);
         if let Some(new_state) = Self::get_updated_edge_state(chunk, pos, direction) {
             chunk.set_block_state(&pos.0, new_state);
         }
+        Self::schedule_leaf_update(chunk, neighbor_pos, pos);
         if let Some(new_neighbor_state) =
             Self::get_updated_edge_state(chunk, neighbor_pos, direction.opposite())
         {
             chunk.set_block_state(&neighbor_pos.0, new_neighbor_state);
+        }
+    }
+
+    /// Vanilla's `LeavesBlock.updateShape`: a leaf whose distance the neighbour does not confirm
+    /// gets a tick, which sets its distance from all neighbours once the chunk ticks; a
+    /// waterlogged one gets a water tick.
+    fn schedule_leaf_update<T: GenerationCache>(
+        chunk: &mut T,
+        pos: BlockPos,
+        neighbor_pos: BlockPos,
+    ) {
+        let (block, state) = chunk.get_block_and_state(&pos);
+        if !OakLeavesLikeProperties::handles_block_id(block.id) {
+            return;
+        }
+        let props = OakLeavesLikeProperties::from_state_id(state.id);
+        if props.waterlogged {
+            let water = &pumpkin_data::fluid::Fluid::WATER;
+            chunk.schedule_fluid_tick_at(&pos.0, water, water.flow_speed as u8);
+        }
+        let (n_block, n_state) = chunk.get_block_and_state(&neighbor_pos);
+        let distance_from_neighbor = leaf_distance_at(n_block, n_state).unwrap_or(7) + 1;
+        if distance_from_neighbor != 1 || props.distance != distance_from_neighbor {
+            chunk.schedule_block_tick_at(&pos.0, block, 1);
         }
     }
 

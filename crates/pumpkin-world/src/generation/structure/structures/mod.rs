@@ -472,7 +472,7 @@ impl StructurePiece {
         if fluid.id != Fluid::EMPTY.id
             && let Some(fluid) = Fluid::from_id(fluid.id)
         {
-            world.schedule_fluid_tick(block_pos.x, block_pos.y, block_pos.z, fluid);
+            world.schedule_fluid_tick(block_pos.x, block_pos.y, block_pos.z, fluid, 0);
         }
         if SHAPE_CHECK_BLOCKS.contains(&block.id.to_block_id()) {
             world.mark_pos_for_post_processing(block_pos.x, block_pos.y, block_pos.z);

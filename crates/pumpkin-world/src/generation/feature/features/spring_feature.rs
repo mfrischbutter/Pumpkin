@@ -134,7 +134,7 @@ impl SpringFeatureFeature {
             chunk.set_block_state(&pos.0, self.state);
             // Vanilla schedules the spring's fluid tick, so it starts flowing once the chunk ticks.
             if let Some(fluid) = Fluid::from_state_id(self.state.id) {
-                chunk.schedule_fluid_tick_at(&pos.0, fluid);
+                chunk.schedule_fluid_tick_at(&pos.0, fluid, 0);
             }
             return true;
         }
