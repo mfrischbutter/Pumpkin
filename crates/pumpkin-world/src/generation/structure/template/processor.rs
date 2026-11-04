@@ -372,6 +372,31 @@ impl ProcessorContext {
 }
 
 impl StructureProcessor {
+    /// Vanilla's `BlockIgnoreProcessor.STRUCTURE_BLOCK`: the data markers stay out of the world.
+    #[must_use]
+    pub fn ignore_structure_blocks() -> Self {
+        Self::BlockIgnore(vec![IgnoredBlock {
+            block_id: Block::STRUCTURE_BLOCK.id,
+            properties: None,
+        }])
+    }
+
+    /// Vanilla's `BlockIgnoreProcessor.STRUCTURE_AND_AIR`: the template's air keeps the world's
+    /// blocks too.
+    #[must_use]
+    pub fn ignore_structure_blocks_and_air() -> Self {
+        Self::BlockIgnore(vec![
+            IgnoredBlock {
+                block_id: Block::AIR.id,
+                properties: None,
+            },
+            IgnoredBlock {
+                block_id: Block::STRUCTURE_BLOCK.id,
+                properties: None,
+            },
+        ])
+    }
+
     #[must_use]
     pub fn process(
         &self,

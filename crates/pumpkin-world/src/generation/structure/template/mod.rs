@@ -355,6 +355,92 @@ pub fn place_template_with_options(
     true
 }
 
+/// Vanilla's `TemplateStructurePiece.postProcess` once the piece has moved its template: the
+/// template inside the settings' bounding box, the chunk, then each data marker there, which
+/// `handle_data_marker` gets with its metadata and position.
+pub(crate) fn place_template_piece<P: BlockPlacer>(
+    placer: &mut P,
+    template: &StructureTemplate,
+    position: Vector3<i32>,
+    settings: &StructurePlaceSettings,
+    random: &mut RandomGenerator,
+    level_seed: i64,
+    mut handle_data_marker: impl FnMut(&mut P, &mut RandomGenerator, &str, Vector3<i32>),
+) {
+    if !place_template_with_options(
+        placer,
+        template,
+        position,
+        settings,
+        random,
+        TemplatePlacement::piece(position, level_seed),
+    ) {
+        return;
+    }
+    for marker in template.filter_blocks(position, settings, "minecraft:structure_block") {
+        if let Some(nbt) = &marker.nbt
+            && nbt.get_string("mode") == Some("DATA")
+        {
+            handle_data_marker(
+                placer,
+                random,
+                nbt.get_string("metadata").unwrap_or_default(),
+                marker.pos,
+            );
+        }
+    }
+}
+
+/// Vanilla's `RandomizableContainer.setBlockEntityLootTable`: the container at the position, if
+/// there is one, gets the loot table and a seed from the random.
+pub(crate) fn set_block_entity_loot_table(
+    chunk: &mut crate::ProtoChunk,
+    random: &mut RandomGenerator,
+    pos: Vector3<i32>,
+    loot_table: &str,
+) {
+    let block = pumpkin_data::Block::from_state_id(chunk.get_block_state(&pos));
+    if block_entity_id(block).is_some_and(is_randomizable_container) {
+        set_loot_table(chunk, pos, loot_table, random.next_i64());
+    }
+}
+
+/// Vanilla's `RandomizableContainer.setLootTable` on the block entity at the position: its last
+/// pending entry, or a new one.
+pub(crate) fn set_loot_table(
+    chunk: &mut crate::ProtoChunk,
+    pos: Vector3<i32>,
+    loot_table: &str,
+    seed: i64,
+) {
+    let at_pos = |nbt: &NbtCompound| {
+        [nbt.get_int("x"), nbt.get_int("y"), nbt.get_int("z")]
+            == [Some(pos.x), Some(pos.y), Some(pos.z)]
+    };
+    if let Some(nbt) = chunk
+        .pending_block_entities
+        .iter_mut()
+        .rev()
+        .find(|nbt| at_pos(nbt))
+    {
+        nbt.put_string("LootTable", loot_table.to_string());
+        nbt.put_long("LootTableSeed", seed);
+        return;
+    }
+    let block = pumpkin_data::Block::from_state_id(chunk.get_block_state(&pos));
+    let Some(id) = block_entity_id(block) else {
+        return;
+    };
+    let mut nbt = NbtCompound::new();
+    nbt.put_string("id", id.to_string());
+    nbt.put_int("x", pos.x);
+    nbt.put_int("y", pos.y);
+    nbt.put_int("z", pos.z);
+    nbt.put_string("LootTable", loot_table.to_string());
+    nbt.put_long("LootTableSeed", seed);
+    chunk.add_block_entity(nbt);
+}
+
 /// Vanilla's `CappedProcessor.finalizeProcessing`: a random forked from the level seed at the
 /// template's position draws the limit and shuffles every processed block; the delegate runs on
 /// them in that order until it changed `limit` of them.

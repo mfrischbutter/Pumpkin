@@ -1,11 +1,10 @@
 use std::sync::Arc;
 
 use pumpkin_data::{Mirror, Rotation};
-use pumpkin_nbt::compound::NbtCompound;
 use pumpkin_util::{
     HeightMap,
     math::{block_box::BlockBox, position::BlockPos, vector3::Vector3},
-    random::{RandomGenerator, RandomImpl, hash_block_pos, legacy_rand::LegacyRand},
+    random::{RandomGenerator, RandomImpl},
 };
 
 use crate::{
@@ -18,7 +17,10 @@ use crate::{
                 StructureGenerator, StructureGeneratorContext, StructurePiece, StructurePieceBase,
                 StructurePiecesCollector, StructurePosition, WorldPortalExt,
             },
-            template::{BlockStateResolver, StructureTemplate, get_template},
+            template::{
+                StructurePlaceSettings, StructureTemplate, get_template, place_template_piece,
+                processor::StructureProcessor, set_block_entity_loot_table,
+            },
         },
     },
 };
@@ -150,7 +152,7 @@ impl StructureGenerator for ShipwreckGenerator {
 pub struct ShipwreckPiece {
     piece: StructurePiece,
     template: Arc<StructureTemplate>,
-    rotation: Rotation,
+    place_settings: StructurePlaceSettings,
     template_position: Vector3<i32>,
     is_beached: bool,
     height_adjusted: bool,
@@ -164,18 +166,13 @@ impl ShipwreckPiece {
         rotation: Rotation,
         is_beached: bool,
     ) -> Self {
-        let bounding_box = StructureTemplate::get_bounding_box_static(
-            position,
-            rotation,
-            PIVOT,
-            Mirror::None,
-            template.size,
-        );
+        let place_settings = make_settings(rotation);
+        let bounding_box = template.get_bounding_box(&place_settings, position);
 
         Self {
             piece: StructurePiece::new(StructurePieceType::Shipwreck, bounding_box, 0),
             template,
-            rotation,
+            place_settings,
             template_position: position,
             is_beached,
             height_adjusted: false,
@@ -196,51 +193,9 @@ impl ShipwreckPiece {
     pub fn adjust_position_height(&mut self, new_height: i32) {
         self.height_adjusted = true;
         self.template_position.y = new_height;
-        self.piece.bounding_box = StructureTemplate::get_bounding_box_static(
-            self.template_position,
-            self.rotation,
-            PIVOT,
-            Mirror::None,
-            self.template.size,
-        );
-    }
-
-    fn handle_data_marker(
-        marker_id: &str,
-        position: Vector3<i32>,
-        chunk: &mut ProtoChunk,
-        chunk_box: &BlockBox,
-    ) {
-        let Some((_, loot_table)) = MARKERS_TO_LOOT.iter().find(|(k, _)| *k == marker_id) else {
-            return;
-        };
-
-        let chest_pos = Vector3::new(position.x, position.y - 1, position.z);
-        if !chunk_box.contains_pos(&chest_pos) {
-            return;
-        }
-
-        if let Some(existing) = chunk.pending_block_entities.iter_mut().find(|nbt| {
-            nbt.get_int("x") == Some(chest_pos.x)
-                && nbt.get_int("y") == Some(chest_pos.y)
-                && nbt.get_int("z") == Some(chest_pos.z)
-        }) {
-            existing.put_string("LootTable", (*loot_table).to_string());
-            let mut rng =
-                LegacyRand::from_seed(hash_block_pos(chest_pos.x, chest_pos.y, chest_pos.z) as u64);
-            existing.put_long("LootTableSeed", rng.next_i64());
-        } else {
-            let mut chest_nbt = NbtCompound::new();
-            chest_nbt.put_string("id", "minecraft:chest".to_string());
-            chest_nbt.put_int("x", chest_pos.x);
-            chest_nbt.put_int("y", chest_pos.y);
-            chest_nbt.put_int("z", chest_pos.z);
-            chest_nbt.put_string("LootTable", (*loot_table).to_string());
-            let mut rng =
-                LegacyRand::from_seed(hash_block_pos(chest_pos.x, chest_pos.y, chest_pos.z) as u64);
-            chest_nbt.put_long("LootTableSeed", rng.next_i64());
-            chunk.add_block_entity(chest_nbt);
-        }
+        self.piece.bounding_box = self
+            .template
+            .get_bounding_box(&self.place_settings, self.template_position);
     }
 }
 
@@ -257,13 +212,12 @@ impl StructurePieceBase for ShipwreckPiece {
         &mut self.piece
     }
 
-    #[expect(clippy::too_many_lines)]
     fn place(
         &mut self,
         chunk: &mut ProtoChunk,
         _block_registry: &dyn WorldPortalExt,
         random: &mut RandomGenerator,
-        _seed: i64,
+        seed: i64,
         chunk_box: &BlockBox,
     ) {
         if !self.height_adjusted && !self.is_too_big_to_fit_in_world_gen_region() {
@@ -305,123 +259,38 @@ impl StructurePieceBase for ShipwreckPiece {
             self.adjust_position_height(target_y);
         }
 
-        // Vanilla's `StructureTemplate.placeInWorld` picks one of the template's palettes (the
-        // wreck's wood) from the final template position. The flat block list follows palette 0's
-        // order, which every palette shares.
-        let palette = self.template.palettes
-            [crate::generation::structure::template::random_palette_index(
-                self.template.palettes.len(),
-                self.template_position,
-            )]
-        .blocks();
-
-        // Place non-marker blocks
-        let box_limit = self.piece.bounding_box;
-        for (index, block) in self.template.blocks.iter().enumerate() {
-            let palette_entry = &palette[index].state;
-
-            if palette_entry.name == "minecraft:structure_block"
-                || palette_entry.name == "minecraft:air"
-                || palette_entry.name == "minecraft:structure_void"
-                || palette_entry.name == "structure_void"
-            {
-                continue;
-            }
-
-            let rel_pos = StructureTemplate::transform_block_pos(
-                block.pos,
-                Mirror::None,
-                self.rotation,
-                PIVOT,
-            );
-            let world_pos = self.template_position + rel_pos;
-
-            if !box_limit.contains_pos(&world_pos) || !chunk_box.contains_pos(&world_pos) {
-                continue;
-            }
-
-            let Some(mut state) =
-                BlockStateResolver::resolve(palette_entry, self.rotation, Mirror::None)
-            else {
-                continue;
-            };
-
-            if chunk.get_block_state(&world_pos).to_block_id() == pumpkin_data::Block::WATER.id {
-                let mut modified_entry = palette_entry.clone();
-                if let Some(waterlogged) =
-                    modified_entry.properties.iter_mut().find_map(|p| match p {
-                        pumpkin_data::Property::Waterlogged(w) => Some(w),
-                        _ => None,
-                    })
+        self.place_settings.bounding_box = Some(*chunk_box);
+        self.piece.bounding_box = self
+            .template
+            .get_bounding_box(&self.place_settings, self.template_position);
+        place_template_piece(
+            chunk,
+            &self.template,
+            self.template_position,
+            &self.place_settings,
+            random,
+            seed,
+            |chunk, random, marker, position| {
+                if let Some((_, loot_table)) = MARKERS_TO_LOOT.iter().find(|(id, _)| *id == marker)
                 {
-                    *waterlogged = true;
-                    if let Some(waterlogged_state) =
-                        BlockStateResolver::resolve(&modified_entry, self.rotation, Mirror::None)
-                    {
-                        state = waterlogged_state;
-                    }
-                }
-            }
-
-            chunk.set_block_state(world_pos.x, world_pos.y, world_pos.z, state);
-
-            let final_block = pumpkin_data::Block::from_id(state.id.to_block_id());
-            let block_entity_id =
-                crate::generation::structure::template::get_block_entity_id(final_block.name);
-            if block.nbt.is_some() || block_entity_id.is_some() {
-                let fallback_id = block_entity_id.unwrap_or(final_block.name);
-                let mut placed_nbt = NbtCompound::new();
-
-                placed_nbt.put_string("id", fallback_id.to_string());
-                placed_nbt.put_int("x", world_pos.x);
-                placed_nbt.put_int("y", world_pos.y);
-                placed_nbt.put_int("z", world_pos.z);
-
-                if let Some(template_nbt) = &block.nbt {
-                    for (key, value) in &template_nbt.child_tags {
-                        if key.as_ref() != "x"
-                            && key.as_ref() != "y"
-                            && key.as_ref() != "z"
-                            && key.as_ref() != "id"
-                        {
-                            placed_nbt.child_tags.insert(key.clone(), value.clone());
-                        }
-                    }
-                }
-
-                if placed_nbt.get_string("LootTable").is_some()
-                    && placed_nbt.get_long("LootTableSeed").is_none()
-                {
-                    let mut rng =
-                        LegacyRand::from_seed(
-                            hash_block_pos(world_pos.x, world_pos.y, world_pos.z) as u64,
-                        );
-                    placed_nbt.put_long("LootTableSeed", rng.next_i64());
-                }
-
-                chunk.add_block_entity(placed_nbt);
-            }
-        }
-
-        // Process data markers
-        for block in &self.template.blocks {
-            let palette_entry = &self.template.palette[block.state as usize];
-            if palette_entry.name == "minecraft:structure_block"
-                && let Some(nbt) = &block.nbt
-            {
-                let mode = nbt.get_string("mode").unwrap_or("");
-                if mode == "DATA" {
-                    let metadata = nbt.get_string("metadata").unwrap_or("");
-                    let rel_pos = StructureTemplate::transform_block_pos(
-                        block.pos,
-                        Mirror::None,
-                        self.rotation,
-                        PIVOT,
+                    set_block_entity_loot_table(
+                        chunk,
+                        random,
+                        Vector3::new(position.x, position.y - 1, position.z),
+                        loot_table,
                     );
-                    let world_pos = self.template_position + rel_pos;
-                    Self::handle_data_marker(metadata, world_pos, chunk, chunk_box);
                 }
-            }
-        }
+            },
+        );
     }
+}
+
+/// Vanilla's `ShipwreckPiece.makeSettings`.
+fn make_settings(rotation: Rotation) -> StructurePlaceSettings {
+    StructurePlaceSettings::new()
+        .set_rotation(rotation)
+        .set_mirror(Mirror::None)
+        .set_rotation_pivot(PIVOT)
+        .set_apply_waterlogging(true)
+        .add_processor(StructureProcessor::ignore_structure_blocks_and_air())
 }
