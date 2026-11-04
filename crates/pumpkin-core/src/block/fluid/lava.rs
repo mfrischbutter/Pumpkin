@@ -261,7 +261,7 @@ impl FlowingFluid for FlowingLava {
     }
 
     fn get_max_flow_distance(&self, world: &World) -> i32 {
-        if world.dimension.fast_lava { 5 } else { 3 }
+        if world.dimension.fast_lava { 4 } else { 2 }
     }
 
     /// Determines if lava can convert to source blocks based on game rules.

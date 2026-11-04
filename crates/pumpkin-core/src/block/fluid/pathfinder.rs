@@ -102,8 +102,8 @@ pub fn get_spread<T: FlowingFluid + Sync + ?Sized>(
 
 /// Performs iterative BFS search to find the shortest distance to a downward flow opportunity.
 ///
-/// Uses stack-allocated array for zero heap allocations. Searches up to `get_max_flow_distance`
-/// (dynamic) horizontally from the starting position.
+/// Uses stack-allocated array for zero heap allocations. Like vanilla's `getSlopeDistance`, it finds
+/// holes up to `get_max_flow_distance` blocks beyond the starting (side) block, which counts as 1.
 ///
 /// # Returns
 /// Distance to nearest hole, or 1000 if no hole found within search distance
@@ -114,7 +114,7 @@ pub fn get_in_flow_down_distance_iterative<T: FlowingFluid + Sync + ?Sized>(
     start_pos: BlockPos,
     initial_exclude_dir: BlockDirection,
 ) -> i32 {
-    const MAX_QUEUE_SIZE: usize = 64;
+    const MAX_QUEUE_SIZE: usize = 256;
 
     let mut queue: [PathNode; MAX_QUEUE_SIZE] = [PathNode {
         pos: BlockPos::new(0, 0, 0),
@@ -147,7 +147,7 @@ pub fn get_in_flow_down_distance_iterative<T: FlowingFluid + Sync + ?Sized>(
         let node = queue[queue_start];
         queue_start += 1;
 
-        if node.distance > slope_find_distance {
+        if node.distance > slope_find_distance + 1 {
             continue;
         }
 
