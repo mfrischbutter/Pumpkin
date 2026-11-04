@@ -3,7 +3,7 @@ use std::sync::Arc;
 use pumpkin_data::{Block, BlockDirection, BlockState, Mirror, Rotation};
 use pumpkin_util::{
     math::{block_box::BlockBox, position::BlockPos, vector3::Vector3},
-    random::{RandomDeriverImpl, RandomGenerator, RandomImpl},
+    random::{RandomDeriverImpl, RandomGenerator, RandomImpl, legacy_rand::LegacyRand},
 };
 
 use crate::{
@@ -154,21 +154,18 @@ impl NetherFossilPiece {
         }
     }
 
+    /// Vanilla's `NetherFossilPiece.placeDriedGhast`, whose `createThreadLocalInstance` random is a
+    /// legacy one.
     fn place_dried_ghast(
         cache: &mut dyn GenerationCache,
         seed: i64,
         fossil_bb: &BlockBox,
         chunk_bb: &BlockBox,
     ) {
-        use pumpkin_util::random::xoroshiro128::Xoroshiro;
-
-        let center_x = i32::midpoint(fossil_bb.min.x, fossil_bb.max.x);
-        let center_y = i32::midpoint(fossil_bb.min.y, fossil_bb.max.y);
-        let center_z = i32::midpoint(fossil_bb.min.z, fossil_bb.max.z);
-
-        let mut rng = RandomGenerator::Xoroshiro(Xoroshiro::from_seed(seed as u64));
-        let splitter = rng.next_splitter();
-        let mut positional_random = splitter.split_pos(center_x, center_y, center_z);
+        let center = fossil_bb.get_center();
+        let mut positional_random = RandomGenerator::Legacy(LegacyRand::from_seed(seed as u64))
+            .next_splitter()
+            .split_pos(center.x, center.y, center.z);
 
         if positional_random.next_f32() < 0.5 {
             let x_span = (fossil_bb.max.x - fossil_bb.min.x + 1).max(1);
@@ -237,7 +234,7 @@ impl StructurePieceBase for NetherFossilPiece {
             seed,
             |_, _, _, _| {},
         );
-        Self::place_dried_ghast(cache, seed, &fossil_bb, chunk_box);
+        Self::place_dried_ghast(cache, seed, &fossil_bb, &enlarged_box);
     }
 }
 

@@ -442,8 +442,8 @@ impl RuinedPortalPiece {
         let follow_ground_surface = self.vertical_placement == VerticalPlacement::OnLandSurface
             || self.vertical_placement == VerticalPlacement::OnOceanFloor;
         let bb = self.piece.bounding_box;
-        let center_x = i32::midpoint(bb.min.x, bb.max.x);
-        let center_z = i32::midpoint(bb.min.z, bb.max.z);
+        let center = bb.get_center();
+        let (center_x, center_z) = (center.x, center.z);
 
         let max_distance = NETHERRACK_PROBABILITY_BY_DISTANCE.len() as i32;
         let x_span = bb.max.x - bb.min.x + 1;
@@ -638,12 +638,7 @@ impl StructurePieceBase for RuinedPortalPiece {
         let bounding_box = self
             .template
             .get_bounding_box(&self.place_settings, self.template_position);
-        let center = Vector3::new(
-            i32::midpoint(bounding_box.min.x, bounding_box.max.x),
-            i32::midpoint(bounding_box.min.y, bounding_box.max.y),
-            i32::midpoint(bounding_box.min.z, bounding_box.max.z),
-        );
-        if !chunk_box.contains_pos(&center) {
+        if !chunk_box.contains_pos(&bounding_box.get_center()) {
             return;
         }
         let mut enlarged_box = *chunk_box;
