@@ -80,7 +80,14 @@ impl SimpleBlockFeature {
                 chunk.set_block_state(&above_pos.0, upper_props.to_state_id(block).to_state());
             }
         } else if block.id == BlockId::PALE_MOSS_CARPET {
-            Self::place_pale_moss_carpet(chunk, pos, random);
+            // Vanilla's `MossyCarpetBlock.placeAt` draws from the `WorldGenRegion`'s random.
+            match chunk.get_center_chunk_mut().region_random.take() {
+                Some(mut region_random) => {
+                    Self::place_pale_moss_carpet(chunk, pos, &mut region_random);
+                    chunk.get_center_chunk_mut().region_random = Some(region_random);
+                }
+                None => Self::place_pale_moss_carpet(chunk, pos, random),
+            }
         } else {
             chunk.set_block_state(&pos.0, state);
         }
