@@ -156,7 +156,7 @@ pub fn build() -> TokenStream {
                 EnvironmentScanPlacementModifier, HeightRangePlacementModifier,
                 HeightmapPlacementModifier, NoiseBasedCountPlacementModifier,
                 NoiseThresholdCountPlacementModifier, OffsetPlacementModifier,
-                RandomOffsetPlacementModifier,
+                RandomChancePlacementModifier, RandomOffsetPlacementModifier,
                 RarityFilterPlacementModifier, SquarePlacementModifier,
                 SurfaceThresholdFilterPlacementModifier, SurfaceWaterDepthFilterPlacementModifier,
                 PlacedFeatureWrapper,
@@ -1074,7 +1074,19 @@ pub fn value_to_configured_feature(v: &Value) -> TokenStream {
             }
         }
         "minecraft:sequence" => {
-            quote! { ConfiguredFeature::NoOp }
+            let features_arr = config["features"]
+                .as_array()
+                .map(|a| a.as_slice())
+                .unwrap_or(&[]);
+            let features: Vec<TokenStream> = features_arr
+                .iter()
+                .map(value_to_placed_feature_wrapper)
+                .collect();
+            quote! {
+                ConfiguredFeature::Sequence(crate::generation::feature::features::sequence::SequenceFeature {
+                    features: vec![#(#features),*],
+                })
+            }
         }
         "minecraft:stepped_column_cluster" => {
             let block = value_to_block_state_provider(&config["block"]);
@@ -2153,6 +2165,10 @@ fn value_to_placement_modifier_cf(v: &Value) -> TokenStream {
         "minecraft:rarity_filter" => {
             let ch = v["chance"].as_u64().unwrap_or(1) as u32;
             quote! { PlacementModifier::RarityFilter(RarityFilterPlacementModifier { chance: #ch }) }
+        }
+        "minecraft:random_chance" => {
+            let ch = v["chance"].as_f64().unwrap() as f32;
+            quote! { PlacementModifier::RandomChance(RandomChancePlacementModifier { chance: #ch }) }
         }
         "minecraft:block_predicate_filter" => {
             let pred = value_to_block_predicate(&v["predicate"]);

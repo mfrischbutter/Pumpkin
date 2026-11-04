@@ -243,6 +243,14 @@ fn value_to_placement_modifier(v: &Value) -> TokenStream {
                 })
             }
         }
+        "minecraft:random_chance" => {
+            let chance = v["chance"].as_f64().unwrap() as f32;
+            quote! {
+                PlacementModifier::RandomChance(RandomChancePlacementModifier {
+                    chance: #chance,
+                })
+            }
+        }
         "minecraft:block_predicate_filter" => {
             let predicate = value_to_block_predicate(&v["predicate"]);
             quote! {
