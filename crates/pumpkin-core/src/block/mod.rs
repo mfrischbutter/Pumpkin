@@ -293,6 +293,8 @@ pub struct ExplodeArgs<'a> {
     pub world: &'a Arc<World>,
     pub block: &'a Block,
     pub position: &'a BlockPos,
+    /// Vanilla `Explosion.getIndirectSourceEntity`.
+    pub indirect_source: Option<&'a crate::entity::Entity>,
 }
 
 pub struct OnSyncedBlockEventArgs<'a> {

@@ -718,11 +718,6 @@ impl EntityBase for ArmorStandEntity {
         !self.is_marker()
     }
 
-    /// Vanilla `isAffectedByPotions`.
-    fn is_affected_by_potions(&self) -> bool {
-        false
-    }
-
     /// Vanilla `ignoreExplosion`.
     fn ignore_explosion(&self, affects_blocklike_entities: bool, _source_in_water: bool) -> bool {
         !affects_blocklike_entities || self.is_invisible()

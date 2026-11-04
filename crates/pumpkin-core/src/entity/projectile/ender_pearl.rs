@@ -138,6 +138,7 @@ impl EnderPearlEntity {
         );
         if let Some(living) = owner.get_living_entity() {
             living.fall_distance.store(0.0);
+            living.current_impulse.reset();
         }
         if is_player {
             owner.damage(owner, TELEPORT_DAMAGE, DamageType::ENDER_PEARL);

@@ -104,17 +104,13 @@ impl RangedCrossbowAttackGoal {
                 entity,
                 &projectile,
                 weapon,
-                ArrowPickup::Allowed,
+                ArrowPickup::Disallowed,
             )
         } else {
-            ArrowEntity::new_shot(arrow_entity, entity, &projectile, ArrowPickup::Allowed)
+            ArrowEntity::new_shot(arrow_entity, entity, &projectile, ArrowPickup::Disallowed)
         };
+        arrow.set_sound_event(pumpkin_data::sound::Sound::ItemCrossbowHit);
 
-        if let Some(ref item) = weapon_opt {
-            arrow.set_pierce_level(
-                crate::enchantment::EnchantmentHelper::process_projectile_piercing(item, 0),
-            );
-        }
         arrow.apply_on_projectile_spawned(&projectile);
         if entity.is_on_fire() {
             arrow.set_flame(true);

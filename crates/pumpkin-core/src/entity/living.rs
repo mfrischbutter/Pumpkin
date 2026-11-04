@@ -127,6 +127,10 @@ pub struct LivingEntity {
 
     last_hurt_by_mob: AtomicCell<Option<LastHurtByMob>>,
     last_hurt_by_mob_timestamp: AtomicI32,
+    /// Vanilla `DATA_ARROW_COUNT_ID`: the arrows the client draws in the body.
+    arrow_count: AtomicI32,
+    /// Vanilla `removeArrowTime`.
+    remove_arrow_time: AtomicI32,
     last_damage_type: std::sync::Mutex<Option<DamageType>>,
     /// Entity id of the last damage source's causing entity, 0 when it had none.
     last_damage_attacker: AtomicI32,
@@ -248,7 +252,6 @@ impl LivingEntity {
     const USING_ITEM_FLAG: u8 = 1;
     const OFF_HAND_ACTIVE_FLAG: u8 = 2;
     const RANDOM_TELEPORT_ATTEMPTS: usize = 16;
-    #[expect(dead_code)]
     const USING_RIPTIDE_FLAG: u8 = 4;
 
     const PREVENT_AREA_FALL_DAMAGE_BLOCKS: [&'static Block; 4] = [
@@ -370,6 +373,8 @@ impl LivingEntity {
             climbing_pos: AtomicCell::new(None),
             last_hurt_by_mob: AtomicCell::new(None),
             last_hurt_by_mob_timestamp: AtomicI32::new(0),
+            arrow_count: AtomicI32::new(0),
+            remove_arrow_time: AtomicI32::new(0),
             last_damage_type: std::sync::Mutex::new(None),
             last_damage_attacker: AtomicI32::new(0),
             last_damage_stamp: std::sync::atomic::AtomicI64::new(0),
@@ -427,6 +432,35 @@ impl LivingEntity {
         }));
         self.last_hurt_by_mob_timestamp
             .store(self.entity.tick_count.load(Relaxed), Relaxed);
+    }
+
+    /// Vanilla `setArrowCount(getArrowCount() + 1)`.
+    pub(crate) fn add_stuck_arrow(&self) {
+        self.set_arrow_count(self.arrow_count.load(Relaxed) + 1);
+    }
+
+    /// Vanilla `setArrowCount`.
+    pub(crate) fn set_arrow_count(&self, count: i32) {
+        self.arrow_count.store(count, Relaxed);
+        self.entity
+            .set_synced_data(tracked_data::living_entity::DATA_ARROW_COUNT_ID, count);
+    }
+
+    /// The arrow part of vanilla `LivingEntity.tick`: they fall out, faster the more there are.
+    fn tick_arrow_count(&self) {
+        let count = self.arrow_count.load(Relaxed);
+        if count <= 0 {
+            return;
+        }
+        let mut time = self.remove_arrow_time.load(Relaxed);
+        if time <= 0 {
+            time = 20 * (30 - count);
+        }
+        time -= 1;
+        self.remove_arrow_time.store(time, Relaxed);
+        if time <= 0 {
+            self.set_arrow_count(count - 1);
+        }
     }
 
     fn tick_last_hurt_by_mob(&self) {
@@ -832,6 +866,11 @@ impl LivingEntity {
         if is_blocking {
             self.set_bedrock_blocking(true);
         }
+    }
+
+    /// Vanilla `setLivingEntityFlag(LIVING_ENTITY_FLAG_SPIN_ATTACK, value)`.
+    pub(crate) fn set_riptide_flag(&self, value: bool) {
+        self.set_living_flag(Self::USING_RIPTIDE_FLAG, value);
     }
 
     fn set_living_flag(&self, flag: u8, value: bool) {
@@ -4217,6 +4256,7 @@ impl EntityBase for LivingEntity {
         self.entity.tick(caller, server);
         self.current_impulse.tick();
         self.tick_last_hurt_by_mob();
+        self.tick_arrow_count();
         if let Some(mob) = caller.get_mob() {
             mob.tick_ambient_sound();
             if !mob.mob_handles_own_air_supply() {

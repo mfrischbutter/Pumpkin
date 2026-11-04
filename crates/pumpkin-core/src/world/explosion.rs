@@ -335,6 +335,7 @@ impl Explosion {
                     world,
                     block,
                     position: pos,
+                    indirect_source: None,
                 });
             }
         }
@@ -576,6 +577,7 @@ impl Explosion {
         blocks: &ExplodedBlocks,
         yield_rate: f32,
         default_yield_rate: f32,
+        indirect_source: Option<&Entity>,
     ) -> u32 {
         let decay_drops = self.block_interaction == BlockInteraction::DestroyWithDecay;
         let explosion_radius = if yield_rate == default_yield_rate {
@@ -615,6 +617,7 @@ impl Explosion {
                     world,
                     block,
                     position: pos,
+                    indirect_source,
                 });
             }
         }
@@ -654,7 +657,14 @@ impl Explosion {
                 0
             }
             BlockInteraction::Destroy | BlockInteraction::DestroyWithDecay => {
-                self.destroy_blocks(world, &blocks, yield_rate, default_yield_rate)
+                let cause = entities::indirect_source(source.as_ref());
+                self.destroy_blocks(
+                    world,
+                    &blocks,
+                    yield_rate,
+                    default_yield_rate,
+                    cause.as_deref().map(EntityBase::get_entity),
+                )
             }
         };
 

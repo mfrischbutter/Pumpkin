@@ -1,5 +1,6 @@
 pub mod advancement;
 mod ender_pearls;
+pub mod auto_spin_attack;
 mod mount_screen;
 pub mod statistics;
 
@@ -795,6 +796,8 @@ pub struct Player {
     pub advancements: Arc<Mutex<PlayerAdvancement>>,
     pub enchantment_seed: AtomicI32,
     pub fishing_bobber: AtomicI32,
+    /// Riptide's spin.
+    pub auto_spin_attack: auto_spin_attack::AutoSpinAttack,
     pub bedrock_skin: arc_swap::ArcSwap<pumpkin_protocol::bedrock::client::Skin>,
     pub seen_credits: AtomicBool,
     ender_pearls: ender_pearls::EnderPearls,
@@ -1138,6 +1141,7 @@ impl Player {
             respawn_location: AtomicCell::new(None),
             hidden_players: Mutex::new(std::collections::HashSet::new()),
             fishing_bobber: AtomicI32::new(-1),
+            auto_spin_attack: auto_spin_attack::AutoSpinAttack::default(),
             bedrock_skin: ArcSwap::new(Arc::new(bedrock_skin)),
             seen_credits: AtomicBool::new(false),
             ender_pearls: ender_pearls::EnderPearls::default(),
@@ -1644,7 +1648,11 @@ impl Player {
         let config = &server.advanced_config.pvp;
 
         let inventory = self.inventory();
-        let item_stack = inventory.held_item();
+        // Vanilla `Player.getWeaponItem`: a spin attacks with the trident that started it.
+        let item_stack = self
+            .auto_spin_attack
+            .weapon()
+            .unwrap_or_else(|| inventory.held_item());
         if !item_stack.is_empty() {
             self.increment_stat(
                 statistics::StatisticCategory::Used,
@@ -1653,9 +1661,13 @@ impl Player {
             );
         }
 
-        let base_damage = self
-            .living_entity
-            .get_attribute_value(&Attributes::ATTACK_DAMAGE);
+        let base_damage = self.auto_spin_attack.damage().map_or_else(
+            || {
+                self.living_entity
+                    .get_attribute_value(&Attributes::ATTACK_DAMAGE)
+            },
+            f64::from,
+        );
         let base_attack_speed = 4.0;
 
         let mut damage_multiplier = 1.0;
@@ -2713,11 +2725,6 @@ impl Player {
         }
     }
 
-    const fn is_auto_spin_attack() -> bool {
-        // TODO: Track active auto-spin/riptide state and return true while it is active.
-        false
-    }
-
     fn can_fit_pose(&self, pose: EntityPose) -> bool {
         let entity = self.get_entity();
         let dimensions = entity.get_dimensions(pose);
@@ -2738,7 +2745,7 @@ impl Player {
             EntityPose::Swimming
         } else if entity.is_fall_flying() {
             EntityPose::FallFlying
-        } else if Self::is_auto_spin_attack() {
+        } else if self.auto_spin_attack.is_active() {
             EntityPose::SpinAttack
         } else if entity.is_sneaking() && !self.is_flying() {
             EntityPose::Crouching
@@ -3468,6 +3475,7 @@ impl Player {
         self.last_attacked_ticks.fetch_add(1, Ordering::Relaxed);
 
         self.living_entity.tick(self, server);
+        self.tick_auto_spin_attack();
         self.detect_armor_changes();
 
         self.breath_manager.tick(self);
@@ -5528,6 +5536,8 @@ impl Player {
 
     pub async fn respawn(self: &Arc<Self>) {
         self.world().respawn_player(self, false).await;
+        // Vanilla's respawn makes a new player, with no arrows stuck in it.
+        self.living_entity.set_arrow_count(0);
         // The client rebuilt its attribute state on respawn, so send the held
         // weapon modifiers again.
         crate::entity::attributes::send_attribute_updates_for_living(

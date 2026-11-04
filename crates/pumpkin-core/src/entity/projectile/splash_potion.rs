@@ -5,9 +5,9 @@ use std::sync::{Arc, RwLock};
 use crate::entity::living::EffectSource;
 use crate::entity::projectile::ProjectileHit;
 use crate::entity::projectile::thrown_item::{read_thrown_item, write_thrown_item};
+use crate::entity::projectile::hit_result::compute_margin;
 use crate::entity::projectile::thrown_potion::{
-    self, SPLASH_HEIGHT, SPLASH_RANGE, SPLASH_RANGE_SQ, box_distance_sqr, compute_margin,
-    living_in_box,
+    self, SPLASH_HEIGHT, SPLASH_RANGE, SPLASH_RANGE_SQ, box_distance_sqr, living_in_box,
 };
 use crate::item::potion::{PotionContents, PotionEffect};
 use crate::{

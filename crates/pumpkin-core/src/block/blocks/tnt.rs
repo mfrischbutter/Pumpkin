@@ -195,6 +195,7 @@ impl BlockBehaviour for TNTBlock {
         }
         let fuse = TNTEntity::random_short_fuse(TNTEntity::DEFAULT_FUSE);
         let tnt = TNTEntity::primed(args.world, args.position, fuse);
+        tnt.set_owner(args.indirect_source);
         args.world.spawn_entity(tnt);
     }
 

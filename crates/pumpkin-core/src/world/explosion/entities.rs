@@ -17,9 +17,8 @@ use crate::{
     world::World,
 };
 
-/// Vanilla `Explosion.getIndirectSourceEntity`: the living thing behind the explosion. Primed
-/// TNT has no owner here yet.
-fn indirect_source(source: Option<&Arc<dyn EntityBase>>) -> Option<Arc<dyn EntityBase>> {
+/// Vanilla `Explosion.getIndirectSourceEntity`: the living thing behind the explosion.
+pub(super) fn indirect_source(source: Option<&Arc<dyn EntityBase>>) -> Option<Arc<dyn EntityBase>> {
     let source = source?;
     if source.get_living_entity().is_some() {
         return Some(source.clone());

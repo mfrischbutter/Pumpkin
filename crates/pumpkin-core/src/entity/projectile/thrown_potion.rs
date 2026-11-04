@@ -39,13 +39,6 @@ pub(crate) fn living_in_box(world: &World, area: &BoundingBox) -> Vec<Arc<dyn En
         .collect()
 }
 
-/// Vanilla `ProjectileUtil.computeMargin`.
-#[must_use]
-pub fn compute_margin(projectile: &Entity) -> f64 {
-    let age = projectile.tick_count.load(Ordering::Relaxed) - 2;
-    f64::from((age as f32 / 20.0).clamp(0.0, 0.3))
-}
-
 /// Vanilla `AABB.distanceToSqr(AABB)`.
 #[must_use]
 pub fn box_distance_sqr(a: &BoundingBox, b: &BoundingBox) -> f64 {

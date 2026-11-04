@@ -24,6 +24,7 @@ pub mod fireball;
 pub mod firework_rocket;
 pub mod fishing_bobber;
 pub mod hurting;
+pub(crate) mod hit_result;
 pub mod lingering_potion;
 pub mod llama_spit;
 pub mod owner;
@@ -258,38 +259,34 @@ impl ThrownItemEntity {
         )
         .expand(0.3, 0.3, 0.3);
 
+        let normal = delta.normalize().multiply(-1.0, -1.0, -1.0);
         let mut closest_t = 1.0f64;
         let mut hit = None;
 
-        // Block collisions
-        let (block_cols, block_positions) = world.get_block_collisions(search_box, caller);
-        for (idx, bb) in block_cols.iter().enumerate() {
-            if let Some(t) = calculate_ray_intersection(&start_pos, &delta, bb)
-                && t < closest_t
-            {
-                closest_t = t;
-                // Map back to block pos
-                for (len, pos) in &block_positions {
-                    if idx < *len {
-                        let hit_pos = start_pos.add(&delta.multiply(t, t, t));
-                        hit = Some(ProjectileHit::Block {
-                            pos: *pos,
-                            face: get_hit_face(hit_pos, bb),
-                            hit_pos,
-                            normal: delta.normalize().multiply(-1.0, -1.0, -1.0),
-                        });
-                        break;
-                    }
-                }
-            }
+        // Block collisions: vanilla `ProjectileUtil.getHitResult` clips first and only looks
+        // for entities up to the block.
+        let block_hit = world.clip(&ClipContext::new(
+            start_pos,
+            new_pos,
+            ClipBlock::Collider,
+            ClipFluid::None,
+        ));
+        if !block_hit.is_miss {
+            hit = Some(ProjectileHit::Block {
+                pos: block_hit.block_pos,
+                face: block_hit.direction,
+                hit_pos: block_hit.location,
+                normal,
+            });
         }
+        let segment = block_hit.location.sub(&start_pos);
 
         // Entity collisions
         let candidates = world
             .get_all_at_box(&search_box)
             .into_iter()
             .flat_map(|entity| crate::entity::boss::ender_dragon::projectile_targets(&entity));
-        let margin = compute_margin(entity);
+        let margin = hit_result::compute_margin(entity);
         for cand in candidates {
             if self.should_skip_collision(&world, entity, &cand)
                 || !caller.projectile_can_hit(cand.as_ref())
@@ -306,15 +303,15 @@ impl ThrownItemEntity {
             if contains(&ebb, &start_pos) {
                 continue;
             }
-            if let Some(t) = calculate_ray_intersection(&start_pos, &delta, &ebb)
+            if let Some(t) = calculate_ray_intersection(&start_pos, &segment, &ebb)
                 && t < closest_t
             {
                 closest_t = t;
-                let hit_pos = start_pos.add(&delta.multiply(t, t, t));
+                let hit_pos = start_pos.add(&segment.multiply(t, t, t));
                 hit = Some(ProjectileHit::Entity {
                     entity: cand.clone(),
                     hit_pos,
-                    normal: delta.normalize().multiply(-1.0, -1.0, -1.0),
+                    normal,
                 });
             }
         }
@@ -328,6 +325,8 @@ impl ThrownItemEntity {
         if self.has_hit.load(Ordering::SeqCst) {
             return;
         }
+        // Vanilla `ThrowableProjectile.tick` moves only as far as the hit.
+        self.get_entity().set_pos(hit.hit_pos());
         if self.hit_target_or_deflect_self(caller, hit) {
             self.has_hit.store(true, Ordering::SeqCst);
             self.get_entity().remove();
@@ -489,36 +488,11 @@ fn calculate_ray_intersection(
     (t_min <= t_max && (0.0..=1.0).contains(&t_min)).then_some(t_min)
 }
 
-/// Vanilla `ProjectileUtil.computeMargin`: a young projectile hits only what it really touches.
-fn compute_margin(entity: &Entity) -> f64 {
-    let age = entity.tick_count.load(Ordering::Relaxed) - 2;
-    f64::from((age as f32 / 20.0).clamp(0.0, 0.3))
-}
-
 /// Vanilla `AABB.contains`.
 fn contains(bb: &BoundingBox, point: &Vector3<f64>) -> bool {
     (bb.min.x..bb.max.x).contains(&point.x)
         && (bb.min.y..bb.max.y).contains(&point.y)
         && (bb.min.z..bb.max.z).contains(&point.z)
-}
-
-/// Get the face of the collision box that was hit
-fn get_hit_face(hit_pos: Vector3<f64>, bb: &BoundingBox) -> BlockDirection {
-    let eps = 1.0e-4;
-
-    if hit_pos.x <= bb.min.x + eps {
-        BlockDirection::West
-    } else if hit_pos.x >= bb.max.x - eps {
-        BlockDirection::East
-    } else if hit_pos.y <= bb.min.y + eps {
-        BlockDirection::Down
-    } else if hit_pos.y >= bb.max.y - eps {
-        BlockDirection::Up
-    } else if hit_pos.z <= bb.min.z + eps {
-        BlockDirection::North
-    } else {
-        BlockDirection::South
-    }
 }
 
 pub enum ProjectileHit {

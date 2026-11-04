@@ -1,5 +1,4 @@
 use std::sync::Arc;
-use std::sync::atomic::Ordering;
 
 use crate::enchantment::EnchantmentHelper;
 use crate::entity::projectile::arrow::{ArrowEntity, ArrowPickup};
@@ -51,16 +50,10 @@ impl ProjectileWeaponItem {
         let arrow =
             ArrowEntity::new_shot_with_weapon(arrow_entity, shooter, projectile, weapon, pickup);
 
-        // Apply data-driven weapon enchantment modifications
-        arrow.set_base_damage(EnchantmentHelper::modify_damage(
-            weapon,
-            arrow.get_base_damage(),
-        ));
-        arrow.punch_level.store(
-            EnchantmentHelper::modify_knockback(weapon, 0.0) as u8,
-            Ordering::Relaxed,
-        );
-        arrow.set_pierce_level(EnchantmentHelper::process_projectile_piercing(weapon, 0));
+        // Vanilla `CrossbowItem.createProjectile`.
+        if weapon.item.id == Item::CROSSBOW.id {
+            arrow.set_sound_event(pumpkin_data::sound::Sound::ItemCrossbowHit);
+        }
 
         // Data-driven PROJECTILE_SPAWNED effects (e.g. Flame enchantment -> Ignite effect)
         arrow.apply_on_projectile_spawned(projectile);
@@ -192,6 +185,11 @@ impl ProjectileWeaponItem {
                     is_creative,
                 );
                 arrow.set_velocity_from_rotation(pitch, yaw + angle, 0.0, power, uncertainty);
+                // Vanilla `BowItem.shootProjectile` uses `shootFromRotation`, the crossbow
+                // `shoot`, which leaves out the shooter's movement.
+                if weapon.item.id != Item::CROSSBOW.id {
+                    arrow.add_shooter_movement(shooter);
+                }
                 let arrow_arc: Arc<dyn EntityBase> = Arc::new(arrow);
                 world.spawn_entity(arrow_arc);
             }

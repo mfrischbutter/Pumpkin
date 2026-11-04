@@ -58,6 +58,7 @@ impl ItemBehaviour for FireworkRocketItem {
             &EntityType::FIREWORK_ROCKET,
         );
         let entity = FireworkRocketEntity::new_with_stack(entity, item.copy_with_count(1));
+        entity.entity.owner.set(Some(player.get_entity()));
         world.spawn_entity(Arc::new(entity));
         item.decrement_unless_creative(player.gamemode.load(), 1);
         BlockActionResult::Success

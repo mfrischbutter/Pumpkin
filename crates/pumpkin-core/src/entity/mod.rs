@@ -509,11 +509,6 @@ pub trait EntityBase: Send + Sync + std::any::Any {
         self.get_entity().blocks_building
     }
 
-    /// Vanilla `LivingEntity.isAffectedByPotions`.
-    fn is_affected_by_potions(&self) -> bool {
-        true
-    }
-
     fn get_gravity(&self) -> f64 {
         0.0
     }
