@@ -1,4 +1,4 @@
-use pumpkin_data::{Block, BlockState};
+use pumpkin_data::{Block, BlockDirection, BlockId, BlockState, Property};
 use pumpkin_util::{
     DoublePerlinNoiseParametersCodec,
     math::{
@@ -21,7 +21,8 @@ pub enum BlockStateProvider {
     NoiseThreshold(NoiseThresholdBlockStateProvider),
     NoiseProvider(NoiseBlockStateProvider),
     DualNoise(DualNoiseBlockStateProvider),
-    Pillar(PillarBlockStateProvider),
+    Rotated(RotatedBlockStateProvider),
+    RandomBlock(RandomBlockStateProvider),
     RandomizedInt(RandomizedIntBlockStateProvider),
     Rule(RuleBasedBlockStateProvider),
 }
@@ -38,7 +39,8 @@ impl BlockStateProvider {
             Self::Simple(provider) => Some(provider.get(pos)),
             Self::Weighted(provider) => Some(provider.get(random)),
             Self::DualNoise(provider) => Some(provider.get(pos)),
-            Self::Pillar(provider) => Some(provider.get_with_random(random, pos)),
+            Self::Rotated(provider) => provider.get_for_bonemeal(random, pos),
+            Self::RandomBlock(provider) => provider.get(random),
             Self::RandomizedInt(provider) => provider.get_for_bonemeal(random, pos),
             Self::Rule(_) => None,
         }
@@ -56,7 +58,10 @@ impl BlockStateProvider {
             Self::NoiseThreshold(provider) => provider.get(random, pos),
             Self::NoiseProvider(provider) => provider.get(pos),
             Self::DualNoise(provider) => provider.get(pos),
-            Self::Pillar(provider) => provider.get_with_random(random, pos),
+            Self::Rotated(provider) => provider.get_state_for_world(world, random, pos),
+            Self::RandomBlock(provider) => provider
+                .get(random)
+                .unwrap_or_else(|| world.get_block_state(&pos)),
             Self::RandomizedInt(provider) => provider.get_state_for_world(world, random, pos),
             Self::Rule(provider) => {
                 for rule in &provider.rules {
@@ -85,7 +90,10 @@ impl BlockStateProvider {
             Self::Simple(provider) => provider.get(pos),
             Self::Weighted(provider) => provider.get(random),
             Self::DualNoise(provider) => provider.get(pos),
-            Self::Pillar(provider) => provider.get_with_random(random, pos),
+            Self::Rotated(provider) => provider.get(random, pos, chunk, block_registry),
+            Self::RandomBlock(provider) => provider
+                .get(random)
+                .unwrap_or_else(|| GenerationCache::get_block_state(chunk, &pos.0).to_state()),
             Self::RandomizedInt(provider) => provider.get(random, pos, chunk, block_registry),
             Self::Rule(provider) => provider.get(block_registry, chunk, random, pos),
         }
@@ -113,6 +121,7 @@ impl BlockStateProvider {
     ) -> Option<&'static BlockState> {
         match self {
             Self::Rule(provider) => provider.get_optional(block_registry, chunk, random, pos),
+            Self::RandomBlock(provider) => provider.get(random),
             _ => Some(self.get(random, pos, chunk, block_registry)),
         }
     }
@@ -223,55 +232,91 @@ impl RandomizedIntBlockStateProvider {
     }
 }
 
-pub struct PillarBlockStateProvider {
-    pub state: &'static BlockState,
+pub struct RotatedBlockStateProvider {
+    pub state: Box<BlockStateProvider>,
+    pub direction: Option<BlockDirection>,
 }
 
-impl PillarBlockStateProvider {
-    #[must_use]
-    pub const fn get(&self, _pos: BlockPos) -> &'static BlockState {
-        self.state
+impl RotatedBlockStateProvider {
+    /// Returns the given direction or a random one, drawn before the inner provider like vanilla.
+    fn direction(&self, random: &mut RandomGenerator) -> BlockDirection {
+        self.direction
+            .unwrap_or_else(|| BlockDirection::random(random))
     }
 
-    #[must_use]
-    pub fn get_with_random(
+    /// Sets the axis and the facing like vanilla's `trySetValue` calls.
+    fn rotate(state: &'static BlockState, direction: BlockDirection) -> &'static BlockState {
+        let block = Block::from_id(state.id.to_block_id());
+        let Some(properties) = block.properties(state.id) else {
+            return state;
+        };
+        let mut props = properties.to_props();
+        if !props
+            .iter()
+            .any(|p| matches!(p, Property::Axis(_) | Property::Facing(_)))
+        {
+            return state;
+        }
+        // `from_props` applies the entries in order and skips a value the block's property does
+        // not have, so a horizontal facing keeps its value for up and down.
+        props.extend([
+            Property::Axis(direction.to_axis()),
+            Property::Facing(direction.to_facing()),
+        ]);
+        BlockState::from_id(block.from_properties(&props).to_state_id(block))
+    }
+
+    pub fn get_for_bonemeal(
         &self,
         random: &mut RandomGenerator,
-        _pos: BlockPos,
-    ) -> &'static BlockState {
-        use pumpkin_data::block_properties::{Axis, Facing};
-        let (axis, facing) = match random.next_bounded_i32(6) {
-            0 => (Axis::Y, Facing::Down),
-            1 => (Axis::Y, Facing::Up),
-            2 => (Axis::Z, Facing::North),
-            3 => (Axis::Z, Facing::South),
-            4 => (Axis::X, Facing::West),
-            _ => (Axis::X, Facing::East),
-        };
-        let block = Block::from_id(self.state.id.to_block_id());
-        if let Some(props_source) = block.properties(self.state.id) {
-            let mut prop_list = props_source.to_props();
-            let mut modified = false;
-            for p in &mut prop_list {
-                match p {
-                    pumpkin_data::Property::Axis(a) => {
-                        *a = axis;
-                        modified = true;
-                    }
-                    pumpkin_data::Property::Facing(f) => {
-                        *f = facing;
-                        modified = true;
-                    }
-                    _ => {}
-                }
-            }
-            if modified {
-                let new_props_obj = block.from_properties(prop_list.as_slice());
-                let new_state_id = new_props_obj.to_state_id(block);
-                return BlockState::from_id(new_state_id);
-            }
-        }
+        pos: BlockPos,
+    ) -> Option<&'static BlockState> {
+        let direction = self.direction(random);
         self.state
+            .get_for_bonemeal(random, pos)
+            .map(|state| Self::rotate(state, direction))
+    }
+
+    pub fn get_state_for_world(
+        &self,
+        world: &dyn BlockAccessor,
+        random: &mut RandomGenerator,
+        pos: BlockPos,
+    ) -> &'static BlockState {
+        let direction = self.direction(random);
+        let state = self.state.get_state_for_world(world, random, pos);
+        Self::rotate(state, direction)
+    }
+
+    pub fn get<T: GenerationCache>(
+        &self,
+        random: &mut RandomGenerator,
+        pos: BlockPos,
+        chunk: &T,
+        block_registry: &dyn WorldPortalExt,
+    ) -> &'static BlockState {
+        let direction = self.direction(random);
+        let state = self.state.get(random, pos, chunk, block_registry);
+        Self::rotate(state, direction)
+    }
+}
+
+pub struct RandomBlockStateProvider {
+    pub blocks: &'static [u16],
+}
+
+impl RandomBlockStateProvider {
+    /// Picks a block's default state like vanilla's `HolderSet.getRandomElement`, which draws
+    /// nothing from an empty set.
+    pub fn get(&self, random: &mut RandomGenerator) -> Option<&'static BlockState> {
+        if self.blocks.is_empty() {
+            return None;
+        }
+        let index = random.next_bounded_i32(self.blocks.len() as i32) as usize;
+        self.blocks
+            .get(index)
+            .and_then(|&id| BlockId::new(id))
+            .map(|id| id.to_block().default_state)
     }
 }
 

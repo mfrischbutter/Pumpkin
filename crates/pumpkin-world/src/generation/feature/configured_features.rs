@@ -558,9 +558,18 @@ include!("../../../../pumpkin-data/src/generated/configured_features_generated.r
 #[cfg(test)]
 mod tests {
     use super::{BONE_MEAL_FEATURES, CONFIGURED_FEATURES, ConfiguredFeature};
+    use crate::generation::feature::placed_features::{
+        Feature, PlacedFeature, PlacedFeatureWrapper,
+    };
+    use pumpkin_data::{
+        Block,
+        block_properties::{
+            Axis, BrainCoralWallFanProperties, HayBlockProperties, HorizontalFacing,
+        },
+    };
     use pumpkin_util::{
         math::position::BlockPos,
-        random::{RandomGenerator, xoroshiro128::Xoroshiro},
+        random::{RandomGenerator, legacy_rand::LegacyRand, xoroshiro128::Xoroshiro},
     };
 
     #[test]
@@ -591,5 +600,72 @@ mod tests {
         assert_eq!(values.len(), 8);
         assert!(values.contains(&"flower_default"));
         assert!(values.contains(&"wildflower"));
+    }
+
+    /// `coral/block_decoration` turns a fan from `#minecraft:wall_corals`, drawn with `nextInt(5)`
+    /// in tag order, to the side it grows on: `java.util.Random(12345)` draws 1, brain coral.
+    #[test]
+    fn coral_decoration_turns_wall_coral_fans() {
+        let Some(ConfiguredFeature::Overlay(decoration)) = CONFIGURED_FEATURES
+            .get(&pumpkin_data::configured_feature::ConfiguredFeature::CoralBlockDecoration)
+        else {
+            panic!("coral/block_decoration must be an overlay");
+        };
+        let fans: Vec<_> = decoration.features[1..]
+            .iter()
+            .map(|wrapper| {
+                let PlacedFeatureWrapper::Direct(PlacedFeature {
+                    feature: Feature::Inlined(feature),
+                    ..
+                }) = wrapper
+                else {
+                    panic!("the wall coral fans must be inlined");
+                };
+                let ConfiguredFeature::SimpleBlock(fan) = feature.as_ref() else {
+                    panic!("the wall coral fans must be simple blocks");
+                };
+                let mut random = RandomGenerator::Legacy(LegacyRand::from_seed(12345));
+                fan.to_place
+                    .get_for_bonemeal(&mut random, BlockPos::new(0, 64, 0))
+                    .map(|state| state.id)
+            })
+            .collect();
+        let expected = [
+            HorizontalFacing::North,
+            HorizontalFacing::East,
+            HorizontalFacing::South,
+            HorizontalFacing::West,
+        ]
+        .map(|facing| {
+            let mut fan = BrainCoralWallFanProperties::default(&Block::BRAIN_CORAL_WALL_FAN);
+            fan.facing = facing;
+            Some(fan.to_state_id(&Block::BRAIN_CORAL_WALL_FAN))
+        });
+        assert_eq!(fans, expected);
+    }
+
+    /// `pile_hay` turns every bale with one `nextInt(6)` over DOWN, UP, NORTH, SOUTH, WEST, EAST:
+    /// `java.util.Random(12345)` draws UP, WEST, SOUTH.
+    #[test]
+    fn hay_pile_turns_every_bale() {
+        let Some(ConfiguredFeature::BlockPile(pile)) =
+            CONFIGURED_FEATURES.get(&pumpkin_data::configured_feature::ConfiguredFeature::PileHay)
+        else {
+            panic!("pile_hay must be a block pile");
+        };
+        let mut random = RandomGenerator::Legacy(LegacyRand::from_seed(12345));
+        let bales: Vec<_> = (0..3)
+            .map(|_| {
+                pile.state_provider
+                    .get_for_bonemeal(&mut random, BlockPos::new(0, 64, 0))
+                    .map(|state| state.id)
+            })
+            .collect();
+        let expected = [Axis::Y, Axis::X, Axis::Z].map(|axis| {
+            let mut bale = HayBlockProperties::default(&Block::HAY_BLOCK);
+            bale.axis = axis;
+            Some(bale.to_state_id(&Block::HAY_BLOCK))
+        });
+        assert_eq!(bales, expected);
     }
 }

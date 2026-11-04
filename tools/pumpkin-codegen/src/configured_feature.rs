@@ -135,9 +135,9 @@ pub fn build() -> TokenStream {
             use crate::generation::block_state_provider::{
                 BlockStateProvider, BlockStateRule, DualNoiseBlockStateProvider,
                 NoiseBlockStateProvider, NoiseBlockStateProviderBase,
-                NoiseThresholdBlockStateProvider, PillarBlockStateProvider,
-                RandomizedIntBlockStateProvider, RuleBasedBlockStateProvider, SimpleStateProvider,
-                WeightedBlockStateProvider,
+                NoiseThresholdBlockStateProvider, RandomBlockStateProvider,
+                RandomizedIntBlockStateProvider, RotatedBlockStateProvider,
+                RuleBasedBlockStateProvider, SimpleStateProvider, WeightedBlockStateProvider,
             };
             use pumpkin_util::math::pool::Weighted;
             use pumpkin_util::DoublePerlinNoiseParametersCodec;
@@ -1359,8 +1359,27 @@ fn value_to_block_state_provider(v: &Value) -> TokenStream {
             }
         }
         "minecraft:rotated_block_provider" | "minecraft:rotated" => {
-            let state = value_to_block_state(&v["state"]);
-            quote! { BlockStateProvider::Pillar(PillarBlockStateProvider { state: #state }) }
+            let state = value_to_block_state_provider(&v["state"]);
+            let direction = if let Some(direction) = v["direction"].as_str() {
+                let direction = value_to_block_direction(direction);
+                quote! { Some(#direction) }
+            } else {
+                quote! { None }
+            };
+            quote! {
+                BlockStateProvider::Rotated(RotatedBlockStateProvider {
+                    state: Box::new(#state),
+                    direction: #direction,
+                })
+            }
+        }
+        "minecraft:random_block" => {
+            let blocks = value_to_block_list(&v["blocks"]);
+            quote! {
+                BlockStateProvider::RandomBlock(RandomBlockStateProvider {
+                    blocks: const { #blocks },
+                })
+            }
         }
         "minecraft:noise_provider" | "minecraft:noise" => {
             let base = value_to_noise_base(v);
@@ -1696,13 +1715,12 @@ fn value_to_block_list(v: &Value) -> TokenStream {
         return quote! { &pumpkin_data::tag::Block::#ident.1 };
     }
     let mut blocks = Vec::new();
-    if let Some(arr) = v.as_array() {
-        for b in arr {
-            if let Some(s) = b.as_str() {
-                let name = s.strip_prefix("minecraft:").unwrap_or(s).to_uppercase();
-                let ident = syn::Ident::new(&name, proc_macro2::Span::call_site());
-                blocks.push(quote! { pumpkin_data::BlockId::#ident.as_u16() });
-            }
+    // Besides a tag, a block holder set is a list or a single block.
+    for b in v.as_array().map_or(std::slice::from_ref(v), Vec::as_slice) {
+        if let Some(s) = b.as_str() {
+            let name = s.strip_prefix("minecraft:").unwrap_or(s).to_uppercase();
+            let ident = syn::Ident::new(&name, proc_macro2::Span::call_site());
+            blocks.push(quote! { pumpkin_data::BlockId::#ident.as_u16() });
         }
     }
     quote! { &[#(#blocks),*] }
