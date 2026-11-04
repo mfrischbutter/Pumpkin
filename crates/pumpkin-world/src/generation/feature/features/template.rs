@@ -1,9 +1,7 @@
 use std::sync::Arc;
 
-use pumpkin_data::{BlockState, BlockStateId, Mirror, Rotation, fluid::Fluid};
-use pumpkin_nbt::compound::NbtCompound;
+use pumpkin_data::Rotation;
 use pumpkin_util::{
-    HeightMap,
     math::{
         pool::{Pool, Weighted},
         position::BlockPos,
@@ -15,7 +13,7 @@ use pumpkin_util::{
 use crate::generation::{
     proto_chunk::GenerationCache,
     structure::template::{
-        BlockPlacer, StructureProcessor, TemplatePlacement, get_template,
+        RegionPlacer, StructurePlaceSettings, StructureProcessor, TemplatePlacement, get_template,
         place_template_with_options,
     },
 };
@@ -52,80 +50,37 @@ impl TemplateFeature {
         let Some(template) = get_template(entry.template) else {
             return false;
         };
-
-        // `StructureTemplate.placeInWorld` draws the palette from the feature's random; the
-        // templates of template features have one palette, the one placed below.
-        if template.palettes().is_empty() {
-            return false;
-        }
-        random.next_bounded_i32(template.palettes().len() as i32);
-        let size = template.size;
-        if (template.blocks.is_empty() && template.entities.is_empty())
-            || size.x < 1
-            || size.y < 1
-            || size.z < 1
-        {
+        if template.palettes.is_empty() {
             return false;
         }
 
-        let (offset_x, offset_z) = rotation.rotate_offset(-(size.x / 2), -(size.z / 2));
+        let (offset_x, offset_z) =
+            rotation.rotate_offset(-(template.size.x / 2), -(template.size.z / 2));
         let position = Vector3::new(origin.0.x + offset_x, origin.0.y, origin.0.z + offset_z);
-        // Vanilla turns the template around `position`, the placement below lays the turned
-        // template out from its lowest corner.
-        let corner = template
-            .get_bounding_box_with_pivot(position, rotation, Vector3::new(0, 0, 0), Mirror::None)
-            .min;
-        // Without a bounding box the template reaches into the whole generation region. Vanilla
-        // would also place its entities; no template of a template feature has any.
+        // Vanilla places with `setRandom(random)`, so the palette comes from the feature's random.
+        // Its processors are rule processors, which seed from the block's position in vanilla too.
+        let palette_index = random.next_bounded_i32(template.palettes.len() as i32) as usize;
+        let settings = StructurePlaceSettings {
+            rotation,
+            apply_waterlogging: true,
+            processors: self.processors.clone(),
+            palette_index: Some(palette_index),
+            ..StructurePlaceSettings::default()
+        };
+        // Without a bounding box the template reaches into the whole generation region.
         place_template_with_options(
             &mut RegionPlacer(chunk),
             &template,
-            corner,
-            (0, 0),
-            rotation,
-            false,
-            true,
-            &self.processors,
-            None,
-            true,
+            position,
+            &settings,
             random,
             TemplatePlacement {
-                position,
+                reference: position,
                 level_seed: block_registry.feature_seed() as i64,
+                skip_air: false,
+                keep_jigsaws: true,
             },
-        );
-        // Vanilla then updates the shapes of the placed blocks and their neighbours
-        // (`knownShape` is false), which the shared placement does not do.
-        true
-    }
-}
-
-/// The generation region as a template sees it while a feature places one, like vanilla's
-/// `WorldGenRegion`: blocks set with their post-processing marks and block entities.
-struct RegionPlacer<'a, T>(&'a mut T);
-
-impl<T: GenerationCache> BlockPlacer for RegionPlacer<'_, T> {
-    fn get_block_state(&self, pos: &Vector3<i32>) -> BlockStateId {
-        GenerationCache::get_block_state(self.0, pos)
-    }
-
-    fn set_block_state(&mut self, pos: &Vector3<i32>, state: &BlockState) {
-        GenerationCache::set_block_state(self.0, pos, state);
-    }
-
-    fn add_block_entity(&mut self, nbt: NbtCompound) {
-        if let (Some(x), Some(y), Some(z)) = (nbt.get_int("x"), nbt.get_int("y"), nbt.get_int("z"))
-        {
-            GenerationCache::add_block_entity(self.0, &Vector3::new(x, y, z), nbt);
-        }
-    }
-
-    fn get_height(&self, heightmap: HeightMap, x: i32, z: i32) -> Option<i32> {
-        Some(self.0.get_top_y(&heightmap, x, z))
-    }
-
-    fn schedule_fluid_tick(&mut self, pos: &Vector3<i32>, fluid: &'static Fluid, delay: u8) {
-        self.0.schedule_fluid_tick_at(pos, fluid, delay);
+        )
     }
 }
 
@@ -133,6 +88,8 @@ impl<T: GenerationCache> BlockPlacer for RegionPlacer<'_, T> {
 mod tests {
     use pumpkin_data::configured_feature::ConfiguredFeature as FeatureKey;
     use pumpkin_util::random::legacy_rand::LegacyRand;
+
+    use pumpkin_data::Mirror;
 
     use super::*;
     use crate::generation::feature::configured_features::{CONFIGURED_FEATURES, ConfiguredFeature};
