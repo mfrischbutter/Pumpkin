@@ -6,7 +6,7 @@ use pumpkin_util::{
 
 use crate::generation::{
     block_predicate::BlockPredicate, block_state_provider::BlockStateProvider,
-    proto_chunk::GenerationCache,
+    feature::features::freeze_top_layer::block_light_at, proto_chunk::GenerationCache,
 };
 use crate::world::WorldPortalExt;
 
@@ -163,17 +163,7 @@ impl LakeFeature {
             for xx in 0..16 {
                 for zz in 0..16 {
                     let freeze_pos = origin.add(xx, 4, zz);
-                    let biome = chunk.get_biome_for_terrain_gen(
-                        freeze_pos.0.x,
-                        freeze_pos.0.y,
-                        freeze_pos.0.z,
-                    );
-                    if biome.weather.compute_temperature(
-                        freeze_pos.0.x as f64,
-                        freeze_pos.0.y,
-                        freeze_pos.0.z as f64,
-                        63,
-                    ) < 0.15
+                    if should_freeze(chunk, &freeze_pos)
                         && self.can_replace_with_air_or_fluid.test(
                             block_registry,
                             chunk,
@@ -190,15 +180,29 @@ impl LakeFeature {
     }
 }
 
+/// Vanilla's `Biome.shouldFreeze` without the neighbour check: a water source in the dark, where
+/// the biome is too cold for rain.
+fn should_freeze<T: GenerationCache>(chunk: &T, pos: &BlockPos) -> bool {
+    let (x, y, z) = (pos.0.x, pos.0.y, pos.0.z);
+    !chunk
+        .get_biome_for_terrain_gen(x, y, z)
+        .weather
+        .warm_enough_to_rain(x, y, z, chunk.get_sea_level())
+        && !chunk.out_of_height(y as i16)
+        && block_light_at(chunk, x, y, z) < 10
+        && GenerationCache::get_block_state(chunk, &pos.0) == Block::WATER.default_state.id
+}
+
 #[cfg(test)]
 mod tests {
+    use pumpkin_data::chunk::Biome;
     use pumpkin_data::configured_feature::ConfiguredFeature as FeatureKey;
     use pumpkin_data::{BlockId, BlockState};
     use pumpkin_util::math::vector3::Vector3;
     use pumpkin_util::random::legacy_rand::LegacyRand;
 
     use super::*;
-    use crate::chunk_system::Cache;
+    use crate::chunk_system::{Cache, Chunk};
     use crate::generation::feature::configured_features::{CONFIGURED_FEATURES, ConfiguredFeature};
     use crate::generation::feature::features::sculk::test_utils::{empty_region, set};
     use crate::generation::feature::placed_features::Feature;
@@ -264,5 +268,32 @@ mod tests {
 
         assert!(!lake.generate(&TestBlockRegistry, &mut level, &mut random, ORIGIN));
         assert_eq!(count(&level, BlockId::WATER), 0);
+    }
+
+    #[test]
+    fn water_lakes_freeze_only_water_sources() {
+        // In a cold biome the layer above the water freezes where it holds a water source: the
+        // corner, which never borders the lake, and not the stone or the air of the lake.
+        let lake = sulfur_pool_lake();
+        assert!(lake.is_some(), "the sulfur pool starts with a lake");
+        let Some(lake) = lake else {
+            return;
+        };
+        let mut level = region_of(Block::STONE.default_state);
+        for chunk in &mut level.chunks {
+            if let Chunk::Proto(chunk) = chunk {
+                chunk.flat_biome_map.fill(Biome::SNOWY_PLAINS.id);
+            }
+        }
+        let corner = BlockPos::new(16, 64, 16);
+        set(&mut level, corner, Block::WATER.default_state);
+        let mut random = RandomGenerator::Legacy(LegacyRand::from_seed(1));
+
+        assert!(lake.generate(&TestBlockRegistry, &mut level, &mut random, ORIGIN));
+        assert_eq!(
+            GenerationCache::get_block_state(&level, &corner.0).to_block_id(),
+            BlockId::ICE
+        );
+        assert_eq!(count(&level, BlockId::ICE), 1);
     }
 }

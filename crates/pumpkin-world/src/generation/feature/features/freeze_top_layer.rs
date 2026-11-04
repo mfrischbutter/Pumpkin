@@ -125,7 +125,7 @@ fn is_full_snow_layer(state: BlockStateId) -> bool {
 
 /// Block light at a world position during generation. Sections without
 /// computed light read as 0, matching vanilla worldgen behavior.
-fn block_light_at<T: GenerationCache>(chunk: &T, x: i32, y: i32, z: i32) -> u8 {
+pub(crate) fn block_light_at<T: GenerationCache>(chunk: &T, x: i32, y: i32, z: i32) -> u8 {
     let Some(proto) = chunk.get_chunk(x >> 4, z >> 4) else {
         return 0;
     };
