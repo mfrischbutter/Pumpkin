@@ -704,3 +704,76 @@ impl Behavior for ArmadilloBallUp {
         "ArmadilloBallUp"
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::entity::ai::test_support::world;
+    use crate::world::World;
+    use pumpkin_util::math::vector3::Vector3;
+
+    fn armadillo(world: &Arc<World>, scute_time: i32) -> Arc<ArmadilloEntity> {
+        let armadillo = ArmadilloEntity::new(Entity::new(
+            world.clone(),
+            Vector3::new(0.0, 64.0, 0.0),
+            &EntityType::ARMADILLO,
+        ));
+        armadillo.scute_time.store(scute_time, Ordering::Relaxed);
+        armadillo
+    }
+
+    fn dropped_items(world: &World) -> Vec<(&'static Item, u8)> {
+        world
+            .entities
+            .load()
+            .iter()
+            .filter_map(|entity| entity.cast_any().downcast_ref::<ItemEntity>())
+            .map(|item| {
+                let stack = item
+                    .get_item_stack()
+                    .lock()
+                    .unwrap_or_else(std::sync::PoisonError::into_inner);
+                (stack.item, stack.item_count)
+            })
+            .collect()
+    }
+
+    /// Vanilla counts `scuteTime` down for babies too, so an armadillo that grows up with the
+    /// timer run out sheds right away.
+    #[tokio::test]
+    async fn a_baby_keeps_counting_and_sheds_once_grown() -> Result<(), Box<dyn std::error::Error>>
+    {
+        let folder = tempfile::tempdir()?;
+        let world = world(&folder);
+        let armadillo = armadillo(&world, 1);
+        armadillo.get_entity().age.store(-100, Ordering::Relaxed);
+
+        armadillo.custom_server_ai_step(armadillo.as_ref());
+        assert_eq!(armadillo.scute_time.load(Ordering::Relaxed), 0);
+        assert!(dropped_items(&world).is_empty());
+
+        armadillo.get_entity().age.store(0, Ordering::Relaxed);
+        armadillo.custom_server_ai_step(armadillo.as_ref());
+        assert_eq!(dropped_items(&world), [(&Item::ARMADILLO_SCUTE, 1)]);
+        assert!(armadillo.scute_time.load(Ordering::Relaxed) >= 6000);
+        Ok(())
+    }
+
+    /// With `mob_drops` off nothing is shed and the timer is not picked anew, as in vanilla's
+    /// `--scuteTime <= 0 && shouldDropLoot`.
+    #[tokio::test]
+    async fn mob_drops_off_holds_the_scute_back() -> Result<(), Box<dyn std::error::Error>> {
+        let folder = tempfile::tempdir()?;
+        let world = world(&folder);
+        let mut level_info = (**world.level_info.load()).clone();
+        level_info.game_rules.mob_drops = false;
+        world.level_info.store(Arc::new(level_info));
+        let armadillo = armadillo(&world, 1);
+
+        armadillo.custom_server_ai_step(armadillo.as_ref());
+
+        assert!(dropped_items(&world).is_empty());
+        assert_eq!(armadillo.scute_time.load(Ordering::Relaxed), 0);
+        Ok(())
+    }
+}
