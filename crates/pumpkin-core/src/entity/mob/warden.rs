@@ -677,7 +677,7 @@ mod tests {
         assert!((entity.height() - 2.9).abs() < 1.0e-4);
 
         warden.emerge();
-        assert!(entity.pose.load() == EntityPose::Emerging);
+        assert_eq!(entity.pose.load(), EntityPose::Emerging);
         assert!(warden.mob_entity.with_brain(&*warden, |brain| {
             brain.has_memory_value(types::IS_EMERGING.id())
         }));

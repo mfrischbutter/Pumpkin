@@ -52,7 +52,10 @@ fn is_legacy_iron_golem_excluded(block: &Block) -> bool {
         || block.id == Block::CACTUS.id
         || block.id == Block::GLASS_PANE.id
         || is_stained_glass_pane(block)
-        || block.has_tag(&pumpkin_data::tag::Block::MINECRAFT_IMPERMEABLE)
+        // The impermeable tag holds the glass, tinted glass and stained glass vanilla lists, and
+        // the barrier it does not.
+        || (block.has_tag(&pumpkin_data::tag::Block::MINECRAFT_IMPERMEABLE)
+            && block.id != Block::BARRIER.id)
         || block.has_tag(&pumpkin_data::tag::Block::MINECRAFT_LEAVES)
         || block.id == Block::CONDUIT.id
         || block.id == Block::ICE.id

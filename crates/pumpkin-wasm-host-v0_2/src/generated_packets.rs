@@ -134,6 +134,20 @@ pub fn serialize_java_packet(
                 .unwrap();
             Some(buf.into())
         }
+        ClientboundPacket::CAddTransientBlock(data) => {
+            let p = pumpkin_protocol::java::client::play::CAddTransientBlock {
+                location: pumpkin_util::math::position::BlockPos::new(
+                    data.location.0,
+                    data.location.1,
+                    data.location.2,
+                ),
+                state_id: VarInt(data.state_id),
+            };
+            let mut buf = Vec::new();
+            pumpkin_core::net::java::JavaClient::write_packet_for_version(&p, version, &mut buf)
+                .unwrap();
+            Some(buf.into())
+        }
         ClientboundPacket::CSetBlockDestroyStage(data) => {
             let p = pumpkin_protocol::java::client::play::CSetBlockDestroyStage {
                 entity_id: VarInt(data.entity_id),
@@ -1855,6 +1869,17 @@ impl ToWitClientboundJava for pumpkin_protocol::java::client::play::CActionBar<'
     }
 }
 
+impl ToWitClientboundJava for pumpkin_protocol::java::client::play::CAddTransientBlock {
+    fn to_wit(&self) -> ClientboundPacket {
+        ClientboundPacket::CAddTransientBlock(
+            crate::pumpkin::plugin::java_packets::CAddTransientBlock {
+                location: (self.location.0.x, self.location.0.y, self.location.0.z),
+                state_id: self.state_id.0.try_into().unwrap(),
+            },
+        )
+    }
+}
+
 impl ToWitClientboundJava for pumpkin_protocol::java::client::play::CSetBlockDestroyStage {
     fn to_wit(&self) -> ClientboundPacket {
         ClientboundPacket::CSetBlockDestroyStage(
@@ -2770,6 +2795,10 @@ pub fn clientbound_java_any_to_wit(any: &dyn Any) -> Option<ClientboundPacket> {
         return Some(p.to_wit());
     }
     if let Some(p) = any.downcast_ref::<pumpkin_protocol::java::client::play::CActionBar>() {
+        return Some(p.to_wit());
+    }
+    if let Some(p) = any.downcast_ref::<pumpkin_protocol::java::client::play::CAddTransientBlock>()
+    {
         return Some(p.to_wit());
     }
     if let Some(p) =

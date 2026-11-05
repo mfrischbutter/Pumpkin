@@ -8,6 +8,7 @@ use super::super::BrainTick;
 use super::super::memory::{MemoryModuleId, types};
 use super::Sensor;
 use crate::entity::EntityBase;
+use crate::entity::ai::target_predicate::TargetPredicate;
 use crate::entity::player::Player;
 
 const REQUIRES: [MemoryModuleId; 1] = [types::TEMPTING_PLAYER.id()];
@@ -60,20 +61,17 @@ impl Sensor for FrogTemptingSensor {
     }
 }
 
+/// Vanilla `TemptingSensor.doTick` with its `TEMPT_TARGETING`: not for combat, no line of
+/// sight needed, the tempt range scaled by the player's visibility.
 fn set_tempting_player(tick: &mut BrainTick<'_>, is_food: impl Fn(&ItemStack) -> bool) {
-    let living = &tick.mob.get_mob_entity().living_entity;
-    let entity = &living.entity;
-    let position = entity.pos.load();
-    let range = living.get_attribute_value(&Attributes::TEMPT_RANGE);
+    let mob = tick.mob;
+    let living = &mob.get_mob_entity().living_entity;
+    let targeting = TargetPredicate::create_non_attackable()
+        .ignore_visibility()
+        .set_base_max_distance(living.get_attribute_value(&Attributes::TEMPT_RANGE));
+    let position = living.entity.pos.load();
     let distance =
         |player: &Arc<Player>| position.squared_distance_to_vec(&player.get_entity().pos.load());
-    let riders: Vec<i32> = entity
-        .passengers
-        .lock()
-        .unwrap_or_else(std::sync::PoisonError::into_inner)
-        .iter()
-        .map(|passenger| passenger.get_entity().entity_id)
-        .collect();
     let holding = |player: &Arc<Player>| {
         [pumpkin_util::Hand::Right, pumpkin_util::Hand::Left]
             .into_iter()
@@ -86,10 +84,9 @@ fn set_tempting_player(tick: &mut BrainTick<'_>, is_food: impl Fn(&ItemStack) ->
         .iter()
         .filter(|player| {
             !player.is_spectator()
-                && player.get_entity().is_alive()
-                && distance(player) <= range * range
-                && !riders.contains(&player.entity_id())
+                && targeting.test(tick.world, Some(mob), player.as_ref())
                 && holding(player)
+                && !mob.has_passenger(player.as_ref())
         })
         .min_by(|a, b| distance(a).total_cmp(&distance(b)))
         .cloned();

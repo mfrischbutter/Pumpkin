@@ -524,7 +524,9 @@ impl HomeBatch {
             Occupancy::Any,
         );
         pois.retain(|(pos, _)| !self.cache.contains_key(pos));
-        let exhausted = pois.len() >= Self::BATCH_SIZE;
+        // Vanilla's `triedCount` counts every untried bed; the batch takes the first four,
+        // and the cache only clears while fewer than five were seen.
+        let exhausted = pois.len() > Self::BATCH_SIZE;
         pois.truncate(Self::BATCH_SIZE);
         for (pos, _) in &pois {
             self.cache.insert(*pos, last_update + Self::CACHE_TIMEOUT);

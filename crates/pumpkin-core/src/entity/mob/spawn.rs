@@ -4,7 +4,7 @@ use std::sync::Arc;
 
 use pumpkin_data::attributes::Attributes;
 use pumpkin_data::effect::StatusEffect;
-use pumpkin_data::entity_variant::RabbitVariant;
+use pumpkin_data::entity_variant::{HorseVariant, RabbitVariant};
 use rand::RngExt;
 
 use crate::entity::EntityBase;
@@ -93,6 +93,11 @@ pub enum SpawnGroupData {
     },
     /// The effect the first spider of a group rolled on hard difficulty.
     SpiderEffects(Option<&'static StatusEffect>),
+    /// Vanilla `HorseGroupData`: the coat color the group shares and how many joined so far.
+    Horse {
+        color: HorseVariant,
+        group_size: u32,
+    },
     /// Vanilla `FoxGroupData`: the group's variant and how many joined so far.
     Fox {
         variant: FoxVariant,
@@ -254,6 +259,7 @@ impl MobEntity {
             .age
             .store(-24000, std::sync::atomic::Ordering::Relaxed);
         entity.set_synced_data(pumpkin_data::tracked_data::ageable_mob::DATA_BABY_ID, true);
+        entity.refresh_dimensions();
     }
 
     /// Baby state kept as a mob's own flag and synced key (vanilla zombies and piglins), so it
@@ -272,6 +278,7 @@ impl MobEntity {
             if baby { -24000 } else { 0 },
             std::sync::atomic::Ordering::Relaxed,
         );
+        entity.refresh_dimensions();
     }
 }
 

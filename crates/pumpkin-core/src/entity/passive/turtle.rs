@@ -415,7 +415,7 @@ impl Mob for TurtleEntity {
         if self.has_egg() && !self.is_baby() && self.is_food(item_stack) {
             return false;
         }
-        self.animal_interact(player, item_stack, Sound::EntityTurtleAmbientLand)
+        self.animal_interact(player, item_stack)
     }
 }
 

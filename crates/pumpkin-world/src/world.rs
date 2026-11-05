@@ -84,7 +84,9 @@ pub trait WorldPortalExt: Send + Sync {
         chunk_z: i32,
     );
 
-    fn spawn_structure_entities(&self, _entities: Vec<StructureEntity>) {}
+    /// Spawns the entities structures placed in a chunk, each with the biome it generates in
+    /// (vanilla's `finalizeVillagerType` reads the generating region's biome).
+    fn spawn_structure_entities(&self, _entities: Vec<(StructureEntity, &'static Biome)>) {}
 
     /// The seed features read where vanilla reads the level's seed (the geode noise and the
     /// end spikes): the world seed, or the features seed a generation secret derives from it.

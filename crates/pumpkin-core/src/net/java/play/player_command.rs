@@ -46,21 +46,9 @@ impl JavaClient {
 
             // Vanilla `handlePlayerCommand`: the rider's client jumps the mount itself and tells
             // the server so the mount can rear and sound.
-            Action::StartHorseJump => {
-                let vehicle = entity
-                    .vehicle
-                    .lock()
-                    .unwrap_or_else(std::sync::PoisonError::into_inner)
-                    .clone();
-                if let Some(mob) = vehicle.as_ref().and_then(|vehicle| vehicle.get_mob())
-                    && command.jump_boost.0 > 0
-                {
-                    mob.mob_start_rider_jump(command.jump_boost.0);
-                }
-            }
-            Action::StopHorseJump => {
-                debug!("todo");
-            }
+            Action::StartHorseJump => player.start_riding_jump(server, command.jump_boost.0),
+            // Releasing the jump key does nothing on any rideable mob.
+            Action::StopHorseJump => {}
             Action::OpenVehicleInventory => {
                 player.open_vehicle_inventory();
             }

@@ -3,9 +3,10 @@ use std::sync::{
     atomic::{AtomicBool, AtomicI32, Ordering},
 };
 
-use pumpkin_data::Block;
 use pumpkin_data::attributes::Attributes;
 use pumpkin_data::block_properties::WheatLikeProperties;
+use pumpkin_data::data_component::DataComponent;
+use pumpkin_data::data_component_impl::{DataComponentImpl, RabbitVariantImpl};
 use pumpkin_data::entity::{EntityStatus, EntityType};
 use pumpkin_data::entity_variant::RabbitVariant;
 use pumpkin_data::game_event::GameEvent;
@@ -13,6 +14,7 @@ use pumpkin_data::item_stack::ItemStack;
 use pumpkin_data::sound::{Sound, SoundCategory};
 use pumpkin_data::tag::{self, Taggable};
 use pumpkin_data::world::WorldEvent;
+use pumpkin_data::{Block, translation};
 use pumpkin_nbt::compound::NbtCompound;
 use pumpkin_protocol::bedrock::server::actor_event::ActorEventID;
 use pumpkin_protocol::codec::var_int::VarInt;
@@ -22,6 +24,7 @@ use pumpkin_util::text::TextComponent;
 use pumpkin_world::world::BlockFlags;
 use rand::RngExt;
 
+use crate::block::blocks::plant::crop::MAX_AGE;
 use crate::entity::ai::behavior::hunting::{self, Hunt};
 use crate::entity::ai::control::{
     Control, MoveControlTrait,
@@ -35,7 +38,7 @@ use crate::entity::{
     ageable::{AgeableData, AgeableMob},
     ai::behavior::fleeing::{self, Flee},
     ai::goal::{
-        Controls, Goal, ParentHandle, breed::BreedGoal,
+        Controls, Goal, GoalReach, ParentHandle, breed::BreedGoal,
         climb_on_top_of_powder_snow::ClimbOnTopOfPowderSnowGoal, escape_danger::EscapeDangerGoal,
         look_at_entity::LookAtEntityGoal, melee_attack::MeleeAttackGoal, swim::SwimGoal,
         tempt::TemptGoal, wander_around::WanderAroundGoal,
@@ -73,7 +76,6 @@ const DEFAULT_JUMP_POWER: f32 = 0.42;
 const HIGH_JUMP_RISE: f64 = 0.5;
 /// Vanilla `customServerAiStep`: a killer bunny leaps at targets within 4 blocks.
 const EVIL_LEAP_DISTANCE_SQR: f64 = 16.0;
-const KILLER_BUNNY: &str = "entity.minecraft.killer_bunny";
 const EVIL_ATTACK_POWER_INCREMENT: f64 = 5.0;
 const EVIL_ATTACK_POWER_MODIFIER: &str = "minecraft:evil";
 const EVIL_ARMOR_VALUE: f64 = 8.0;
@@ -91,8 +93,6 @@ const RAID_GARDEN_SPEED: f32 = 0.7;
 const RAID_GARDEN_RANGE: i32 = 16;
 const RAID_GARDEN_RETRY_TICKS: i32 = 10;
 const RAID_GARDEN_LOOK_YAW: f32 = 10.0;
-/// Vanilla `CropBlock.MAX_AGE`.
-const CARROT_MAX_AGE: u8 = 7;
 
 const RABBIT_FLEES: &[Flee] = &[
     Flee::new(4, TargetMatch::Type(&EntityType::PLAYER), 8.0, 2.2, 2.2).when(is_not_evil),
@@ -229,7 +229,10 @@ impl RabbitEntity {
                 });
             });
             if entity.custom_name.load().is_none() {
-                entity.set_custom_name(TextComponent::translate(KILLER_BUNNY, []));
+                entity.set_custom_name(TextComponent::translate(
+                    translation::java::ENTITY_MINECRAFT_KILLER_BUNNY,
+                    [],
+                ));
             }
         } else {
             living.update_attribute(&Attributes::ATTACK_DAMAGE, |damage| {
@@ -505,7 +508,7 @@ impl Mob for RabbitEntity {
             entity.update_velocity_from_input(push, f64::from(JUMP_PUSH_SPEED));
         }
         let world = entity.world.load();
-        world.send_entity_status(entity, EntityStatus::Jump, ActorEventID::None);
+        world.send_entity_status(entity, EntityStatus::Jump, ActorEventID::Jump);
     }
 
     /// Vanilla `customServerAiStep`: hop timing, carrot hunger and the killer bunny's leap.
@@ -581,6 +584,16 @@ impl Mob for RabbitEntity {
         self.more_carrot_ticks.store(ticks, Ordering::Relaxed);
     }
 
+    /// Vanilla `Rabbit.get` of `RABBIT_VARIANT`.
+    fn mob_get_component(&self, component: DataComponent) -> Option<Box<dyn DataComponentImpl>> {
+        match component {
+            DataComponent::RabbitVariant => Some(Box::new(RabbitVariantImpl {
+                value: self.get_variant().name().into(),
+            })),
+            _ => None,
+        }
+    }
+
     fn mob_set_variant_name(&self, name: &str) {
         if let Some(variant) = RabbitVariant::from_name(name) {
             self.set_variant(variant);
@@ -604,7 +617,7 @@ impl Mob for RabbitEntity {
     }
 
     fn mob_interact(&self, player: &Arc<Player>, item_stack: &mut ItemStack) -> bool {
-        self.animal_interact(player, item_stack, Sound::EntityRabbitAmbient)
+        self.animal_interact(player, item_stack)
     }
 }
 
@@ -701,6 +714,10 @@ impl RabbitPanicGoal {
 }
 
 impl Goal for RabbitPanicGoal {
+    fn tick_reach(&self, mob: &dyn Mob, running: bool) -> Option<GoalReach> {
+        self.escape_danger_goal.tick_reach(mob, running)
+    }
+
     fn can_start(&mut self, mob: &dyn Mob) -> bool {
         self.escape_danger_goal.can_start(mob)
     }
@@ -722,6 +739,10 @@ impl Goal for RabbitPanicGoal {
         if let Some(rabbit) = as_rabbit(mob) {
             rabbit.set_speed_modifier(FLEE_SPEED_MOD);
         }
+    }
+
+    fn should_run_every_tick(&self) -> bool {
+        self.escape_danger_goal.should_run_every_tick()
     }
 
     fn controls(&self) -> Controls {
@@ -748,8 +769,7 @@ impl MoveToTargetPos for GardenTarget {
             return false;
         }
         let (block, state) = world.get_block_and_state_id(&block_pos.up());
-        if block.id == Block::CARROTS.id
-            && WheatLikeProperties::from_state_id(state).age >= CARROT_MAX_AGE
+        if block.id == Block::CARROTS.id && WheatLikeProperties::from_state_id(state).age >= MAX_AGE
         {
             self.can_raid.store(true, Ordering::Relaxed);
             return true;

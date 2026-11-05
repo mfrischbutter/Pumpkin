@@ -135,6 +135,12 @@ impl AgeableMob for PigEntity {
 }
 
 impl Animal for PigEntity {
+    fn play_eating_sound(&self) {
+        let sound_variant = PigSoundVariant::from_id(self.sound_variant.load(Ordering::Relaxed))
+            .unwrap_or_default();
+        self.make_sound(sound_variant.eat_sound(self.is_baby()));
+    }
+
     fn is_food(&self, item_stack: &ItemStack) -> bool {
         item_stack.item.has_tag(&tag::Item::MINECRAFT_PIG_FOOD)
     }
@@ -360,13 +366,7 @@ impl Mob for PigEntity {
             return true;
         }
 
-        let sound_variant = PigSoundVariant::from_id(self.sound_variant.load(Ordering::Relaxed))
-            .unwrap_or_default();
-        if self.animal_interact(
-            player,
-            item_stack,
-            sound_variant.ambient_sound(self.is_baby()),
-        ) {
+        if self.animal_interact(player, item_stack) {
             return true;
         }
 

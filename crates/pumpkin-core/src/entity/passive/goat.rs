@@ -280,6 +280,12 @@ impl AgeableMob for GoatEntity {
 }
 
 impl Animal for GoatEntity {
+    /// Vanilla `Goat.playEatingSound`.
+    fn play_eating_sound(&self) {
+        let pitch = 0.8 + self.get_random().random::<f32>() * 0.4;
+        self.play_entity_sound(self.eating_sound(), 1.0, pitch);
+    }
+
     fn is_food(&self, item_stack: &ItemStack) -> bool {
         item_stack.item.has_tag(&tag::Item::MINECRAFT_GOAT_FOOD)
     }
@@ -445,9 +451,9 @@ impl Mob for GoatEntity {
             return true;
         }
         let food = self.is_food(item_stack);
-        let used = self.animal_interact(player, item_stack, self.ambient_sound());
+        let used = self.animal_interact(player, item_stack);
         if used && food {
-            self.play_eating_sound(self.eating_sound());
+            self.play_eating_sound();
         }
         used
     }

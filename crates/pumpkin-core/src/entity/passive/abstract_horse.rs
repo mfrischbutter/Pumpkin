@@ -7,8 +7,9 @@ use std::sync::{Arc, Mutex};
 use crossbeam::atomic::AtomicCell;
 use pumpkin_data::attributes::Attributes;
 use pumpkin_data::block_state::SoundType;
-use pumpkin_data::data_component_impl::EquipmentSlot;
+use pumpkin_data::data_component_impl::{EquipmentSlot, EquippableImpl};
 use pumpkin_data::entity::EntityStatus;
+use pumpkin_data::game_event::GameEvent;
 use pumpkin_data::item::Item;
 use pumpkin_data::item_stack::ItemStack;
 use pumpkin_data::sound::Sound;
@@ -23,6 +24,7 @@ use uuid::Uuid;
 
 use crate::entity::ageable::AgeableMob;
 use crate::entity::ai::goal::Goal;
+use crate::entity::ai::target_match::TargetMatch;
 use crate::entity::ai::target_predicate::TargetPredicate;
 use crate::entity::mob::Mob;
 use crate::entity::passive::animal::Animal;
@@ -30,16 +32,27 @@ use crate::entity::passive::horse_food::{self, FoodEffect};
 use crate::entity::passive::horse_inventory;
 use crate::entity::player::Player;
 use crate::entity::player::advancement::trigger::AdvancementTrigger;
-use crate::entity::{EntityBase, mob::saddle};
+use crate::entity::{Entity, EntityBase, mob::saddle};
 
 pub const FLAG_TAME: u8 = 2;
 pub const FLAG_BRED: u8 = 8;
 pub const FLAG_EATING: u8 = 16;
 pub const FLAG_STANDING: u8 = 32;
 pub const FLAG_OPEN_MOUTH: u8 = 64;
+/// Vanilla `AbstractHorse.getSoundVolume`.
+pub const SOUND_VOLUME: f32 = 0.8;
+/// Vanilla `AbstractHorse.getAmbientSoundInterval`, also its `getAmbientStandInterval`.
+pub const AMBIENT_SOUND_INTERVAL: i32 = 400;
 /// Vanilla `MOMMY_TARGETING`'s range.
 const MOMMY_RANGE: f64 = 16.0;
 const MOMMY_MIN_DISTANCE_SQ: f64 = 4.0;
+/// Vanilla `playStepSound` and `playGallopSound`: hooves sound at this share of the block's volume.
+const STEP_VOLUME_SCALE: f32 = 0.15;
+/// Vanilla `causeFallDamage` and `playJumpSound`.
+const LAND_VOLUME: f32 = 0.4;
+const JUMP_VOLUME: f32 = 0.4;
+/// Vanilla `PlayerRideableJumping.getPlayerJumpPendingScale`: a jump charged this long is full.
+const MAX_JUMP_AMOUNT: i32 = 90;
 
 /// The state vanilla `AbstractHorse` keeps beside its synced flags.
 pub struct HorseData {
@@ -91,6 +104,11 @@ pub trait AbstractHorse: Animal + AgeableMob {
         Sound::EntityHorseJump
     }
 
+    /// Vanilla `playGallopSound`.
+    fn play_gallop_sound(&self, sound_type: &SoundType) {
+        play_gallop(self, sound_type);
+    }
+
     /// Vanilla `canPerformRearing`.
     fn can_perform_rearing(&self) -> bool {
         true
@@ -106,7 +124,7 @@ pub trait AbstractHorse: Animal + AgeableMob {
         true
     }
 
-    /// Vanilla `isMobControlled`: ridden by a mob, like a skeleton trap's horses.
+    /// Vanilla `isMobControlled`: ridden by a mob, like a zombie horse's jockey.
     fn is_mob_controlled(&self) -> bool {
         false
     }
@@ -234,7 +252,11 @@ pub fn make_mad(horse: &dyn AbstractHorse) {
     }
     stand_if_possible(horse);
     if let Some(sound) = horse.horse_angry_sound() {
-        horse.play_entity_sound(sound, 0.8, horse.get_mob_entity().living_entity.get_pitch());
+        horse.play_entity_sound(
+            sound,
+            SOUND_VOLUME,
+            horse.get_mob_entity().living_entity.get_pitch(),
+        );
     }
 }
 
@@ -319,6 +341,7 @@ pub fn horse_ai_step(horse: &dyn AbstractHorse) {
 
 /// Vanilla `followMommy`: a bred foal plans a path to the nearest bred horse of the family 16
 /// blocks around. It only plans (`createPath`, no `moveTo`); `FollowParentGoal` does the walking.
+/// Breeding does not set the bred flag (vanilla `setBred` is only read from saves).
 fn follow_mommy(horse: &dyn AbstractHorse) {
     if !horse.can_follow_mommy()
         || !has_flag(horse, FLAG_BRED)
@@ -394,64 +417,109 @@ fn is_leash_click(horse: &dyn AbstractHorse, player: &Player, stack: &ItemStack)
         || (stack.item == &Item::LEAD && !held_by_player)
 }
 
-/// Vanilla `AbstractHorse.mobInteract`: a sneaking click on a free tamed adult opens its
-/// inventory. `true` when the click was that.
-pub fn try_open_inventory(horse: &dyn AbstractHorse, player: &Arc<Player>) -> bool {
-    if horse.get_entity().has_passengers()
-        || horse.is_baby()
-        || !is_tamed(horse)
-        || !player.get_entity().is_sneaking()
-    {
-        return false;
-    }
-    horse_inventory::open_custom_inventory_screen(horse, player);
-    true
+/// Vanilla `Player.isHolding`: in either hand.
+fn is_holding(player: &Player, item: &Item) -> bool {
+    let inventory = player.inventory();
+    inventory.held_item().item == item || inventory.off_hand_item().item == item
 }
 
-/// Vanilla `Horse.mobInteract` and `AbstractChestedHorse.mobInteract`.
+/// Vanilla `Mob.interact` before the mob's own `mobInteract`.
 ///
-/// With `AbstractHorse.mobInteract`: feeding, a wild horse rearing at items, `extra` (armour
-/// for horses, a chest for donkeys and mules), saddles, then riding.
-pub fn horse_interact(
+/// Name tags and spawn eggs are left to their items, and the rope's holder or a lead in hand
+/// deals with the leash. `Some` when the click was one of those.
+pub fn important_interaction(
     horse: &dyn AbstractHorse,
     player: &Arc<Player>,
     stack: &mut ItemStack,
-    extra: impl FnOnce(&mut ItemStack) -> bool,
-) -> bool {
-    // Vanilla `Mob.interact`: name tags and spawn eggs come before the mob's own handling.
+) -> Option<bool> {
     if stack.item == &Item::NAME_TAG || stack.item.registry_key.ends_with("_spawn_egg") {
-        return false;
+        return Some(false);
     }
     if is_leash_click(horse, player, stack)
         && horse
             .get_mob_entity()
             .mob_interact(player, stack, horse.can_be_leashed())
     {
-        return true;
+        return Some(true);
     }
-    let entity = horse.get_entity();
+    None
+}
+
+/// The held-item part of vanilla's horse interactions, before `AbstractHorse.mobInteract`.
+///
+/// Vanilla `Horse.mobInteract`, `AbstractChestedHorse.mobInteract` and `ZombieHorse.mobInteract`:
+/// a held item feeds, angers a wild horse (a foal too) or, through `extra`, goes on as a chest.
+/// Skipped for a ridden horse, a sneaking click on a tamed adult and, where
+/// `golden_dandelion_skips`, a foal while the player holds a golden dandelion. `None` passes the
+/// click on.
+pub fn held_item_interaction(
+    horse: &dyn AbstractHorse,
+    player: &Arc<Player>,
+    stack: &mut ItemStack,
+    golden_dandelion_skips: bool,
+    extra: impl FnOnce(&mut ItemStack) -> bool,
+) -> Option<bool> {
     let baby = horse.is_baby();
-    if entity.has_passengers() || baby {
-        // Vanilla `Animal.mobInteract`: foals take food.
-        return baby && horse.is_food(stack) && horse_food::fed_food(horse, player, stack);
+    let opens_inventory = !baby && is_tamed(horse) && player.get_entity().is_sneaking();
+    if horse.get_entity().has_passengers()
+        || opens_inventory
+        || stack.is_empty()
+        || (golden_dandelion_skips && baby && is_holding(player, &Item::GOLDEN_DANDELION))
+    {
+        return None;
     }
-    if try_open_inventory(horse, player) {
+    if horse.is_food(stack) {
+        return Some(horse_food::fed_food(horse, player, stack));
+    }
+    if !is_tamed(horse) {
+        make_mad(horse);
+        return Some(true);
+    }
+    extra(stack).then_some(true)
+}
+
+/// Vanilla `AbstractHorse.mobInteract`: a foal or a ridden horse is only fed like any animal, a
+/// sneaking click opens a tamed horse's inventory, a saddle or body armour goes on, else the
+/// player mounts.
+pub fn abstract_horse_interact(
+    horse: &dyn AbstractHorse,
+    player: &Arc<Player>,
+    stack: &mut ItemStack,
+) -> bool {
+    if horse.get_entity().has_passengers() || horse.is_baby() {
+        return horse.animal_interact(player, stack);
+    }
+    if is_tamed(horse) && player.get_entity().is_sneaking() {
+        horse_inventory::open_custom_inventory_screen(horse, player);
         return true;
     }
-    if !stack.is_empty() {
-        if horse.is_food(stack) {
-            return horse_food::fed_food(horse, player, stack);
-        }
-        if !is_tamed(horse) {
-            make_mad(horse);
-            return true;
-        }
-        if extra(stack) || saddle::try_equip_saddle(horse, player, stack) {
-            return true;
-        }
+    if !stack.is_empty()
+        && (saddle::try_equip_saddle(horse, player, stack)
+            || try_equip_body_armor(horse, player, stack))
+    {
+        return true;
     }
     do_player_ride(horse, player);
     true
+}
+
+/// Vanilla `Horse.mobInteract` and `AbstractChestedHorse.mobInteract` with `AbstractHorse`'s.
+///
+/// [`important_interaction`], [`held_item_interaction`] with `extra` (a chest for donkeys, mules
+/// and llamas), then [`abstract_horse_interact`].
+pub fn horse_interact(
+    horse: &dyn AbstractHorse,
+    player: &Arc<Player>,
+    stack: &mut ItemStack,
+    extra: impl FnOnce(&mut ItemStack) -> bool,
+) -> bool {
+    if let Some(result) = important_interaction(horse, player, stack) {
+        return result;
+    }
+    if let Some(result) = held_item_interaction(horse, player, stack, true, extra) {
+        return result;
+    }
+    abstract_horse_interact(horse, player, stack)
 }
 
 /// Vanilla `RandomStandGoal`: now and then a horse rears with its ambient sound.
@@ -460,13 +528,10 @@ pub struct RandomStandGoal {
 }
 
 impl RandomStandGoal {
-    /// Vanilla `getAmbientStandInterval`.
-    const STAND_INTERVAL: i32 = 400;
-
     #[must_use]
     pub const fn new() -> Self {
         Self {
-            next_stand: -Self::STAND_INTERVAL,
+            next_stand: -AMBIENT_SOUND_INTERVAL,
         }
     }
 }
@@ -482,7 +547,8 @@ impl Goal for RandomStandGoal {
         self.next_stand += 1;
         let mut rng = mob.get_random();
         if self.next_stand > 0 && rng.random_range(0..1000) < self.next_stand {
-            self.next_stand = -Self::STAND_INTERVAL;
+            // Vanilla `getAmbientStandInterval`.
+            self.next_stand = -mob.get_ambient_sound_interval();
             return !mob.is_immobile() && rng.random_range(0..10) == 0;
         }
         false
@@ -492,13 +558,14 @@ impl Goal for RandomStandGoal {
         false
     }
 
+    /// Vanilla `start` with `playStandSound`, through `Entity.playSound` at full volume.
     fn start(&mut self, mob: &dyn Mob) {
         let Some(horse) = as_horse(mob) else {
             return;
         };
         stand_if_possible(horse);
         if let Some(sound) = mob.get_ambient_sound() {
-            mob.play_entity_sound(sound, 0.8, mob.get_mob_entity().living_entity.get_pitch());
+            mob.play_entity_sound(sound, 1.0, 1.0);
         }
     }
 
@@ -507,10 +574,10 @@ impl Goal for RandomStandGoal {
     }
 }
 
-/// Vanilla `AbstractHorse.isImmobile`: eating, rearing or ridden with a saddle.
+/// Vanilla `AbstractHorse.isImmobile`: eating, rearing or ridden with a saddle while dying.
 pub fn is_immobile(horse: &dyn AbstractHorse) -> bool {
     let living = &horse.get_mob_entity().living_entity;
-    (living.health.load() <= 0.0 && horse.get_entity().has_passengers() && horse.is_saddled())
+    (living.is_dead_or_dying() && horse.get_entity().has_passengers() && horse.is_saddled())
         || is_eating(horse)
         || is_standing(horse)
 }
@@ -522,6 +589,13 @@ pub fn on_hurt(horse: &dyn AbstractHorse) {
     }
 }
 
+/// Vanilla `onElasticLeashPull`: a pulled horse stops grazing.
+pub fn on_leash_pull(horse: &dyn AbstractHorse) {
+    if is_eating(horse) {
+        set_flag(horse, FLAG_EATING, false);
+    }
+}
+
 /// Vanilla `handleStartJump`: a rider's jump makes it rear with the jump sound.
 pub fn on_rider_jump(horse: &dyn AbstractHorse) {
     horse
@@ -529,35 +603,73 @@ pub fn on_rider_jump(horse: &dyn AbstractHorse) {
         .allow_stand_sliding
         .store(true, Ordering::Relaxed);
     stand_if_possible(horse);
-    horse.play_entity_sound(horse.horse_jump_sound(), 0.4, 1.0);
+    horse.play_entity_sound(horse.horse_jump_sound(), JUMP_VOLUME, 1.0);
 }
 
-/// Vanilla `generateMaxHealth`, `generateJumpStrength` and `generateSpeed` with random rolls:
-/// a new horse's own stats.
-pub fn randomize_attributes(horse: &dyn AbstractHorse) {
-    randomize_max_health(horse);
-    let living = &horse.get_mob_entity().living_entity;
-    let (jump, speed) = {
-        let mut rng = horse.get_random();
-        let jump =
-            0.4 + rng.random::<f64>() * 0.2 + rng.random::<f64>() * 0.2 + rng.random::<f64>() * 0.2;
-        let speed = (0.45
-            + rng.random::<f64>() * 0.3
-            + rng.random::<f64>() * 0.3
-            + rng.random::<f64>() * 0.3)
-            * 0.25;
-        (jump, speed)
-    };
-    living.set_attribute_base(&Attributes::JUMP_STRENGTH, jump);
-    living.set_attribute_base(&Attributes::MOVEMENT_SPEED, speed);
+/// Vanilla `PlayerRideableJumping.getPlayerJumpPendingScale`: how strong a jump charged for
+/// `jump_amount` ticks is.
+#[must_use]
+pub const fn player_jump_pending_scale(jump_amount: i32) -> f32 {
+    if jump_amount >= MAX_JUMP_AMOUNT {
+        1.0
+    } else {
+        0.4 + 0.4 * jump_amount as f32 / MAX_JUMP_AMOUNT as f32
+    }
+}
+
+/// Vanilla `causeFallDamage`'s landing sound, after more than a block of falling. The damage
+/// itself takes the shared path.
+pub fn play_land_sound(horse: &dyn AbstractHorse, fall_distance: f32) {
+    if fall_distance > 1.0 {
+        let sound = if horse.is_baby() {
+            Sound::EntityBabyHorseLand
+        } else {
+            Sound::EntityHorseLand
+        };
+        horse.play_entity_sound(sound, LAND_VOLUME, 1.0);
+    }
+}
+
+/// Vanilla `getDefaultDimensions`: a foal has its own size.
+pub fn refresh_age_dimensions(horse: &dyn AbstractHorse) {
+    let entity = horse.get_entity();
+    entity.set_default_dimensions(Entity::age_dimensions(entity.entity_type, horse.is_baby()));
 }
 
 /// Vanilla `generateMaxHealth`: 15 to 30.
+fn generate_max_health(mut next_int: impl FnMut(i32) -> i32) -> f64 {
+    15.0 + f64::from(next_int(8) + next_int(9))
+}
+
+/// Vanilla `generateJumpStrength`, from three rolls in 0 to 1.
+pub fn generate_jump_strength(mut probability: impl FnMut() -> f64) -> f64 {
+    f64::from(0.4f32) + probability() * 0.2 + probability() * 0.2 + probability() * 0.2
+}
+
+/// Vanilla `generateSpeed`, from three rolls in 0 to 1.
+fn generate_speed(mut probability: impl FnMut() -> f64) -> f64 {
+    (f64::from(0.45f32) + probability() * 0.3 + probability() * 0.3 + probability() * 0.3) * 0.25
+}
+
+/// Vanilla `Horse.randomizeAttributes`: a new horse's own health, speed and jump.
+pub fn randomize_attributes(horse: &dyn AbstractHorse) {
+    randomize_max_health(horse);
+    let living = &horse.get_mob_entity().living_entity;
+    let (speed, jump) = {
+        let mut rng = horse.get_random();
+        let speed = generate_speed(|| rng.random());
+        (speed, generate_jump_strength(|| rng.random()))
+    };
+    living.set_attribute_base(&Attributes::MOVEMENT_SPEED, speed);
+    living.set_attribute_base(&Attributes::JUMP_STRENGTH, jump);
+}
+
+/// Vanilla `AbstractChestedHorse.randomizeAttributes`: the health only, also for llamas.
 pub fn randomize_max_health(horse: &dyn AbstractHorse) {
     let living = &horse.get_mob_entity().living_entity;
     let health = {
         let mut rng = horse.get_random();
-        15.0 + f64::from(rng.random_range(0..8) + rng.random_range(0..9))
+        generate_max_health(|bound| rng.random_range(0..bound))
     };
     living.set_attribute_base(&Attributes::MAX_HEALTH, health);
     living.set_health(health as f32);
@@ -579,7 +691,14 @@ fn offspring_attribute(a: f64, b: f64, min: f64, max: f64, quality: f64) -> f64 
     }
 }
 
-/// Vanilla `setOffspringAttributes`: health, jump and speed from both parents.
+/// Vanilla keeps the extremes a new horse can roll (`MIN_HEALTH` to `MAX_MOVEMENT_SPEED`) as
+/// floats.
+fn as_float(value: f64) -> f64 {
+    f64::from(value as f32)
+}
+
+/// Vanilla `setOffspringAttributes`: health, jump and speed from both parents, within the
+/// ranges a new horse rolls.
 pub fn set_offspring_attributes(
     parent: &dyn AbstractHorse,
     partner: &dyn EntityBase,
@@ -591,9 +710,21 @@ pub fn set_offspring_attributes(
     let mine = &parent.get_mob_entity().living_entity;
     let born = &baby.get_mob_entity().living_entity;
     let ranges = [
-        (&Attributes::MAX_HEALTH, 15.0, 30.0),
-        (&Attributes::JUMP_STRENGTH, 0.4, 1.0),
-        (&Attributes::MOVEMENT_SPEED, 0.1125, 0.3375),
+        (
+            &Attributes::MAX_HEALTH,
+            generate_max_health(|_| 0),
+            generate_max_health(|bound| bound - 1),
+        ),
+        (
+            &Attributes::JUMP_STRENGTH,
+            as_float(generate_jump_strength(|| 0.0)),
+            as_float(generate_jump_strength(|| 1.0)),
+        ),
+        (
+            &Attributes::MOVEMENT_SPEED,
+            as_float(generate_speed(|| 0.0)),
+            as_float(generate_speed(|| 1.0)),
+        ),
     ];
     for (attribute, min, max) in ranges {
         let quality = {
@@ -653,19 +784,16 @@ pub fn read_horse_nbt(horse: &dyn AbstractHorse, nbt: &NbtCompound) {
     horse.horse_data().owner.store(nbt.get_uuid("Owner"));
 }
 
-/// Marks a foal as bred, vanilla's `setBred` in `getBreedOffspring`'s callers.
-pub fn set_bred(horse: &dyn AbstractHorse) {
-    set_flag(horse, FLAG_BRED, true);
-}
-
-/// Horse armour goes into the body slot, vanilla `equipBodyArmor`.
+/// Vanilla `equipBodyArmor`: body armour this horse can wear goes into the body slot, with
+/// `LivingEntity.onEquipItem`'s sound and game event.
 pub fn try_equip_body_armor(
     horse: &dyn AbstractHorse,
     player: &Player,
     stack: &mut ItemStack,
 ) -> bool {
+    let entity = horse.get_entity();
     let is_armor = crate::entity::mob::equipment::is_equippable_in_slot(
-        horse.get_entity().entity_type,
+        entity.entity_type,
         stack,
         &EquipmentSlot::BODY,
     );
@@ -680,8 +808,20 @@ pub fn try_equip_body_armor(
     if !is_armor || wearing {
         return false;
     }
-    mob_entity.set_item_slot_and_drop_when_killed(&EquipmentSlot::BODY, stack.copy_with_count(1));
+    let armor = stack.copy_with_count(1);
+    let equip_sound = armor
+        .get_data_component::<EquippableImpl>()
+        .map(|equippable| equippable.equip_sound.clone());
+    mob_entity.set_item_slot_and_drop_when_killed(&EquipmentSlot::BODY, armor);
     stack.decrement_unless_creative(player.gamemode.load(), 1);
+    let world = entity.world.load();
+    let pos = entity.pos.load();
+    if let Some(sound) = equip_sound
+        && !entity.is_silent()
+    {
+        world.play_sound_event(&sound, horse.mob_sound_source(), &pos);
+    }
+    world.emit_game_event(GameEvent::Equip.name(), pos);
     true
 }
 
@@ -711,12 +851,11 @@ pub fn play_step_sound(
     } else {
         state.get_sound_type()
     };
-    let volume = sound_type.volume * 0.15;
+    let volume = sound_type.volume * STEP_VOLUME_SCALE;
     if entity.has_passengers() && can_gallop {
-        let counter = &horse.horse_data().gallop_sound_counter;
-        let gallop = counter.fetch_add(1, Ordering::Relaxed) + 1;
+        let gallop = next_gallop_step(horse);
         if gallop > 5 && gallop % 3 == 0 {
-            horse.play_entity_sound(Sound::EntityHorseGallop, volume, sound_type.pitch);
+            horse.play_gallop_sound(sound_type);
         } else if gallop <= 5 {
             horse.play_entity_sound(Sound::EntityHorseStepWood, volume, sound_type.pitch);
         }
@@ -732,6 +871,22 @@ pub fn play_step_sound(
     horse.play_entity_sound(sound, volume, sound_type.pitch);
 }
 
+/// Vanilla `gallopSoundCounter`, one step more under a rider. Only the rider's client resets
+/// it, so the server keeps galloping once the first steps are past.
+pub fn next_gallop_step(horse: &dyn AbstractHorse) -> i32 {
+    let counter = &horse.horse_data().gallop_sound_counter;
+    counter.fetch_add(1, Ordering::Relaxed) + 1
+}
+
+/// Vanilla `AbstractHorse.playGallopSound`.
+pub fn play_gallop<H: EntityBase + ?Sized>(horse: &H, sound_type: &SoundType) {
+    horse.play_entity_sound(
+        Sound::EntityHorseGallop,
+        sound_type.volume * STEP_VOLUME_SCALE,
+        sound_type.pitch,
+    );
+}
+
 /// Vanilla `AbstractHorse.isWoodSoundType`.
 fn is_wood_sound_type(sound_type: &SoundType) -> bool {
     matches!(
@@ -740,20 +895,23 @@ fn is_wood_sound_type(sound_type: &SoundType) -> bool {
     )
 }
 
-/// Vanilla `AbstractHorse.registerGoals` with `addBehaviourGoals`.
+/// Vanilla `AbstractHorse.registerGoals`, without `addBehaviourGoals`. The breed goal looks at
+/// every horse kind (`AbstractHorse.class`); the species' `canMate` decides.
 pub fn register_horse_goals(
     goal_selector: &crate::entity::ai::goal::goal_selector::GoalSelector,
     mob_weak: std::sync::Weak<dyn Mob>,
     can_perform_rearing: bool,
 ) {
     use crate::entity::ai::goal::{
-        breed::BreedGoal, escape_danger::EscapeDangerGoal, follow_parent::FollowParentGoal,
-        look_around::RandomLookAroundGoal, look_at_entity::LookAtEntityGoal,
-        run_around_like_crazy::RunAroundLikeCrazyGoal, swim::SwimGoal, tempt::TemptGoal,
+        breed::BreedGoal, follow_parent::FollowParentGoal, look_around::RandomLookAroundGoal,
+        look_at_entity::LookAtEntityGoal, run_around_like_crazy::RunAroundLikeCrazyGoal,
         wander_around::WanderAroundGoal,
     };
     goal_selector.add_goal(1, Box::new(RunAroundLikeCrazyGoal::new(1.2)));
-    goal_selector.add_goal(2, BreedGoal::new(1.0));
+    goal_selector.add_goal(
+        2,
+        BreedGoal::with_partners(1.0, TargetMatch::ABSTRACT_HORSE),
+    );
     goal_selector.add_goal(4, Box::new(FollowParentGoal::new(1.0)));
     goal_selector.add_goal(6, Box::new(WanderAroundGoal::water_avoiding(0.7)));
     goal_selector.add_goal(
@@ -764,8 +922,15 @@ pub fn register_horse_goals(
     if can_perform_rearing {
         goal_selector.add_goal(9, Box::new(RandomStandGoal::new()));
     }
+}
+
+/// Vanilla `AbstractHorse.addBehaviourGoals`: floating, panicking (`MountPanicGoal`, which only
+/// differs for horses a mob controls) and following tempting food.
+pub fn add_behaviour_goals(goal_selector: &crate::entity::ai::goal::goal_selector::GoalSelector) {
+    use crate::entity::ai::goal::{
+        escape_danger::EscapeDangerGoal, swim::SwimGoal, tempt::TemptGoal,
+    };
     goal_selector.add_goal(0, Box::new(SwimGoal::default()));
-    // Vanilla `MountPanicGoal`: no panic while a mob rides it.
     goal_selector.add_goal(1, EscapeDangerGoal::new(1.2));
     goal_selector.add_goal(
         3,

@@ -4,8 +4,12 @@ use std::sync::{
 };
 
 use pumpkin_data::BlockState;
+use pumpkin_data::block_state::SoundType;
 use pumpkin_data::damage::DamageType;
+use pumpkin_data::data_component::DataComponent;
+use pumpkin_data::data_component_impl::{DataComponentImpl, EquipmentSlot, HorseVariantImpl};
 use pumpkin_data::entity::EntityType;
+use pumpkin_data::entity_variant::{HorseMarkings, HorseVariant};
 use pumpkin_data::item_stack::ItemStack;
 use pumpkin_data::sound::Sound;
 use pumpkin_data::tag::{self, Taggable};
@@ -13,23 +17,24 @@ use pumpkin_nbt::compound::NbtCompound;
 use pumpkin_protocol::codec::var_int::VarInt;
 use pumpkin_util::math::position::BlockPos;
 use rand::RngExt;
+use uuid::Uuid;
 
 use crate::entity::custom_sound::CustomSound;
 use crate::entity::passive::abstract_horse::{self as horse_base, AbstractHorse, HorseData};
 use crate::entity::passive::chested_horse::{self, ChestedHorseEntity};
 use crate::entity::{
-    Entity, EntityBase,
-    ageable::{AgeableData, AgeableMob},
+    Entity, EntityBase, GearDamage,
+    ageable::{AgeableData, AgeableMob, DEFAULT_BABY_SPAWN_CHANCE},
     mob::{Mob, MobEntity, spawn::SpawnGroupData},
     passive::animal::Animal,
     player::Player,
 };
 use crate::world::World;
 
-/// Vanilla `Variant`: seven coat colours.
-const COLORS: i32 = 7;
-/// Vanilla `Markings`: five patterns.
-const MARKINGS: i32 = 5;
+/// Vanilla `Horse.playGallopSound`: one gallop in ten comes with a breath, this much quieter
+/// than the block's sound.
+const BREATHE_CHANCE: i32 = 10;
+const BREATHE_VOLUME_SCALE: f32 = 0.6;
 
 pub struct HorseEntity {
     pub mob_entity: MobEntity,
@@ -51,7 +56,9 @@ impl HorseEntity {
             let mob_arc: Arc<dyn Mob> = mob_arc.clone();
             Arc::downgrade(&mob_arc)
         };
-        horse_base::register_horse_goals(&mob_arc.mob_entity.goals_selector, mob_weak, true);
+        let goal_selector = &mob_arc.mob_entity.goals_selector;
+        horse_base::register_horse_goals(goal_selector, mob_weak, true);
+        horse_base::add_behaviour_goals(goal_selector);
         mob_arc
     }
 
@@ -87,12 +94,12 @@ impl HorseEntity {
         let color = match rng.random_range(0..9) {
             0..4 => mine & 0xFF,
             4..8 => theirs & 0xFF,
-            _ => rng.random_range(0..COLORS),
+            _ => HorseVariant::ALL[rng.random_range(0..HorseVariant::ALL.len())].id(),
         };
         let markings = match rng.random_range(0..5) {
             0..2 => (mine >> 8) & 0xFF,
             2..4 => (theirs >> 8) & 0xFF,
-            _ => rng.random_range(0..MARKINGS),
+            _ => HorseMarkings::ALL[rng.random_range(0..HorseMarkings::ALL.len())].id(),
         };
         (color, markings)
     }
@@ -103,8 +110,8 @@ impl AgeableMob for HorseEntity {
         &self.ageable_data
     }
 
-    fn default_baby_spawn_chance(&self) -> f32 {
-        crate::entity::ageable::ABSTRACT_HORSE_BABY_SPAWN_CHANCE
+    fn age_boundary_reached(&self) {
+        horse_base::refresh_age_dimensions(self);
     }
 }
 
@@ -130,24 +137,19 @@ impl Animal for HorseEntity {
     fn get_breed_offspring(&self, partner: &dyn EntityBase) -> Arc<dyn EntityBase> {
         let entity = self.get_entity();
         let new_entity = |kind| Entity::new(entity.world.load_full(), entity.pos.load(), kind);
-        let baby: Arc<dyn EntityBase> = if partner.get_entity().entity_type == &EntityType::DONKEY {
+        if partner.get_entity().entity_type == &EntityType::DONKEY {
             let mule = ChestedHorseEntity::new(new_entity(&EntityType::MULE), &chested_horse::MULE);
             horse_base::set_offspring_attributes(self, partner, mule.as_ref());
-            mule
-        } else {
-            let foal = Self::new(new_entity(&EntityType::HORSE));
-            let (color, markings) = partner.cast_any().downcast_ref::<Self>().map_or_else(
-                || (self.get_variant() & 0xFF, 0),
-                |other| self.foal_variant(other),
-            );
-            foal.set_variant_and_markings(color, markings);
-            horse_base::set_offspring_attributes(self, partner, foal.as_ref());
-            foal
-        };
-        if let Some(foal) = baby.get_mob().and_then(|mob| mob.as_abstract_horse()) {
-            horse_base::set_bred(foal);
+            return mule;
         }
-        baby
+        let foal = Self::new(new_entity(&EntityType::HORSE));
+        let (color, markings) = partner.cast_any().downcast_ref::<Self>().map_or_else(
+            || (self.get_variant() & 0xFF, 0),
+            |other| self.foal_variant(other),
+        );
+        foal.set_variant_and_markings(color, markings);
+        horse_base::set_offspring_attributes(self, partner, foal.as_ref());
+        foal
     }
 }
 
@@ -171,6 +173,23 @@ impl AbstractHorse for HorseEntity {
             Sound::EntityHorseAngry
         })
     }
+
+    /// Vanilla `Horse.playGallopSound`: now and then a breath with the gallop.
+    fn play_gallop_sound(&self, sound_type: &SoundType) {
+        horse_base::play_gallop(self, sound_type);
+        if self.get_random().random_range(0..BREATHE_CHANCE) == 0 {
+            let breathe = if self.is_baby() {
+                Sound::EntityBabyHorseBreathe
+            } else {
+                Sound::EntityHorseBreathe
+            };
+            self.play_entity_sound(
+                breathe,
+                sound_type.volume * BREATHE_VOLUME_SCALE,
+                sound_type.pitch,
+            );
+        }
+    }
 }
 
 impl CustomSound for HorseEntity {
@@ -191,7 +210,7 @@ impl CustomSound for HorseEntity {
     }
 
     fn sound_volume(&self) -> f32 {
-        0.8
+        horse_base::SOUND_VOLUME
     }
 }
 
@@ -215,9 +234,8 @@ impl Mob for HorseEntity {
         })
     }
 
-    /// Vanilla `AbstractHorse.getAmbientSoundInterval`.
     fn get_ambient_sound_interval(&self) -> i32 {
-        400
+        horse_base::AMBIENT_SOUND_INTERVAL
     }
 
     fn as_custom_sound(&self) -> Option<&dyn CustomSound> {
@@ -226,6 +244,11 @@ impl Mob for HorseEntity {
 
     fn is_tamed(&self) -> bool {
         self.is_tame()
+    }
+
+    /// Vanilla `AbstractHorse.getOwnerReference`.
+    fn get_owner_uuid(&self) -> Option<Uuid> {
+        horse_base::owner(self)
     }
 
     fn mob_play_step_sound(&self, pos: &BlockPos, state: &BlockState) {
@@ -257,26 +280,76 @@ impl Mob for HorseEntity {
         horse_base::on_hurt(self);
     }
 
+    fn on_elastic_leash_pull(&self) {
+        horse_base::on_leash_pull(self);
+    }
+
+    fn mob_cause_fall_damage(&self, fall_distance: f32) {
+        horse_base::play_land_sound(self, fall_distance);
+    }
+
+    /// Vanilla `Horse.hurtArmor`: only the body armour wears.
+    fn mob_hurt_gear_slots(&self, gear: GearDamage) -> &'static [EquipmentSlot] {
+        match gear {
+            GearDamage::Armor => &[EquipmentSlot::BODY],
+            GearDamage::Helmet => &[],
+        }
+    }
+
     fn mob_start_rider_jump(&self, _strength: i32) {
         if self.is_saddled() {
             horse_base::on_rider_jump(self);
         }
     }
 
-    /// Vanilla `Horse.finalizeSpawn` with `AbstractHorse.randomizeAttributes`: random stats,
-    /// colour and markings.
+    /// Vanilla `Horse.finalizeSpawn` with `AbstractHorse.randomizeAttributes`: a herd shares
+    /// the first horse's colour (`HorseGroupData`), each rolls its markings and stats.
     fn finalize_spawn(
         &self,
         _world: &Arc<World>,
         group_data: Option<SpawnGroupData>,
     ) -> Option<SpawnGroupData> {
-        let (color, markings) = {
+        let (color, markings, group_size) = {
             let mut rng = self.get_random();
-            (rng.random_range(0..COLORS), rng.random_range(0..MARKINGS))
+            let (color, group_size) = match group_data {
+                Some(SpawnGroupData::Horse { color, group_size }) => (color, group_size),
+                _ => (
+                    HorseVariant::ALL[rng.random_range(0..HorseVariant::ALL.len())],
+                    0,
+                ),
+            };
+            let markings = HorseMarkings::ALL[rng.random_range(0..HorseMarkings::ALL.len())];
+            (color, markings, group_size)
         };
-        self.set_variant_and_markings(color, markings);
+        self.set_variant_and_markings(color.id(), markings.id());
         horse_base::randomize_attributes(self);
-        self.finalize_spawn_super(group_data)
+        // `HorseGroupData` is an `AgeableMobGroupData(true)`: foals at the plain chance, not
+        // the 0.2 that `AbstractHorse.finalizeSpawn` gives a group without data.
+        self.finalize_ageable_spawn(Some(SpawnGroupData::Ageable {
+            group_size,
+            should_spawn_baby: true,
+            baby_spawn_chance: DEFAULT_BABY_SPAWN_CHANCE,
+        }));
+        Some(SpawnGroupData::Horse {
+            color,
+            group_size: group_size + 1,
+        })
+    }
+
+    /// Vanilla `Horse.get(HORSE_VARIANT)`: the coat colour.
+    fn mob_get_component(&self, component: DataComponent) -> Option<Box<dyn DataComponentImpl>> {
+        (component == DataComponent::HorseVariant).then(|| {
+            Box::new(HorseVariantImpl {
+                value: HorseVariant::by_id(self.get_variant() & 0xFF).name().into(),
+            }) as Box<dyn DataComponentImpl>
+        })
+    }
+
+    /// Vanilla `Horse.applyImplicitComponent(HORSE_VARIANT)`: the colour, keeping the markings.
+    fn mob_set_variant_name(&self, name: &str) {
+        if let Some(color) = HorseVariant::from_name(name) {
+            self.set_variant((color.id() & 0xFF) | (self.get_variant() & !0xFF));
+        }
     }
 
     fn mob_write_nbt(&self, nbt: &mut NbtCompound) {
@@ -326,10 +399,8 @@ impl Mob for HorseEntity {
         );
     }
 
-    /// Vanilla `Horse.mobInteract`: armour goes on a tamed horse.
+    /// Vanilla `Horse.mobInteract` with `AbstractHorse.mobInteract`.
     fn mob_interact(&self, player: &Arc<Player>, item_stack: &mut ItemStack) -> bool {
-        horse_base::horse_interact(self, player, item_stack, |stack| {
-            horse_base::try_equip_body_armor(self, player, stack)
-        })
+        horse_base::horse_interact(self, player, item_stack, |_| false)
     }
 }

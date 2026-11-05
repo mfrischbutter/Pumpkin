@@ -142,22 +142,7 @@ impl VillagerPoiStorage {
 /// The job site of a profession (vanilla `VillagerProfession.heldJobSite`).
 #[must_use]
 pub const fn poi_type_for_profession(profession: VillagerProfession) -> Option<&'static PoiType> {
-    Some(match profession {
-        VillagerProfession::Armorer => &PoiType::ARMORER,
-        VillagerProfession::Butcher => &PoiType::BUTCHER,
-        VillagerProfession::Cartographer => &PoiType::CARTOGRAPHER,
-        VillagerProfession::Cleric => &PoiType::CLERIC,
-        VillagerProfession::Farmer => &PoiType::FARMER,
-        VillagerProfession::Fisherman => &PoiType::FISHERMAN,
-        VillagerProfession::Fletcher => &PoiType::FLETCHER,
-        VillagerProfession::Leatherworker => &PoiType::LEATHERWORKER,
-        VillagerProfession::Librarian => &PoiType::LIBRARIAN,
-        VillagerProfession::Mason => &PoiType::MASON,
-        VillagerProfession::Shepherd => &PoiType::SHEPHERD,
-        VillagerProfession::Toolsmith => &PoiType::TOOLSMITH,
-        VillagerProfession::Weaponsmith => &PoiType::WEAPONSMITH,
-        VillagerProfession::None | VillagerProfession::Nitwit => return None,
-    })
+    profession.held_job_site().first().copied()
 }
 
 #[must_use]

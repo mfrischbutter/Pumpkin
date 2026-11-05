@@ -37,15 +37,17 @@ impl JavaClient {
         }) {
             return;
         }
-        if let Some(vehicle) = vehicle {
+        if let Some(vehicle) = &vehicle {
             let vehicle_entity = vehicle.get_entity();
             player.driven_vehicle.store(Some(vehicle_entity.entity_id));
-            let old_y = vehicle_entity.pos.load().y;
+            let old_pos = vehicle_entity.pos.load();
+            let old_y = old_pos.y;
             vehicle_entity.set_pos(pos);
             vehicle_entity.set_rotation(packet.yaw, packet.pitch);
             vehicle_entity
                 .on_ground
                 .store(packet.on_ground, Ordering::Relaxed);
+            vehicle_entity.emit_client_movement(vehicle.as_ref(), pos - old_pos);
             if let Some(living) = vehicle.get_living_entity() {
                 living.fall(vehicle.as_ref(), pos.y - old_y, packet.on_ground, false);
             }
@@ -80,8 +82,12 @@ impl JavaClient {
         } else {
             player.entered_lava_pos.store(None);
         }
-        entity.set_pos(pos);
-        let distance = last_pos.squared_distance_to_vec(&pos).sqrt();
+        match &vehicle {
+            Some(vehicle) => vehicle.position_rider(player.as_ref()),
+            None => entity.set_pos(pos),
+        }
+        let new_pos = entity.pos.load();
+        let distance = last_pos.squared_distance_to_vec(&new_pos).sqrt();
         let cm = (distance * 100.0).round() as i32;
         if cm > 0 {
             let stat = player.get_movement_statistic();

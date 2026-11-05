@@ -24,9 +24,12 @@ use crate::entity::{
     Entity, EntityBase,
     ai::behavior::neutral::apply_targets,
     ai::goal::{
+        defend_village_target::DefendVillageTargetGoal,
+        golem_random_stroll_in_village::golem_random_stroll_in_village,
         look_around::RandomLookAroundGoal, look_at_entity::LookAtEntityGoal,
-        melee_attack::MeleeAttackGoal, move_towards_target::MoveTowardsTargetGoal,
-        offer_flower::OfferFlowerGoal, revenge::RevengeGoal, wander_around::WanderAroundGoal,
+        melee_attack::MeleeAttackGoal, move_back_to_village::move_back_to_village,
+        move_towards_target::MoveTowardsTargetGoal, offer_flower::OfferFlowerGoal,
+        revenge::RevengeGoal,
     },
     mob::{
         Mob, MobEntity,
@@ -34,6 +37,7 @@ use crate::entity::{
     },
     player::Player,
 };
+use crate::plugin::api::events::entity::entity_target::TargetReason;
 use crate::world::level_accessor::LevelAccessor;
 use crate::world::natural_spawner::is_valid_empty_spawn_block;
 
@@ -50,6 +54,12 @@ const CRACK_FRACTIONS: [f32; 3] = [0.75, 0.5, 0.25];
 const REPAIR_HEALTH: f32 = 25.0;
 /// Vanilla `IronGolem.doHurtTarget`: the upward push of a hit.
 const HIT_LIFT: f64 = 0.4;
+/// Vanilla `IronGolem.registerGoals`: the speed of the village strolls.
+const STROLL_SPEED: f64 = 0.6;
+/// Vanilla `IronGolem.doPush`: one push in this many makes the pushed enemy the target.
+const PUSH_TARGET_CHANCE: i32 = 20;
+/// Vanilla `AbstractGolem.getAmbientSoundInterval`.
+const AMBIENT_SOUND_INTERVAL: i32 = 120;
 
 pub struct IronGolemEntity {
     pub mob_entity: MobEntity,
@@ -84,7 +94,8 @@ impl IronGolemEntity {
 
             goal_selector.add_goal(1, Box::new(MeleeAttackGoal::new(1.0, true)));
             goal_selector.add_goal(2, Box::new(MoveTowardsTargetGoal::new(0.9, 32.0)));
-            goal_selector.add_goal(4, Box::new(WanderAroundGoal::new(0.6)));
+            goal_selector.add_goal(2, Box::new(move_back_to_village(STROLL_SPEED)));
+            goal_selector.add_goal(4, Box::new(golem_random_stroll_in_village(STROLL_SPEED)));
             goal_selector.add_goal(5, Box::new(OfferFlowerGoal::new()));
             goal_selector.add_goal(
                 7,
@@ -92,7 +103,7 @@ impl IronGolemEntity {
             );
             goal_selector.add_goal(8, Box::new(RandomLookAroundGoal::default()));
 
-            // TODO: DefendVillageTargetGoal at 1.
+            target_selector.add_goal(1, DefendVillageTargetGoal::new());
             target_selector.add_goal(2, Box::new(RevengeGoal::new(true)));
             apply_targets(target_selector, &mob_arc.mob_entity, 3, 4, false);
             hunting::apply(target_selector, &mob_arc.mob_entity, IRON_GOLEM_HUNTS);
@@ -168,6 +179,11 @@ fn crack_level(fraction: f32) -> usize {
 }
 
 impl NeutralMob for IronGolemEntity {
+    /// Vanilla `IronGolem.aiStep` updates the persistent anger.
+    fn updates_anger_in_ai_step(&self) -> bool {
+        true
+    }
+
     fn get_neutral_data(&self) -> &NeutralData {
         &self.neutral_data
     }
@@ -203,6 +219,26 @@ impl Mob for IronGolemEntity {
     /// Vanilla `AbstractGolem.removeWhenFarAway`.
     fn remove_when_far_away(&self, _distance_sq: f64) -> bool {
         false
+    }
+
+    fn get_ambient_sound_interval(&self) -> i32 {
+        AMBIENT_SOUND_INTERVAL
+    }
+
+    /// Vanilla `IronGolem.decreaseAirSupply`: golems do not run out of air.
+    fn mob_decrease_air_supply(&self, current: i32) -> i32 {
+        current
+    }
+
+    /// Vanilla `IronGolem.doPush`: a pushed enemy other than a creeper may become the target.
+    fn mob_do_push(&self, entity: &Arc<dyn EntityBase>) {
+        let entity_type = entity.get_entity().entity_type;
+        if TargetMatch::Enemy.matches(entity_type)
+            && entity_type != &EntityType::CREEPER
+            && self.get_random().random_range(0..PUSH_TARGET_CHANCE) == 0
+        {
+            self.set_mob_target(Some(entity.clone()), TargetReason::Unknown);
+        }
     }
 
     fn mob_play_step_sound(&self, _pos: &BlockPos, _state: &BlockState) {
@@ -287,7 +323,8 @@ impl Mob for IronGolemEntity {
         Some(self)
     }
 
-    fn mob_tick(&self, _caller: &dyn EntityBase) {
+    /// Vanilla `IronGolem.aiStep`.
+    fn mob_ai_step(&self) {
         let attack_tick = self.attack_animation_tick.load(Ordering::Relaxed);
         if attack_tick > 0 {
             self.attack_animation_tick.fetch_sub(1, Ordering::Relaxed);
@@ -297,6 +334,8 @@ impl Mob for IronGolemEntity {
         if flower_tick > 0 {
             self.offer_flower_tick.fetch_sub(1, Ordering::Relaxed);
         }
+
+        self.update_persistent_anger();
     }
 
     fn mob_init_data_tracker(&self) {

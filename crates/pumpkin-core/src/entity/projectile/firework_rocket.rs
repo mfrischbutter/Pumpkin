@@ -85,6 +85,11 @@ impl FireworkRocketEntity {
         Self::with_owner(entity, None, stack)
     }
 
+    /// Vanilla's `FireworkRocketEntity(level, owner, x, y, z, sourceItemStack)`.
+    pub fn new_with_owner(entity: Entity, owner: &Entity, stack: ItemStack) -> Self {
+        Self::with_owner(entity, Some(owner), stack)
+    }
+
     pub fn new_shot(entity: Entity, shooter: &Entity) -> Self {
         Self::new_shot_with_stack(entity, shooter, ItemStack::new(1, &Item::FIREWORK_ROCKET))
     }

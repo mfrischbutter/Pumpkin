@@ -5,6 +5,8 @@ use std::sync::{
 
 use crossbeam::atomic::AtomicCell;
 use pumpkin_data::BlockState;
+use pumpkin_data::data_component::DataComponent;
+use pumpkin_data::data_component_impl::{DataComponentImpl, LlamaVariantImpl};
 use pumpkin_data::entity::EntityType;
 use pumpkin_data::item::Item;
 use pumpkin_data::item_stack::ItemStack;
@@ -15,11 +17,13 @@ use pumpkin_nbt::compound::NbtCompound;
 use pumpkin_protocol::codec::var_int::VarInt;
 use pumpkin_util::math::position::BlockPos;
 use rand::RngExt;
+use uuid::Uuid;
 
 use crate::entity::ai::behavior::hunting::{self, Hunt};
 use crate::entity::ai::goal::llama_follow_caravan::LlamaFollowCaravanGoal;
 use crate::entity::ai::goal::run_around_like_crazy::RunAroundLikeCrazyGoal;
 use crate::entity::ai::target_match::TargetMatch;
+use crate::entity::custom_sound::CustomSound;
 use crate::entity::passive::tamable::is_untamed;
 use crate::entity::{
     Entity, EntityBase,
@@ -76,6 +80,18 @@ impl LlamaVariant {
         self as i32
     }
 
+    /// The name the `llama/variant` component uses.
+    #[must_use]
+    pub const fn name(self) -> &'static str {
+        pumpkin_data::entity_variant::LlamaVariant::by_id(self.id()).name()
+    }
+
+    #[must_use]
+    pub fn from_name(name: &str) -> Option<Self> {
+        pumpkin_data::entity_variant::LlamaVariant::from_name(name)
+            .map(|variant| Self::from_id(variant.id()))
+    }
+
     #[must_use]
     pub fn random_variant() -> Self {
         let mut rng = rand::rng();
@@ -92,6 +108,8 @@ impl LlamaVariant {
 const FOLLOW_CARAVAN_SPEED: f64 = 2.1;
 /// Vanilla `Llama.getFollowLeashSpeed`.
 const FOLLOW_LEASH_SPEED: f64 = 2.0;
+/// Vanilla `Llama`'s `setRequiredPathLength`.
+const REQUIRED_PATH_LENGTH: f32 = 40.0;
 
 /// Vanilla `Llama.setRandomStrength`: 1 to 3, or 1 to 5 with a 4% chance.
 fn random_strength() -> i32 {
@@ -140,7 +158,13 @@ pub fn as_llama(entity: &dyn EntityBase) -> Option<&LlamaEntity> {
 
 impl LlamaEntity {
     pub fn new(entity: Entity) -> Arc<Self> {
-        let mob_entity = MobEntity::new(entity);
+        let mut mob_entity = MobEntity::new(entity);
+        // Vanilla `Llama`: a caravan follows its head over longer paths.
+        mob_entity
+            .navigator
+            .get_mut()
+            .unwrap_or_else(std::sync::PoisonError::into_inner)
+            .set_required_path_length(REQUIRED_PATH_LENGTH);
         let variant = LlamaVariant::random_variant();
         let strength = random_strength();
 
@@ -182,7 +206,13 @@ impl LlamaEntity {
                 Box::new(RangedAttackGoal::new(ranged_weak, 1.25, 40, 20.0)),
             );
             goal_selector.add_goal(3, EscapeDangerGoal::new(1.2));
-            goal_selector.add_goal(4, BreedGoal::new(1.0));
+            // Vanilla `BreedGoal` looks for its own class: a llama also finds trader llamas.
+            let breed = if mob_arc.is_trader() {
+                BreedGoal::new(1.0)
+            } else {
+                BreedGoal::with_partners(1.0, TargetMatch::LLAMA_LIKE)
+            };
+            goal_selector.add_goal(4, breed);
             goal_selector.add_goal(
                 5,
                 Box::new(TemptGoal::with_tag(
@@ -344,6 +374,10 @@ impl AgeableMob for LlamaEntity {
     fn get_ageable_data(&self) -> &AgeableData {
         &self.ageable_data
     }
+
+    fn age_boundary_reached(&self) {
+        horse_base::refresh_age_dimensions(self);
+    }
 }
 
 impl Animal for LlamaEntity {
@@ -360,8 +394,8 @@ impl Animal for LlamaEntity {
             .is_some_and(|llama| horse_base::can_parent(self) && horse_base::can_parent(llama))
     }
 
-    /// Vanilla `Llama.getBreedOffspring`: up to the stronger parent's strength (one more
-    /// with a 3% chance) and a parent's variant.
+    /// Vanilla `Llama.getBreedOffspring`: health, jump and speed from both parents, up to the
+    /// stronger parent's strength (one more with a 3% chance) and a parent's variant.
     fn get_breed_offspring(&self, partner: &dyn EntityBase) -> Arc<dyn EntityBase> {
         let entity = self.get_entity();
         let baby = Self::new(Entity::new(
@@ -375,6 +409,7 @@ impl Animal for LlamaEntity {
                 .persistence_required
                 .store(true, Ordering::Relaxed);
         }
+        horse_base::set_offspring_attributes(self, partner, baby.as_ref());
         if let Some(partner) = partner.cast_any().downcast_ref::<Self>() {
             let mut rng = self.get_random();
             let stronger = self.get_strength().max(partner.get_strength());
@@ -469,6 +504,20 @@ impl AbstractHorse for LlamaEntity {
     }
 }
 
+impl CustomSound for LlamaEntity {
+    fn hurt_sound(&self) -> Option<Sound> {
+        Some(Sound::EntityLlamaHurt)
+    }
+
+    fn death_sound(&self) -> Option<Sound> {
+        Some(Sound::EntityLlamaDeath)
+    }
+
+    fn sound_volume(&self) -> f32 {
+        horse_base::SOUND_VOLUME
+    }
+}
+
 impl Mob for LlamaEntity {
     /// Vanilla `AbstractHorse.isPushable`.
     fn mob_is_pushable(&self) -> bool {
@@ -489,7 +538,22 @@ impl Mob for LlamaEntity {
         self.is_tame()
     }
 
-    /// Vanilla `Llama.finalizeSpawn`: a random strength and the group's variant.
+    /// Vanilla `AbstractHorse.getOwnerReference`.
+    fn get_owner_uuid(&self) -> Option<Uuid> {
+        horse_base::owner(self)
+    }
+
+    /// Vanilla `Llama.isImmobile`: no rearing, so only eating or dying holds it still.
+    fn is_mob_immobile(&self) -> bool {
+        self.mob_entity.living_entity.is_dead_or_dying() || horse_base::is_eating(self)
+    }
+
+    fn on_elastic_leash_pull(&self) {
+        horse_base::on_leash_pull(self);
+    }
+
+    /// Vanilla `Llama.finalizeSpawn` with `AbstractHorse.finalizeSpawn`: a random strength,
+    /// the group's variant and, as for every chested horse, a random health.
     fn finalize_spawn(
         &self,
         _world: &Arc<World>,
@@ -504,6 +568,7 @@ impl Mob for LlamaEntity {
             _ => (LlamaVariant::random_variant(), 0),
         };
         self.set_variant(variant);
+        horse_base::randomize_max_health(self);
         // `LlamaGroupData` is ageable group data that spawns babies after the first llama.
         self.finalize_ageable_spawn(Some(SpawnGroupData::Ageable {
             group_size,
@@ -519,6 +584,30 @@ impl Mob for LlamaEntity {
 
     fn get_ambient_sound(&self) -> Option<Sound> {
         Some(Sound::EntityLlamaAmbient)
+    }
+
+    fn get_ambient_sound_interval(&self) -> i32 {
+        horse_base::AMBIENT_SOUND_INTERVAL
+    }
+
+    fn as_custom_sound(&self) -> Option<&dyn CustomSound> {
+        Some(self)
+    }
+
+    /// Vanilla `Llama.get(LLAMA_VARIANT)`.
+    fn mob_get_component(&self, component: DataComponent) -> Option<Box<dyn DataComponentImpl>> {
+        (component == DataComponent::LlamaVariant).then(|| {
+            Box::new(LlamaVariantImpl {
+                value: self.get_variant().name().into(),
+            }) as Box<dyn DataComponentImpl>
+        })
+    }
+
+    /// Vanilla `Llama.applyImplicitComponent(LLAMA_VARIANT)`.
+    fn mob_set_variant_name(&self, name: &str) {
+        if let Some(variant) = LlamaVariant::from_name(name) {
+            self.set_variant(variant);
+        }
     }
 
     fn mob_play_step_sound(&self, _pos: &BlockPos, _state: &BlockState) {
@@ -553,14 +642,12 @@ impl Mob for LlamaEntity {
         }
     }
 
+    /// Vanilla `Llama.readAdditionalSaveData`: the strength first, so the chest gets its
+    /// columns; a missing one is 1 and a missing variant creamy.
     fn mob_read_nbt(&self, nbt: &NbtCompound) {
         self.read_ageable_nbt(nbt);
-        if let Some(variant) = nbt.get_int("Variant") {
-            self.set_variant(LlamaVariant::from_id(variant));
-        }
-        if let Some(strength) = nbt.get_int("Strength") {
-            self.set_strength(strength);
-        }
+        self.set_strength(nbt.get_int("Strength").unwrap_or(0));
+        self.set_variant(LlamaVariant::from_id(nbt.get_int("Variant").unwrap_or(0)));
         horse_base::read_horse_nbt(self, nbt);
         self.set_has_chest(nbt.get_bool("ChestedHorse").unwrap_or(false));
         horse_inventory::read_chest_items(self, nbt);
@@ -619,15 +706,15 @@ impl Mob for LlamaEntity {
         );
     }
 
-    /// Vanilla `AbstractChestedHorse.mobInteract`: a wild llama can be mounted to tame it, a tame
-    /// one takes a chest and a carpet.
+    /// Vanilla `AbstractChestedHorse.mobInteract` with `AbstractHorse.mobInteract`: a wild
+    /// llama can be mounted to tame it, a tame one takes a chest and a carpet.
     fn mob_interact(&self, player: &Arc<Player>, item_stack: &mut ItemStack) -> bool {
         horse_base::horse_interact(self, player, item_stack, |stack| {
             if !self.has_chest() && stack.item == &Item::CHEST {
                 self.equip_chest(player, stack);
                 return true;
             }
-            horse_base::try_equip_body_armor(self, player, stack)
+            false
         })
     }
 }

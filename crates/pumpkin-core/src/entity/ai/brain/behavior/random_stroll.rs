@@ -3,10 +3,8 @@ use pumpkin_util::math::vector3::Vector3;
 
 use super::super::memory::{MemoryStatus, types, walk_target::WalkTarget};
 use super::OneShot;
-use crate::entity::ai::pathfinder::node::PathComputationType;
-use crate::entity::ai::util::{
-    air_and_water_random_pos, default_random_pos, goal_utils, land_random_pos,
-};
+use super::utils::get_random_swimmable_pos;
+use crate::entity::ai::util::{air_and_water_random_pos, goal_utils, land_random_pos};
 use crate::entity::mob::Mob;
 
 const MAX_XZ_DIST: i32 = 10;
@@ -72,26 +70,6 @@ pub fn fly(speed_modifier: f32) -> OneShot {
     )
 }
 
-/// Vanilla `BehaviorUtils.getRandomSwimmablePos`.
-fn random_swimmable_pos(mob: &dyn Mob, horizontal: i32, vertical: i32) -> Option<Vector3<f64>> {
-    let world = mob.get_entity().world.load();
-    let mut target = default_random_pos::get_pos(mob, horizontal, vertical);
-    let mut count = 0;
-    while let Some(pos) = target {
-        let (block, state) = world.get_block_and_state(&pos.to_block_pos());
-        if count >= 10
-            || world
-                .block_registry
-                .is_pathfindable(block, state, PathComputationType::Water)
-        {
-            break;
-        }
-        count += 1;
-        target = default_random_pos::get_pos(mob, horizontal, vertical);
-    }
-    target
-}
-
 /// Vanilla `RandomStroll.getTargetSwimPos`: ever farther spots along the first direction, as
 /// long as they stay in the fluid.
 fn get_target_swim_pos(mob: &dyn Mob) -> Option<Vector3<f64>> {
@@ -101,7 +79,7 @@ fn get_target_swim_pos(mob: &dyn Mob) -> Option<Vector3<f64>> {
     let mut target = None;
     for (horizontal, vertical) in SWIM_XY_DISTANCE_TIERS {
         target = fallback.map_or_else(
-            || random_swimmable_pos(mob, horizontal, vertical),
+            || get_random_swimmable_pos(mob, horizontal, vertical),
             |fallback| {
                 let direction = (fallback - position).normalize();
                 Some(Vector3::new(

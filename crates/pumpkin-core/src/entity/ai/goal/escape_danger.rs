@@ -7,6 +7,7 @@ use std::sync::atomic::Ordering::Relaxed;
 use super::{Controls, Goal, GoalReach};
 use crate::entity::ai::goal::try_find_water::TryFindWaterGoal;
 use crate::entity::ai::util::default_random_pos;
+use crate::entity::passive::abstract_horse::AbstractHorse;
 use crate::entity::{ai::pathfinder::NavigatorGoal, mob::Mob};
 
 const WATER_SEARCH_XZ: i32 = 5;
@@ -29,6 +30,7 @@ pub struct EscapeDangerGoal {
     panic_causes: PanicCauses,
     /// Vanilla `TurtlePanicGoal`: look for water this far first, not only when burning.
     water_first: Option<i32>,
+    calm_while_mob_controlled: bool,
 }
 
 impl EscapeDangerGoal {
@@ -48,6 +50,7 @@ impl EscapeDangerGoal {
             running: false,
             panic_causes,
             water_first: None,
+            calm_while_mob_controlled: false,
         })
     }
 
@@ -58,6 +61,14 @@ impl EscapeDangerGoal {
         self
     }
 
+    /// Vanilla `AbstractHorse.MountPanicGoal`: no panic while a mob rides the horse.
+    #[must_use]
+    pub fn mount(speed: f64) -> Box<Self> {
+        let mut goal = Self::new(speed);
+        goal.calm_while_mob_controlled = true;
+        goal
+    }
+
     #[must_use]
     pub const fn is_running(&self) -> bool {
         self.running
@@ -66,6 +77,13 @@ impl EscapeDangerGoal {
     /// Only damage in the panic causes tag makes a mob flee, and only while the source is still
     /// remembered.
     fn should_panic(&self, mob: &dyn Mob) -> bool {
+        if self.calm_while_mob_controlled
+            && mob
+                .as_abstract_horse()
+                .is_some_and(AbstractHorse::is_mob_controlled)
+        {
+            return false;
+        }
         let panic_causes = (self.panic_causes)(mob);
         mob.get_mob_entity()
             .living_entity

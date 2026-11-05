@@ -4,14 +4,12 @@ use std::sync::atomic::{AtomicBool, Ordering};
 use pumpkin_data::entity::EntityType;
 use pumpkin_data::item::Item;
 use pumpkin_data::item_stack::ItemStack;
-use pumpkin_data::particle::Particle;
 use pumpkin_data::sound::Sound;
 use pumpkin_data::tag::{self, Taggable};
 use pumpkin_data::tracked_data;
 use pumpkin_nbt::compound::NbtCompound;
-use pumpkin_util::math::vector3::Vector3;
 
-use super::abstract_fish::{AbstractFish, FishData};
+use super::abstract_fish::{self, AbstractFish, FishData};
 use super::frog_ai;
 use crate::entity::ai::brain::memory::{MemoryModuleId, PackedMemories};
 use crate::entity::ai::brain::sensing::SensorType;
@@ -24,7 +22,7 @@ use crate::entity::mob::conversion::{ConversionParams, convert_to};
 use crate::entity::mob::spawn::SpawnGroupData;
 use crate::entity::{
     Entity, EntityBase,
-    ageable::{AgeableData, AgeableMob},
+    ageable::{AgeableData, AgeableMob, get_speed_up_seconds_when_feeding},
     mob::{Mob, MobEntity},
     player::Player,
 };
@@ -47,13 +45,16 @@ impl TadpoleEntity {
     pub fn new(entity: Entity) -> Arc<Self> {
         let mut mob_entity = MobEntity::new(entity);
         Self::set_up_movement(&mut mob_entity);
-        Arc::new(Self {
+        let tadpole = Arc::new(Self {
             mob_entity,
             ageable_data: AgeableData::default(),
             fish_data: FishData {
                 from_bucket: AtomicBool::new(true),
             },
-        })
+        });
+        // Vanilla `AbstractFish.registerGoals`: a tadpole runs them beside its brain.
+        abstract_fish::register_fish_goals(&tadpole.mob_entity);
+        tadpole
     }
 
     /// Vanilla `Tadpole` constructor and `createNavigation`.
@@ -80,26 +81,23 @@ impl TadpoleEntity {
         item_stack.item.has_tag(&tag::Item::MINECRAFT_FROG_FOOD)
     }
 
-    /// Vanilla `Tadpole.feed`.
+    /// Vanilla `Tadpole.feed`. Its happy villager particle is `Level.addParticle`, drawn by the
+    /// feeding player's own client only.
     fn feed(&self, player: &Arc<Player>, item_stack: &mut ItemStack) {
         item_stack.decrement_unless_creative(player.gamemode.load(), 1);
         let ticks_left = (TICKS_TO_BE_FROG - self.get_age()).max(0);
-        let seconds = (ticks_left as f32 / 20.0 * 0.1) as i32;
+        let seconds = get_speed_up_seconds_when_feeding(ticks_left);
         self.set_age(self.get_age() + seconds * 20);
-
-        let entity = self.get_entity();
-        entity.world.load().spawn_particle(
-            entity.pos.load() + Vector3::new(0.0, f64::from(entity.height()), 0.0),
-            Vector3::new(0.5, 0.5, 0.5),
-            1.0,
-            7,
-            Particle::HappyVillager,
-        );
     }
 
-    /// Vanilla `Tadpole.ageUp`.
+    /// Vanilla `Tadpole.ageUp`. A tadpole read past its time converts once it is in the world.
     fn grow_into_frog(&self) {
-        let world = self.get_entity().world.load_full();
+        let entity = self.get_entity();
+        let world = entity.world.load_full();
+        if world.get_entity_by_id(entity.entity_id).is_none() {
+            return;
+        }
+        let dimensions = entity.get_dimensions(entity.pose.load());
         let _ = convert_to(
             self,
             &EntityType::FROG,
@@ -107,6 +105,7 @@ impl TadpoleEntity {
             |frog| {
                 frog.finalize_spawn(&world, None);
                 frog.get_mob_entity().set_persistence_required();
+                frog.get_entity().fudge_position_for(frog, dimensions);
                 self.play_entity_sound(Sound::EntityTadpoleGrowUp, 0.15, 1.0);
             },
         );

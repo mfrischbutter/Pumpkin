@@ -61,8 +61,8 @@ const GRAVITY: f64 = 0.04;
 const GRAVITY_IN_WATER: f64 = 0.005;
 /// Vanilla `WATER_SLOWDOWN_FACTOR`.
 const WATER_SLOWDOWN_FACTOR: f32 = 0.95;
-/// The minecart types' `passengerAttachments` in `EntityTypes`, not in the extracted entity data.
-const PASSENGER_ATTACHMENT_Y: f64 = 0.1875;
+/// Vanilla `AbstractMinecart.LOWERED_PASSENGER_ATTACHMENT`.
+const LOWERED_PASSENGER_ATTACHMENT: Vector3<f64> = Vector3::new(0.0, 0.0, 0.0);
 /// Vanilla `getDefaultDisplayOffset`, with the chest and hopper overrides.
 const DEFAULT_DISPLAY_OFFSET: i32 = 6;
 const CHEST_DISPLAY_OFFSET: i32 = 8;
@@ -471,19 +471,16 @@ impl EntityBase for MinecartEntity {
         }
     }
 
-    /// Vanilla `Entity.positionRider` with `AbstractMinecart.getPassengerAttachmentPoint`:
-    /// villagers and wandering traders sit lower.
-    fn position_rider(&self, passenger: &dyn EntityBase) {
-        let passenger_entity = passenger.get_entity();
-        let attachment_y = if passenger_entity.entity_type == &EntityType::VILLAGER
-            || passenger_entity.entity_type == &EntityType::WANDERING_TRADER
-        {
-            0.0
-        } else {
-            PASSENGER_ATTACHMENT_Y
-        };
-        let seat = self.vehicle.entity.pos.load() + Vector3::new(0.0, attachment_y, 0.0);
-        passenger_entity.set_pos(seat - passenger.vehicle_attachment_point());
+    /// Vanilla `AbstractMinecart.getPassengerAttachmentPoint`: villagers and wandering traders
+    /// sit lower, everyone else on the extracted seat.
+    fn passenger_attachment_point(
+        &self,
+        passenger: &dyn EntityBase,
+        _index: usize,
+    ) -> Option<Vector3<f64>> {
+        let passenger_type = passenger.get_entity().entity_type;
+        (passenger_type == &EntityType::VILLAGER || passenger_type == &EntityType::WANDERING_TRADER)
+            .then_some(LOWERED_PASSENGER_ATTACHMENT)
     }
 
     /// Vanilla `AbstractMinecart.tick`, which replaces `Entity.baseTick`: a burning cart never

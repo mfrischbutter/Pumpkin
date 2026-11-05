@@ -28,6 +28,9 @@ use crate::world::level_accessor::LevelAccessor;
 use pumpkin_util::random::RandomImpl;
 use rand::RngExt;
 
+/// Vanilla `AbstractCubeMob.getPassengerAttachmentPoint`: how far a rider sinks in per size.
+const PASSENGER_SINK_PER_SIZE: f64 = 0.015_625;
+
 const CUBE_MOB_HUNTS: &[Hunt] = &[
     Hunt::new(1, TargetMatch::Type(&EntityType::PLAYER), true)
         .matching(hunting::within_four_blocks_height),
@@ -325,6 +328,23 @@ impl Mob for SlimeEntity {
 
     fn mob_metadata(&self) -> Option<MobMetadata> {
         Some(MobMetadata::new().slime_size(self.get_size()))
+    }
+
+    /// Vanilla `AbstractCubeMob.getPassengerAttachmentPoint`: the bigger the cube, the deeper
+    /// its rider sits.
+    fn mob_passenger_attachment_point(
+        &self,
+        _passenger: &dyn EntityBase,
+        _index: usize,
+    ) -> Option<pumpkin_util::math::vector3::Vector3<f64>> {
+        let living = &self.entity.living_entity;
+        let scale = living.get_attribute_value(&Attributes::SCALE);
+        Some(pumpkin_util::math::vector3::Vector3::new(
+            0.0,
+            f64::from(living.entity.height())
+                - PASSENGER_SINK_PER_SIZE * f64::from(self.get_size()) * scale,
+            0.0,
+        ))
     }
 
     fn get_base_experience_reward(&self) -> u32 {

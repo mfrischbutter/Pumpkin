@@ -13,4 +13,9 @@ pub trait CustomSound: Mob {
     fn sound_category(&self) -> SoundCategory {
         self.mob_sound_source()
     }
+
+    /// Vanilla `LivingEntity.getVoicePitch`: the baby or adult pitch unless overridden.
+    fn voice_pitch(&self) -> f32 {
+        self.get_mob_entity().living_entity.get_pitch()
+    }
 }

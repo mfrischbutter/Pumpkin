@@ -4,28 +4,32 @@ use std::sync::{
 };
 
 use pumpkin_data::BlockState;
-use pumpkin_data::entity::EntityType;
+use pumpkin_data::attributes::Attributes;
+use pumpkin_data::damage::DamageType;
 use pumpkin_data::item_stack::ItemStack;
 use pumpkin_data::sound::Sound;
+use pumpkin_data::tag::{self, Taggable};
 use pumpkin_nbt::compound::NbtCompound;
 use pumpkin_util::math::position::BlockPos;
+use rand::RngExt;
+use uuid::Uuid;
 
+use crate::entity::custom_sound::CustomSound;
 use crate::entity::passive::abstract_horse::{self as horse_base, AbstractHorse, HorseData};
 use crate::entity::{
     Entity, EntityBase,
     ageable::{AgeableData, AgeableMob},
-    ai::goal::{
-        escape_danger::EscapeDangerGoal, look_around::RandomLookAroundGoal,
-        look_at_entity::LookAtEntityGoal, skeleton_trap::SkeletonTrapGoal, swim::SwimGoal,
-        wander_around::WanderAroundGoal,
-    },
-    mob::{Mob, MobEntity},
+    ai::goal::skeleton_trap::SkeletonTrapGoal,
+    mob::{Mob, MobEntity, spawn::SpawnGroupData},
     passive::animal::Animal,
     player::Player,
 };
+use crate::world::World;
 
 /// An untouched trap horse leaves after this many ticks (vanilla `SkeletonHorse.aiStep`).
 const TRAP_DESPAWN_TICKS: i32 = 18_000;
+/// Vanilla `SkeletonHorse.playSwimSound`: its splashes on the bottom are this loud.
+const GROUND_SWIM_VOLUME: f32 = 0.3;
 
 pub struct SkeletonHorseEntity {
     pub mob_entity: MobEntity,
@@ -52,22 +56,12 @@ impl SkeletonHorseEntity {
             let mob_arc: Arc<dyn Mob> = mob_arc.clone();
             Arc::downgrade(&mob_arc)
         };
-
-        {
-            let goal_selector = &mob_arc.mob_entity.goals_selector;
-
-            goal_selector.add_goal(0, Box::new(SwimGoal::default()));
-            goal_selector.add_goal(1, EscapeDangerGoal::new(1.2));
-            // Vanilla adds this goal while the horse is a trap; here it only starts then.
-            goal_selector.add_goal(1, Box::new(SkeletonTrapGoal::new(Arc::downgrade(&mob_arc))));
-            goal_selector.add_goal(6, Box::new(WanderAroundGoal::new(0.7)));
-            goal_selector.add_goal(
-                7,
-                LookAtEntityGoal::with_default(mob_weak, &EntityType::PLAYER, 6.0),
-            );
-            goal_selector.add_goal(8, Box::new(RandomLookAroundGoal::default()));
-        };
-
+        // Vanilla `SkeletonHorse.addBehaviourGoals` adds nothing: it neither floats, panics
+        // nor follows food.
+        let goal_selector = &mob_arc.mob_entity.goals_selector;
+        horse_base::register_horse_goals(goal_selector, mob_weak, true);
+        // Vanilla adds this goal while the horse is a trap; here it only starts then.
+        goal_selector.add_goal(1, Box::new(SkeletonTrapGoal::new(Arc::downgrade(&mob_arc))));
         mob_arc
     }
 
@@ -100,10 +94,25 @@ impl AgeableMob for SkeletonHorseEntity {
     fn default_baby_spawn_chance(&self) -> f32 {
         crate::entity::ageable::ABSTRACT_HORSE_BABY_SPAWN_CHANCE
     }
+
+    /// Vanilla `SkeletonHorse.canAgeUp`: a foal stays one.
+    fn can_age_up(&self) -> bool {
+        false
+    }
+
+    fn age_boundary_reached(&self) {
+        horse_base::refresh_age_dimensions(self);
+    }
 }
 
 impl Animal for SkeletonHorseEntity {
-    fn is_food(&self, _item_stack: &ItemStack) -> bool {
+    /// Vanilla `AbstractHorse.isFood`.
+    fn is_food(&self, item_stack: &ItemStack) -> bool {
+        item_stack.item.has_tag(&tag::Item::MINECRAFT_HORSE_FOOD)
+    }
+
+    /// Vanilla `AbstractHorse.canMate`: it never breeds.
+    fn can_mate(&self, _partner: &dyn EntityBase) -> bool {
         false
     }
 }
@@ -111,6 +120,29 @@ impl Animal for SkeletonHorseEntity {
 impl AbstractHorse for SkeletonHorseEntity {
     fn horse_data(&self) -> &HorseData {
         &self.horse
+    }
+
+    /// Vanilla `SkeletonHorse.playJumpSound`: another sound in water.
+    fn horse_jump_sound(&self) -> Sound {
+        if self.get_entity().is_in_water() {
+            Sound::EntitySkeletonHorseJumpWater
+        } else {
+            Sound::EntityHorseJump
+        }
+    }
+}
+
+impl CustomSound for SkeletonHorseEntity {
+    fn hurt_sound(&self) -> Option<Sound> {
+        Some(Sound::EntitySkeletonHorseHurt)
+    }
+
+    fn death_sound(&self) -> Option<Sound> {
+        Some(Sound::EntitySkeletonHorseDeath)
+    }
+
+    fn sound_volume(&self) -> f32 {
+        horse_base::SOUND_VOLUME
     }
 }
 
@@ -126,16 +158,29 @@ impl Mob for SkeletonHorseEntity {
     }
 
     /// Vanilla `SkeletonHorse.getAmbientSound`.
-    fn get_ambient_sound(&self) -> Option<pumpkin_data::sound::Sound> {
+    fn get_ambient_sound(&self) -> Option<Sound> {
         Some(if self.get_entity().is_submerged_in_water() {
-            pumpkin_data::sound::Sound::EntitySkeletonHorseAmbientWater
+            Sound::EntitySkeletonHorseAmbientWater
         } else {
-            pumpkin_data::sound::Sound::EntitySkeletonHorseAmbient
+            Sound::EntitySkeletonHorseAmbient
         })
+    }
+
+    fn get_ambient_sound_interval(&self) -> i32 {
+        horse_base::AMBIENT_SOUND_INTERVAL
+    }
+
+    fn as_custom_sound(&self) -> Option<&dyn CustomSound> {
+        Some(self)
     }
 
     fn is_tamed(&self) -> bool {
         self.is_tame()
+    }
+
+    /// Vanilla `AbstractHorse.getOwnerReference`.
+    fn get_owner_uuid(&self) -> Option<Uuid> {
+        horse_base::owner(self)
     }
 
     fn mob_tick(&self, _caller: &dyn EntityBase) {
@@ -150,13 +195,60 @@ impl Mob for SkeletonHorseEntity {
         }
     }
 
+    fn on_damage(&self, _damage_type: DamageType, _source: Option<&dyn EntityBase>) {
+        horse_base::on_hurt(self);
+    }
+
+    fn on_elastic_leash_pull(&self) {
+        horse_base::on_leash_pull(self);
+    }
+
+    fn mob_cause_fall_damage(&self, fall_distance: f32) {
+        horse_base::play_land_sound(self, fall_distance);
+    }
+
+    /// Vanilla `SkeletonHorse.randomizeAttributes` through `AbstractHorse.finalizeSpawn`: only
+    /// the jump is rolled.
+    fn finalize_spawn(
+        &self,
+        _world: &Arc<World>,
+        group_data: Option<SpawnGroupData>,
+    ) -> Option<SpawnGroupData> {
+        let jump = {
+            let mut rng = self.get_random();
+            horse_base::generate_jump_strength(|| rng.random())
+        };
+        self.mob_entity
+            .living_entity
+            .set_attribute_base(&Attributes::JUMP_STRENGTH, jump);
+        self.finalize_spawn_super(group_data)
+    }
+
     fn mob_play_step_sound(&self, pos: &BlockPos, state: &BlockState) {
         horse_base::play_step_sound(self, pos, state, true);
     }
 
+    /// Vanilla `SkeletonHorse.getSwimSound`: on the bottom it steps, and gallops under a rider.
+    fn mob_get_swim_sound(&self) -> Option<Sound> {
+        let entity = self.get_entity();
+        if entity.on_ground.load(Ordering::Relaxed) {
+            if !entity.has_passengers() {
+                return Some(Sound::EntitySkeletonHorseStepWater);
+            }
+            let gallop = horse_base::next_gallop_step(self);
+            if gallop > 5 && gallop % 3 == 0 {
+                return Some(Sound::EntitySkeletonHorseGallopWater);
+            }
+            if gallop <= 5 {
+                return Some(Sound::EntitySkeletonHorseStepWater);
+            }
+        }
+        Some(Sound::EntitySkeletonHorseSwim)
+    }
+
     fn mob_play_swim_sound(&self, volume: f32) {
         if self.get_entity().on_ground.load(Ordering::Relaxed) {
-            self.play_default_swim_sound(0.3);
+            self.play_default_swim_sound(GROUND_SWIM_VOLUME);
         } else {
             self.play_default_swim_sound((volume * 25.0).min(0.1));
         }
@@ -235,25 +327,12 @@ impl Mob for SkeletonHorseEntity {
         );
     }
 
+    /// Vanilla `SkeletonHorse.mobInteract`: a wild one ignores the player, a tamed one is a
+    /// horse (`AbstractHorse.mobInteract`).
     fn mob_interact(&self, player: &Arc<Player>, item_stack: &mut ItemStack) -> bool {
-        if horse_base::try_open_inventory(self, player) {
-            return true;
+        if let Some(result) = horse_base::important_interaction(self, player, item_stack) {
+            return result;
         }
-        if crate::entity::mob::saddle::try_equip_saddle(self, player, item_stack) {
-            return true;
-        }
-
-        if !self.is_baby() {
-            let world = player.world();
-            let ent = &self.mob_entity.living_entity.entity;
-            if let Some(vehicle) = world.get_entity_by_id(ent.entity_id)
-                && let Some(passenger) = world.get_player_by_id(player.entity_id())
-            {
-                ent.add_passenger(vehicle, passenger as Arc<dyn EntityBase>);
-                return true;
-            }
-        }
-
-        self.animal_interact(player, item_stack, Sound::EntitySkeletonHorseAmbient)
+        self.is_tame() && horse_base::abstract_horse_interact(self, player, item_stack)
     }
 }

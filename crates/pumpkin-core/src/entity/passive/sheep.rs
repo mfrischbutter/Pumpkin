@@ -370,6 +370,6 @@ impl Mob for SheepEntity {
             return true;
         }
 
-        self.animal_interact(player, item_stack, Sound::EntitySheepAmbient)
+        self.animal_interact(player, item_stack)
     }
 }

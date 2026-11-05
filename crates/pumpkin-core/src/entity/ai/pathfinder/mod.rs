@@ -683,6 +683,15 @@ impl PathNavigation {
         destination: Vector3<f64>,
         reach_range: i32,
     ) -> Option<Path> {
+        self.compute_path_to_targets(entity, &[BlockPos::floored_v(destination)], reach_range)
+    }
+
+    pub fn compute_path_to_targets(
+        &mut self,
+        entity: &LivingEntity,
+        targets: &[BlockPos],
+        reach_range: i32,
+    ) -> Option<Path> {
         let world_change = self.prepare_evaluator(entity);
 
         let max_path_length = self.mob_max_follow_range(entity);
@@ -701,9 +710,9 @@ impl PathNavigation {
             );
             self.update_pathfinder_max_visited_nodes = false;
         }
-        let mut path = finder.find_path_single(
+        let mut path = finder.find_path(
             &mut self.evaluator,
-            BlockPos::floored_v(destination),
+            targets,
             max_path_length,
             reach_range,
             self.max_visited_nodes_multiplier,
@@ -734,32 +743,8 @@ impl PathNavigation {
         {
             return Some(path.clone());
         }
-        let world_change = self.prepare_evaluator(entity);
-        let max_path_length = self.mob_max_follow_range(entity);
-        let finder = self.path_finder.get_or_insert_with(|| {
-            PathFinder::new(
-                (entity.get_attribute_base(&Attributes::FOLLOW_RANGE)
-                    * f64::from(MAX_VISITED_NODES_MULTIPLIER))
-                .floor() as usize,
-            )
-        });
-        finder.set_use_xz_distance(self.xz_path_distance);
-        if self.update_pathfinder_max_visited_nodes {
-            finder.set_max_visited_nodes(
-                (max_path_length * MAX_VISITED_NODES_MULTIPLIER).floor() as usize
-            );
-            self.update_pathfinder_max_visited_nodes = false;
-        }
-        let mut path = finder.find_path(
-            &mut self.evaluator,
-            targets,
-            max_path_length,
-            reach_range,
-            self.max_visited_nodes_multiplier,
-        );
-        self.evaluator.done();
-        if let Some(path) = &mut path {
-            path.world_change = Some(world_change);
+        let path = self.compute_path_to_targets(entity, targets, reach_range);
+        if let Some(path) = &path {
             self.target_pos = Some(path.get_target());
             self.reach_range = reach_range;
             self.reset_stuck_timeout();
@@ -1642,6 +1627,15 @@ impl PathNavigationTrait for FlyingPathNavigation {
         self.inner.create_path(entity, destination, reach_range)
     }
 
+    fn create_path_to_any(
+        &mut self,
+        entity: &LivingEntity,
+        targets: &[BlockPos],
+        reach_range: i32,
+    ) -> Option<Path> {
+        self.inner.create_path_to_any(entity, targets, reach_range)
+    }
+
     fn recompute_path(&mut self, entity: &LivingEntity) {
         self.inner.recompute_path(entity);
     }
@@ -1905,6 +1899,15 @@ impl PathNavigationTrait for WaterBoundPathNavigation {
         self.inner.create_path(entity, destination, reach_range)
     }
 
+    fn create_path_to_any(
+        &mut self,
+        entity: &LivingEntity,
+        targets: &[BlockPos],
+        reach_range: i32,
+    ) -> Option<Path> {
+        self.inner.create_path_to_any(entity, targets, reach_range)
+    }
+
     fn recompute_path(&mut self, entity: &LivingEntity) {
         self.inner.recompute_path(entity);
     }
@@ -2143,6 +2146,15 @@ impl PathNavigationTrait for WallClimberNavigation {
     ) -> Option<Path> {
         self.path_to_position = Some(BlockPos::floored_v(destination));
         self.inner.create_path(entity, destination, reach_range)
+    }
+
+    fn create_path_to_any(
+        &mut self,
+        entity: &LivingEntity,
+        targets: &[BlockPos],
+        reach_range: i32,
+    ) -> Option<Path> {
+        self.inner.create_path_to_any(entity, targets, reach_range)
     }
 
     fn recompute_path(&mut self, entity: &LivingEntity) {
@@ -2390,6 +2402,15 @@ impl PathNavigationTrait for AmphibiousPathNavigation {
         reach_range: i32,
     ) -> Option<Path> {
         self.inner.create_path(entity, destination, reach_range)
+    }
+
+    fn create_path_to_any(
+        &mut self,
+        entity: &LivingEntity,
+        targets: &[BlockPos],
+        reach_range: i32,
+    ) -> Option<Path> {
+        self.inner.create_path_to_any(entity, targets, reach_range)
     }
 
     fn recompute_path(&mut self, entity: &LivingEntity) {

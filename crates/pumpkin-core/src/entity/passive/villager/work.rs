@@ -5,7 +5,7 @@ use std::sync::Arc;
 use std::sync::atomic::Ordering;
 
 use pumpkin_data::block_properties::ComposterLikeProperties;
-use pumpkin_data::data_component_impl::{CompostableImpl, EquipmentSlot};
+use pumpkin_data::data_component_impl::EquipmentSlot;
 use pumpkin_data::effect::StatusEffect;
 use pumpkin_data::entity::EntityType;
 use pumpkin_data::item::Item;
@@ -217,15 +217,16 @@ pub(super) fn use_composter(world: &Arc<World>, pos: BlockPos, body: &VillagerEn
     compost_items(world, pos, body, state.id);
 }
 
-/// Vanilla `WorkAtComposter.compostItems`: above ten of a kind, up to twenty seeds go in.
+/// Vanilla `WorkAtComposter.compostItems`: a full composter gives its bone meal, then above ten
+/// of a kind, up to twenty seeds go in one by one until the composter is ready.
 fn compost_items(world: &Arc<World>, pos: BlockPos, body: &VillagerEntity, state: BlockStateId) {
-    let composter = ComposterBlock;
-    let mut level = ComposterLikeProperties::from_state_id(state).level;
-    if level == 8 {
-        composter.clear_composter(world, &pos, state, &Block::COMPOSTER);
-        level = 0;
-    }
-    let started_at = level;
+    let source: Option<&dyn EntityBase> = Some(body);
+    let started = if ComposterLikeProperties::from_state_id(state).level == 8 {
+        ComposterBlock::extract_produce(source, state, world, &pos)
+    } else {
+        state
+    };
+    let mut current = started;
     let mut total_items_to_use = 20;
     let mut seen = [0i32; 2];
     let mut inventory = body
@@ -233,6 +234,9 @@ fn compost_items(world: &Arc<World>, pos: BlockPos, body: &VillagerEntity, state
         .lock()
         .unwrap_or_else(std::sync::PoisonError::into_inner);
     'stacks: for stack in inventory.iter_mut().rev() {
+        if total_items_to_use <= 0 {
+            break;
+        }
         let index = if stack.item == &Item::WHEAT_SEEDS {
             0
         } else if stack.item == &Item::BEETROOT_SEEDS {
@@ -240,9 +244,6 @@ fn compost_items(world: &Arc<World>, pos: BlockPos, body: &VillagerEntity, state
         } else {
             continue;
         };
-        if total_items_to_use <= 0 {
-            break;
-        }
         let stack_size = i32::from(stack.item_count);
         seen[index] += stack_size;
         let items_to_use = (seen[index] - 10).min(total_items_to_use).min(stack_size);
@@ -250,29 +251,16 @@ fn compost_items(world: &Arc<World>, pos: BlockPos, body: &VillagerEntity, state
             continue;
         }
         total_items_to_use -= items_to_use;
-        let chance = stack
-            .get_data_component::<CompostableImpl>()
-            .map_or(0.0, |compostable| compostable.chance);
         for _ in 0..items_to_use {
-            stack.decrement(1);
-            if level == 0 || rand::rng().random_bool(f64::from(chance)) {
-                level += 1;
-            }
-            if level == 7 {
+            current = ComposterBlock::insert_item(source, current, world, stack, &pos);
+            if ComposterLikeProperties::from_state_id(current).level == 7 {
                 break 'stacks;
             }
         }
     }
     drop(inventory);
-    if level != started_at {
-        let state = world.get_block_state_id(&pos);
-        composter.update_level_composter(world, &pos, state, &Block::COMPOSTER, level);
-    }
-    world.sync_world_event(
-        WorldEvent::ComposterFill,
-        pos,
-        i32::from(level != started_at),
-    );
+    // Vanilla compares with the state before the bone meal came out.
+    world.sync_world_event(WorldEvent::ComposterFill, pos, i32::from(current != state));
 }
 
 /// Vanilla `UseBonemeal`.

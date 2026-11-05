@@ -749,6 +749,12 @@ impl World {
             let passenger_entity = passenger.get_entity();
             let old_chunk = passenger_entity.chunk_pos.load();
             vehicle.position_rider(passenger.as_ref());
+            // Vanilla `Entity.rideTick` and `LivingEntity.rideTick`: a rider keeps no motion of
+            // its own and builds no fall.
+            passenger_entity.velocity.store(Vector3::default());
+            if let Some(living) = passenger.get_living_entity() {
+                living.fall_distance.store(0.0);
+            }
             if passenger_entity.chunk_pos.load() != old_chunk
                 && passenger.get_player().is_some()
                 && let Some(player) = self.get_player_by_id(passenger_entity.entity_id)
@@ -1568,13 +1574,26 @@ impl World {
         category: SoundCategory,
         position: &Vector3<f64>,
     ) {
+        self.play_sound_event_fine(sound, category, position, 1.0, 1.0);
+    }
+
+    pub fn play_sound_event_fine(
+        &self,
+        sound: &pumpkin_data::data_component_impl::IdOr<
+            pumpkin_data::data_component_impl::SoundEvent,
+        >,
+        category: SoundCategory,
+        position: &Vector3<f64>,
+        volume: f32,
+        pitch: f32,
+    ) {
         let seed = rng().random::<i64>();
         let packet = CSoundEffect::new(
             data_to_proto_sound(sound),
             category,
             position,
-            1.0,
-            1.0,
+            volume,
+            pitch,
             seed,
         );
         self.broadcast_packet_all(&packet);
@@ -5228,13 +5247,24 @@ impl World {
             .load()
             .game_rules
             .fire_spread_radius_around_player;
-        match spread_radius {
-            0 => false,
-            -1 => true,
-            radius => self
-                .get_closest_player(pos.to_centered_f64(), radius as f64)
-                .is_some(),
+        if spread_radius == -1 {
+            return true;
         }
+        if spread_radius <= 0 {
+            return false;
+        }
+        // Vanilla `ChunkMap.anyPlayerCloseEnoughTo`: from the block's corner, no spectators.
+        let target = pos.0.to_f64();
+        let max_distance_sq = (spread_radius as f64).powi(2);
+        self.players.load().iter().any(|player| {
+            !player.is_spectator()
+                && player
+                    .get_entity()
+                    .pos
+                    .load()
+                    .squared_distance_to_vec(&target)
+                    < max_distance_sq
+        })
     }
 
     pub fn get_closest_player(&self, pos: Vector3<f64>, radius: f64) -> Option<Arc<Player>> {
@@ -5760,6 +5790,22 @@ impl World {
             return;
         }
         base_entity.removed.store(true, Ordering::Release);
+
+        // Vanilla `Entity.setRemoved`: a destroyed entity leaves its vehicle and its
+        // passengers leave it.
+        if let Some(vehicle) = base_entity.get_vehicle() {
+            vehicle
+                .get_entity()
+                .remove_passenger_on_disconnect(base_entity.entity_id);
+        }
+        let passengers = base_entity
+            .passengers
+            .lock()
+            .unwrap_or_else(std::sync::PoisonError::into_inner)
+            .clone();
+        for passenger in passengers {
+            base_entity.remove_passenger(passenger.get_entity().entity_id);
+        }
 
         self.entity_tracker.remove_entity(entity, self);
         self.entities.rcu(|current_entities| {
@@ -6362,6 +6408,11 @@ impl World {
     #[must_use]
     pub fn get_light_level_dependent_magic_value(&self, pos: &BlockPos) -> f32 {
         LevelAccessor::get_light_level_dependent_magic_value(self, pos)
+    }
+
+    #[must_use]
+    pub fn get_pathfinding_cost_from_light_levels(&self, pos: &BlockPos) -> f32 {
+        LevelAccessor::get_pathfinding_cost_from_light_levels(self, pos)
     }
 
     /// [`Self::get_light_level_dependent_magic_value`] for a sky light the caller already read.
@@ -8454,11 +8505,15 @@ impl WorldPortalExt for WorldPortal {
         self.0.level.feature_seed()
     }
 
-    fn spawn_structure_entities(&self, entities: Vec<StructureEntity>) {
-        for StructureEntity { mut nbt, finalize } in entities {
+    fn spawn_structure_entities(&self, entities: Vec<(StructureEntity, &'static Biome)>) {
+        for (StructureEntity { mut nbt, finalize }, biome) in entities {
             nbt.child_tags.remove("UUID");
             if let Some(entity) = load_static_entity_from_nbt(&nbt, Vector3::default(), &self.0) {
                 if finalize {
+                    // Vanilla `finalizeVillagerType` reads the biome the structure generates in.
+                    if let Some(mob) = entity.get_mob() {
+                        mob.finalize_spawn_in_biome(biome);
+                    }
                     crate::entity::mob::spawn::finalize_spawn(
                         &entity,
                         &self.0,

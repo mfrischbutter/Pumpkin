@@ -656,7 +656,7 @@ impl Mob for HappyGhastEntity {
     /// Vanilla `HappyGhast.mobInteract` with the item's own interactions before it.
     fn mob_interact(&self, player: &Arc<Player>, item_stack: &mut ItemStack) -> bool {
         if self.is_baby() {
-            return self.animal_interact(player, item_stack, Sound::EntityGhastlingAmbient);
+            return self.animal_interact(player, item_stack);
         }
         if self.try_equip_harness(player, item_stack) {
             return true;

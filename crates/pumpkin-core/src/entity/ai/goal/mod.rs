@@ -2,7 +2,6 @@ use crate::entity::mob::Mob;
 use std::{any::TypeId, ops::BitOr, ptr};
 
 pub mod active_target;
-pub mod ambient_stand;
 pub mod avoid_entity;
 pub mod beg;
 pub mod blaze_attack;
@@ -14,6 +13,7 @@ pub mod cat;
 pub mod chase_player;
 pub mod climb_on_top_of_powder_snow;
 pub mod creeper_ignite;
+pub mod defend_village_target;
 pub mod destroy_egg;
 pub mod door_interact;
 pub mod eat_grass;
@@ -24,12 +24,14 @@ pub mod follow_mob;
 pub mod follow_owner;
 pub mod follow_parent;
 pub mod goal_selector;
+pub mod golem_random_stroll_in_village;
 pub mod interact;
 pub mod leap_at_target;
 pub mod llama_follow_caravan;
 pub mod look_around;
 pub mod look_at_entity;
 pub mod melee_attack;
+pub mod move_back_to_village;
 pub mod move_to_target_pos;
 pub mod move_towards_restriction;
 pub mod move_towards_target;
@@ -63,7 +65,6 @@ pub mod try_find_water;
 pub mod use_item;
 pub mod wander_around;
 pub mod water_avoiding_random_flying;
-pub mod work_at_job_site;
 pub mod zombie_attack;
 
 #[must_use]

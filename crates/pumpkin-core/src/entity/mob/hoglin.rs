@@ -535,7 +535,7 @@ impl Mob for HoglinEntity {
         if pacified && self.is_food(item_stack) {
             return false;
         }
-        let consumed = self.animal_interact(player, item_stack, Sound::EntityHoglinAmbient);
+        let consumed = self.animal_interact(player, item_stack);
         if consumed {
             self.mob_entity.set_persistence_required();
         }

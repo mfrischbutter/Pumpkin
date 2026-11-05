@@ -4,7 +4,6 @@ use pumpkin_data::dye_color::DyeColor;
 use pumpkin_data::item::Item;
 use pumpkin_data::item_stack::ItemStack;
 use pumpkin_data::particle::Particle;
-use pumpkin_data::sound::{Sound, SoundCategory};
 
 use crate::entity::{EntityBase, mob::Mob, player::Player, r#type::from_type};
 use crate::world::World;
@@ -57,12 +56,8 @@ pub trait Animal: Mob {
         level.get_pathfinding_cost_from_light_levels(pos)
     }
 
-    fn play_eating_sound(&self, sound: Sound) {
-        let mob_entity = self.get_mob_entity();
-        let entity = &mob_entity.living_entity.entity;
-        let world = entity.world.load();
-        world.play_sound(sound, SoundCategory::Neutral, &entity.pos.load());
-    }
+    /// Vanilla `Animal.playEatingSound`: silent unless the species overrides it.
+    fn play_eating_sound(&self) {}
 
     fn write_animal_nbt(&self, nbt: &mut pumpkin_nbt::compound::NbtCompound) {
         let mob_entity = self.get_mob_entity();
@@ -87,12 +82,25 @@ pub trait Animal: Mob {
         item_stack.decrement_unless_creative(player.gamemode.load(), 1);
     }
 
-    fn animal_interact(
-        &self,
-        player: &Arc<Player>,
-        item_stack: &mut ItemStack,
-        ambient_sound: Sound,
-    ) -> bool {
+    /// Vanilla `Animal.setInLove`: 600 ticks in love caused by the player, and the hearts
+    /// entity event for the clients. Returns `false` when a plugin cancels.
+    fn set_in_love(&self, player: &Arc<Player>) -> bool {
+        let Some(ticks) = self.approve_love(Some(player.entity_id()), 600) else {
+            return false;
+        };
+        let mob_entity = self.get_mob_entity();
+        mob_entity.set_love_ticks(ticks, Some(player.gameprofile.id));
+        let entity = &mob_entity.living_entity.entity;
+        entity.world.load().send_entity_status(
+            entity,
+            pumpkin_data::entity::EntityStatus::InLoveHearts,
+            ActorEventID::InLoveHearts,
+        );
+        true
+    }
+
+    /// Vanilla `Animal.mobInteract`: food puts an adult in love or ages a baby up.
+    fn animal_interact(&self, player: &Arc<Player>, item_stack: &mut ItemStack) -> bool {
         let mob_entity = self.get_mob_entity();
         if self.is_food(item_stack) {
             let age = mob_entity
@@ -103,53 +111,30 @@ pub trait Animal: Mob {
 
             if age >= 0 && mob_entity.is_breeding_ready() && !mob_entity.is_in_love() {
                 self.use_player_item(player, item_stack);
-
-                let Some(ticks) = self.approve_love(Some(player.entity_id()), 600) else {
-                    return true;
-                };
-                mob_entity.set_love_ticks(ticks, Some(player.gameprofile.id));
-                let entity = &mob_entity.living_entity.entity;
-                let world = entity.world.load();
-                let pos = entity.pos.load();
-
-                world.send_entity_status(
-                    entity,
-                    pumpkin_data::entity::EntityStatus::InLoveHearts,
-                    ActorEventID::InLoveHearts,
-                );
-
-                world.spawn_particle(
-                    pos + Vector3::new(0.0, f64::from(entity.height()), 0.0),
-                    Vector3::new(0.5, 0.5, 0.5),
-                    1.0,
-                    7,
-                    Particle::Heart,
-                );
-                world.play_sound(ambient_sound, SoundCategory::Neutral, &entity.pos.load());
+                if self.set_in_love(player) {
+                    self.play_eating_sound();
+                }
                 return true;
             }
 
-            if age < 0 {
+            if let Some(ageable) = self.as_ageable()
+                && ageable.can_age_up()
+            {
                 self.use_player_item(player, item_stack);
-                let speedup = (-age / 10).max(1);
-                mob_entity
-                    .living_entity
-                    .entity
-                    .age
-                    .fetch_add(speedup, std::sync::atomic::Ordering::Relaxed);
+                ageable.age_up(
+                    crate::entity::ageable::get_speed_up_seconds_when_feeding(-age),
+                    true,
+                );
 
                 let entity = &mob_entity.living_entity.entity;
-                let world = entity.world.load();
-                let pos = entity.pos.load();
-
-                world.spawn_particle(
-                    pos + Vector3::new(0.0, f64::from(entity.height()), 0.0),
+                entity.world.load().spawn_particle(
+                    entity.pos.load() + Vector3::new(0.0, f64::from(entity.height()), 0.0),
                     Vector3::new(0.5, 0.5, 0.5),
                     1.0,
                     7,
                     Particle::HappyVillager,
                 );
-                self.play_eating_sound(ambient_sound);
+                self.play_eating_sound();
                 return true;
             }
         }

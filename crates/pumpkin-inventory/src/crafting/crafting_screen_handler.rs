@@ -72,7 +72,12 @@ impl RecipeResult {
             item_id: result.id.to_string(),
             count: result.count,
             pot_decorations: None,
-            components: Vec::new(),
+            // The recipe's result components, such as a suspicious stew's effects.
+            components: result
+                .components
+                .iter()
+                .map(|(component, value)| (*component, Some(value.clone_dyn())))
+                .collect(),
             recipe_id: None,
         }
     }

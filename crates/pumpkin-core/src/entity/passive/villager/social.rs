@@ -13,7 +13,9 @@ use pumpkin_world::poi::Occupancy;
 use rand::RngExt;
 use uuid::Uuid;
 
-use super::data::{BREEDING_FOOD_THRESHOLD, VillagerData, VillagerProfession};
+use super::data::{
+    BREEDING_FOOD_THRESHOLD, GOSSIP_DISCARD_THRESHOLD, VillagerData, VillagerProfession,
+};
 use super::{GossipType, VillagerEntity};
 use crate::entity::ageable::AgeableMob;
 use crate::entity::ai::brain::BrainTick;
@@ -28,8 +30,6 @@ use crate::world::World;
 const GOSSIP_COOLDOWN: i64 = 1200;
 /// Vanilla `Villager.MAX_GOSSIP_TOPICS`.
 const MAX_GOSSIP_TOPICS: usize = 10;
-/// Vanilla `GossipContainer.DISCARD_THRESHOLD`.
-const DISCARD_THRESHOLD: i32 = 2;
 /// Vanilla `Villager.HOW_MANY_VILLAGERS_NEED_TO_AGREE_TO_SPAWN_A_GOLEM`.
 const VILLAGERS_TO_AGREE_ON_A_GOLEM: usize = 5;
 /// Vanilla `VillagerGoalPackages.INTERACT_DIST_SQR`.
@@ -112,7 +112,7 @@ impl VillagerEntity {
             }
             transferred += 1;
             let decayed = value - gossip.decay_per_transfer();
-            if decayed >= DISCARD_THRESHOLD {
+            if decayed >= GOSSIP_DISCARD_THRESHOLD {
                 let entry = gossips
                     .entry(target)
                     .or_default()
@@ -139,22 +139,8 @@ impl VillagerEntity {
         target.last_gossip_share_time.store(time, Ordering::Relaxed);
         self.spawn_golem_if_needed(tick.state, tick.world, time, VILLAGERS_TO_AGREE_ON_A_GOLEM);
         if new_gossip > 0 {
-            self.notify_trading_player_offers_updated();
+            self.refresh_trading_player_prices(None);
         }
-    }
-
-    /// Vanilla `Villager.onReputationEventFrom`, `VILLAGER_KILLED`.
-    pub(super) fn witness_murder(&self, killer: Uuid) {
-        let mut gossips = self
-            .gossips
-            .lock()
-            .unwrap_or_else(std::sync::PoisonError::into_inner);
-        let value = gossips
-            .entry(killer)
-            .or_default()
-            .entry(GossipType::MajorNegative)
-            .or_default();
-        *value = (*value + 25).min(GossipType::MajorNegative.max_value());
     }
 
     /// Vanilla `Villager.hasExcessFood`.
@@ -226,6 +212,7 @@ impl VillagerEntity {
             partner.villager_type()
         };
         child.set_villager_data(VillagerData::new(child_type, VillagerProfession::None, 1));
+        child.set_villager_data_finalized(true);
         child
     }
 }

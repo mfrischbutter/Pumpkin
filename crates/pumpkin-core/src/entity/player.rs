@@ -14,6 +14,7 @@ use std::sync::{Arc, Mutex, Weak};
 use std::time::{Duration, Instant};
 
 use crate::entity::attributes::{Modifier, ModifierOperation};
+use crate::entity::passive::abstract_horse::player_jump_pending_scale;
 use crate::plugin::api::events::enchantment::{EnchantItemEvent, PrepareItemEnchantEvent};
 use crate::plugin::api::events::inventory::PrepareAnvilEvent;
 use crate::world::scoreboard::{BedrockScoreboard, Scoreboard};
@@ -312,6 +313,7 @@ use crate::log_at_level;
 use crate::net::{ClientPlatform, GameProfile};
 use crate::net::{DisconnectReason, PlayerConfig};
 use crate::plugin::api::events::entity::entity_toggle_glide::EntityToggleGlideEvent;
+use crate::plugin::api::events::entity::horse_jump::HorseJumpEvent;
 use crate::plugin::player::exp_change::PlayerExpChangeEvent;
 use crate::plugin::player::inventory_interact::InventoryClickEvent;
 use crate::plugin::player::player_armor_change::PlayerArmorChangeEvent;
@@ -334,7 +336,7 @@ use super::hunger::HungerManager;
 use super::item::ItemEntity;
 use super::living::LivingEntity;
 use super::mob::warden_spawn_tracker::WardenSpawnTracker;
-use super::{Entity, EntityBase, NBTStorage, NBTStorageInit};
+use super::{Entity, EntityBase, GearDamage, NBTStorage, NBTStorageInit};
 use pumpkin_data::potion::Effect;
 const MAX_CACHED_SIGNATURES: u8 = 128; // Vanilla: 128
 const MAX_PREVIOUS_MESSAGES: u8 = 20; // Vanilla: 20
@@ -415,10 +417,6 @@ pub const DATA_VERSION: i32 = 5023; // 26.3
 /// non-creative players holding a tool that can harvest the block, so callers
 /// must apply the same gating.
 pub const MINE_BLOCK_EXHAUSTION: f32 = 0.005; // Vanilla: 0.005F
-
-/// Vanilla `Player.DEFAULT_VEHICLE_ATTACHMENT`: the point of a player that sits on a vehicle's
-/// passenger attachment point, so a riding player is placed this far below it.
-pub const DEFAULT_VEHICLE_ATTACHMENT: Vector3<f64> = Vector3::new(0.0, 0.6, 0.0);
 
 #[cfg(test)]
 const fn bedrock_inventory_slot(player_screen_slot: i16) -> Option<u32> {
@@ -1793,21 +1791,7 @@ impl Player {
             self.trigger_advancement(crate::entity::player::advancement::trigger::AdvancementTrigger::DealtOverkillDamage);
         }
 
-        if let Some(enchantments) = item_stack.get_data_component::<EnchantmentsImpl>() {
-            for (enchantment, level) in enchantments.enchantment.iter() {
-                for post_effect in enchantment.get_post_attack_effects() {
-                    if post_effect.affected
-                        == Some(pumpkin_data::enchantment::EnchantmentTarget::Victim)
-                        && let pumpkin_data::enchantment::EnchantmentEntityEffect::Ignite {
-                            duration,
-                        } = &post_effect.effect
-                    {
-                        let duration_seconds = duration.calculate(*level);
-                        victim_entity.set_on_fire_for_ticks((duration_seconds * 20.0) as u32);
-                    }
-                }
-            }
-        }
+        crate::enchantment::EnchantmentHelper::on_post_attack(victim_entity, &item_stack);
 
         if is_mace_smash {
             let fall_distance = self.living_entity.fall_distance.load();
@@ -5400,13 +5384,16 @@ impl Player {
             let player_pos = self.living_entity.entity.block_pos.load();
             let pos_f64 = self.living_entity.entity.pos.load();
 
-            let village_pos = world.nearest_job_site(player_pos, 64).or_else(|| {
-                world.raids.try_lock().ok().and_then(|raids| {
-                    raids
-                        .get_nearby_raid(&player_pos, 64.0 * 64.0)
-                        .map(|r| r.center)
-                })
-            });
+            let village_pos = world
+                .is_village(&player_pos)
+                .then_some(player_pos)
+                .or_else(|| {
+                    world.raids.try_lock().ok().and_then(|raids| {
+                        raids
+                            .get_nearby_raid(&player_pos, 64.0 * 64.0)
+                            .map(|r| r.center)
+                    })
+                });
 
             if let Some(pos) = village_pos {
                 if let Some(p) = self.world().get_player_by_uuid(self.gameprofile.id) {
@@ -6768,6 +6755,28 @@ impl Player {
         }
     }
 
+    /// Vanilla `handlePlayerCommand` `START_RIDING_JUMP` on the controlled vehicle
+    /// (`handleStartJump`): only rears and sounds, the rider's client simulates the jump itself.
+    pub fn start_riding_jump(&self, server: &Arc<Server>, jump_scale: i32) {
+        if jump_scale <= 0 {
+            return;
+        }
+        let Some(vehicle) = self.get_entity().get_controlled_vehicle() else {
+            return;
+        };
+        let Some(mob) = vehicle.get_mob() else {
+            return;
+        };
+        let mut event = HorseJumpEvent::new(
+            vehicle.get_entity().entity_id,
+            player_jump_pending_scale(jump_scale),
+        );
+        server.plugin_manager.fire_blocking(server, &mut event);
+        if !event.cancelled {
+            mob.mob_start_rider_jump(jump_scale);
+        }
+    }
+
     /// The Java slot shown in the single Bedrock equipment slot, if `window_id` is a mount screen.
     fn bedrock_mount_equip_slot(&self, window_id: u32) -> Option<usize> {
         self.bedrock_mount_screen
@@ -7780,6 +7789,18 @@ impl EntityBase for Player {
         self.damage_with_context(caller, amount, damage_type, position, source, cause)
     }
 
+    fn hurt_gear_slots(&self, gear: GearDamage) -> &'static [EquipmentSlot] {
+        match gear {
+            GearDamage::Armor => &[
+                EquipmentSlot::FEET,
+                EquipmentSlot::LEGS,
+                EquipmentSlot::CHEST,
+                EquipmentSlot::HEAD,
+            ],
+            GearDamage::Helmet => &[EquipmentSlot::HEAD],
+        }
+    }
+
     fn teleport(
         &self,
         position: Vector3<f64>,
@@ -7823,10 +7844,6 @@ impl EntityBase for Player {
 
     fn get_player(&self) -> Option<&Player> {
         Some(self)
-    }
-
-    fn vehicle_attachment_point(&self) -> Vector3<f64> {
-        DEFAULT_VEHICLE_ATTACHMENT
     }
 
     /// Bedrock renders remote players only from `AddPlayer`, never `AddActor`.

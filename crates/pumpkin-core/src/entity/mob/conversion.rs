@@ -220,6 +220,11 @@ fn convert_common(from: &dyn Mob, to: &dyn Mob, params: ConversionParams) {
         to_entity.set_on_fire(true);
     }
     to_entity.set_invulnerable(from_entity.invulnerable.load(Relaxed));
+    // Vanilla `setInvulnerableTime`.
+    to_mob
+        .living_entity
+        .hurt_cooldown
+        .store(from_mob.living_entity.hurt_cooldown.load(Relaxed), Relaxed);
     to_entity.set_has_no_gravity(from_entity.has_no_gravity());
     to_entity
         .portal_cooldown
@@ -237,9 +242,19 @@ fn convert_common(from: &dyn Mob, to: &dyn Mob, params: ConversionParams) {
                 .iter()
                 .cloned(),
         );
+    // Vanilla `COMPONENTS_TO_COPY`: the custom name and the custom data.
     if let Some(name) = &**from_entity.custom_name.load() {
         to_entity.set_custom_name(name.clone());
     }
+    let custom_data = from_entity
+        .custom_data
+        .lock()
+        .unwrap_or_else(std::sync::PoisonError::into_inner)
+        .clone();
+    *to_entity
+        .custom_data
+        .lock()
+        .unwrap_or_else(std::sync::PoisonError::into_inner) = custom_data;
 }
 
 /// Vanilla `ConversionTracker`.

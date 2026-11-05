@@ -285,6 +285,11 @@ pub mod noise_router;
 #[path = "generated/flower_pot_transformations.rs"]
 pub mod flower_pot_transformations;
 
+#[cfg(feature = "suspicious_effects")]
+#[rustfmt::skip]
+#[path = "generated/suspicious_effects.rs"]
+pub mod suspicious_effects;
+
 #[cfg(feature = "effect")]
 #[rustfmt::skip]
 #[path = "generated/effect.rs"]
@@ -330,6 +335,11 @@ pub mod test_instance;
 #[path = "generated/painting_variant.rs"]
 pub mod painting_variant;
 
+#[cfg(feature = "poi_type")]
+#[rustfmt::skip]
+#[path = "generated/poi_type.rs"]
+pub mod poi_type;
+
 #[cfg(feature = "context_provider")]
 #[rustfmt::skip]
 #[path = "generated/context_provider.rs"]
@@ -354,11 +364,6 @@ pub mod cat_variant;
 #[rustfmt::skip]
 #[path = "generated/frog_variant.rs"]
 pub mod frog_variant;
-
-#[cfg(feature = "poi_type")]
-#[rustfmt::skip]
-#[path = "generated/poi_type.rs"]
-pub mod poi_type;
 
 #[cfg(feature = "cow_variant")]
 #[rustfmt::skip]

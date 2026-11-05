@@ -72,6 +72,8 @@ impl HuskEntity {
         }
         camel.get_entity().add_passenger(camel.clone(), this);
         let parched = from_type(&EntityType::PARCHED, pos, &world, Uuid::new_v4());
+        // Vanilla `snapTo` with the husk's yaw and a level pitch.
+        parched.get_entity().set_rotation(entity.yaw.load(), 0.0);
         finalize_spawn(&parched, &world, EntitySpawnReason::Natural, None);
         if world.spawn_entity(parched.clone()) {
             camel.get_entity().add_passenger(camel.clone(), parched);

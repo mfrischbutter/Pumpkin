@@ -5,7 +5,7 @@ use std::sync::atomic::Ordering::Relaxed;
 
 use pumpkin_data::block_properties::WhiteBedLikeProperties as BedProperties;
 use pumpkin_data::entity::{EntityType, MobCategory};
-use pumpkin_data::environment_attribute::{Activity, VillagerScheduleTimeline};
+use pumpkin_data::environment_attribute::Activity;
 use pumpkin_data::poi_type::PoiType;
 use pumpkin_data::tag::PointOfInterestType::MINECRAFT_ACQUIRABLE_JOB_SITE;
 use pumpkin_data::tag::{self, Taggable};
@@ -45,7 +45,7 @@ use crate::entity::ai::brain::memory::position_tracker::{BlockPosTracker, Entity
 use crate::entity::ai::brain::memory::walk_target::WalkTarget;
 use crate::entity::ai::brain::memory::{MemoryModuleId, MemoryStatus, types};
 use crate::entity::ai::brain::sensing::SensorType;
-use crate::entity::ai::brain::{Brain, BrainProvider, BrainTick};
+use crate::entity::ai::brain::{Brain, BrainProvider, BrainTick, Schedule};
 use crate::entity::mob::Mob;
 use crate::world::World;
 use crate::world::villager_poi::poi_type_for_profession;
@@ -95,13 +95,14 @@ pub(super) fn make_brain(villager: &VillagerEntity, packed: &PackedMemories) -> 
         activities,
     }
     .make_brain(villager, packed);
-    brain.set_schedule(if is_baby(villager) {
-        VillagerScheduleTimeline::BABY_VILLAGER_ACTIVITY_KEYFRAMES
+    brain.set_schedule(Some(if is_baby(villager) {
+        Schedule::BabyVillager
     } else {
-        VillagerScheduleTimeline::VILLAGER_ACTIVITY_KEYFRAMES
-    });
+        Schedule::Villager
+    }));
     let world = villager.get_entity().world.load();
-    brain.update_activity_from_schedule(world.get_world_age(), world.get_time_of_day());
+    let pos = villager.get_entity().block_pos.load();
+    brain.update_activity_from_schedule(&world, world.get_world_age(), &pos);
     brain
 }
 
@@ -750,8 +751,9 @@ fn villager_calm_down() -> OneShot {
             if !(is_scared(tick) || attacker_close) {
                 tick.state.erase(types::HURT_BY.id());
                 tick.state.erase(types::HURT_BY_ENTITY.id());
+                let pos = tick.mob.get_entity().block_pos.load();
                 tick.state
-                    .update_activity_from_schedule(tick.time, tick.world.get_time_of_day());
+                    .update_activity_from_schedule(tick.world, tick.time, &pos);
             }
             true
         },
@@ -798,9 +800,11 @@ fn poi_competitor_scan() -> OneShot {
             let Some(me) = as_villager(tick.mob) else {
                 return true;
             };
+            let villagers = nearby_villagers(tick);
+            // The winner so far, `None` for this villager.
+            let mut winner: Option<&VillagerEntity> = None;
             let mut winner_xp = me.xp.load(Relaxed);
-            let mut me_winning = true;
-            for other in nearby_villagers(tick) {
+            for other in &villagers {
                 let Some(other) = other.cast_any().downcast_ref::<VillagerEntity>() else {
                     continue;
                 };
@@ -815,15 +819,19 @@ fn poi_competitor_scan() -> OneShot {
                 if holds_it != Some(true) {
                     continue;
                 }
-                // Vanilla `selectWinner`: the first only wins with more experience.
+                // Vanilla `selectWinner`: the winner so far only stays with more experience;
+                // the loser forgets the site.
                 let other_xp = other.xp.load(Relaxed);
                 if winner_xp > other_xp {
                     other.with_other_brain(|brain| brain.erase(types::JOB_SITE.id()));
                 } else {
-                    if me_winning {
-                        tick.state.erase(types::JOB_SITE.id());
-                        me_winning = false;
+                    match winner {
+                        None => tick.state.erase(types::JOB_SITE.id()),
+                        Some(previous) => {
+                            previous.with_other_brain(|brain| brain.erase(types::JOB_SITE.id()));
+                        }
                     }
+                    winner = Some(other);
                     winner_xp = other_xp;
                 }
             }

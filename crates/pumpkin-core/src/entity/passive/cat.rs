@@ -20,6 +20,7 @@ use crate::entity::custom_sound::CustomSound;
 use crate::entity::passive::animal::get_mixed_color;
 use crate::entity::{
     Entity, EntityBase,
+    ageable::{AgeableData, AgeableMob},
     ai::behavior::{
         feline,
         fleeing::{self, Flee},
@@ -85,6 +86,7 @@ pub fn morning_gift(cat: &CatEntity) -> Vec<ItemStack> {
 
 pub struct CatEntity {
     pub mob_entity: MobEntity,
+    pub ageable_data: AgeableData,
     pub variant: AtomicU8,
     pub sound_variant: AtomicU8,
     pub collar_color: AtomicU8,
@@ -98,6 +100,7 @@ impl CatEntity {
         let mob_entity = MobEntity::new(entity);
         let cat = Self {
             mob_entity,
+            ageable_data: AgeableData::default(),
             variant: AtomicU8::new(CatVariant::Black.id()),
             sound_variant: AtomicU8::new(0), // Default to classic
             collar_color: AtomicU8::new(14), // Default to red
@@ -231,20 +234,6 @@ impl CatEntity {
             VarInt(sound_variant as u8 as i32),
         );
     }
-
-    pub fn play_eating_sound(&self) {
-        let mob_entity = self.get_mob_entity();
-        let entity = &mob_entity.living_entity.entity;
-        let is_baby = entity.age.load(Ordering::Relaxed) < 0;
-        let sound_variant = CatSoundVariant::from_id(self.sound_variant.load(Ordering::Relaxed))
-            .unwrap_or_default();
-        let world = entity.world.load();
-        world.play_sound(
-            sound_variant.eat_sound(is_baby),
-            pumpkin_data::sound::SoundCategory::Neutral,
-            &entity.pos.load(),
-        );
-    }
 }
 
 impl CustomSound for CatEntity {
@@ -302,6 +291,16 @@ impl Animal for CatEntity {
         baby
     }
 
+    fn play_eating_sound(&self) {
+        let sound_variant = CatSoundVariant::from_id(self.sound_variant.load(Ordering::Relaxed))
+            .unwrap_or_default();
+        self.play_entity_sound(
+            sound_variant.eat_sound(self.mob_entity.living_entity.is_baby()),
+            1.0,
+            1.0,
+        );
+    }
+
     fn is_food(&self, item_stack: &ItemStack) -> bool {
         let item = item_stack.get_item();
         item.has_tag(&tag::Item::MINECRAFT_CAT_FOOD) || item == &Item::COD || item == &Item::SALMON
@@ -311,6 +310,12 @@ impl Animal for CatEntity {
 impl TamableAnimal for CatEntity {
     fn get_tamable_data(&self) -> &TamableData {
         &self.tamable_data
+    }
+}
+
+impl AgeableMob for CatEntity {
+    fn get_ageable_data(&self) -> &AgeableData {
+        &self.ageable_data
     }
 }
 
@@ -355,6 +360,10 @@ impl Mob for CatEntity {
     }
 
     fn as_custom_sound(&self) -> Option<&dyn CustomSound> {
+        Some(self)
+    }
+
+    fn as_ageable(&self) -> Option<&dyn AgeableMob> {
         Some(self)
     }
 
@@ -515,9 +524,8 @@ impl Mob for CatEntity {
                     return true;
                 }
 
-                let parent_interaction =
-                    self.mob_entity
-                        .mob_interact(player, item_stack, self.can_be_leashed());
+                // Vanilla `Cat.mobInteract` asks `Animal.mobInteract`: food breeds or ages up.
+                let parent_interaction = self.animal_interact(player, item_stack);
                 if !parent_interaction {
                     self.order_to_sit(!self.is_ordered_to_sit());
                     return true;
@@ -553,9 +561,7 @@ impl Mob for CatEntity {
         }
 
         // Vanilla `Cat.mobInteract`: any consuming interaction keeps the cat loaded.
-        let interacted = self
-            .mob_entity
-            .mob_interact(player, item_stack, self.can_be_leashed());
+        let interacted = self.animal_interact(player, item_stack);
         if interacted {
             self.mob_entity
                 .persistence_required

@@ -293,7 +293,7 @@ impl NautilusEntity {
                 ActorEventID::TamingFailed,
             );
         }
-        self.play_entity_sound(self.eat_sound(), 1.0, 1.0);
+        self.play_eating_sound();
     }
 
     /// Vanilla `TamableAnimal.feed(player, hand, item, 2, 1)`.
@@ -303,7 +303,7 @@ impl NautilusEntity {
             .map_or(1.0, |food| 2.0 * food.nutrition as f32);
         self.use_player_item(player, stack);
         self.mob_entity.living_entity.heal(heal);
-        self.play_entity_sound(self.eat_sound(), 1.0, 1.0);
+        self.play_eating_sound();
     }
 
     /// The equip part of vanilla `Equippable.equipOnInteract` for its armour.
@@ -395,6 +395,11 @@ impl TamableAnimal for NautilusEntity {
 }
 
 impl Animal for NautilusEntity {
+    /// Vanilla `Nautilus.playEatingSound` and `ZombieNautilus.playEatingSound`.
+    fn play_eating_sound(&self) {
+        self.make_sound(self.eat_sound());
+    }
+
     /// Vanilla `AbstractNautilus.isFood`: taming first, then its food.
     fn is_food(&self, item_stack: &ItemStack) -> bool {
         let tag = if !self.is_tame() && !self.is_baby() {
@@ -541,6 +546,13 @@ impl Mob for NautilusEntity {
     /// Vanilla `AbstractNautilus.isPushedByFluid`.
     fn mob_is_pushed_by_fluids(&self) -> bool {
         false
+    }
+
+    /// Vanilla `AbstractNautilus.canDispenserEquipIntoSlot`, past it `Mob`'s loot rule.
+    fn can_dispenser_equip_into_slot(&self, slot: &EquipmentSlot) -> bool {
+        *slot == EquipmentSlot::BODY
+            || *slot == EquipmentSlot::SADDLE
+            || self.mob_entity.can_pick_up_loot()
     }
 
     /// Vanilla `Nautilus.getMaxAirSupply`, which is also every mob's default.
@@ -700,7 +712,7 @@ impl Mob for NautilusEntity {
             .persistence_required
             .store(true, Ordering::Relaxed);
         if self.is_baby() {
-            return self.animal_interact(player, item_stack, self.eat_sound());
+            return self.animal_interact(player, item_stack);
         }
         let sneaking = player.get_entity().is_sneaking();
         if self.is_tame() && sneaking {
@@ -729,7 +741,7 @@ impl Mob for NautilusEntity {
         if self.is_tame() && !sneaking && !is_food {
             return self.start_riding(player);
         }
-        !self.is_zombie() && self.animal_interact(player, item_stack, self.eat_sound())
+        !self.is_zombie() && self.animal_interact(player, item_stack)
     }
 
     /// Vanilla `AbstractNautilus.canUseSlot(SADDLE)`: a tamed adult.

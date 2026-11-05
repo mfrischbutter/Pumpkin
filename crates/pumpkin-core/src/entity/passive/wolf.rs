@@ -166,13 +166,13 @@ impl WolfEntity {
     }
 
     /// Vanilla `TamableAnimal.feed`: heals twice the food's nutrition, or 2.
-    fn feed(&self, player: &Player, item_stack: &mut ItemStack, ambient: Sound) {
+    fn feed(&self, player: &Player, item_stack: &mut ItemStack) {
         let heal = item_stack
             .get_data_component::<pumpkin_data::data_component_impl::FoodImpl>()
             .map_or(2.0, |food| 2.0 * food.nutrition as f32);
         item_stack.decrement_unless_creative(player.gamemode.load(), 1);
         self.mob_entity.living_entity.heal(heal);
-        self.play_eating_sound(ambient);
+        self.play_eating_sound();
     }
 
     pub fn get_tame_flags(&self) -> u8 {
@@ -494,14 +494,12 @@ impl Mob for WolfEntity {
 
     fn mob_interact(&self, player: &Arc<Player>, item_stack: &mut ItemStack) -> bool {
         let item = item_stack.get_item();
-        let sound_variant = self.sound_variant();
-        let ambient = sound_variant.ambient_sound(self.is_baby());
         if self.is_tame() {
             if self.is_food(item_stack)
                 && self.mob_entity.living_entity.health.load()
                     < self.mob_entity.living_entity.get_max_health()
             {
-                self.feed(player, item_stack, ambient);
+                self.feed(player, item_stack);
                 return true;
             }
 
@@ -515,7 +513,7 @@ impl Mob for WolfEntity {
                     return true;
                 }
 
-                let parent_interaction = self.animal_interact(player, item_stack, ambient);
+                let parent_interaction = self.animal_interact(player, item_stack);
                 if !parent_interaction {
                     if self.order_to_sit(!self.is_ordered_to_sit()) {
                         self.stop_and_forget_target();
@@ -538,7 +536,7 @@ impl Mob for WolfEntity {
             return true;
         }
 
-        self.animal_interact(player, item_stack, ambient)
+        self.animal_interact(player, item_stack)
     }
 }
 

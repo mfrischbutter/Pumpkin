@@ -11,6 +11,20 @@ use crate::world::World;
 /// and water is rejected.
 #[must_use]
 pub fn get_pos(mob: &dyn Mob, horizontal_dist: i32, vertical_dist: i32) -> Option<Vector3<f64>> {
+    let world = mob.get_entity().world.load_full();
+    get_pos_weighted(mob, horizontal_dist, vertical_dist, |pos| {
+        f64::from(mob.get_walk_target_value(&pos, world.as_ref()))
+    })
+}
+
+/// Vanilla `LandRandomPos.getPos` with its own weight for the candidates.
+#[must_use]
+pub fn get_pos_weighted(
+    mob: &dyn Mob,
+    horizontal_dist: i32,
+    vertical_dist: i32,
+    weight: impl Fn(BlockPos) -> f64,
+) -> Option<Vector3<f64>> {
     let restrict = goal_utils::mob_restricted(mob, f64::from(horizontal_dist));
     let world = mob.get_entity().world.load_full();
     let block_pos = mob.get_entity().block_pos.load();
@@ -34,7 +48,24 @@ pub fn get_pos(mob: &dyn Mob, horizontal_dist: i32, vertical_dist: i32) -> Optio
             )?;
             move_pos_up_out_of_solid(mob, &world, &mut context, pos)
         },
-        |pos| f64::from(mob.get_walk_target_value(pos, world.as_ref())),
+        |pos| weight(*pos),
+    )
+}
+
+/// Vanilla `LandRandomPos.getPosTowards`.
+#[must_use]
+pub fn get_pos_towards(
+    mob: &dyn Mob,
+    horizontal_dist: i32,
+    vertical_dist: i32,
+    towards_pos: Vector3<f64>,
+) -> Option<Vector3<f64>> {
+    get_pos_in_direction(
+        mob,
+        0.0,
+        f64::from(horizontal_dist),
+        vertical_dist,
+        towards_pos - mob.get_entity().pos.load(),
     )
 }
 
@@ -64,11 +95,28 @@ pub fn get_pos_away_between(
     vertical_dist: i32,
     avoid_pos: Vector3<f64>,
 ) -> Option<Vector3<f64>> {
-    let mut rng = mob.get_random();
     let mut away = mob.get_entity().pos.load() - avoid_pos;
     if away.length() == 0.0 {
+        let mut rng = mob.get_random();
         away = Vector3::new(rng.random::<f64>() - 0.5, 0.0, rng.random::<f64>() - 0.5);
     }
+    get_pos_in_direction(
+        mob,
+        min_horizontal_dist,
+        max_horizontal_dist,
+        vertical_dist,
+        away,
+    )
+}
+
+/// Vanilla `LandRandomPos.getPosInDirection`.
+fn get_pos_in_direction(
+    mob: &dyn Mob,
+    min_horizontal_dist: f64,
+    max_horizontal_dist: f64,
+    vertical_dist: i32,
+    dir: Vector3<f64>,
+) -> Option<Vector3<f64>> {
     let restrict = goal_utils::mob_restricted(mob, max_horizontal_dist);
     let world = mob.get_entity().world.load_full();
     let block_pos = mob.get_entity().block_pos.load();
@@ -76,6 +124,7 @@ pub fn get_pos_away_between(
         Vector3::new(block_pos.0.x, block_pos.0.y, block_pos.0.z),
         world.clone(),
     );
+    let mut rng = mob.get_random();
     random_pos::generate_random_pos(
         || {
             let direction = random_pos::generate_random_direction_within_radians(
@@ -84,8 +133,8 @@ pub fn get_pos_away_between(
                 max_horizontal_dist,
                 vertical_dist,
                 0,
-                away.x,
-                away.z,
+                dir.x,
+                dir.z,
                 std::f64::consts::FRAC_PI_2,
             )?;
             let pos = toward_direction(

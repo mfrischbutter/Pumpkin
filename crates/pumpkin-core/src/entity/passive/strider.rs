@@ -428,7 +428,7 @@ impl Mob for StriderEntity {
             }
         }
 
-        let consumed = self.animal_interact(player, item_stack, Sound::EntityStriderAmbient);
+        let consumed = self.animal_interact(player, item_stack);
         // Vanilla `Strider.mobInteract`: eating plays its own sound.
         if consumed && has_food && !self.get_entity().is_silent() {
             let pitch = {

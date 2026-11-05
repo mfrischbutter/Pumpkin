@@ -14,6 +14,7 @@ use pumpkin_data::sound::Sound;
 use pumpkin_data::tag::{self, Taggable};
 use pumpkin_nbt::compound::NbtCompound;
 use pumpkin_util::math::position::BlockPos;
+use uuid::Uuid;
 
 use crate::entity::custom_sound::CustomSound;
 use crate::entity::passive::abstract_horse::{self as horse_base, AbstractHorse, HorseData};
@@ -87,7 +88,9 @@ impl ChestedHorseEntity {
             let mob_arc: Arc<dyn Mob> = mob_arc.clone();
             Arc::downgrade(&mob_arc)
         };
-        horse_base::register_horse_goals(&mob_arc.mob_entity.goals_selector, mob_weak, true);
+        let goal_selector = &mob_arc.mob_entity.goals_selector;
+        horse_base::register_horse_goals(goal_selector, mob_weak, true);
+        horse_base::add_behaviour_goals(goal_selector);
         mob_arc
     }
 
@@ -124,6 +127,10 @@ impl AgeableMob for ChestedHorseEntity {
 
     fn default_baby_spawn_chance(&self) -> f32 {
         crate::entity::ageable::ABSTRACT_HORSE_BABY_SPAWN_CHANCE
+    }
+
+    fn age_boundary_reached(&self) {
+        horse_base::refresh_age_dimensions(self);
     }
 }
 
@@ -162,7 +169,6 @@ impl Animal for ChestedHorseEntity {
             kind,
         );
         horse_base::set_offspring_attributes(self, partner, foal.as_ref());
-        horse_base::set_bred(foal.as_ref());
         foal
     }
 }
@@ -204,7 +210,7 @@ impl CustomSound for ChestedHorseEntity {
     }
 
     fn sound_volume(&self) -> f32 {
-        0.8
+        horse_base::SOUND_VOLUME
     }
 }
 
@@ -213,9 +219,8 @@ impl Mob for ChestedHorseEntity {
         Some(self.kind.ambient)
     }
 
-    /// Vanilla `AbstractHorse.getAmbientSoundInterval`.
     fn get_ambient_sound_interval(&self) -> i32 {
-        400
+        horse_base::AMBIENT_SOUND_INTERVAL
     }
 
     fn as_custom_sound(&self) -> Option<&dyn CustomSound> {
@@ -224,6 +229,11 @@ impl Mob for ChestedHorseEntity {
 
     fn is_tamed(&self) -> bool {
         self.is_tame()
+    }
+
+    /// Vanilla `AbstractHorse.getOwnerReference`.
+    fn get_owner_uuid(&self) -> Option<Uuid> {
+        horse_base::owner(self)
     }
 
     /// Vanilla `AbstractChestedHorse`: `canGallop` is off.
@@ -254,6 +264,14 @@ impl Mob for ChestedHorseEntity {
 
     fn on_damage(&self, _damage_type: DamageType, _source: Option<&dyn EntityBase>) {
         horse_base::on_hurt(self);
+    }
+
+    fn on_elastic_leash_pull(&self) {
+        horse_base::on_leash_pull(self);
+    }
+
+    fn mob_cause_fall_damage(&self, fall_distance: f32) {
+        horse_base::play_land_sound(self, fall_distance);
     }
 
     fn mob_start_rider_jump(&self, _strength: i32) {
@@ -325,7 +343,8 @@ impl Mob for ChestedHorseEntity {
         );
     }
 
-    /// Vanilla `AbstractChestedHorse.mobInteract`: a tamed adult takes a chest.
+    /// Vanilla `AbstractChestedHorse.mobInteract` with `AbstractHorse.mobInteract`: a tamed
+    /// adult also takes a chest.
     fn mob_interact(&self, player: &Arc<Player>, item_stack: &mut ItemStack) -> bool {
         horse_base::horse_interact(self, player, item_stack, |stack| {
             if !self.has_chest() && stack.item == &Item::CHEST {

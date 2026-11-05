@@ -86,7 +86,10 @@ impl SulfurCubeEntity {
         if stack.item.has_tag(&tag::Item::MINECRAFT_SULFUR_CUBE_FOOD) && self.can_age_up() {
             let age = self.get_age();
             stack.decrement_unless_creative(player.gamemode.load(), 1);
-            self.age_up(Self::get_speed_up_seconds_when_feeding(-age), true);
+            self.age_up(
+                crate::entity::ageable::get_speed_up_seconds_when_feeding(-age),
+                true,
+            );
             self.make_sound(Sound::EntitySmallSulfurCubeEat);
             return true;
         }

@@ -4,27 +4,36 @@ use crate::entity::mob::spawn::{EntitySpawnReason, SpawnGroupData, finalize_spaw
 use crate::entity::r#type::from_type;
 use crate::world::World;
 use pumpkin_data::BlockState;
+use pumpkin_data::attributes::Attributes;
+use pumpkin_data::damage::DamageType;
 use pumpkin_data::data_component_impl::EquipmentSlot;
 use pumpkin_data::entity::EntityType;
 use pumpkin_data::item::Item;
 use pumpkin_data::item_stack::ItemStack;
 use pumpkin_data::sound::Sound;
+use pumpkin_data::tag::{self, Taggable};
 use pumpkin_nbt::compound::NbtCompound;
 use pumpkin_util::math::position::BlockPos;
+use rand::RngExt;
 use uuid::Uuid;
 
+use crate::entity::custom_sound::CustomSound;
 use crate::entity::passive::abstract_horse::{self as horse_base, AbstractHorse, HorseData};
 use crate::entity::{
     Entity, EntityBase,
     ageable::{AgeableData, AgeableMob},
-    ai::goal::{
-        escape_danger::EscapeDangerGoal, look_around::RandomLookAroundGoal,
-        look_at_entity::LookAtEntityGoal, swim::SwimGoal, wander_around::WanderAroundGoal,
-    },
+    ai::goal::{swim::SwimGoal, tempt::TemptGoal},
     mob::{Mob, MobEntity},
     passive::animal::Animal,
     player::Player,
 };
+
+/// Vanilla `ZombieHorse.generateZombieHorseJumpStrength` and `generateZombieHorseSpeed`.
+const BASE_JUMP_STRENGTH: f64 = 0.5;
+const PER_RANDOM_JUMP_STRENGTH: f64 = 0.066_666_666_666_666_67;
+const BASE_SPEED: f64 = 9.0;
+const PER_RANDOM_SPEED: f64 = 1.0;
+const SPEED_FACTOR: f32 = 42.16;
 
 pub struct ZombieHorseEntity {
     pub mob_entity: MobEntity,
@@ -45,20 +54,18 @@ impl ZombieHorseEntity {
             let mob_arc: Arc<dyn Mob> = mob_arc.clone();
             Arc::downgrade(&mob_arc)
         };
-
-        {
-            let goal_selector = &mob_arc.mob_entity.goals_selector;
-
-            goal_selector.add_goal(0, Box::new(SwimGoal::default()));
-            goal_selector.add_goal(1, EscapeDangerGoal::new(1.2));
-            goal_selector.add_goal(6, Box::new(WanderAroundGoal::new(0.7)));
-            goal_selector.add_goal(
-                7,
-                LookAtEntityGoal::with_default(mob_weak, &EntityType::PLAYER, 6.0),
-            );
-            goal_selector.add_goal(8, Box::new(RandomLookAroundGoal::default()));
-        };
-
+        let goal_selector = &mob_arc.mob_entity.goals_selector;
+        horse_base::register_horse_goals(goal_selector, mob_weak, true);
+        // Vanilla `ZombieHorse.addBehaviourGoals`: floating and its own food, no panic.
+        goal_selector.add_goal(0, Box::new(SwimGoal::default()));
+        goal_selector.add_goal(
+            3,
+            Box::new(TemptGoal::with_tag(
+                1.25,
+                &tag::Item::MINECRAFT_ZOMBIE_HORSE_FOOD,
+                false,
+            )),
+        );
         mob_arc
     }
 
@@ -70,6 +77,26 @@ impl ZombieHorseEntity {
     pub fn set_tame(&self, val: bool) {
         horse_base::set_flag(self, horse_base::FLAG_TAME, val);
     }
+
+    /// Vanilla `ZombieHorse.randomizeAttributes`: its own jump and speed, the health stays.
+    fn randomize_attributes(&self) {
+        let (jump, speed) = {
+            let mut rng = self.get_random();
+            let jump = BASE_JUMP_STRENGTH
+                + rng.random::<f64>() * PER_RANDOM_JUMP_STRENGTH
+                + rng.random::<f64>() * PER_RANDOM_JUMP_STRENGTH
+                + rng.random::<f64>() * PER_RANDOM_JUMP_STRENGTH;
+            let speed = (BASE_SPEED
+                + rng.random::<f64>() * PER_RANDOM_SPEED
+                + rng.random::<f64>() * PER_RANDOM_SPEED
+                + rng.random::<f64>() * PER_RANDOM_SPEED)
+                / f64::from(SPEED_FACTOR);
+            (jump, speed)
+        };
+        let living = &self.mob_entity.living_entity;
+        living.set_attribute_base(&Attributes::JUMP_STRENGTH, jump);
+        living.set_attribute_base(&Attributes::MOVEMENT_SPEED, speed);
+    }
 }
 
 impl AgeableMob for ZombieHorseEntity {
@@ -80,10 +107,27 @@ impl AgeableMob for ZombieHorseEntity {
     fn default_baby_spawn_chance(&self) -> f32 {
         crate::entity::ageable::ABSTRACT_HORSE_BABY_SPAWN_CHANCE
     }
+
+    /// Vanilla `ZombieHorse.canAgeUp`: a foal stays one.
+    fn can_age_up(&self) -> bool {
+        false
+    }
+
+    fn age_boundary_reached(&self) {
+        horse_base::refresh_age_dimensions(self);
+    }
 }
 
 impl Animal for ZombieHorseEntity {
-    fn is_food(&self, _item_stack: &ItemStack) -> bool {
+    /// Vanilla `ZombieHorse.isFood`.
+    fn is_food(&self, item_stack: &ItemStack) -> bool {
+        item_stack
+            .item
+            .has_tag(&tag::Item::MINECRAFT_ZOMBIE_HORSE_FOOD)
+    }
+
+    /// Vanilla `AbstractHorse.canMate`: it never breeds.
+    fn can_mate(&self, _partner: &dyn EntityBase) -> bool {
         false
     }
 }
@@ -99,6 +143,30 @@ impl AbstractHorse for ZombieHorseEntity {
 
     fn horse_angry_sound(&self) -> Option<Sound> {
         Some(Sound::EntityZombieHorseAngry)
+    }
+
+    /// Vanilla `ZombieHorse.isMobControlled`: a mob rides in front, like its zombie jockey.
+    fn is_mob_controlled(&self) -> bool {
+        self.get_entity()
+            .passengers
+            .lock()
+            .unwrap_or_else(std::sync::PoisonError::into_inner)
+            .first()
+            .is_some_and(|rider| rider.get_mob().is_some())
+    }
+}
+
+impl CustomSound for ZombieHorseEntity {
+    fn hurt_sound(&self) -> Option<Sound> {
+        Some(Sound::EntityZombieHorseHurt)
+    }
+
+    fn death_sound(&self) -> Option<Sound> {
+        Some(Sound::EntityZombieHorseDeath)
+    }
+
+    fn sound_volume(&self) -> f32 {
+        horse_base::SOUND_VOLUME
     }
 }
 
@@ -116,6 +184,21 @@ impl Mob for ZombieHorseEntity {
     /// Vanilla `supportQuadLeash`.
     fn mob_support_quad_leash(&self) -> bool {
         true
+    }
+
+    /// Vanilla `ZombieHorse.canBeLeashed`: not while its jockey rides it wild.
+    fn can_be_leashed(&self) -> bool {
+        self.is_tame() || !self.is_mob_controlled()
+    }
+
+    /// Vanilla `AbstractHorse.finalizeSpawn`: its own jump and speed.
+    fn finalize_spawn(
+        &self,
+        _world: &Arc<World>,
+        group_data: Option<SpawnGroupData>,
+    ) -> Option<SpawnGroupData> {
+        self.randomize_attributes();
+        self.finalize_spawn_super(group_data)
     }
 
     /// Vanilla `ZombieHorse.finalizeSpawn`: a natural zombie horse carries a zombie with an
@@ -148,8 +231,16 @@ impl Mob for ZombieHorseEntity {
     }
 
     /// Vanilla `ZombieHorse.getAmbientSound`.
-    fn get_ambient_sound(&self) -> Option<pumpkin_data::sound::Sound> {
-        Some(pumpkin_data::sound::Sound::EntityZombieHorseAmbient)
+    fn get_ambient_sound(&self) -> Option<Sound> {
+        Some(Sound::EntityZombieHorseAmbient)
+    }
+
+    fn get_ambient_sound_interval(&self) -> i32 {
+        horse_base::AMBIENT_SOUND_INTERVAL
+    }
+
+    fn as_custom_sound(&self) -> Option<&dyn CustomSound> {
+        Some(self)
     }
 
     /// Vanilla `ZombieHorse.removeWhenFarAway`.
@@ -161,6 +252,11 @@ impl Mob for ZombieHorseEntity {
         self.is_tame()
     }
 
+    /// Vanilla `AbstractHorse.getOwnerReference`.
+    fn get_owner_uuid(&self) -> Option<Uuid> {
+        horse_base::owner(self)
+    }
+
     fn mob_play_step_sound(&self, pos: &BlockPos, state: &BlockState) {
         horse_base::play_step_sound(self, pos, state, true);
     }
@@ -169,8 +265,9 @@ impl Mob for ZombieHorseEntity {
         Some(self)
     }
 
-    fn sun_protection_slot(&self) -> pumpkin_data::data_component_impl::EquipmentSlot {
-        pumpkin_data::data_component_impl::EquipmentSlot::BODY
+    /// Vanilla `ZombieHorse.sunProtectionSlot`: its armour keeps the sun off.
+    fn sun_protection_slot(&self) -> EquipmentSlot {
+        EquipmentSlot::BODY
     }
 
     fn as_animal(&self) -> Option<&dyn Animal> {
@@ -194,6 +291,18 @@ impl Mob for ZombieHorseEntity {
     fn mob_tick(&self, _caller: &dyn EntityBase) {
         horse_base::horse_tick(self);
         horse_base::horse_ai_step(self);
+    }
+
+    fn on_damage(&self, _damage_type: DamageType, _source: Option<&dyn EntityBase>) {
+        horse_base::on_hurt(self);
+    }
+
+    fn on_elastic_leash_pull(&self) {
+        horse_base::on_leash_pull(self);
+    }
+
+    fn mob_cause_fall_damage(&self, fall_distance: f32) {
+        horse_base::play_land_sound(self, fall_distance);
     }
 
     fn as_abstract_horse(&self) -> Option<&dyn AbstractHorse> {
@@ -237,29 +346,26 @@ impl Mob for ZombieHorseEntity {
         );
     }
 
+    /// Vanilla `ZombieHorse.interact` and `mobInteract` with `AbstractHorse.mobInteract`: its
+    /// food feeds it, a wild one gets mad, and it takes horse armour like a horse.
     fn mob_interact(&self, player: &Arc<Player>, item_stack: &mut ItemStack) -> bool {
         // Vanilla `ZombieHorse.interact`: every click keeps it loaded.
         self.mob_entity
             .persistence_required
-            .store(true, std::sync::atomic::Ordering::Relaxed);
-        if horse_base::try_open_inventory(self, player) {
-            return true;
+            .store(true, Ordering::Relaxed);
+        if let Some(result) = horse_base::important_interaction(self, player, item_stack) {
+            return result;
         }
-        if crate::entity::mob::saddle::try_equip_saddle(self, player, item_stack) {
-            return true;
+        if let Some(result) =
+            horse_base::held_item_interaction(self, player, item_stack, false, |_| false)
+        {
+            return result;
         }
-
-        if !self.is_baby() {
-            let world = player.world();
-            let ent = &self.mob_entity.living_entity.entity;
-            if let Some(vehicle) = world.get_entity_by_id(ent.entity_id)
-                && let Some(passenger) = world.get_player_by_id(player.entity_id())
-            {
-                ent.add_passenger(vehicle, passenger as Arc<dyn EntityBase>);
-                return true;
-            }
+        // Vanilla `Animal.mobInteract` does nothing for it: it neither falls in love
+        // (`canFallInLove`) nor ages up.
+        if self.get_entity().has_passengers() || self.is_baby() {
+            return false;
         }
-
-        self.animal_interact(player, item_stack, Sound::EntityZombieHorseAmbient)
+        horse_base::abstract_horse_interact(self, player, item_stack)
     }
 }

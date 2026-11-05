@@ -888,7 +888,7 @@ impl Mob for PandaEntity {
         if !self.is_food(item_stack) {
             return self.is_baby()
                 && item_stack.item == &Item::GOLDEN_DANDELION
-                && self.animal_interact(player, item_stack, Sound::EntityPandaAmbient);
+                && self.animal_interact(player, item_stack);
         }
         if self.mob_entity.get_target().is_some() {
             self.got_bamboo.store(true, Ordering::Relaxed);
@@ -896,10 +896,10 @@ impl Mob for PandaEntity {
         let entity = self.get_entity();
         let age = entity.age.load(Ordering::Relaxed);
         if age < 0 {
-            return self.animal_interact(player, item_stack, Sound::EntityPandaAmbient);
+            return self.animal_interact(player, item_stack);
         }
         if age == 0 && self.mob_entity.is_breeding_ready() && !self.mob_entity.is_in_love() {
-            return self.animal_interact(player, item_stack, Sound::EntityPandaAmbient);
+            return self.animal_interact(player, item_stack);
         }
         self.take_food(player, item_stack)
     }

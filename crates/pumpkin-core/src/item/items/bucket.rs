@@ -108,7 +108,7 @@ const fn get_fill_sound(item: &Item) -> Sound {
 fn give_filled_bucket_stack(
     stack: &mut ItemStack,
     player: &Player,
-    mut filled: ItemStack,
+    filled: ItemStack,
     limit_creative_stack_size: bool,
 ) {
     player.trigger_advancement(
@@ -116,6 +116,15 @@ fn give_filled_bucket_stack(
             item_id: filled.item.registry_key.to_string(),
         },
     );
+    create_filled_result(stack, player, filled, limit_creative_stack_size);
+}
+
+pub(crate) fn create_filled_result(
+    stack: &mut ItemStack,
+    player: &Player,
+    mut filled: ItemStack,
+    limit_creative_stack_size: bool,
+) {
     if limit_creative_stack_size && player.gamemode.load() == GameMode::Creative {
         let has_item = {
             let inv = player
@@ -475,22 +484,16 @@ impl ItemBehaviour for EmptyBucketItem {
     fn use_on_entity(&self, item: &mut ItemStack, player: &Player, entity: Arc<dyn EntityBase>) {
         let ent = entity.get_entity();
         let entity_type = ent.entity_type;
-        if (entity_type == &EntityType::MOOSHROOM || entity_type == &EntityType::GOAT)
-            && ent.age.load(Ordering::Relaxed) >= 0
-        {
+        if entity_type == &EntityType::GOAT && ent.age.load(Ordering::Relaxed) >= 0 {
             let world = ent.world.load();
-            let sound = if entity_type == &EntityType::GOAT {
-                if let Some(goat) = entity
-                    .cast_any()
-                    .downcast_ref::<crate::entity::passive::goat::GoatEntity>()
-                    && goat.is_screaming()
-                {
-                    Sound::EntityGoatScreamingMilk
-                } else {
-                    Sound::EntityGoatMilk
-                }
+            let sound = if let Some(goat) = entity
+                .cast_any()
+                .downcast_ref::<crate::entity::passive::goat::GoatEntity>(
+            ) && goat.is_screaming()
+            {
+                Sound::EntityGoatScreamingMilk
             } else {
-                Sound::EntityCowMilk
+                Sound::EntityGoatMilk
             };
             world.play_sound(sound, SoundCategory::Neutral, &ent.pos.load());
             fill_bucket_stack(item, player, &Item::MILK_BUCKET);

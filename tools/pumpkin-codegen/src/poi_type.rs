@@ -6,51 +6,61 @@ use proc_macro2::TokenStream;
 use quote::{format_ident, quote};
 use serde::Deserialize;
 
-/// One entry of `point_of_interest_type.json`: vanilla's `PoiType` registry.
+/// One entry of `poi_types.json`: vanilla's `PoiType` registry.
 #[derive(Deserialize)]
-struct PoiTypeJson {
+pub(crate) struct PoiTypeJson {
     id: u16,
     max_tickets: u32,
     valid_range: u32,
-    states: Vec<u16>,
+    state_ids: Vec<u16>,
+}
+
+impl PoiTypeJson {
+    pub(crate) const fn id(&self) -> u16 {
+        self.id
+    }
+}
+
+/// The point of interest types by their name without namespace, in registry id order.
+pub(crate) fn read_poi_types() -> Vec<(String, PoiTypeJson)> {
+    let content = fs::read_to_string("../../assets/poi_types.json").expect("read poi_types.json");
+    let types: BTreeMap<String, PoiTypeJson> =
+        serde_json::from_str(&content).expect("parse poi_types.json");
+    let mut types: Vec<_> = types.into_iter().collect();
+    types.sort_by_key(|(_, json)| json.id);
+    types
 }
 
 pub fn build() -> TokenStream {
-    let content = fs::read_to_string("../../assets/point_of_interest_type.json")
-        .expect("read point_of_interest_type.json");
-    let types: BTreeMap<String, PoiTypeJson> =
-        serde_json::from_str(&content).expect("parse point_of_interest_type.json");
-
-    let mut by_id: Vec<(&String, &PoiTypeJson)> = types.iter().collect();
-    by_id.sort_by_key(|(_, json)| json.id);
+    let types = read_poi_types();
 
     let mut consts = Vec::new();
     let mut all = Vec::new();
     let mut from_name_arms = Vec::new();
     let mut state_entries: Vec<(u16, u16)> = Vec::new();
-    for (index, (name, json)) in by_id.iter().enumerate() {
+    for (index, (name, json)) in types.iter().enumerate() {
         assert_eq!(
             usize::from(json.id),
             index,
             "point of interest type ids are contiguous"
         );
-        let bare = name.strip_prefix("minecraft:").unwrap_or(name);
-        let ident = format_ident!("{}", bare.to_shouty_snake_case());
+        let ident = format_ident!("{}", name.to_shouty_snake_case());
+        let namespaced = format!("minecraft:{name}");
         let id = json.id;
         let max_tickets = json.max_tickets;
         let valid_range = json.valid_range;
-        let states = &json.states;
+        let states = &json.state_ids;
         consts.push(quote! {
             pub const #ident: Self = Self {
                 id: #id,
-                resource_name: #bare,
+                resource_name: #name,
                 max_tickets: #max_tickets,
                 valid_range: #valid_range,
                 states: &[#(#states),*],
             };
         });
         all.push(quote! { &Self::#ident });
-        from_name_arms.push(quote! { #name | #bare => Some(&Self::#ident) });
+        from_name_arms.push(quote! { #namespaced | #name => Some(&Self::#ident) });
         state_entries.extend(states.iter().map(|state| (*state, json.id)));
     }
     state_entries.sort_unstable();

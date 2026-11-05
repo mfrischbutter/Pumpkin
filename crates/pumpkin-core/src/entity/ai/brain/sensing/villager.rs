@@ -50,17 +50,18 @@ impl Sensor for VillagerHostilesSensor {
 
     fn do_tick(&mut self, tick: &mut BrainTick<'_>) {
         let position = tick.mob.get_entity().pos.load();
-        let hostile = {
-            let Some(visible) = tick.state.get(types::NEAREST_VISIBLE_LIVING_ENTITIES) else {
-                return;
-            };
-            visible.find_closest(&tick.visibility(), |mob| {
-                let entity = mob.get_entity();
-                acceptable_distance(entity.entity_type).is_some_and(|distance| {
-                    entity.pos.load().squared_distance_to_vec(&position) <= distance * distance
+        // Without visible entities the memory is erased, as vanilla sets it to an empty value.
+        let hostile = tick
+            .state
+            .get(types::NEAREST_VISIBLE_LIVING_ENTITIES)
+            .and_then(|visible| {
+                visible.find_closest(&tick.visibility(), |mob| {
+                    let entity = mob.get_entity();
+                    acceptable_distance(entity.entity_type).is_some_and(|distance| {
+                        entity.pos.load().squared_distance_to_vec(&position) <= distance * distance
+                    })
                 })
-            })
-        };
+            });
         tick.state.set_optional(types::NEAREST_HOSTILE, hostile);
     }
 }

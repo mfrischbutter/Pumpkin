@@ -25,13 +25,15 @@ use crate::block::blocks::bed::BedBlock;
 use crate::entity::EntityBase;
 use crate::entity::ai::util::{default_random_pos, land_random_pos};
 use crate::entity::mob::Mob;
+use crate::world::World;
 
 /// Vanilla `UpdateActivityFromSchedule`.
 #[must_use]
 pub fn update_activity_from_schedule() -> OneShot {
     OneShot::new("UpdateActivityFromSchedule", Vec::new(), |tick| {
+        let pos = tick.mob.get_entity().block_pos.load();
         tick.state
-            .update_activity_from_schedule(tick.time, tick.world.get_time_of_day());
+            .update_activity_from_schedule(tick.world, tick.time, &pos);
         true
     })
 }
@@ -265,20 +267,22 @@ pub fn go_to_closest_village(speed_modifier: f32, close_enough_distance: i32) ->
     )
 }
 
-/// Vanilla `BehaviorUtils.findSectionClosestToVillage`, as a target position.
-fn section_closest_to_village(
-    tick: &BrainTick<'_>,
-    body_pos: BlockPos,
+/// Vanilla `BehaviorUtils.findSectionClosestToVillage`: of the sections within `radius`, the
+/// first closer to a village than `center` is, if any.
+#[must_use]
+pub fn section_closest_to_village(
+    world: &World,
+    center: (i32, i32, i32),
     radius: i32,
-) -> Option<Vector3<f64>> {
-    let center = section_of(&body_pos);
-    let mut best = tick.world.sections_to_village(center);
+) -> Option<(i32, i32, i32)> {
+    let mut best = world.sections_to_village(center);
     let mut best_section = None;
-    for x in -radius..=radius {
+    // `SectionPos.cube` runs x fastest, then y, then z.
+    for z in -radius..=radius {
         for y in -radius..=radius {
-            for z in -radius..=radius {
+            for x in -radius..=radius {
                 let section = (center.0 + x, center.1 + y, center.2 + z);
-                let distance = tick.world.sections_to_village(section);
+                let distance = world.sections_to_village(section);
                 if distance < best {
                     best = distance;
                     best_section = Some(section);
@@ -286,13 +290,17 @@ fn section_closest_to_village(
             }
         }
     }
-    best_section.map(|(x, y, z)| {
-        Vector3::new(
-            f64::from(x * 16 + 8),
-            f64::from(y * 16 + 8),
-            f64::from(z * 16 + 8),
-        )
-    })
+    best_section
+}
+
+/// Vanilla `Vec3.atBottomCenterOf(section.center())`.
+#[must_use]
+pub fn section_bottom_center((x, y, z): (i32, i32, i32)) -> Vector3<f64> {
+    Vector3::new(
+        f64::from(x * 16 + 8) + 0.5,
+        f64::from(y * 16 + 8),
+        f64::from(z * 16 + 8) + 0.5,
+    )
 }
 
 /// Vanilla `VillageBoundRandomStroll`.
@@ -305,12 +313,14 @@ pub fn village_bound_random_stroll(speed_modifier: f32, max_xz: i32, max_y: i32)
             let body_pos = tick.mob.get_entity().block_pos.load();
             let target = if tick.world.is_village(&body_pos) {
                 land_random_pos::get_pos(tick.mob, max_xz, max_y)
-            } else if let Some(towards) = section_closest_to_village(tick, body_pos, 2) {
+            } else if let Some(section) =
+                section_closest_to_village(tick.world, section_of(&body_pos), 2)
+            {
                 default_random_pos::get_pos_towards(
                     tick.mob,
                     max_xz,
                     max_y,
-                    towards,
+                    section_bottom_center(section),
                     std::f64::consts::FRAC_PI_2,
                 )
             } else {

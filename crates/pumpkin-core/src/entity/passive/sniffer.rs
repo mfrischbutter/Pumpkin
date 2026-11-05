@@ -343,6 +343,11 @@ const fn is_free_to_mate(state: SnifferState) -> bool {
 }
 
 impl Animal for SnifferEntity {
+    fn play_eating_sound(&self) {
+        let pitch = 0.8 + self.get_random().random::<f32>() * 0.4;
+        self.play_entity_sound(Sound::EntitySnifferEat, 1.0, pitch);
+    }
+
     fn is_food(&self, item_stack: &ItemStack) -> bool {
         item_stack.item.has_tag(&tag::Item::MINECRAFT_SNIFFER_FOOD)
     }
@@ -485,6 +490,6 @@ impl Mob for SnifferEntity {
     }
 
     fn mob_interact(&self, player: &Arc<Player>, item_stack: &mut ItemStack) -> bool {
-        self.animal_interact(player, item_stack, Sound::EntitySnifferEat)
+        self.animal_interact(player, item_stack)
     }
 }

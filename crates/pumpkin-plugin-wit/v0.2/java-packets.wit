@@ -745,6 +745,14 @@ interface java-packets {
     forced: bool,
     prompt-message: option<string>,
   }
+  /// Vanilla `ClientboundAddTransientBlockPacket`: a falling block just landed at this location,
+  /// so the client keeps drawing it there until its own block update has taken effect.
+  record c-add-transient-block {
+    /// The world coordinates of the landed block.
+    location: tuple<s32, s32, s32>,
+    /// The block state ID.
+    state-id: s32,
+  }
   record c-award-stats {
     stats: list<statistic>,
   }
@@ -1369,6 +1377,8 @@ interface java-packets {
     sound: inexpressible-host-type,
     /// The size of the block particles pool, used for debris visuals in 1.21.9+.
     block-particles-pool-size: s32,
+    /// Whether the client plays the sound, false for a silent source. Sent since 26.3.
+    plays-sound: bool,
   }
   /// Updates the game state or triggers specific environmental changes.
   /// 
@@ -1677,6 +1687,62 @@ interface java-packets {
     /// Extra data required by specific particles (e.g., block states for
     /// `block` particles or RGB values for `dust`).
     data: list<u8>,
+  }
+  /// Generated; extracted from variant arm. See `particle-options.block` for details.
+  record particle-options-block {
+    /// WARNING: Could not fully translate type `Particle` to WIT
+    particle: inexpressible-host-type,
+    /// WARNING: Could not fully translate type `BlockStateId` to WIT
+    state: inexpressible-host-type,
+  }
+  /// Generated; extracted from variant arm. See `particle-options.dust` for details.
+  record particle-options-dust {
+    /// The color, encoded as `0xRRGGBB`. The top bits are ignored.
+    color: s32,
+    /// The client clamps it to 0.01 to 4.0.
+    scale: f32,
+  }
+  /// Generated; extracted from variant arm. See `particle-options.dust-color-transition` for details.
+  record particle-options-dust-color-transition {
+    /// The start color, encoded as `0xRRGGBB`. The top bits are ignored.
+    from-color: s32,
+    /// The end color, encoded as `0xRRGGBB`. The top bits are ignored.
+    to-color: s32,
+    /// The client clamps it to 0.01 to 4.0.
+    scale: f32,
+  }
+  /// Generated; extracted from variant arm. See `particle-options.color` for details.
+  record particle-options-color {
+    /// WARNING: Could not fully translate type `Particle` to WIT
+    particle: inexpressible-host-type,
+    /// The color, encoded as `0xAARRGGBB`.
+    color: s32,
+  }
+  /// Generated; extracted from variant arm. See `particle-options.raw` for details.
+  record particle-options-raw {
+    /// WARNING: Could not fully translate type `Particle` to WIT
+    particle: inexpressible-host-type,
+    data: list<u8>,
+  }
+  /// The payload that follows the particle ID for particles whose vanilla `ParticleOptions` is not
+  /// a plain `SimpleParticleType`.
+  /// 
+  /// Particles that take no options are spawned through [`CParticle`] with an empty `data`.
+  variant particle-options {
+    /// Vanilla `BlockParticleOption`, read by `block`, `block_marker`, `falling_dust`,
+    /// `dust_pillar` and `block_crumble`.
+    block(particle-options-block),
+    /// Vanilla `ItemParticleOption`, read by `item`.WARNING: Could not fully translate type `ItemStack` to WIT
+    item(inexpressible-host-type),
+    /// Vanilla `DustParticleOptions`, read by `dust`.
+    dust(particle-options-dust),
+    /// Vanilla `DustColorTransitionOptions`, read by `dust_color_transition`.
+    dust-color-transition(particle-options-dust-color-transition),
+    /// Vanilla `ColorParticleOption`, read by `entity_effect` and `tinted_leaves`.
+    color(particle-options-color),
+    /// A payload written as it is, for options without a variant here. The caller is
+    /// responsible for its format.
+    raw(particle-options-raw),
   }
   record c-play-ping {
     id: s32,
@@ -2505,6 +2571,9 @@ interface java-packets {
     /// mana/stamina counters.
     c-action-bar(c-action-bar),
     c-add-resource-pack(c-add-resource-pack),
+    /// Vanilla `ClientboundAddTransientBlockPacket`: a falling block just landed at this location,
+    /// so the client keeps drawing it there until its own block update has taken effect.
+    c-add-transient-block(c-add-transient-block),
     c-award-stats(c-award-stats),
     /// Updates the visual "breaking" progress of a block for all clients.
     /// 

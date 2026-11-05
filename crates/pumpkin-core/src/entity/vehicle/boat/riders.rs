@@ -256,7 +256,7 @@ impl BoatEntity {
             .add(&self.passenger_attachment_point(passenger));
         passenger
             .get_entity()
-            .set_pos(seat.sub(&passenger.vehicle_attachment_point()));
+            .set_pos(seat.sub(&crate::entity::vehicle_attachment_of(passenger, self)));
         if !passenger
             .get_entity()
             .entity_type

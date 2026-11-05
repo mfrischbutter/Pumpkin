@@ -21,7 +21,7 @@ use pumpkin_data::biome::Biome;
 use pumpkin_data::block_properties::blocks_movement;
 use pumpkin_data::data_component_impl::EquipmentSlot;
 use pumpkin_data::dimension::Dimension;
-use pumpkin_data::entity::EntityStatus;
+use pumpkin_data::entity::{EntityAttachments, EntityStatus};
 use pumpkin_data::fluid::Fluid;
 use pumpkin_data::item_stack::ItemStack;
 use pumpkin_data::packet::CURRENT_MC_VERSION;
@@ -83,6 +83,7 @@ pub mod bucketable;
 pub mod current_impulse;
 pub mod custom_sound;
 pub mod decoration;
+pub mod dismount_helper;
 pub mod effect;
 pub mod experience_orb;
 pub mod falling;
@@ -153,6 +154,12 @@ pub(crate) const fn lava_push_speed(fast_lava: bool) -> f64 {
 #[must_use]
 pub(crate) const fn max_fluid_push_speed(fast_lava: bool) -> f64 {
     WATER_PUSH_SPEED + lava_push_speed(fast_lava)
+}
+
+#[derive(Clone, Copy, PartialEq, Eq)]
+pub enum GearDamage {
+    Armor,
+    Helmet,
 }
 
 /// Returns the [`EntityStatus`] that should be broadcast when the given
@@ -367,14 +374,6 @@ pub trait EntityBase: Send + Sync + std::any::Any {
         } else {
             self.get_entity().tick(caller, server);
         }
-    }
-
-    fn get_job_site_pos(&self) -> Option<pumpkin_util::math::position::BlockPos> {
-        None
-    }
-
-    fn get_home_pos(&self) -> Option<pumpkin_util::math::position::BlockPos> {
-        None
     }
 
     #[must_use]
@@ -716,6 +715,30 @@ pub trait EntityBase: Send + Sync + std::any::Any {
         true
     }
 
+    /// Vanilla `getPassengerAttachmentPoint` where this entity overrides it: the seat of
+    /// `passenger` relative to this entity. `None` takes the extracted attachment points.
+    fn passenger_attachment_point(
+        &self,
+        _passenger: &dyn EntityBase,
+        _index: usize,
+    ) -> Option<Vector3<f64>> {
+        None
+    }
+
+    /// Vanilla `getVehicleAttachmentPoint` where this entity overrides it: the point of this
+    /// entity that sits on the seat of `vehicle`. `None` takes the extracted attachment point.
+    fn vehicle_attachment_point(&self, _vehicle: &dyn EntityBase) -> Option<Vector3<f64>> {
+        None
+    }
+
+    /// What this vehicle's vanilla `positionRider` override does once `passenger` is seated.
+    fn on_rider_positioned(&self, _passenger: &dyn EntityBase) {}
+
+    /// The equipment that wears when this entity takes armor or helmet damage.
+    fn hurt_gear_slots(&self, _gear: GearDamage) -> &'static [EquipmentSlot] {
+        &[]
+    }
+
     fn can_control_vehicle(&self) -> bool {
         !self
             .get_entity()
@@ -723,25 +746,15 @@ pub trait EntityBase: Send + Sync + std::any::Any {
             .has_tag(&tag::EntityType::MINECRAFT_NON_CONTROLLING_RIDER)
     }
 
-    /// Places `passenger` on this vehicle, like vanilla `Entity.positionRider`.
+    /// Places `passenger` on this vehicle, like vanilla `Entity.positionRider`: through
+    /// [`crate::entity::position_rider`] unless the vehicle seats its riders itself.
     fn position_rider(&self, passenger: &dyn EntityBase) {
-        let vehicle = self.get_entity();
-        let seat = vehicle
-            .pos
-            .load()
-            .add(&vehicle.passenger_attachment_point());
-        passenger
-            .get_entity()
-            .set_pos(seat.sub(&passenger.vehicle_attachment_point()));
-    }
-
-    /// The point of this entity that sits on a vehicle's passenger attachment point, like vanilla
-    /// `Entity.getVehicleAttachmentPoint`.
-    ///
-    /// This is vanilla's default of the entity's origin. Types with their own vehicle attachment
-    /// in vanilla need it extracted into the entity data first.
-    fn vehicle_attachment_point(&self) -> Vector3<f64> {
-        Vector3::new(0.0, 0.0, 0.0)
+        // A default method has no `&dyn EntityBase` of `self`; the passenger holds its vehicle's.
+        if let Some(vehicle) = passenger.get_entity().get_vehicle()
+            && vehicle.get_entity().entity_id == self.get_entity().entity_id
+        {
+            position_rider(vehicle.as_ref(), passenger);
+        }
     }
 
     /// Vanilla `Entity.getDismountLocationForPassenger` of a vehicle with its own spot: `None`
@@ -1288,6 +1301,80 @@ fn y_rot(vector: Vector3<f64>, angle: f32) -> Vector3<f64> {
     )
 }
 
+/// Attachment points for the entity's current pose and age, and the scale they grow with.
+fn attachments_of(entity: &dyn EntityBase) -> (&'static EntityAttachments, f64) {
+    let base = entity.get_entity();
+    let entity_type = base.entity_type;
+    let living = entity.get_living_entity();
+    let baby = living.is_some_and(LivingEntity::is_baby);
+    let attachments = entity_type
+        .pose_dimensions(base.pose.load(), baby)
+        .map(|pose| &pose.attachments)
+        .or_else(|| entity_type.baby_attachments.as_ref().filter(|_| baby))
+        .unwrap_or(&entity_type.attachments);
+    let scale = living.map_or(1.0, |living| {
+        living.get_attribute_value(&pumpkin_data::attributes::Attributes::SCALE)
+    });
+    (attachments, scale)
+}
+
+/// Vanilla `EntityAttachments.get`: an attachment point scaled and turned with the entity.
+pub(crate) fn attachment_point(point: [f64; 3], scale: f64, yaw: f32) -> Vector3<f64> {
+    let [x, y, z] = point;
+    y_rot(Vector3::new(x, y, z) * scale, -yaw.to_radians())
+}
+
+/// Vanilla `Entity.getDefaultPassengerAttachmentPoint`: the extracted seat for the passenger
+/// index, the last seat for any further passenger.
+pub fn default_passenger_attachment_point(
+    vehicle: &dyn EntityBase,
+    index: usize,
+) -> Option<Vector3<f64>> {
+    let (seats, scale) = attachments_of(vehicle);
+    let seat = *seats.passenger.get(index).or(seats.passenger.last())?;
+    Some(attachment_point(
+        seat,
+        scale,
+        vehicle.get_entity().yaw.load(),
+    ))
+}
+
+/// Vanilla `Entity.getVehicleAttachmentPoint`: the point of `passenger` that sits on the seat
+/// of `vehicle`.
+#[must_use]
+pub fn vehicle_attachment_of(passenger: &dyn EntityBase, vehicle: &dyn EntityBase) -> Vector3<f64> {
+    passenger
+        .vehicle_attachment_point(vehicle)
+        .unwrap_or_else(|| {
+            let (own, own_scale) = attachments_of(passenger);
+            attachment_point(own.vehicle, own_scale, passenger.get_entity().yaw.load())
+        })
+}
+
+/// Vanilla `Entity.positionRider`: moves `passenger` onto its seat on `vehicle`.
+pub fn position_rider(vehicle: &dyn EntityBase, passenger: &dyn EntityBase) {
+    let vehicle_entity = vehicle.get_entity();
+    let passenger_entity = passenger.get_entity();
+    let Some(index) = vehicle_entity
+        .passengers
+        .lock()
+        .unwrap_or_else(std::sync::PoisonError::into_inner)
+        .iter()
+        .position(|other| other.get_entity().entity_id == passenger_entity.entity_id)
+    else {
+        return;
+    };
+    let Some(seat) = vehicle
+        .passenger_attachment_point(passenger, index)
+        .or_else(|| default_passenger_attachment_point(vehicle, index))
+    else {
+        return;
+    };
+    let offset = vehicle_attachment_of(passenger, vehicle);
+    passenger_entity.set_pos(vehicle_entity.pos.load() + seat - offset);
+    vehicle.on_rider_positioned(passenger);
+}
+
 /// The movement the server knows about: a player's last reported step, otherwise velocity.
 fn known_movement(entity: &dyn EntityBase) -> Vector3<f64> {
     let base = entity.get_entity();
@@ -1762,10 +1849,7 @@ impl Entity {
         self.init_bedrock_flags();
 
         let mut metadata = SyncedActorDataList::new();
-        let dimensions = self
-            .default_dimensions
-            .load()
-            .unwrap_or_else(|| Self::type_dimensions(self.entity_type));
+        let dimensions = self.get_dimensions(self.pose.load());
         metadata.set(
             entity_data_key::WIDTH,
             MetadataValue::Float(dimensions.width),
@@ -1860,6 +1944,15 @@ impl Entity {
             .collect()
     }
 
+    /// The type's baby size for babies, its adult size otherwise.
+    #[must_use]
+    pub fn age_dimensions(entity_type: &EntityType, baby: bool) -> EntityDimensions {
+        entity_type
+            .baby_dimensions
+            .filter(|_| baby)
+            .unwrap_or_else(|| Self::type_dimensions(entity_type))
+    }
+
     /// The type's default size, vanilla `EntityType.getDimensions`.
     #[must_use]
     pub const fn type_dimensions(entity_type: &EntityType) -> EntityDimensions {
@@ -1872,7 +1965,10 @@ impl Entity {
 
     /// Sets the entity's growth age. Negative values indicate that the entity is a baby.
     pub fn set_age(&self, age: i32) {
-        self.age.store(age, Relaxed);
+        let old_age = self.age.swap(age, Relaxed);
+        if (old_age < 0) != (age < 0) {
+            self.refresh_dimensions();
+        }
     }
 
     /// Adds a scoreboard tag to this entity.
@@ -2017,40 +2113,25 @@ impl Entity {
         if let Some(dimensions) = self.dimensions_override.load() {
             return dimensions;
         }
-        if pose == EntityPose::Sleeping {
-            return EntityDimensions::new(0.2, 0.2, 0.2);
-        }
         // Vanilla `Warden.getDefaultDimensions`: half in the ground.
         if self.entity_type == &EntityType::WARDEN
             && matches!(pose, EntityPose::Digging | EntityPose::Emerging)
         {
             return EntityDimensions::new(0.9, 1.0, 0.85);
         }
-        // Vanilla `Avatar.POSES`.
-        if self.entity_type == &EntityType::PLAYER || self.entity_type == &EntityType::MANNEQUIN {
-            match pose {
-                EntityPose::FallFlying | EntityPose::Swimming | EntityPose::SpinAttack => {
-                    return EntityDimensions::new(0.6, 0.6, 0.4).scale(self.scale.load());
-                }
-                EntityPose::Crouching => {
-                    return EntityDimensions::new(0.6, 1.5, 1.27).scale(self.scale.load());
-                }
-                // Vanilla `EntityDimensions.fixed`: the scale does not apply.
-                EntityPose::Dying => return EntityDimensions::new(0.2, 0.2, 1.62),
-                _ => {}
+        let baby = self.age.load(Relaxed) < 0;
+        if let Some(pose_dimensions) = self.entity_type.pose_dimensions(pose, baby) {
+            // Vanilla `EntityDimensions.fixed` (`SLEEPING_DIMENSIONS`, the avatar's dying size):
+            // the scale does not apply.
+            if matches!(pose, EntityPose::Sleeping | EntityPose::Dying) {
+                return pose_dimensions.dimensions;
             }
+            return pose_dimensions.dimensions.scale(self.scale.load());
         }
-        let dimensions = self
-            .default_dimensions
+        self.default_dimensions
             .load()
-            .unwrap_or_else(|| Self::type_dimensions(self.entity_type));
-        // Vanilla `Goat.getDefaultDimensions`.
-        if self.entity_type == &EntityType::GOAT && pose == EntityPose::LongJumping {
-            return dimensions
-                .scale(passive::goat::LONG_JUMPING_SCALE)
-                .scale(self.scale.load());
-        }
-        dimensions.scale(self.scale.load())
+            .unwrap_or_else(|| Self::age_dimensions(self.entity_type, baby))
+            .scale(self.scale.load())
     }
 
     /// Vanilla `LivingEntity.onAttributeUpdated` for the scale attribute: resizes the entity.
@@ -2121,8 +2202,7 @@ impl Entity {
     }
 
     pub fn fudge_position_after_size_change(&self, previous_dimensions: EntityDimensions) -> bool {
-        let world = self.world.load();
-        let Some(this) = world.get_entity_by_id(self.entity_id) else {
+        let Some(this) = self.world.load().get_entity_by_id(self.entity_id) else {
             return false;
         };
         self.fudge_position_for(this.as_ref(), previous_dimensions)
@@ -3329,7 +3409,7 @@ impl Entity {
     }
 
     /// Vanilla `gameEvent(event)`: at the entity, with itself as the source.
-    fn emit_own_game_event(&self, caller: &dyn EntityBase, event: GameEvent) {
+    pub(crate) fn emit_own_game_event(&self, caller: &dyn EntityBase, event: GameEvent) {
         self.world.load().emit_game_event_with_context(
             event.name(),
             self.pos.load(),
@@ -3801,17 +3881,6 @@ impl Entity {
         self.entity_dimension.load().height
     }
 
-    /// Where a passenger sits on this entity, relative to its position, like vanilla
-    /// `Entity.getPassengerAttachmentPoint`.
-    ///
-    /// This is vanilla's default for every passenger: the top of the entity's current dimensions.
-    /// Types with their own passenger attachments in vanilla need them extracted into the entity
-    /// data first.
-    #[must_use]
-    pub fn passenger_attachment_point(&self) -> Vector3<f64> {
-        Vector3::new(0.0, f64::from(self.height()), 0.0)
-    }
-
     /// Applies knockback to the entity, following vanilla Minecraft's mechanics.
     ///
     /// This function calculates the entity's new velocity based on the specified knockback strength and direction.
@@ -3981,6 +4050,11 @@ impl Entity {
             self.has_visual_fire.store(on_fire, Ordering::Relaxed);
             self.set_flag(Flag::OnFire, on_fire);
         }
+    }
+
+    #[must_use]
+    pub fn get_y(&self, height_fraction: f64) -> f64 {
+        f64::from(self.entity_dimension.load().height).mul_add(height_fraction, self.pos.load().y)
     }
 
     #[must_use]

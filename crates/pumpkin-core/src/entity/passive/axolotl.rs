@@ -684,7 +684,7 @@ impl Mob for AxolotlEntity {
     }
 
     fn mob_interact(&self, player: &Arc<Player>, item_stack: &mut ItemStack) -> bool {
-        self.animal_interact(player, item_stack, Sound::EntityAxolotlIdleAir)
+        self.animal_interact(player, item_stack)
     }
 }
 

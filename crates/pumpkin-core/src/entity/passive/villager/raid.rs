@@ -111,8 +111,9 @@ pub(super) fn reset_raid_status() -> OneShot {
         }
         if body_raid(tick).is_none_or(|raid| raid.stopped || raid.loss) {
             tick.state.set_default_activity(Activity::Idle);
+            let pos = tick.mob.get_entity().block_pos.load();
             tick.state
-                .update_activity_from_schedule(tick.time, tick.world.get_time_of_day());
+                .update_activity_from_schedule(tick.world, tick.time, &pos);
         }
         true
     })
@@ -264,8 +265,9 @@ pub(super) fn set_hidden_state(seconds: i32, close_enough_dist: i32) -> OneShot 
             } else {
                 tick.state.erase(types::HEARD_BELL_TIME.id());
                 tick.state.erase(types::HIDING_PLACE.id());
+                let pos = tick.mob.get_entity().block_pos.load();
                 tick.state
-                    .update_activity_from_schedule(tick.time, tick.world.get_time_of_day());
+                    .update_activity_from_schedule(tick.world, tick.time, &pos);
                 ticks_hidden = 0;
             }
             true
@@ -330,8 +332,9 @@ impl Behavior for CelebrateVillagersSurvivedRaid {
     }
 
     fn stop(&mut self, tick: &mut BrainTick<'_>) {
+        let pos = tick.mob.get_entity().block_pos.load();
         tick.state
-            .update_activity_from_schedule(tick.time, tick.world.get_time_of_day());
+            .update_activity_from_schedule(tick.world, tick.time, &pos);
     }
 
     fn tick(&mut self, tick: &mut BrainTick<'_>) {
