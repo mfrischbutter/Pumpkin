@@ -41,31 +41,40 @@ impl UnderwaterMagmaFeature {
         (floor_id != Block::WATER).then_some(y)
     }
 
-    /// Check if a block can host magma
+    /// Vanilla `isValidPlacement`: a block that is neither water nor air, whose top face is
+    /// covered by the block below and whose horizontal faces are all covered by their neighbours.
     fn is_valid_placement<T: GenerationCache>(chunk: &T, target: &BlockPos) -> bool {
-        // Reject water/air or unsupported blocks
-        let target_id = GenerationCache::get_block_state(chunk, &target.0).to_block_id();
-        if target_id == Block::WATER || target_id == Block::AIR {
+        let target_state = GenerationCache::get_block_state(chunk, &target.0);
+        if target_state.to_block_id() == Block::WATER || target_state.to_state().is_air() {
             return false;
         }
 
-        // Below must be solid
         let below = target.offset(BlockDirection::Down.to_offset());
-        let below_id = GenerationCache::get_block_state(chunk, &below.0).to_block_id();
-        if below_id == Block::WATER || below_id == Block::AIR {
+        if Self::is_visible_from_outside(chunk, &below, BlockDirection::Up) {
             return false;
         }
 
-        // No open horizontal faces
-        for dir in &BlockDirection::horizontal() {
+        for dir in BlockDirection::horizontal().map(BlockDirection::from_cardinal_direction) {
             let neighbour = target.offset(dir.to_offset());
-            let n_id = GenerationCache::get_block_state(chunk, &neighbour.0).to_block_id();
-            if n_id == Block::WATER || n_id == Block::AIR {
+            if Self::is_visible_from_outside(chunk, &neighbour, dir.opposite()) {
                 return false;
             }
         }
 
         true
+    }
+
+    /// Vanilla `isVisibleFromOutside`: the face `covered_direction` of the block at `pos` does
+    /// not occlude a full face. Blocks that cannot occlude (water, lava, plants, glass) have no
+    /// occlusion shape; for the others the full sturdy face stands in for the face of the
+    /// occlusion shape, the two being the same for the blocks of the sea floor.
+    fn is_visible_from_outside<T: GenerationCache>(
+        chunk: &T,
+        pos: &BlockPos,
+        covered_direction: BlockDirection,
+    ) -> bool {
+        let state = GenerationCache::get_block_state(chunk, &pos.0).to_state();
+        !(state.can_occlude() && state.is_side_solid(covered_direction))
     }
 
     #[allow(clippy::too_many_arguments)]
@@ -111,5 +120,62 @@ impl UnderwaterMagmaFeature {
         }
 
         placed > 0
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use pumpkin_data::BlockState;
+
+    use super::*;
+    use crate::generation::feature::features::sculk::test_utils::{empty_chunk, set};
+
+    /// A stone block at `target` buried in stone, under water.
+    fn buried_stone(target: BlockPos) -> crate::generation::proto_chunk::ProtoChunk {
+        let mut chunk = empty_chunk();
+        for pos in BlockPos::iterate(target.add(-1, -1, -1), target.add(1, 0, 1)) {
+            set(&mut chunk, pos, Block::STONE.default_state);
+        }
+        set(&mut chunk, target.up(), Block::WATER.default_state);
+        chunk
+    }
+
+    fn valid_with(neighbour: BlockPos, state: &BlockState) -> bool {
+        let target = BlockPos::new(8, 40, 8);
+        let mut chunk = buried_stone(target);
+        set(&mut chunk, neighbour, state);
+        UnderwaterMagmaFeature::is_valid_placement(&chunk, &target)
+    }
+
+    #[test]
+    fn buried_stone_is_valid() {
+        let target = BlockPos::new(8, 40, 8);
+        assert!(UnderwaterMagmaFeature::is_valid_placement(
+            &buried_stone(target),
+            &target
+        ));
+    }
+
+    #[test]
+    fn cave_air_is_not_valid() {
+        let target = BlockPos::new(8, 40, 8);
+        assert!(!valid_with(target, Block::CAVE_AIR.default_state));
+    }
+
+    #[test]
+    fn faces_that_do_not_occlude_are_visible() {
+        let west = BlockPos::new(7, 40, 8);
+        assert!(!valid_with(west, Block::GLOW_LICHEN.default_state));
+        assert!(!valid_with(west, Block::LAVA.default_state));
+        assert!(!valid_with(west, Block::CAVE_AIR.default_state));
+        assert!(valid_with(west, Block::MAGMA_BLOCK.default_state));
+    }
+
+    #[test]
+    fn below_needs_a_covered_top_face() {
+        let below = BlockPos::new(8, 39, 8);
+        assert!(!valid_with(below, Block::SEAGRASS.default_state));
+        assert!(!valid_with(below, Block::GLASS.default_state));
+        assert!(valid_with(below, Block::MUD.default_state));
     }
 }
