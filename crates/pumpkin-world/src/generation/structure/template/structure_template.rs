@@ -11,6 +11,7 @@ use pumpkin_nbt::{compound::NbtCompound, nbt_compress::read_gzip_compound_tag, t
 use pumpkin_util::math::{block_box::BlockBox, vector3::Vector3};
 use thiserror::Error;
 
+use super::BlockStateResolver;
 use super::processor::StructureProcessor;
 use crate::generation::structure::structures::jigsaw::{JigsawBlock, JigsawJointType};
 
@@ -1253,31 +1254,21 @@ impl StructureTemplate {
     ) {
         if info.nbt.is_some() {
             block_entities_list.push(info);
-        } else if Self::is_full_cube_block(&info.state.name) {
+        } else if Self::is_full_cube_block(&info.state) {
             full_block_list.push(info);
         } else {
             other_blocks_list.push(info);
         }
     }
 
-    fn is_full_cube_block(name: &str) -> bool {
-        let stripped = name.strip_prefix("minecraft:").unwrap_or(name);
-        !(stripped.contains("air")
-            || stripped.contains("stair")
-            || stripped.contains("slab")
-            || stripped.contains("fence")
-            || stripped.contains("wall")
-            || stripped.contains("door")
-            || stripped.contains("torch")
-            || stripped.contains("pane")
-            || stripped.contains("glass_pane")
-            || stripped.contains("lantern")
-            || stripped.contains("carpet")
-            || stripped.contains("chain")
-            || stripped.contains("iron_bars")
-            || stripped.contains("candle")
-            || stripped.contains("bell")
-            || stripped.contains("scaffolding"))
+    /// Vanilla's `StructureTemplate.addToLists` test for the full block list:
+    /// `!hasDynamicShape() && isCollisionShapeFullBlock(...)` on the palette entry's state.
+    /// None of 26.3's dynamic-shape blocks (moving piston, bamboo, scaffolding, powder snow,
+    /// pointed dripstone, sulfur spike, firefly bush) has a full-cube collision shape in any
+    /// state, so the shape test alone is exact. An entry that does not resolve is not full.
+    fn is_full_cube_block(entry: &PaletteEntry) -> bool {
+        BlockStateResolver::resolve_simple(entry)
+            .is_some_and(pumpkin_data::BlockState::is_collision_shape_full_block)
     }
 
     fn build_info_list(
@@ -1494,6 +1485,7 @@ impl StructureTemplate {
 
 #[cfg(test)]
 mod tests {
+    use pumpkin_data::Block;
     use pumpkin_data::block_properties::{Facing, Half, Property};
 
     use super::*;
@@ -1534,6 +1526,109 @@ mod tests {
                 .iter()
                 .any(|entry| !entry.properties.is_empty() && entry.name.contains("trapdoor")),
             "the palette must keep the block properties"
+        );
+    }
+
+    /// Sorts the entries into vanilla's three lists and returns them.
+    fn classify(entries: Vec<(PaletteEntry, Option<NbtCompound>)>) -> [Vec<StructureBlockInfo>; 3] {
+        let (mut full, mut entities, mut other) = (Vec::new(), Vec::new(), Vec::new());
+        for (i, (entry, nbt)) in entries.into_iter().enumerate() {
+            let info = StructureBlockInfo::new(Vector3::new(i as i32, 0, 0), entry, nbt);
+            StructureTemplate::add_to_lists(info, &mut full, &mut entities, &mut other);
+        }
+        [full, entities, other]
+    }
+
+    fn names(list: &[StructureBlockInfo]) -> Vec<&str> {
+        list.iter().map(|info| info.state.name.as_str()).collect()
+    }
+
+    /// Blocks go to the full list exactly when vanilla's collision shape is a full cube.
+    #[test]
+    fn add_to_lists_uses_the_collision_shape() {
+        let plain = |name: &str| (PaletteEntry::new(format!("minecraft:{name}")), None);
+        let full = ["gravel", "stone_bricks", "glass", "oak_leaves"];
+        let other = [
+            "water",
+            "seagrass",
+            "kelp",
+            "rail",
+            "cobweb",
+            "soul_sand",
+            "dirt_path",
+            "lantern",
+            "oak_stairs",
+        ];
+        let mut entries: Vec<_> = full.iter().chain(other.iter()).map(|n| plain(n)).collect();
+        entries.push((
+            PaletteEntry::with_properties("minecraft:snow".to_string(), vec![Property::Layers(8)]),
+            None,
+        ));
+        entries.push((
+            PaletteEntry::new("minecraft:chest".to_string()),
+            Some(NbtCompound::new()),
+        ));
+
+        let [full_list, entity_list, other_list] = classify(entries);
+        let prefixed = |names: &[&str]| -> Vec<String> {
+            names.iter().map(|n| format!("minecraft:{n}")).collect()
+        };
+        assert_eq!(names(&full_list), prefixed(&full));
+        let mut expected_other = prefixed(&other);
+        expected_other.push("minecraft:snow".to_string());
+        assert_eq!(names(&other_list), expected_other);
+        assert_eq!(names(&entity_list), ["minecraft:chest"]);
+    }
+
+    /// The shape test stands in for vanilla's `!hasDynamicShape()` only while no dynamic-shape
+    /// block has a full-cube collision shape in any state.
+    #[test]
+    fn dynamic_shape_blocks_are_never_full() {
+        for name in [
+            "moving_piston",
+            "bamboo",
+            "scaffolding",
+            "powder_snow",
+            "pointed_dripstone",
+            "sulfur_spike",
+            "firefly_bush",
+        ] {
+            let block = Block::from_registry_key(name).expect(name);
+            assert!(
+                !block
+                    .states
+                    .iter()
+                    .any(pumpkin_data::BlockState::is_collision_shape_full_block),
+                "{name} has a full-cube collision shape"
+            );
+        }
+    }
+
+    /// Each list is sorted by y, x, z, and the full blocks come before the others.
+    #[test]
+    fn build_info_list_orders_like_vanilla() {
+        let mut lists = (Vec::new(), Vec::new(), Vec::new());
+        for (name, pos) in [
+            ("water", Vector3::new(1, 0, 0)),
+            ("gravel", Vector3::new(0, 0, 0)),
+            ("stone", Vector3::new(0, 1, 0)),
+        ] {
+            let info =
+                StructureBlockInfo::new(pos, PaletteEntry::new(format!("minecraft:{name}")), None);
+            StructureTemplate::add_to_lists(info, &mut lists.0, &mut lists.1, &mut lists.2);
+        }
+        let result = StructureTemplate::build_info_list(lists.0, lists.1, lists.2);
+        let order: Vec<_> = result
+            .iter()
+            .map(|info| (info.state.name.as_str(), info.pos))
+            .collect();
+        assert_eq!(
+            order,
+            [
+                ("minecraft:gravel", Vector3::new(0, 0, 0)),
+                ("minecraft:stone", Vector3::new(0, 1, 0)),
+                ("minecraft:water", Vector3::new(1, 0, 0)),
+            ]
         );
     }
 }

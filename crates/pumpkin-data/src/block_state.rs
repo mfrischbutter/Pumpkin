@@ -237,6 +237,19 @@ impl BlockState {
             .map(|&id| COLLISION_SHAPES[id as usize])
     }
 
+    /// Whether this state's collision shape is exactly one full unit cube, like vanilla's
+    /// `BlockBehaviour.BlockStateBase.isCollisionShapeFullBlock` (`Block.isShapeFullBlock` of the
+    /// collision shape at the origin). The extracted shapes are vanilla's merged boxes, so a full
+    /// block is a single box spanning 0..1 on every axis.
+    #[must_use]
+    pub fn is_collision_shape_full_block(&self) -> bool {
+        let [id] = self.collision_shapes else {
+            return false;
+        };
+        let shape = COLLISION_SHAPES[*id as usize];
+        shape.min == Vector3::new(0.0, 0.0, 0.0) && shape.max == Vector3::new(1.0, 1.0, 1.0)
+    }
+
     /// Returns block-local collision shapes with vanilla's coordinate-derived offset applied.
     pub fn get_block_collision_shapes_at(
         &self,
