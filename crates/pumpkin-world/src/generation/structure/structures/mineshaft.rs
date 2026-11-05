@@ -103,14 +103,12 @@ impl StructureGenerator for MineshaftGenerator {
 
         let dy = if self.is_mesa {
             let bbox = collector.get_bounding_box();
-            let center_x = i32::midpoint(bbox.min.x, bbox.max.x);
-            let center_z = i32::midpoint(bbox.min.z, bbox.max.z);
-            let center_y = i32::midpoint(bbox.min.y, bbox.max.y);
+            let center = bbox.get_center();
 
             let surface_height = context
                 .height_sampler
                 .as_deref_mut()
-                .map_or(context.sea_level, |s| s.estimate_height(center_x, center_z));
+                .map_or(context.sea_level, |s| s.estimate_height(center.x, center.z));
 
             let target_y = if surface_height <= context.sea_level {
                 context.sea_level
@@ -119,7 +117,7 @@ impl StructureGenerator for MineshaftGenerator {
                 context.sea_level + context.random.next_bounded_i32(range)
             };
 
-            let dy = target_y - center_y;
+            let dy = target_y - center.y;
             collector.shift(dy);
             dy
         } else {
