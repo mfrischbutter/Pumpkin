@@ -61,7 +61,14 @@ impl TreeDecorator {
                 decorator.generate(chunk, random, foliage_positions, decorations);
             }
             Self::PaleMoss(decorator) => {
-                decorator.generate(chunk, random, log_positions, foliage_positions, decorations);
+                decorator.generate(
+                    chunk,
+                    block_registry,
+                    random,
+                    log_positions,
+                    foliage_positions,
+                    decorations,
+                );
             }
             Self::CreakingHeart(decorator) => {
                 decorator.generate(chunk, random, log_positions, decorations);
