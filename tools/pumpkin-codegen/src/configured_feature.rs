@@ -875,6 +875,8 @@ pub fn value_to_configured_feature(v: &Value) -> TokenStream {
             let required_vertical_space_for_tree = config["required_vertical_space_for_tree"]
                 .as_i64()
                 .unwrap_or(0) as i32;
+            let level_test_distance = config["level_test_distance"].as_i64().unwrap_or(0) as i32;
+            let max_level_deviation = config["max_level_deviation"].as_i64().unwrap_or(0) as i32;
             let root_radius = config["root_radius"].as_i64().unwrap_or(0) as i32;
             let root_replaceable = value_to_block_predicate(&config["root_replaceable"]);
             let root_state_provider = value_to_block_state_provider(&config["root_state_provider"]);
@@ -901,6 +903,8 @@ pub fn value_to_configured_feature(v: &Value) -> TokenStream {
                 ConfiguredFeature::RootSystem(crate::generation::feature::features::root_system::RootSystemFeature {
                     feature: Box::new(#feature),
                     required_vertical_space_for_tree: #required_vertical_space_for_tree,
+                    level_test_distance: #level_test_distance,
+                    max_level_deviation: #max_level_deviation,
                     root_radius: #root_radius,
                     root_replaceable: #root_replaceable,
                     root_state_provider: #root_state_provider,

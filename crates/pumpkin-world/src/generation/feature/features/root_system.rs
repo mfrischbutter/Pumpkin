@@ -12,6 +12,8 @@ use crate::world::WorldPortalExt;
 pub struct RootSystemFeature {
     pub feature: Box<crate::generation::feature::placed_features::PlacedFeature>,
     pub required_vertical_space_for_tree: i32,
+    pub level_test_distance: i32,
+    pub max_level_deviation: i32,
     pub root_radius: i32,
     pub root_replaceable: BlockPredicate,
     pub root_state_provider: BlockStateProvider,
@@ -65,6 +67,27 @@ impl RootSystemFeature {
             let state = GenerationCache::get_block_state(chunk, &column_up.0);
             if !self.is_allowed_tree_space(state.to_block_id(), i) {
                 return false;
+            }
+        }
+
+        // Vanilla's level test: at the distance in each horizontal direction
+        // (south, west, north, east), ground within the allowed deviation
+        // below and open air at it above.
+        if self.level_test_distance > 0 {
+            let d = self.level_test_distance;
+            for (dx, dz) in [(0, d), (-d, 0), (0, -d), (d, 0)] {
+                let corner = pos.add(dx, 0, dz);
+                let below = corner.down_height(self.max_level_deviation);
+                let above = corner.up_height(self.max_level_deviation);
+                if GenerationCache::get_block_state(chunk, &below.0)
+                    .to_state()
+                    .is_air()
+                    || !GenerationCache::get_block_state(chunk, &above.0)
+                        .to_state()
+                        .is_air()
+                {
+                    return false;
+                }
             }
         }
         true

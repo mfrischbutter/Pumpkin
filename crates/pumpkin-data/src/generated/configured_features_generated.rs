@@ -3792,6 +3792,8 @@ fn build_configured_features()
                     placement: vec![],
                 }),
                 required_vertical_space_for_tree: 3i32,
+                level_test_distance: 0i32,
+                max_level_deviation: 0i32,
                 root_radius: 3i32,
                 root_replaceable: BlockPredicate::MatchingBlockTag(MatchingBlockTagPredicate {
                     offset: OffsetBlocksBlockPredicate { offset: None },
@@ -3853,6 +3855,8 @@ fn build_configured_features()
                     placement: vec![],
                 }),
                 required_vertical_space_for_tree: 5i32,
+                level_test_distance: 8i32,
+                max_level_deviation: 2i32,
                 root_radius: 3i32,
                 root_replaceable: BlockPredicate::MatchingBlockTag(MatchingBlockTagPredicate {
                     offset: OffsetBlocksBlockPredicate { offset: None },
