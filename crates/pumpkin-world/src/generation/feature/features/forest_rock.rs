@@ -1,6 +1,6 @@
-use crate::generation::proto_chunk::GenerationCache;
+use crate::generation::{block_predicate::BlockPredicate, proto_chunk::GenerationCache};
+use crate::world::WorldPortalExt;
 use pumpkin_data::BlockState;
-use pumpkin_data::tag;
 use pumpkin_util::{
     math::position::BlockPos,
     random::{RandomGenerator, RandomImpl},
@@ -8,30 +8,20 @@ use pumpkin_util::{
 
 pub struct ForestRockFeature {
     pub state: &'static BlockState,
+    pub can_place_on: BlockPredicate,
 }
 
 impl ForestRockFeature {
     pub fn generate<T: GenerationCache>(
         &self,
         chunk: &mut T,
+        block_registry: &dyn WorldPortalExt,
         random: &mut RandomGenerator,
         pos: BlockPos,
     ) -> bool {
-        let mut pos = pos;
-        loop {
-            if pos.0.y <= chunk.bottom_y() as i32 + 3 {
-                return false;
-            }
-            let below_state = GenerationCache::get_block_state(chunk, &pos.down().0);
-            let below_id = below_state.to_block_id();
-            if !chunk.is_air(&pos.down().0)
-                && (below_id.has_tag(tag::Block::MINECRAFT_DIRT)
-                    || below_id.has_tag(tag::Block::MINECRAFT_BASE_STONE_OVERWORLD))
-            {
-                break;
-            }
-            pos = pos.down();
-        }
+        let Some(mut pos) = self.find_origin(chunk, block_registry, pos) else {
+            return false;
+        };
 
         let block_state = self.state;
 
@@ -62,5 +52,64 @@ impl ForestRockFeature {
         }
 
         true
+    }
+    /// Vanilla's descent: down while the block below fails `can_place_on`,
+    /// giving up at the world's minimum Y + 3.
+    fn find_origin<T: GenerationCache>(
+        &self,
+        chunk: &T,
+        block_registry: &dyn WorldPortalExt,
+        mut pos: BlockPos,
+    ) -> Option<BlockPos> {
+        let min_y = chunk.bottom_y() as i32 + 3;
+        while pos.0.y > min_y && !self.can_place_on.test(block_registry, chunk, &pos.down()) {
+            pos = pos.down();
+        }
+        (pos.0.y > min_y).then_some(pos)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::generation::block_predicate::{
+        MatchingBlockTagPredicate, OffsetBlocksBlockPredicate,
+    };
+    use crate::generation::feature::features::sculk::test_utils::{empty_chunk, set};
+    use crate::generation::proto_chunk_test::stage_parity::TestBlockRegistry;
+    use pumpkin_data::{Block, tag};
+    use pumpkin_util::random::legacy_rand::LegacyRand;
+
+    #[test]
+    fn rock_over_grass_stays_on_top_of_it() {
+        let rock = ForestRockFeature {
+            state: Block::MOSSY_COBBLESTONE.default_state,
+            can_place_on: BlockPredicate::MatchingBlockTag(MatchingBlockTagPredicate {
+                offset: OffsetBlocksBlockPredicate { offset: None },
+                tag: tag::Block::MINECRAFT_FOREST_ROCK_CAN_PLACE_ON,
+            }),
+        };
+        let mut chunk = empty_chunk();
+        set(
+            &mut chunk,
+            BlockPos::new(8, 62, 8),
+            Block::STONE.default_state,
+        );
+        set(
+            &mut chunk,
+            BlockPos::new(8, 63, 8),
+            Block::GRASS_BLOCK.default_state,
+        );
+
+        let start = BlockPos::new(8, 70, 8);
+        let origin = rock.find_origin(&chunk, &TestBlockRegistry, start);
+        assert_eq!(origin, Some(BlockPos::new(8, 64, 8)));
+
+        let mut random = RandomGenerator::Legacy(LegacyRand::from_seed(42));
+        assert!(rock.generate(&mut chunk, &TestBlockRegistry, &mut random, start));
+        assert_eq!(
+            GenerationCache::get_block_state(&chunk, &BlockPos::new(8, 64, 8).0),
+            Block::MOSSY_COBBLESTONE.default_state.id,
+        );
     }
 }

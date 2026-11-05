@@ -2469,6 +2469,10 @@ fn build_configured_features()
         ConfiguredFeature::ForestRock(
             crate::generation::feature::features::forest_rock::ForestRockFeature {
                 state: pumpkin_data::Block::MOSSY_COBBLESTONE.default_state,
+                can_place_on: BlockPredicate::MatchingBlockTag(MatchingBlockTagPredicate {
+                    offset: OffsetBlocksBlockPredicate { offset: None },
+                    tag: pumpkin_data::tag::Block::MINECRAFT_FOREST_ROCK_CAN_PLACE_ON,
+                }),
             },
         ),
     );

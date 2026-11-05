@@ -756,9 +756,11 @@ pub fn value_to_configured_feature(v: &Value) -> TokenStream {
         }
         "minecraft:block_blob" => {
             let state = value_to_block_state(&config["state"]);
+            let can_place_on = value_to_block_predicate(&config["can_place_on"]);
             quote! {
                 ConfiguredFeature::ForestRock(crate::generation::feature::features::forest_rock::ForestRockFeature {
                     state: #state,
+                    can_place_on: #can_place_on,
                 })
             }
         }
