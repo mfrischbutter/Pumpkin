@@ -12,6 +12,9 @@ pub(super) struct ActivePlayerArea {
 pub(super) struct ActiveChunkTracker {
     pub players: FxHashMap<Uuid, ActivePlayerArea>,
     pub loaded_active_chunks: FxHashSet<Vector2<i32>>,
+    /// Loaded chunks next to an active one that started block ticking: vanilla block-ticks the
+    /// ring around the entity-ticking chunks too.
+    pub ticking_ring: FxHashSet<Vector2<i32>>,
     watcher_counts: FxHashMap<Vector2<i32>, u32>,
     forced_chunks: FxHashSet<Vector2<i32>>,
 }

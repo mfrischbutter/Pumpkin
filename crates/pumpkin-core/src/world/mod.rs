@@ -602,11 +602,62 @@ impl World {
             &mut newly_active,
         );
 
+        // Chunks that may have joined the ring of block-ticking chunks around the active ones.
+        let mut ring_candidates = Vec::new();
         for pos in newly_active {
+            for dx in -1..=1 {
+                for dz in -1..=1 {
+                    ring_candidates.push(pos.add_raw(dx, dz));
+                }
+            }
             if self.level.is_chunk_loaded(&pos) && tracker.loaded_active_chunks.insert(pos) {
                 migrations.push(pos);
             }
         }
+        self.apply_loaded_chunk_changes(
+            &mut tracker,
+            &active_chunks,
+            &mut migrations,
+            &mut ring_candidates,
+        );
+        let mut pending_migrations = FxHashSet::default();
+        while let Some(pos) = self.pending_block_entity_migrations.pop() {
+            pending_migrations.insert(pos);
+        }
+        for pos in pending_migrations {
+            if active_chunks.contains(&pos) && self.level.is_chunk_loaded(&pos) {
+                migrations.push(pos);
+            }
+        }
+        let ring_migrations = self.join_ticking_ring(&mut tracker, &active_chunks, ring_candidates);
+        drop(active_chunks);
+        drop(tracker);
+        for pos in migrations {
+            self.pending_post_processing.push(pos);
+            self.level.unpack_chunk_ticks(&pos);
+            self.migrate_pending_block_entities(pos);
+        }
+        for pos in ring_migrations {
+            self.pending_post_processing.push(pos);
+            self.level.unpack_chunk_ticks(&pos);
+        }
+
+        // Mob caps follow the 17 x 17 chunks around players, not the simulation distance.
+        self.natural_spawn_chunks
+            .store(Arc::new(natural_spawner::spawn_candidate_chunks(
+                player_chunks,
+            )));
+    }
+
+    /// Chunks loaded, generated or unloaded since the last tick: a loaded active chunk migrates, a
+    /// loaded chunk may join the ticking ring, an unloaded one leaves both.
+    fn apply_loaded_chunk_changes(
+        &self,
+        tracker: &mut ActiveChunkTracker,
+        active_chunks: &FxHashSet<Vector2<i32>>,
+        migrations: &mut Vec<Vector2<i32>>,
+        ring_candidates: &mut Vec<Vector2<i32>>,
+    ) {
         for change in self.level.loaded_chunk_changes() {
             match change {
                 pumpkin_world::level::LoadedChunkChange::Loaded(pos)
@@ -617,37 +668,40 @@ impl World {
                     {
                         migrations.push(pos);
                     }
+                    ring_candidates.push(pos);
                 }
                 pumpkin_world::level::LoadedChunkChange::Unloaded(pos) => {
                     self.forget_structure_references(pos);
                     if !self.level.is_chunk_loaded(&pos) {
                         tracker.loaded_active_chunks.remove(&pos);
+                        tracker.ticking_ring.remove(&pos);
                     }
                 }
             }
         }
-        let mut pending_migrations = FxHashSet::default();
-        while let Some(pos) = self.pending_block_entity_migrations.pop() {
-            pending_migrations.insert(pos);
-        }
-        for pos in pending_migrations {
-            if active_chunks.contains(&pos) && self.level.is_chunk_loaded(&pos) {
-                migrations.push(pos);
+    }
+
+    /// The loaded chunks among `candidates` that join the ring of block-ticking chunks around the
+    /// active ones. Vanilla block-ticks that ring as well: a chunk there post-processes and runs
+    /// the ticks it brought along (`ChunkMap.prepareTickingChunk`).
+    fn join_ticking_ring(
+        &self,
+        tracker: &mut ActiveChunkTracker,
+        active_chunks: &FxHashSet<Vector2<i32>>,
+        candidates: Vec<Vector2<i32>>,
+    ) -> Vec<Vector2<i32>> {
+        let mut joined = Vec::new();
+        for pos in candidates {
+            if active_chunks.contains(&pos) || !self.level.is_chunk_loaded(&pos) {
+                continue;
+            }
+            let next_to_active =
+                (-1..=1).any(|dx| (-1..=1).any(|dz| active_chunks.contains(&pos.add_raw(dx, dz))));
+            if next_to_active && tracker.ticking_ring.insert(pos) {
+                joined.push(pos);
             }
         }
-        drop(active_chunks);
-        drop(tracker);
-        for pos in migrations {
-            self.pending_post_processing.push(pos);
-            self.level.unpack_chunk_ticks(&pos);
-            self.migrate_pending_block_entities(pos);
-        }
-
-        // Mob caps follow the 17 x 17 chunks around players, not the simulation distance.
-        self.natural_spawn_chunks
-            .store(Arc::new(natural_spawner::spawn_candidate_chunks(
-                player_chunks,
-            )));
+        joined
     }
 
     /// Adds or removes force tickets for `chunks`, mirroring vanilla
