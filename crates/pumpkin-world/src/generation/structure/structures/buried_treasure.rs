@@ -4,7 +4,7 @@ use pumpkin_data::Block;
 use pumpkin_nbt::compound::NbtCompound;
 use pumpkin_util::{
     BlockDirection, HeightMap,
-    math::{block_box::BlockBox, position::BlockPos, vector3::Vector3},
+    math::{block_box::BlockBox, vector3::Vector3},
     random::{RandomGenerator, RandomImpl, hash_block_pos, legacy_rand::LegacyRand},
 };
 
@@ -14,7 +14,7 @@ use crate::{
         piece::StructurePieceType,
         structures::{
             StructureGenerator, StructureGeneratorContext, StructurePiece, StructurePieceBase,
-            StructurePiecesCollector, StructurePosition, WorldPortalExt,
+            StructurePiecesCollector, StructurePosition, WorldPortalExt, chunk_center_start,
         },
     },
 };
@@ -24,7 +24,7 @@ pub struct BuriedTreasureGenerator;
 impl StructureGenerator for BuriedTreasureGenerator {
     fn get_structure_position(
         &self,
-        context: StructureGeneratorContext<'_>,
+        mut context: StructureGeneratorContext<'_>,
     ) -> Option<StructurePosition> {
         let x = (context.chunk_x << 4) + 9;
         let z = (context.chunk_z << 4) + 9;
@@ -37,7 +37,7 @@ impl StructureGenerator for BuriedTreasureGenerator {
         }));
 
         Some(StructurePosition {
-            start_pos: BlockPos::new(x, 90, z),
+            start_pos: chunk_center_start(&mut context, true, 90),
             collector: Arc::new(collector.into()),
         })
     }

@@ -35,7 +35,7 @@ pub use crate::world::WorldPortalExt;
 use crate::{
     ProtoChunk,
     generation::{
-        positions::chunk_pos::{start_block_x, start_block_z},
+        positions::chunk_pos::{get_center_x, get_center_z, start_block_x, start_block_z},
         structure::piece::StructurePieceType,
     },
 };
@@ -960,6 +960,53 @@ impl HeightSampler
     }
 }
 
+/// Vanilla's `Structure.onTopOfChunkCenter`: the start at the chunk's middle block.
+///
+/// It sits on the first occupied block of `OCEAN_FLOOR_WG` when `ocean_floor`, else of
+/// `WORLD_SURFACE_WG`. Without a height sampler it sits at `fallback_y`.
+pub fn chunk_center_start(
+    context: &mut StructureGeneratorContext<'_>,
+    ocean_floor: bool,
+    fallback_y: i32,
+) -> BlockPos {
+    let x = get_center_x(context.chunk_x);
+    let z = get_center_z(context.chunk_z);
+    let y = context
+        .height_sampler
+        .as_deref_mut()
+        .map_or(fallback_y, |sampler| {
+            if ocean_floor {
+                sampler.estimate_ocean_floor_height(x, z)
+            } else {
+                sampler.estimate_height(x, z) - 1
+            }
+        });
+    BlockPos::new(x, y, z)
+}
+
+/// Vanilla's `Structure.getLowestY(context, sizeX, sizeZ)`: the lowest corner of a footprint.
+///
+/// The corners lie `size_x` and `size_z` apart from the chunk's min block, each read as its first
+/// occupied `WORLD_SURFACE_WG` block. `None` without a height sampler.
+pub fn lowest_corner_y(
+    context: &mut StructureGeneratorContext<'_>,
+    size_x: i32,
+    size_z: i32,
+) -> Option<i32> {
+    let min_x = start_block_x(context.chunk_x);
+    let min_z = start_block_z(context.chunk_z);
+    let sampler = context.height_sampler.as_deref_mut()?;
+    [
+        (min_x, min_z),
+        (min_x, min_z + size_z),
+        (min_x + size_x, min_z),
+        (min_x + size_x, min_z + size_z),
+    ]
+    .into_iter()
+    .map(|(x, z)| sampler.estimate_height(x, z) - 1)
+    .min()
+}
+
 pub struct StructureGeneratorContext<'a> {
     pub seed: i64,
     pub chunk_x: i32,
@@ -1013,6 +1060,59 @@ mod structure_random_tests {
                 -196_012_664,
                 372_718_864
             ]
+        );
+    }
+
+    /// A surface that falls towards +x and twice as fast towards +z, with a distinct ocean floor.
+    struct SlopeSampler;
+
+    impl HeightSampler for SlopeSampler {
+        fn estimate_height(&mut self, block_x: i32, block_z: i32) -> i32 {
+            100 - block_x - 2 * block_z
+        }
+
+        fn estimate_ocean_floor_height(&mut self, block_x: i32, block_z: i32) -> i32 {
+            40 + block_x + block_z
+        }
+    }
+
+    fn context(height_sampler: Option<&mut dyn HeightSampler>) -> StructureGeneratorContext<'_> {
+        StructureGeneratorContext {
+            seed: 0,
+            chunk_x: 2,
+            chunk_z: -1,
+            random: create_chunk_random(0, 2, -1),
+            sea_level: 63,
+            min_y: -64,
+            height: 384,
+            height_sampler,
+            structure_key: None,
+        }
+    }
+
+    #[test]
+    fn start_helpers_read_vanilla_positions() {
+        let mut sampler = SlopeSampler;
+        let mut with_sampler = context(Some(&mut sampler));
+
+        // Chunk (2, -1) starts at block (32, -16); the lowest corner is (32 + 12, -16 + 15),
+        // whose surface is 100 - 44 + 2 = 58, so its first occupied block is 57.
+        assert_eq!(lowest_corner_y(&mut with_sampler, 12, 15), Some(57));
+        // The middle block is (40, -8): surface 100 - 40 + 16 = 76, ocean floor 40 + 40 - 8 = 72.
+        assert_eq!(
+            chunk_center_start(&mut with_sampler, false, 64),
+            BlockPos::new(40, 75, -8)
+        );
+        assert_eq!(
+            chunk_center_start(&mut with_sampler, true, 64),
+            BlockPos::new(40, 72, -8)
+        );
+
+        let mut without_sampler = context(None);
+        assert_eq!(lowest_corner_y(&mut without_sampler, 12, 15), None);
+        assert_eq!(
+            chunk_center_start(&mut without_sampler, true, 90),
+            BlockPos::new(40, 90, -8)
         );
     }
 }

@@ -8,7 +8,7 @@ use pumpkin_data::{
 use pumpkin_nbt::compound::NbtCompound;
 use pumpkin_util::{
     HeightMap,
-    math::{block_box::BlockBox, int_provider::IntProvider, position::BlockPos, vector3::Vector3},
+    math::{block_box::BlockBox, int_provider::IntProvider, vector3::Vector3},
     random::{RandomGenerator, RandomImpl},
 };
 
@@ -20,7 +20,7 @@ use crate::{
             piece::StructurePieceType,
             structures::{
                 StructureGenerator, StructureGeneratorContext, StructurePiece, StructurePieceBase,
-                StructurePiecesCollector, StructurePosition, WorldPortalExt,
+                StructurePiecesCollector, StructurePosition, WorldPortalExt, chunk_center_start,
             },
             template::{
                 RegionPlacer, StructurePlaceSettings, StructureTemplate, get_template,
@@ -133,7 +133,7 @@ impl StructureGenerator for OceanRuinGenerator {
         );
 
         Some(StructurePosition {
-            start_pos: BlockPos::new(start_x + 8, 64, start_z + 8),
+            start_pos: chunk_center_start(&mut context, true, 64),
             collector: Arc::new(collector.into()),
         })
     }

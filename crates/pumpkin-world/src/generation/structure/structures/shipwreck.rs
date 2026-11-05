@@ -3,20 +3,20 @@ use std::sync::Arc;
 use pumpkin_data::{Mirror, Rotation};
 use pumpkin_util::{
     HeightMap,
-    math::{block_box::BlockBox, position::BlockPos, vector3::Vector3},
+    math::{block_box::BlockBox, vector3::Vector3},
     random::{RandomGenerator, RandomImpl},
 };
 
 use crate::{
     ProtoChunk,
     generation::{
-        positions::chunk_pos::{get_center_x, get_center_z, start_block_x, start_block_z},
+        positions::chunk_pos::{start_block_x, start_block_z},
         proto_chunk::GenerationCache,
         structure::{
             piece::StructurePieceType,
             structures::{
                 StructureGenerator, StructureGeneratorContext, StructurePiece, StructurePieceBase,
-                StructurePiecesCollector, StructurePosition, WorldPortalExt,
+                StructurePiecesCollector, StructurePosition, WorldPortalExt, chunk_center_start,
             },
             template::{
                 RegionPlacer, StructurePlaceSettings, StructureTemplate, get_template,
@@ -81,22 +81,12 @@ impl StructureGenerator for ShipwreckGenerator {
         &self,
         mut context: StructureGeneratorContext<'_>,
     ) -> Option<StructurePosition> {
-        let center_x = get_center_x(context.chunk_x);
-        let center_z = get_center_z(context.chunk_z);
-
-        let center_y = if self.is_beached {
-            context
-                .height_sampler
-                .as_deref_mut()
-                .map_or(64, |s| s.estimate_height(center_x, center_z))
+        let fallback_y = if self.is_beached {
+            64
         } else {
-            context
-                .height_sampler
-                .as_deref_mut()
-                .map_or(context.sea_level, |s| {
-                    s.estimate_ocean_floor_height(center_x, center_z)
-                })
+            context.sea_level
         };
+        let start_pos = chunk_center_start(&mut context, !self.is_beached, fallback_y);
 
         let rotation_idx = context.random.next_bounded_i32(4) as u8;
         let rotation = Rotation::from_index(rotation_idx);
@@ -144,7 +134,7 @@ impl StructureGenerator for ShipwreckGenerator {
         collector.add_piece(Box::new(piece));
 
         Some(StructurePosition {
-            start_pos: BlockPos::new(center_x, center_y, center_z),
+            start_pos,
             collector: Arc::new(collector.into()),
         })
     }

@@ -2,7 +2,7 @@ use std::sync::Arc;
 
 use pumpkin_data::{Block, BlockState, Mirror, Rotation};
 use pumpkin_util::{
-    math::{block_box::BlockBox, position::BlockPos, vector3::Vector3},
+    math::{block_box::BlockBox, vector3::Vector3},
     random::{RandomGenerator, RandomImpl},
 };
 
@@ -15,7 +15,7 @@ use crate::{
             piece::StructurePieceType,
             structures::{
                 StructureGenerator, StructureGeneratorContext, StructurePiece, StructurePieceBase,
-                StructurePiecesCollector, StructurePosition, WorldPortalExt,
+                StructurePiecesCollector, StructurePosition, WorldPortalExt, chunk_center_start,
             },
             template::{
                 RegionPlacer, StructurePlaceSettings, StructureTemplate, block_entity_id,
@@ -134,7 +134,7 @@ impl StructureGenerator for IglooGenerator {
         add_pieces(&mut collector, block_pos, rotation, &mut context.random);
 
         Some(StructurePosition {
-            start_pos: BlockPos::new(block_pos.x, block_pos.y, block_pos.z),
+            start_pos: chunk_center_start(&mut context, false, GENERATION_HEIGHT),
             collector: Arc::new(collector.into()),
         })
     }
