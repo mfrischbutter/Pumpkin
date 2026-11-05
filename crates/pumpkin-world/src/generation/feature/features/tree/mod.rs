@@ -491,6 +491,7 @@ impl TreeFeature {
                 foliage_height,
                 foliage_radius,
                 &self.foliage_provider,
+                trunk_state,
             );
         }
         (logs, root_positions, foliage_positions)

@@ -8,8 +8,8 @@ use jungle::JungleFoliagePlacer;
 use mega_pine::MegaPineFoliagePlacer;
 use pine::PineFoliagePlacer;
 use poplar::PoplarFoliagePlacer;
-use pumpkin_data::BlockDirection;
 use pumpkin_data::block_properties::{BlockProperties, OakLeavesLikeProperties};
+use pumpkin_data::{BlockDirection, BlockState};
 use pumpkin_util::{
     math::{int_provider::IntProvider, position::BlockPos, vector3::Vector3},
     random::{RandomGenerator, RandomImpl},
@@ -113,6 +113,7 @@ impl FoliagePlacer {
         foliage_height: i32,
         radius: i32,
         foliage_provider: &BlockStateProvider,
+        trunk_state: &BlockState,
     ) {
         let offset = self.offset.get(random);
         if let FoliageType::Cherry(cherry) = &self.r#type {
@@ -135,6 +136,7 @@ impl FoliagePlacer {
                 radius,
                 offset,
                 foliage_provider,
+                trunk_state,
             ));
         }
     }
@@ -302,6 +304,7 @@ impl FoliageType {
         radius: i32,
         offset: i32,
         foliage_provider: &BlockStateProvider,
+        trunk_state: &BlockState,
     ) -> Vec<BlockPos> {
         match self {
             Self::Blob(blob) => blob.generate(
@@ -416,6 +419,7 @@ impl FoliageType {
                 radius,
                 offset,
                 foliage_provider,
+                trunk_state,
             ),
         }
     }
