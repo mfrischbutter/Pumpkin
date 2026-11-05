@@ -527,11 +527,12 @@ impl StructurePiece {
 
         let mut solid_neighbor: Option<HorizontalFacing> = None;
 
+        // Vanilla's `Direction.Plane.HORIZONTAL` order.
         let horizontal = [
             HorizontalFacing::North,
+            HorizontalFacing::East,
             HorizontalFacing::South,
             HorizontalFacing::West,
-            HorizontalFacing::East,
         ];
 
         let offset = |facing: HorizontalFacing| match facing {
