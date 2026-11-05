@@ -14,8 +14,8 @@ use std::rc::Rc;
 use std::sync::Arc;
 
 use super::jigsaw::{
-    JigsawBlock, JigsawJointType, JigsawJunction, JigsawProjection, PoolElementStructurePiece,
-    TemplatePool,
+    JigsawBlock, JigsawJointType, JigsawJunction, JigsawProjection, PoolElement,
+    PoolElementStructurePiece, TemplatePool,
 };
 
 pub struct JigsawPlacement;
@@ -677,18 +677,14 @@ impl JigsawPlacement {
             center_z + max_distance_from_center.horizontal,
         );
 
-        let center_piece = Box::new(PoolElementStructurePiece {
-            piece: StructurePiece::new(StructurePieceType::Jigsaw, box_, 0),
-            element: center_element,
-            pos: piece_pos,
-            rotation: center_rotation,
-            mirror: Mirror::None,
-            jigsaw_blocks: Vec::new(),
-            junctions: Vec::new(),
+        let center_piece = Box::new(center_piece(
+            center_element,
+            box_,
+            piece_pos,
+            center_rotation,
             ground_level_delta,
             liquid_settings,
-            projection: pool.elements[0].projection,
-        });
+        ));
 
         let mut collector = super::StructurePiecesCollector::new();
 
@@ -825,6 +821,31 @@ pub const fn rotate_direction(
     }
 }
 
+/// The start piece of a jigsaw structure. Like vanilla, it takes the projection of the
+/// element chosen for it, not of the pool's first element.
+fn center_piece(
+    element: Arc<PoolElement>,
+    box_: BlockBox,
+    pos: BlockPos,
+    rotation: Rotation,
+    ground_level_delta: i32,
+    liquid_settings: LiquidSettings,
+) -> PoolElementStructurePiece {
+    let projection = element.projection;
+    PoolElementStructurePiece {
+        piece: StructurePiece::new(StructurePieceType::Jigsaw, box_, 0),
+        element,
+        pos,
+        rotation,
+        mirror: Mirror::None,
+        jigsaw_blocks: Vec::new(),
+        junctions: Vec::new(),
+        ground_level_delta,
+        liquid_settings,
+        projection,
+    }
+}
+
 fn can_attach(source: &JigsawBlock, target: &JigsawBlock) -> bool {
     if target
         .name
@@ -873,5 +894,35 @@ mod tests {
         );
         assert!(can_attach(&source, &feature));
         assert!(!can_attach(&source, &bottom));
+    }
+
+    #[test]
+    fn start_piece_takes_the_chosen_elements_projection() {
+        let element = |projection| {
+            Arc::new(PoolElement {
+                weight: 1,
+                projection,
+                kind: crate::generation::structure::structures::jigsaw::PoolElementKind::Empty,
+            })
+        };
+        let pool = TemplatePool {
+            id: "test:start".to_string(),
+            fallback: "minecraft:empty".to_string(),
+            elements: vec![
+                element(JigsawProjection::Rigid),
+                element(JigsawProjection::TerrainMatching),
+            ],
+        };
+        for chosen in &pool.elements {
+            let piece = center_piece(
+                Arc::clone(chosen),
+                BlockBox::new(0, 0, 0, 1, 1, 1),
+                BlockPos(Vector3::new(0, 0, 0)),
+                Rotation::None,
+                1,
+                LiquidSettings::ApplyWaterlog,
+            );
+            assert_eq!(piece.projection, chosen.projection);
+        }
     }
 }
