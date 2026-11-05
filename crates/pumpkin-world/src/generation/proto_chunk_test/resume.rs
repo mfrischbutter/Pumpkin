@@ -202,6 +202,66 @@ fn structure_references_survive_resuming_after_features() {
 }
 
 #[test]
+fn structure_entities_survive_saving_before_the_spawn_stage() {
+    use crate::chunk::ChunkData;
+    use crate::chunk_system::chunk_state::Chunk;
+    use pumpkin_config::lighting::LightingEngineConfig;
+    use pumpkin_nbt::{compound::NbtCompound, tag::NbtTag};
+    use pumpkin_util::math::vector2::Vector2;
+
+    fn entity(id: &str, x: f64) -> NbtCompound {
+        let mut nbt = NbtCompound::new();
+        nbt.put_string("id", id.to_string());
+        nbt.put_list(
+            "Pos",
+            vec![
+                NbtTag::Double(x),
+                NbtTag::Double(64.5),
+                NbtTag::Double(-30.5),
+            ],
+        );
+        nbt
+    }
+
+    let seed = Seed(4242);
+    let world_gen = get_world_gen(seed, Dimension::OVERWORLD, false, Vec::new(), String::new());
+
+    let mut proto = ProtoChunk::new(3, -2, &world_gen);
+    let minecart = entity("minecraft:chest_minecart", 50.5);
+    let villager = entity("minecraft:villager", 52.5);
+    proto.add_structure_entity(minecart.clone(), false);
+    proto.add_structure_entity(villager.clone(), true);
+    // Saved after its features, before its spawn stage took the entities.
+    proto.stage = StagedChunkEnum::Features;
+
+    let mut staged = Chunk::Proto(Box::new(proto));
+    staged.upgrade_to_level_chunk(&Dimension::OVERWORLD, &LightingEngineConfig::Default);
+    let Chunk::Level(chunk_data) = staged else {
+        unreachable!()
+    };
+    let bytes = chunk_data.internal_to_bytes();
+    let read = ChunkData::internal_from_bytes(&bytes, Vector2::new(3, -2)).unwrap();
+
+    let mut resumed = ProtoChunk::from_chunk_data(&read, &world_gen);
+    assert_eq!(resumed.stage, StagedChunkEnum::Features);
+    let pending = resumed.take_pending_structure_entities();
+    assert_eq!(pending.len(), 2);
+    assert_eq!(pending[0].nbt, minecart);
+    assert!(!pending[0].finalize);
+    assert_eq!(pending[1].nbt, villager);
+    assert!(pending[1].finalize);
+
+    // A chunk saved at its spawn stage has spawned them already.
+    let spawned = ChunkData::internal_from_bytes(&bytes, Vector2::new(3, -2)).unwrap();
+    let spawned = ChunkData {
+        status: pumpkin_data::chunk::ChunkStatus::Spawn,
+        ..spawned
+    };
+    let mut resumed = ProtoChunk::from_chunk_data(&spawned, &world_gen);
+    assert!(resumed.take_pending_structure_entities().is_empty());
+}
+
+#[test]
 fn block_entities_survive_chunk_data_resume() {
     use crate::chunk_system::chunk_state::Chunk;
     use pumpkin_config::lighting::LightingEngineConfig;

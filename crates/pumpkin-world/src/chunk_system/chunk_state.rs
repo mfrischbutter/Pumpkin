@@ -3,6 +3,7 @@ use crate::chunk::{
     palette::{BiomePalette, BlockPalette},
 };
 use crate::generation::biome_coords;
+use crate::generation::proto_chunk::StructureEntity;
 use crate::generation::structure::references::reference_map;
 use crate::tick::scheduler::ChunkTickScheduler;
 use pumpkin_config::lighting::LightingEngineConfig;
@@ -295,6 +296,7 @@ impl Chunk {
                 custom_data: Mutex::new(NbtCompound::new()),
                 post_processing: Mutex::default(),
                 structure_references: Mutex::default(),
+                pending_entities: Mutex::default(),
             })),
         ) {
             Self::Proto(proto) => proto,
@@ -345,6 +347,14 @@ impl Chunk {
             }
         }
 
+        // Entities still waiting for the spawn stage are saved with the proto chunk, like
+        // vanilla's `entities`; the spawn stage has taken them from a full chunk.
+        let pending_entities = proto_chunk
+            .pending_structure_entities
+            .into_iter()
+            .map(StructureEntity::into_saved_nbt)
+            .collect();
+
         let chunk = ChunkData {
             light_engine: Mutex::new(light_data),
             light_populated: AtomicBool::new(is_lit),
@@ -362,6 +372,7 @@ impl Chunk {
             custom_data: Mutex::new(NbtCompound::new()),
             post_processing: Mutex::new(proto_chunk.post_processing),
             structure_references: Mutex::new(structure_references),
+            pending_entities: Mutex::new(pending_entities),
         };
 
         *self = Self::Level(Arc::new(chunk));

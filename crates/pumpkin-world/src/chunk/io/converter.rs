@@ -497,6 +497,7 @@ mod tests {
             custom_data: Mutex::new(NbtCompound::default()),
             post_processing: Mutex::default(),
             structure_references: Mutex::default(),
+            pending_entities: Mutex::default(),
         };
         chunk.set_custom_data("test_ns", "flag", NbtTag::Int(99));
 

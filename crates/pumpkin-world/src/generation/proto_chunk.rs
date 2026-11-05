@@ -218,7 +218,7 @@ pub struct ProtoChunk {
     pub light: ChunkLight,
     pub blending_data: Option<crate::generation::blender::blending_data::BlendingData>,
     pub pending_block_entities: Vec<NbtCompound>,
-    pending_structure_entities: Vec<StructureEntity>,
+    pub(crate) pending_structure_entities: Vec<StructureEntity>,
     pub fluid_ticks: Vec<ScheduledTick<&'static Fluid>>,
     pub block_ticks: Vec<ScheduledTick<&'static Block>>,
     /// Blocks marked for post-processing, per section from the bottom, packed like vanilla
@@ -297,6 +297,30 @@ pub struct StructureEntity {
     /// Vanilla runs `finalizeSpawn` (reason `STRUCTURE`) on a mob spawned by a structure's
     /// data marker or jigsaw piece, but not on one from a plain template.
     pub finalize: bool,
+}
+
+/// Key a saved proto chunk's pending entity carries when its [`StructureEntity::finalize`] is
+/// set (byte 1). Vanilla's `entities` has no such flag; the key is removed again on load.
+pub(crate) const FINALIZE_SPAWN_KEY: &str = "pumpkin:finalize_spawn";
+
+impl StructureEntity {
+    /// The entity's compound as a saved proto chunk's `entities` holds it.
+    pub(crate) fn into_saved_nbt(self) -> NbtCompound {
+        let mut nbt = self.nbt;
+        if self.finalize {
+            nbt.put_byte(FINALIZE_SPAWN_KEY, 1);
+        }
+        nbt
+    }
+
+    /// The entity back from a saved proto chunk's `entities`, its marker key taken out.
+    pub(crate) fn from_saved_nbt(mut nbt: NbtCompound) -> Self {
+        let finalize = nbt
+            .child_tags
+            .remove(FINALIZE_SPAWN_KEY)
+            .is_some_and(|tag| tag.extract_byte() == Some(1));
+        Self { nbt, finalize }
+    }
 }
 
 pub struct TerrainCache {
@@ -563,6 +587,18 @@ impl ProtoChunk {
             .lock()
             .unwrap_or_else(std::sync::PoisonError::into_inner)
             .clone();
+        // Entities generation created wait for the spawn stage; a chunk saved at or after it
+        // has spawned them already.
+        if saved_stage < StagedChunkEnum::Spawn {
+            proto_chunk.pending_structure_entities = chunk_data
+                .pending_entities
+                .lock()
+                .unwrap_or_else(std::sync::PoisonError::into_inner)
+                .iter()
+                .cloned()
+                .map(StructureEntity::from_saved_nbt)
+                .collect();
+        }
         if let super::generator::WorldGenerator::Noise(generator) = generator
             && (StagedChunkEnum::StructureStart..StagedChunkEnum::Features).contains(&saved_stage)
         {

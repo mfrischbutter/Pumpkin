@@ -404,6 +404,62 @@ fn read_pump_structure_references(
     Ok(references)
 }
 
+/// Vanilla's `entities` of a proto chunk: the entity compounds waiting for the spawn stage.
+fn read_pending_entities(root_tag: &NbtCompound) -> Vec<NbtCompound> {
+    root_tag
+        .get_list("entities")
+        .map(|list| {
+            list.iter()
+                .filter_map(|tag| match tag {
+                    pumpkin_nbt::tag::NbtTag::Compound(entity) => Some(entity.clone()),
+                    _ => None,
+                })
+                .collect()
+        })
+        .unwrap_or_default()
+}
+
+/// The pending entity block of a pump chunk: entity count, then per entity its length and
+/// unnamed NBT; every length bounded before it is read.
+fn read_pump_pending_entities(buf: &mut &[u8]) -> Result<Vec<NbtCompound>, ChunkParsingError> {
+    const MAX_ENTITIES: usize = 4096;
+    const MAX_ENTITY_LEN: usize = 1 << 20;
+    let eof = || {
+        ChunkParsingError::ErrorDeserializingChunk("Unexpected EOF reading pending entities".into())
+    };
+    let invalid = |what: &str| {
+        ChunkParsingError::ErrorDeserializingChunk(format!("Invalid pending entity {what}"))
+    };
+    if buf.remaining() < 4 {
+        return Err(eof());
+    }
+    let count = buf.get_u32() as usize;
+    if count > MAX_ENTITIES {
+        return Err(invalid("count"));
+    }
+    let mut entities = Vec::with_capacity(count);
+    for _ in 0..count {
+        if buf.remaining() < 4 {
+            return Err(eof());
+        }
+        let len = buf.get_u32() as usize;
+        if len > MAX_ENTITY_LEN {
+            return Err(invalid("length"));
+        }
+        if buf.remaining() < len {
+            return Err(eof());
+        }
+        let mut cursor = std::io::Cursor::new(&buf[..len]);
+        let mut reader = pumpkin_nbt::deserializer::NbtReadHelperJava::new(&mut cursor);
+        let nbt = pumpkin_nbt::Nbt::read_unnamed(&mut reader)
+            .map_err(|e| ChunkParsingError::ErrorDeserializingChunk(e.to_string()))?
+            .root_tag;
+        buf.advance(len);
+        entities.push(nbt);
+    }
+    Ok(entities)
+}
+
 fn parse_scheduled_tick<T>(nbt: &pumpkin_nbt::compound::NbtCompound) -> Option<ScheduledTick<T>>
 where
     T: FromResourceLocation,
@@ -650,6 +706,7 @@ impl ChunkData {
 
         let post_processing = read_post_processing(&root_tag);
         let structure_references = read_structure_references(&root_tag, position.x, position.y);
+        let pending_entities = read_pending_entities(&root_tag);
 
         let mut block_entities = FxHashMap::default();
         if let Some(list) = root_tag.get_list("block_entities") {
@@ -706,6 +763,7 @@ impl ChunkData {
             custom_data: std::sync::Mutex::new(custom_data),
             post_processing: std::sync::Mutex::new(post_processing),
             structure_references: std::sync::Mutex::new(structure_references),
+            pending_entities: std::sync::Mutex::new(pending_entities),
         })
     }
 
@@ -908,6 +966,23 @@ impl ChunkData {
                     .unwrap_or_else(std::sync::PoisonError::into_inner),
             ),
         );
+        let pending_entities = self
+            .pending_entities
+            .lock()
+            .unwrap_or_else(std::sync::PoisonError::into_inner);
+        // Vanilla writes `entities` for proto chunks only; a full chunk's entities live in its
+        // entity chunk.
+        if !pending_entities.is_empty() && self.status != ChunkStatus::Full {
+            root_compound.put_list(
+                "entities",
+                pending_entities
+                    .iter()
+                    .cloned()
+                    .map(NbtTag::Compound)
+                    .collect(),
+            );
+        }
+        drop(pending_entities);
 
         let mut block_entities_list = Vec::new();
         for entity_comp in block_entities_nbt {
@@ -1016,6 +1091,18 @@ impl ChunkData {
         let has_structure_references = !structure_references.is_empty();
         if has_structure_references {
             flags |= 1 << 6;
+        }
+        let pending_entities = if self.status == ChunkStatus::Full {
+            Vec::new()
+        } else {
+            self.pending_entities
+                .lock()
+                .unwrap_or_else(std::sync::PoisonError::into_inner)
+                .clone()
+        };
+        let has_pending_entities = !pending_entities.is_empty();
+        if has_pending_entities {
+            flags |= 1 << 7;
         }
 
         let status_u8 = match self.status {
@@ -1135,6 +1222,15 @@ impl ChunkData {
                 for &packed in start_chunks {
                     out.put_i64(packed);
                 }
+            }
+        }
+
+        if has_pending_entities {
+            out.put_u32(pending_entities.len() as u32);
+            for entity in pending_entities {
+                let bytes = pumpkin_nbt::Nbt::new(String::new(), entity).write_unnamed();
+                out.put_u32(bytes.len() as u32);
+                out.extend_from_slice(&bytes);
             }
         }
 
@@ -1421,6 +1517,11 @@ impl ChunkData {
         } else {
             StructureReferenceMap::new()
         };
+        let pending_entities = if (flags & (1 << 7)) != 0 {
+            read_pump_pending_entities(&mut buf)?
+        } else {
+            Vec::new()
+        };
 
         Ok(Self {
             section,
@@ -1439,6 +1540,7 @@ impl ChunkData {
             custom_data: std::sync::Mutex::new(custom_data),
             post_processing: std::sync::Mutex::new(post_processing),
             structure_references: std::sync::Mutex::new(structure_references),
+            pending_entities: std::sync::Mutex::new(pending_entities),
         })
     }
 
@@ -2093,5 +2195,87 @@ mod tests {
 
         let bytes = chunk_with_references(0, 0).internal_to_pump_bytes();
         assert_ne!(bytes[4 + 1 + 4 + 4 + 4 + 4 + 1] & (1 << 6), 0);
+    }
+
+    fn chunk_with_pending_entities(x: i32, z: i32) -> crate::chunk::ChunkData {
+        let mut minecart = NbtCompound::new();
+        minecart.put_string("id", "minecraft:chest_minecart".to_string());
+        minecart.put_list(
+            "Pos",
+            vec![
+                NbtTag::Double(2.5),
+                NbtTag::Double(30.5),
+                NbtTag::Double(-6.5),
+            ],
+        );
+        let mut villager = NbtCompound::new();
+        villager.put_string("id", "minecraft:villager".to_string());
+        villager.put_byte("pumpkin:finalize_spawn", 1);
+        let chunk = crate::chunk::ChunkData {
+            status: ChunkStatus::Features,
+            ..crate::chunk::ChunkData::empty(x, z)
+        };
+        *chunk.pending_entities.lock().unwrap() = vec![minecart, villager];
+        chunk
+    }
+
+    #[test]
+    fn nbt_round_trip_keeps_pending_entities() {
+        use crate::chunk::ChunkData;
+        use pumpkin_util::math::vector2::Vector2;
+
+        let chunk = chunk_with_pending_entities(4, 9);
+        let expected = chunk.pending_entities.lock().unwrap().clone();
+        let bytes = chunk.internal_to_bytes();
+        assert_eq!(
+            read_root(&bytes).get_list("entities").map(<[NbtTag]>::len),
+            Some(2)
+        );
+        let read = ChunkData::internal_from_bytes(&bytes, Vector2::new(4, 9)).unwrap();
+        assert_eq!(*read.pending_entities.lock().unwrap(), expected);
+    }
+
+    #[test]
+    fn full_chunk_writes_no_entities() {
+        let root = read_root(&crate::chunk::ChunkData::empty(0, 0).internal_to_bytes());
+        assert!(root.get("entities").is_none());
+
+        let full = crate::chunk::ChunkData {
+            status: ChunkStatus::Full,
+            ..chunk_with_pending_entities(0, 0)
+        };
+        assert!(
+            read_root(&full.internal_to_bytes())
+                .get("entities")
+                .is_none()
+        );
+    }
+
+    #[test]
+    fn pump_round_trip_keeps_pending_entities() {
+        use crate::chunk::ChunkData;
+        use pumpkin_util::math::vector2::Vector2;
+
+        let chunk = chunk_with_pending_entities(-7, 3);
+        let expected = chunk.pending_entities.lock().unwrap().clone();
+        let bytes = chunk.internal_to_pump_bytes();
+        assert_ne!(bytes[4 + 1 + 4 + 4 + 4 + 4 + 1] & (1 << 7), 0);
+        let read = ChunkData::internal_from_pump_bytes(&bytes, Vector2::new(-7, 3)).unwrap();
+        assert_eq!(*read.pending_entities.lock().unwrap(), expected);
+    }
+
+    #[test]
+    fn pump_chunk_without_pending_entities_leaves_flag_bit_seven_clear() {
+        use crate::chunk::ChunkData;
+        use pumpkin_util::math::vector2::Vector2;
+
+        let chunk = ChunkData {
+            status: ChunkStatus::Features,
+            ..ChunkData::empty(0, 0)
+        };
+        let bytes = chunk.internal_to_pump_bytes();
+        assert_eq!(bytes[4 + 1 + 4 + 4 + 4 + 4 + 1] & (1 << 7), 0);
+        let read = ChunkData::internal_from_pump_bytes(&bytes, Vector2::new(0, 0)).unwrap();
+        assert!(read.pending_entities.lock().unwrap().is_empty());
     }
 }

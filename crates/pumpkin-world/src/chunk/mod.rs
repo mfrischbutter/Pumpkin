@@ -92,6 +92,9 @@ pub struct ChunkData {
     /// structure data as vanilla's; Pumpkin recomputes structures from placement and does not
     /// read it.
     pub structure_references: std::sync::Mutex<StructureReferenceMap>,
+    /// Vanilla's `entities` of a proto chunk: entities generation created that wait for the
+    /// chunk's spawn stage. Empty for full chunks, whose entities live in the entity chunks.
+    pub pending_entities: std::sync::Mutex<Vec<NbtCompound>>,
 }
 
 /// Structure references of a chunk: full structure id (`minecraft:village_plains`) to the
@@ -785,6 +788,7 @@ impl ChunkData {
             custom_data: std::sync::Mutex::new(NbtCompound::new()),
             post_processing: std::sync::Mutex::default(),
             structure_references: std::sync::Mutex::default(),
+            pending_entities: std::sync::Mutex::default(),
         }
     }
 
