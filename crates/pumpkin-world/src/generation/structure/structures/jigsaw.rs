@@ -314,13 +314,11 @@ impl PoolElementKind {
         matches!(self, Self::Empty)
     }
 
+    /// Vanilla's `StructurePoolElement.getGroundLevelDelta()` returns 1 and no element kind
+    /// overrides it, so every kind (single, list, feature, empty) has a delta of 1.
     #[must_use]
-    pub fn get_ground_level_delta(&self) -> i32 {
-        match self {
-            Self::Single { .. } => 1,
-            Self::List(elements) => elements.first().map_or(1, Self::get_ground_level_delta),
-            Self::Feature(_) | Self::Empty => 0,
-        }
+    pub const fn get_ground_level_delta(&self) -> i32 {
+        1
     }
 
     #[must_use]
@@ -516,7 +514,7 @@ impl PoolElement {
     }
 
     #[must_use]
-    pub fn get_ground_level_delta(&self) -> i32 {
+    pub const fn get_ground_level_delta(&self) -> i32 {
         self.kind.get_ground_level_delta()
     }
 
@@ -1155,6 +1153,29 @@ impl StructureGenerator for JigsawGenerator {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn every_pool_element_kind_has_vanillas_ground_level_delta() {
+        let single = PoolElementKind::Single {
+            template: "minecraft:village/plains/houses/plains_small_house_1".to_string(),
+            resolved_template: None,
+            processors: ProcessorListRef::Empty,
+            legacy: false,
+        };
+        let feature = PoolElementKind::Feature(pumpkin_data::placed_feature::PlacedFeature::Bamboo);
+        let list = PoolElementKind::List(vec![
+            PoolElementKind::Feature(pumpkin_data::placed_feature::PlacedFeature::Bamboo),
+            PoolElementKind::Empty,
+        ]);
+        for (name, kind) in [
+            ("single", single),
+            ("feature", feature),
+            ("empty", PoolElementKind::Empty),
+            ("list", list),
+        ] {
+            assert_eq!(kind.get_ground_level_delta(), 1, "{name}");
+        }
+    }
 
     #[test]
     fn ancient_city_pools_match_vanilla_weights() {
