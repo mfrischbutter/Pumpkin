@@ -966,13 +966,23 @@ pub fn value_to_configured_feature(v: &Value) -> TokenStream {
             }
         }
         "minecraft:coral_tree" => {
-            quote! { ConfiguredFeature::CoralTree(crate::generation::feature::features::coral::coral_tree::CoralTreeFeature) }
+            let feature = value_to_placed_feature_wrapper(&config["feature"]);
+            quote! {
+                ConfiguredFeature::CoralTree(crate::generation::feature::features::coral::coral_tree::CoralTreeFeature {
+                    feature: Box::new(#feature),
+                })
+            }
         }
         "minecraft:coral_mushroom" => {
             quote! { ConfiguredFeature::CoralMushroom(crate::generation::feature::features::coral::coral_mushroom::CoralMushroomFeature) }
         }
         "minecraft:coral_claw" => {
-            quote! { ConfiguredFeature::CoralClaw(crate::generation::feature::features::coral::coral_claw::CoralClawFeature) }
+            let feature = value_to_placed_feature_wrapper(&config["feature"]);
+            quote! {
+                ConfiguredFeature::CoralClaw(crate::generation::feature::features::coral::coral_claw::CoralClawFeature {
+                    feature: Box::new(#feature),
+                })
+            }
         }
         "minecraft:huge_fungus" => {
             let valid_base_block = value_to_block_state(&config["valid_base_block"]);

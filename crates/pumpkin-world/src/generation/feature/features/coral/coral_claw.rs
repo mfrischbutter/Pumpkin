@@ -1,23 +1,45 @@
 use crate::{generation::proto_chunk::GenerationCache, world::WorldPortalExt};
-use pumpkin_data::{BlockDirection, tag};
+use pumpkin_data::BlockDirection;
 use pumpkin_util::{
     math::position::BlockPos,
     random::{RandomGenerator, RandomImpl},
 };
 
-use super::CoralFeature;
+use crate::generation::feature::placed_features::PlacedFeatureWrapper;
 
-pub struct CoralClawFeature;
+/// Vanilla's `CoralClawFeature`: a block and two or three claws, every block placed by
+/// `feature`.
+pub struct CoralClawFeature {
+    pub feature: Box<PlacedFeatureWrapper>,
+}
 
 impl CoralClawFeature {
+    #[expect(clippy::too_many_arguments)]
     pub fn generate<T: GenerationCache>(
+        &self,
         chunk: &mut T,
         block_registry: &dyn WorldPortalExt,
+        min_y: i8,
+        height: u16,
+        feature_name: pumpkin_data::placed_feature::PlacedFeature,
         random: &mut RandomGenerator,
         pos: BlockPos,
     ) -> bool {
-        let block = CoralFeature::get_random_tag_entry(tag::Block::MINECRAFT_CORAL_BLOCKS, random);
-        if !CoralFeature::generate_coral_piece(chunk, block_registry, random, block, pos) {
+        // Every block goes through the configured feature, like vanilla's `feature.value().place`.
+        let place = |chunk: &mut T, random: &mut RandomGenerator, pos: BlockPos| {
+            self.feature.get().is_some_and(|feature| {
+                feature.generate(
+                    chunk,
+                    block_registry,
+                    min_y,
+                    height,
+                    feature_name,
+                    random,
+                    pos,
+                )
+            })
+        };
+        if !place(chunk, random, pos) {
             return false;
         }
         let claw_dir =
@@ -51,13 +73,7 @@ impl CoralClawFeature {
             };
 
             for _ in 0..sideway_length {
-                if !CoralFeature::generate_coral_piece(
-                    chunk,
-                    block_registry,
-                    random,
-                    block,
-                    mut_pos,
-                ) {
+                if !place(chunk, random, mut_pos) {
                     break;
                 }
                 mut_pos = mut_pos.offset(segment_direction.to_offset());
@@ -68,13 +84,7 @@ impl CoralClawFeature {
 
             for _ in 0..inway_length {
                 mut_pos = mut_pos.offset(claw_dir.to_offset());
-                if !CoralFeature::generate_coral_piece(
-                    chunk,
-                    block_registry,
-                    random,
-                    block,
-                    mut_pos,
-                ) {
+                if !place(chunk, random, mut_pos) {
                     break;
                 }
                 if random.next_f32() < 0.25 {

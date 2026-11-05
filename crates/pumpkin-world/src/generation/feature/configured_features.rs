@@ -236,7 +236,7 @@ impl ConfiguredFeature {
                 random,
                 pos,
             ),
-            Self::CoralTree(_feature) => CoralTreeFeature::generate(
+            Self::CoralTree(feature) => feature.generate(
                 chunk,
                 block_registry,
                 min_y,
@@ -245,9 +245,15 @@ impl ConfiguredFeature {
                 random,
                 pos,
             ),
-            Self::CoralClaw(_feature) => {
-                CoralClawFeature::generate(chunk, block_registry, random, pos)
-            }
+            Self::CoralClaw(feature) => feature.generate(
+                chunk,
+                block_registry,
+                min_y,
+                height,
+                feature_name,
+                random,
+                pos,
+            ),
             Self::EndPlatform(_feature) => EndPlatformFeature::generate(
                 chunk,
                 block_registry,
