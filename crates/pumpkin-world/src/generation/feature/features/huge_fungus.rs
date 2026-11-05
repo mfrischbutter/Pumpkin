@@ -54,6 +54,9 @@ impl HugeFungusFeature {
         true
     }
 
+    /// Vanilla's `isReplaceable`: any state whose `canBeReplaced` holds (air,
+    /// but also fire, lava, water, roots, sprouts, ...), else the configured
+    /// predicate when `check_non_replaceable_plants` is set.
     fn is_replaceable<T: GenerationCache>(
         &self,
         chunk: &T,
@@ -61,10 +64,9 @@ impl HugeFungusFeature {
         pos: BlockPos,
         check_non_replaceable_plants: bool,
     ) -> bool {
-        if chunk.is_air(&pos.0)
-            || GenerationCache::get_block_state(chunk, &pos.0)
-                .to_state()
-                .is_air()
+        if GenerationCache::get_block_state(chunk, &pos.0)
+            .to_state()
+            .replaceable()
         {
             true
         } else if check_non_replaceable_plants {
