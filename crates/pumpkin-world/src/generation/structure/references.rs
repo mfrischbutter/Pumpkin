@@ -559,6 +559,19 @@ mod tests {
         assert_eq!(overworld_starts(&generator, -15, -20), ["monument"]);
         assert_eq!(overworld_starts(&generator, 5, -14), ["mineshaft"]);
         assert!(overworld_starts(&generator, 0, 0).is_empty());
+        // A large cold ocean ruin with its cluster: vanilla 26.3 saved 24 pieces for this start
+        // (the big ruin's three templates and seven small ruins of three each).
+        let ruin = super::chunk_structure_starts(&generator, -31, 8);
+        assert_eq!(ruin.len(), 1);
+        assert_eq!(ruin[0].0, StructureKeys::OceanRuinCold);
+        let pieces = ruin[0]
+            .1
+            .collector
+            .lock()
+            .unwrap_or_else(std::sync::PoisonError::into_inner)
+            .pieces
+            .len();
+        assert_eq!(pieces, 24);
     }
 
     // The expected orders a-d are reference arrays vanilla 26.3 saved for

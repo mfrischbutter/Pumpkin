@@ -151,10 +151,14 @@ fn generate_structure_position_checked(
             generator.get_structure_position(context)
         }
         StructureKeys::OceanRuinCold | StructureKeys::OceanRuinWarm => {
+            // Vanilla's `OceanRuinStructure` reads both probabilities from the structure's data
+            // (26.3: large 0.3, cluster 0.9); the defaults only cover data without them.
             let generator = OceanRuinGenerator {
                 is_warm: structure
                     .biome_temp
                     .map_or(key == StructureKeys::OceanRuinWarm, |t| t == "warm"),
+                large_probability: structure.large_probability.unwrap_or(0.3),
+                cluster_probability: structure.cluster_probability.unwrap_or(0.9),
             };
             generator.get_structure_position(context)
         }

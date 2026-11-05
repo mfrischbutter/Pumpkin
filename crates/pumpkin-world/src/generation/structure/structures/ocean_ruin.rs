@@ -107,6 +107,10 @@ const BIG_RUINS_MOSSY: &[&str] = &[
 
 pub struct OceanRuinGenerator {
     pub is_warm: bool,
+    /// Vanilla's `large_probability` of the structure's data.
+    pub large_probability: f32,
+    /// Vanilla's `cluster_probability` of the structure's data.
+    pub cluster_probability: f32,
 }
 
 impl StructureGenerator for OceanRuinGenerator {
@@ -128,8 +132,8 @@ impl StructureGenerator for OceanRuinGenerator {
             rotation,
             &mut context.random,
             self.is_warm,
-            0.3,
-            0.7,
+            self.large_probability,
+            self.cluster_probability,
         );
 
         Some(StructurePosition {
