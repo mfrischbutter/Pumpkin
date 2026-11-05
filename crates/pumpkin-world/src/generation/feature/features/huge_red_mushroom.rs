@@ -10,6 +10,15 @@ pub struct HugeRedMushroomFeature;
 impl HugeRedMushroomFeature {
     const FOLIAGE_RADIUS: i32 = 2;
 
+    /// Vanilla's `getTreeRadiusForHeight`.
+    const fn tree_radius_for_height(tree_height: i32, dy: i32) -> i32 {
+        if (dy < tree_height && dy >= tree_height - 3) || dy == tree_height {
+            Self::FOLIAGE_RADIUS
+        } else {
+            0
+        }
+    }
+
     #[allow(clippy::unused_self)]
     pub fn generate<T: GenerationCache>(
         &self,
@@ -23,7 +32,8 @@ impl HugeRedMushroomFeature {
         let tree_height = super::huge_brown_mushroom::mushroom_tree_height(random);
 
         let min_y = i32::from(min_y);
-        let max_y = min_y + i32::from(height);
+        // Vanilla's `getMaxY()`: the highest block inside the world.
+        let max_y = min_y + i32::from(height) - 1;
         if pos.0.y < min_y + 1 || pos.0.y + tree_height + 1 > max_y {
             return false;
         }
@@ -34,11 +44,9 @@ impl HugeRedMushroomFeature {
         }
 
         for dy in 0..=tree_height {
-            let radius = if (dy < tree_height && dy >= tree_height - 3) || dy == tree_height {
-                Self::FOLIAGE_RADIUS
-            } else {
-                0
-            };
+            // Vanilla's `isValidPosition` asks `getTreeRadiusForHeight(-1, -1, ..)`, so only the
+            // stem column has to be free.
+            let radius = Self::tree_radius_for_height(-1, dy);
             for dx in -radius..=radius {
                 for dz in -radius..=radius {
                     let check_pos = BlockPos::new(pos.0.x + dx, pos.0.y + dy, pos.0.z + dz);
@@ -94,5 +102,43 @@ impl HugeRedMushroomFeature {
         }
 
         true
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use pumpkin_data::Block;
+    use pumpkin_util::random::legacy_rand::LegacyRand;
+
+    use super::*;
+    use crate::generation::feature::features::sculk::test_utils::{empty_chunk, set};
+
+    #[test]
+    fn only_the_stem_column_has_to_be_free() {
+        let mut chunk = empty_chunk();
+        let origin = BlockPos::new(8, 100, 8);
+        set(&mut chunk, origin.down(), Block::GRASS_BLOCK.default_state);
+        // Inside the cap's radius at every height the cap can reach.
+        for y in 100..=113 {
+            set(
+                &mut chunk,
+                BlockPos::new(10, y, 8),
+                Block::STONE.default_state,
+            );
+        }
+
+        let mut random = RandomGenerator::Legacy(LegacyRand::from_seed(1));
+        assert!(HugeRedMushroomFeature.generate(
+            &mut chunk,
+            -64,
+            384,
+            pumpkin_data::placed_feature::PlacedFeature::DarkForestVegetation,
+            &mut random,
+            origin,
+        ));
+        assert_eq!(
+            GenerationCache::get_block_state(&chunk, &origin.0).to_block_id(),
+            Block::MUSHROOM_STEM.id,
+        );
     }
 }

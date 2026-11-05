@@ -46,7 +46,8 @@ impl HugeBrownMushroomFeature {
         let tree_height = mushroom_tree_height(random);
 
         let min_y = i32::from(min_y);
-        let max_y = min_y + i32::from(height);
+        // Vanilla's `getMaxY()`: the highest block inside the world.
+        let max_y = min_y + i32::from(height) - 1;
         if pos.0.y < min_y + 1 || pos.0.y + tree_height + 1 > max_y {
             return false;
         }
@@ -109,5 +110,39 @@ impl HugeBrownMushroomFeature {
         }
 
         true
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use pumpkin_data::Block;
+    use pumpkin_util::random::legacy_rand::LegacyRand;
+
+    use super::*;
+    use crate::generation::feature::features::sculk::test_utils::{empty_chunk, set};
+
+    fn place_with_top_gap(gap: i32) -> bool {
+        let mut height_random = RandomGenerator::Legacy(LegacyRand::from_seed(1));
+        let tree_height = mushroom_tree_height(&mut height_random);
+        // The world ends at y 319: vanilla wants `y + treeHeight + 1 <= 319`.
+        let origin = BlockPos::new(8, 319 - tree_height - 1 - gap, 8);
+        let mut chunk = empty_chunk();
+        set(&mut chunk, origin.down(), Block::GRASS_BLOCK.default_state);
+
+        let mut random = RandomGenerator::Legacy(LegacyRand::from_seed(1));
+        HugeBrownMushroomFeature.generate(
+            &mut chunk,
+            -64,
+            384,
+            pumpkin_data::placed_feature::PlacedFeature::DarkForestVegetation,
+            &mut random,
+            origin,
+        )
+    }
+
+    #[test]
+    fn cap_must_stay_below_the_highest_block() {
+        assert!(place_with_top_gap(0));
+        assert!(!place_with_top_gap(-1));
     }
 }
