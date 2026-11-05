@@ -451,7 +451,7 @@ impl PoolElementKind {
             }),
             Self::Feature(_) => vec![JigsawBlock {
                 pos: offset,
-                name: "minecraft:bottom".to_string(),
+                name: None,
                 target: "minecraft:empty".to_string(),
                 pool: "minecraft:empty".to_string(),
                 final_state: "minecraft:air".to_string(),
@@ -724,7 +724,8 @@ impl JigsawJointType {
 #[derive(Clone)]
 pub struct JigsawBlock {
     pub pos: BlockPos,
-    pub name: String,
+    /// Vanilla's `JigsawBlockInfo.name`: `None` for a feature pool element's jigsaw, which any source attaches to.
+    pub name: Option<String>,
     pub target: String,
     pub pool: String,
     pub final_state: String,
@@ -777,7 +778,7 @@ impl JigsawBlock {
 
         Some(Self {
             pos: BlockPos(block.pos),
-            name: nbt.get_string("name").unwrap_or_default().to_string(),
+            name: Some(nbt.get_string("name").unwrap_or_default().to_string()),
             target: nbt.get_string("target").unwrap_or_default().to_string(),
             pool: nbt.get_string("pool").unwrap_or_default().to_string(),
             final_state: nbt
@@ -810,7 +811,7 @@ impl From<&pumpkin_data::structure_metadata::StaticJigsawBlock> for JigsawBlock 
                 static_jigsaw.pos[1],
                 static_jigsaw.pos[2],
             )),
-            name: static_jigsaw.name.to_string(),
+            name: Some(static_jigsaw.name.to_string()),
             target: static_jigsaw.target.to_string(),
             pool: static_jigsaw.pool.to_string(),
             final_state: static_jigsaw.final_state.to_string(),
@@ -1196,7 +1197,9 @@ mod tests {
             assert!(
                 template.blocks.iter().any(|block| {
                     JigsawBlock::from_template_block(block, &template.palette[block.state as usize])
-                        .is_some_and(|jigsaw| jigsaw.name == "minecraft:city_anchor")
+                        .is_some_and(|jigsaw| {
+                            jigsaw.name.as_deref() == Some("minecraft:city_anchor")
+                        })
                 }),
                 "start template has no city_anchor"
             );

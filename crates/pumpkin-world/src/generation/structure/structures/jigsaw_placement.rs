@@ -609,7 +609,7 @@ impl JigsawPlacement {
                     &mut context.random,
                 );
                 for jigsaw in center_jigsaws {
-                    if jigsaw.name == target_jigsaw_id {
+                    if jigsaw.name.as_deref() == Some(target_jigsaw_id) {
                         found_anchor = Some(jigsaw.pos);
                         break;
                     }
@@ -826,7 +826,11 @@ pub const fn rotate_direction(
 }
 
 fn can_attach(source: &JigsawBlock, target: &JigsawBlock) -> bool {
-    if source.target != target.name {
+    if target
+        .name
+        .as_deref()
+        .is_some_and(|name| source.target != name)
+    {
         return false;
     }
     if source.facing.opposite() != target.facing {
@@ -836,4 +840,38 @@ fn can_attach(source: &JigsawBlock, target: &JigsawBlock) -> bool {
         return false;
     }
     true
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use pumpkin_util::BlockDirection;
+
+    fn jigsaw(name: Option<&str>, target: &str, facing: BlockDirection) -> JigsawBlock {
+        JigsawBlock {
+            pos: BlockPos(Vector3::new(0, 0, 0)),
+            name: name.map(str::to_string),
+            target: target.to_string(),
+            pool: "minecraft:empty".to_string(),
+            final_state: "minecraft:air".to_string(),
+            joint: JigsawJointType::Rollable,
+            facing,
+            up: BlockDirection::South,
+            selection_priority: 0,
+            placement_priority: 0,
+        }
+    }
+
+    #[test]
+    fn unnamed_feature_jigsaw_accepts_any_target() {
+        let source = jigsaw(Some("minecraft:tree"), "minecraft:down", BlockDirection::Up);
+        let feature = jigsaw(None, "minecraft:empty", BlockDirection::Down);
+        let bottom = jigsaw(
+            Some("minecraft:bottom"),
+            "minecraft:empty",
+            BlockDirection::Down,
+        );
+        assert!(can_attach(&source, &feature));
+        assert!(!can_attach(&source, &bottom));
+    }
 }
