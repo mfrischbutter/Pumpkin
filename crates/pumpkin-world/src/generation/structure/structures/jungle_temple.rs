@@ -703,7 +703,7 @@ impl StructurePieceBase for JungleTemplePiece {
         );
         self.piece.add_block(
             chunk,
-            Self::redstone_wire_bidirectional(HorizontalFacing::East, HorizontalFacing::West),
+            Self::attached_tripwire_bidirectional(HorizontalFacing::East, HorizontalFacing::West),
             2,
             -3,
             8,
@@ -954,13 +954,12 @@ impl StructurePieceBase for JungleTemplePiece {
 
         let r_state = {
             let mut props = RedstoneWireLikeProperties::default(&Block::REDSTONE_WIRE);
-            props.south = SouthRedstone::Up;
             props.north = NorthRedstone::Side;
+            props.south = SouthRedstone::Side;
             props.east = EastRedstone::Side;
             props.west = WestRedstone::Side;
             BlockState::from_id(props.to_state_id(&Block::REDSTONE_WIRE))
         };
-        self.piece.add_block(chunk, r_state, 9, -3, 5, bb);
         self.piece.add_block(chunk, r_state, 10, -1, 9, bb);
         self.piece
             .add_block(chunk, Self::sticky_piston_facing(Facing::Up), 9, -2, 8, bb);

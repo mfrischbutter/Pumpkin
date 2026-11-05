@@ -677,13 +677,22 @@ impl StructurePiece {
         use pumpkin_nbt::compound::NbtCompound;
 
         let world_pos = self.offset_pos(x, y, z);
-        if !bb.contains_pos(&world_pos) {
+        if !bb.contains_pos(&world_pos)
+            || chunk.get_block_state(&world_pos).to_block_id() == BlockId::DISPENSER
+        {
             return false;
         }
 
         let mut props = DispenserLikeProperties::default(&Block::DISPENSER);
         props.facing = facing;
-        let state = BlockState::from_id(props.to_state_id(&Block::DISPENSER));
+        // Vanilla places it with `placeBlock`, which mirrors and rotates it with the piece.
+        let mut state = BlockState::from_id(props.to_state_id(&Block::DISPENSER));
+        if self.mirror != Mirror::None {
+            state = state.mirror(self.mirror);
+        }
+        if self.rotation != Rotation::None {
+            state = state.rotate(self.rotation);
+        }
         chunk.set_block_state(world_pos.x, world_pos.y, world_pos.z, state);
 
         let mut nbt = NbtCompound::new();
