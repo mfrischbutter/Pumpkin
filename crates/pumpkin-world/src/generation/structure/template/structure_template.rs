@@ -43,6 +43,9 @@ pub struct StructurePlaceSettings {
     pub processors: Arc<[StructureProcessor]>,
     pub finalize_entities: bool,
     pub palette_index: Option<usize>,
+    /// Vanilla's `setRandom`: the placement's random, not one seeded from the position, picks
+    /// the palette and feeds the rot and age processors.
+    pub shared_random: bool,
 }
 
 impl Default for StructurePlaceSettings {
@@ -58,6 +61,7 @@ impl Default for StructurePlaceSettings {
             processors: Arc::from([]),
             finalize_entities: false,
             palette_index: None,
+            shared_random: false,
         }
     }
 }
@@ -113,6 +117,12 @@ impl StructurePlaceSettings {
     #[must_use]
     pub const fn set_finalize_entities(mut self, finalize_entities: bool) -> Self {
         self.finalize_entities = finalize_entities;
+        self
+    }
+
+    #[must_use]
+    pub const fn set_shared_random(mut self, shared_random: bool) -> Self {
+        self.shared_random = shared_random;
         self
     }
 

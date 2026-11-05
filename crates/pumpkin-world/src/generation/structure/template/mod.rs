@@ -188,9 +188,17 @@ pub fn place_template_with_options(
     if template.palettes.is_empty() {
         return false;
     }
-    let blocks = settings
-        .get_random_palette(&template.palettes, position)
-        .blocks();
+    let palettes = &template.palettes;
+    // Vanilla's `getRandomPalette` draws from the settings' random once, even for one palette.
+    let blocks = if settings.shared_random
+        && settings
+            .palette_index
+            .is_none_or(|index| index >= palettes.len())
+    {
+        palettes[random.next_bounded_i32(palettes.len() as i32) as usize].blocks()
+    } else {
+        settings.get_random_palette(palettes, position).blocks()
+    };
     if (blocks.is_empty() && (settings.ignore_entities || template.entities.is_empty()))
         || template.size.x < 1
         || template.size.y < 1
@@ -204,6 +212,13 @@ pub fn place_template_with_options(
 
     // Vanilla `StructureTemplate.processBlockInfos`: every block of the template runs through the
     // processors, not only this chunk's, because a capped processor then picks among all of them.
+    // Without one, vanilla skips the blocks outside the bounding box first; that only shows when
+    // the processors draw from the shared random, so only then are they skipped here.
+    let skip_outside_box = settings.shared_random
+        && !settings
+            .get_processors()
+            .iter()
+            .any(|processor| matches!(processor, StructureProcessor::Capped { .. }));
     let mut processed = Vec::with_capacity(blocks.len());
     for block in blocks {
         let palette_entry = &block.state;
@@ -242,9 +257,17 @@ pub fn place_template_with_options(
 
         let mut world_pos =
             position + StructureTemplate::transform_block_pos(block.pos, mirror, rotation, pivot);
+        if skip_outside_box
+            && settings
+                .bounding_box
+                .is_some_and(|bbox| !bbox.contains_pos(&world_pos))
+        {
+            continue;
+        }
 
         // Apply processors; each one seeds its own random from the block's position, like
-        // vanilla's processors (`RandomSource.create(Mth.getSeed(pos))`).
+        // vanilla's processors (`RandomSource.create(Mth.getSeed(pos))`). With a shared random,
+        // the rot and age processors draw from it instead, as vanilla's `settings.getRandom` does.
         let mut should_place = true;
         for processor in settings.get_processors() {
             match processor {
@@ -259,16 +282,35 @@ pub fn place_template_with_options(
                 StructureProcessor::Capped { .. } => continue,
                 _ => {}
             }
-            let mut rng =
-                LegacyRand::from_seed(hash_block_pos(world_pos.x, world_pos.y, world_pos.z) as u64);
-            let Some(processed_state) = processor.process_with_context(
-                placer,
-                world_pos,
-                state,
-                &mut block_entity_nbt,
-                &mut context,
-                &mut rng,
-            ) else {
+            let shares_random = settings.shared_random
+                && matches!(
+                    processor,
+                    StructureProcessor::BlockRot { .. } | StructureProcessor::BlockAge { .. }
+                );
+            let processed_state = if shares_random {
+                processor.process_with_context(
+                    placer,
+                    world_pos,
+                    state,
+                    &mut block_entity_nbt,
+                    &mut context,
+                    random,
+                )
+            } else {
+                let mut rng =
+                    LegacyRand::from_seed(
+                        hash_block_pos(world_pos.x, world_pos.y, world_pos.z) as u64
+                    );
+                processor.process_with_context(
+                    placer,
+                    world_pos,
+                    state,
+                    &mut block_entity_nbt,
+                    &mut context,
+                    &mut rng,
+                )
+            };
+            let Some(processed_state) = processed_state else {
                 should_place = false;
                 break;
             };
@@ -844,5 +886,76 @@ mod tests {
 
         let known = place(&settings.set_known_shape(true));
         assert!(known.marks.is_empty());
+    }
+
+    /// Two stone blocks side by side, half rotting away, placed at the origin.
+    fn place_rotting_pair(
+        settings: StructurePlaceSettings,
+        random: &mut RandomGenerator,
+    ) -> [bool; 2] {
+        let mut template = StructureTemplate::default();
+        template.size = Vector3::new(2, 1, 1);
+        template.palettes = vec![Palette::new(
+            [0, 1]
+                .map(|x| {
+                    StructureBlockInfo::new(
+                        Vector3::new(x, 0, 0),
+                        PaletteEntry::new("minecraft:stone".to_string()),
+                        None,
+                    )
+                })
+                .to_vec(),
+        )];
+        let settings = settings.add_processor(StructureProcessor::BlockRot {
+            integrity: 0.5,
+            rottable_blocks: None,
+        });
+        let origin = Vector3::new(0, 0, 0);
+        let mut placer = WaterPlacer::new();
+        assert!(place_template_with_options(
+            &mut placer,
+            &template,
+            origin,
+            &settings,
+            random,
+            TemplatePlacement::piece(origin, 0),
+        ));
+        [0, 1].map(|x| placer.blocks.contains_key(&Vector3::new(x, 0, 0)))
+    }
+
+    /// Vanilla's `setRandom`: the palette and then the rot of each block in the template's order
+    /// draw from the placement's random.
+    #[test]
+    fn a_shared_random_feeds_the_palette_and_the_rot_in_block_order() {
+        let mut mixed = false;
+        for seed in 0..16 {
+            let mut random = RandomGenerator::Legacy(LegacyRand::from_seed(seed));
+            let kept = place_rotting_pair(
+                StructurePlaceSettings::new().set_shared_random(true),
+                &mut random,
+            );
+
+            let mut twin = RandomGenerator::Legacy(LegacyRand::from_seed(seed));
+            assert_eq!(twin.next_bounded_i32(1), 0);
+            let expected = [twin.next_f32() <= 0.5, twin.next_f32() <= 0.5];
+            assert_eq!(kept, expected, "seed {seed}");
+            assert_eq!(random.next_i64(), twin.next_i64(), "seed {seed}");
+            mixed |= expected[0] != expected[1];
+        }
+        assert!(mixed);
+    }
+
+    /// Without a shared random each block's rot seeds from its position and the placement's
+    /// random stays untouched.
+    #[test]
+    fn without_a_shared_random_the_rot_seeds_from_the_position() {
+        let mut random = RandomGenerator::Legacy(LegacyRand::from_seed(5));
+        let kept = place_rotting_pair(StructurePlaceSettings::new(), &mut random);
+
+        let expected =
+            [0, 1].map(|x| LegacyRand::from_seed(hash_block_pos(x, 0, 0) as u64).next_f32() <= 0.5);
+        assert_eq!(kept, expected);
+        let mut twin = RandomGenerator::Legacy(LegacyRand::from_seed(5));
+        assert_eq!(random.next_i64(), twin.next_i64());
     }
 }
