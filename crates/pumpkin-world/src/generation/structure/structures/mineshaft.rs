@@ -308,6 +308,8 @@ const fn is_falling_block(block: &Block) -> bool {
     )
 }
 
+/// Vanilla `StructurePiece.isInInvalidLocation`: a piece whose middle lies in a biome that blocks
+/// mineshafts, or whose box borders a liquid within the chunk, is not placed.
 fn is_in_invalid_location(piece_bb: &BlockBox, chunk: &ProtoChunk, chunk_box: &BlockBox) -> bool {
     let x0 = (piece_bb.min.x - 1).max(chunk_box.min.x);
     let y0 = (piece_bb.min.y - 1).max(chunk_box.min.y);
@@ -323,10 +325,12 @@ fn is_in_invalid_location(piece_bb: &BlockBox, chunk: &ProtoChunk, chunk_box: &B
     let mid_x = i32::midpoint(x0, x1);
     let mid_y = i32::midpoint(y0, y1);
     let mid_z = i32::midpoint(z0, z1);
-    if chunk
-        .get_biome(mid_x >> 2, mid_y >> 2, mid_z >> 2)
-        .registry_id
-        == "minecraft:deep_dark"
+    // Vanilla's `level.getBiome` is the biome as generation reads it, with the fuzzy offset
+    // between biome cells, and the blocking biomes are a tag.
+    let biome = chunk.get_terrain_gen_biome(mid_x, mid_y, mid_z);
+    if pumpkin_data::tag::WorldgenBiome::MINECRAFT_MINESHAFT_BLOCKING
+        .1
+        .contains(&(biome.id as u16))
     {
         return true;
     }
