@@ -18,6 +18,7 @@ use super::super::BrainTick;
 use super::super::memory::position_tracker::EntityTracker;
 use super::super::memory::walk_target::WalkTarget;
 use super::super::memory::{MemoryModuleId, MemoryModuleType, MemoryStatus, types};
+use super::interact_with_door;
 use super::poi::{bottom_center, closer_to_center_than};
 use super::{Behavior, OneShot};
 use crate::block::blocks::bed::BedBlock;
@@ -156,6 +157,7 @@ impl Behavior for SleepInBed {
         if tick.time <= self.next_ok_start_time {
             return;
         }
+        interact_with_door::close_doors_when_going_to_bed(tick);
         if let Some(home) = tick.state.get(types::HOME).copied()
             && start_sleeping(tick.mob, home.pos)
         {

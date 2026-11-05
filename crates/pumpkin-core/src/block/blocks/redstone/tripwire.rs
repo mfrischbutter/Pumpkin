@@ -37,7 +37,7 @@ impl BlockBehaviour for TripwireBlock {
     }
 
     fn on_entity_collision(&self, args: OnEntityCollisionArgs<'_>) {
-        if args.entity.get_entity().is_spectator() {
+        if args.entity.get_entity().is_spectator() || args.entity.is_ignoring_block_triggers() {
             return;
         }
         let mut props = TripwireProperties::from_state_id(args.state.id);
@@ -142,7 +142,7 @@ impl BlockBehaviour for TripwireBlock {
             .world
             .get_entities_at_box(&aabb)
             .iter()
-            .any(|e| !e.get_entity().is_spectator())
+            .any(|e| !e.get_entity().is_spectator() && !e.is_ignoring_block_triggers())
             || args
                 .world
                 .get_players_at_box(&aabb)

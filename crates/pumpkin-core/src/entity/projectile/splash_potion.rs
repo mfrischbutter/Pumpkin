@@ -2,17 +2,21 @@ use crate::entity::projectile::owner::ProjectileOwner;
 use std::sync::atomic::AtomicBool;
 use std::sync::{Arc, RwLock};
 
+use crate::entity::living::EffectSource;
+use crate::entity::projectile::ProjectileHit;
+use crate::entity::projectile::hit_result::compute_margin;
+use crate::entity::projectile::thrown_item::{read_thrown_item, write_thrown_item};
+use crate::entity::projectile::thrown_potion::{
+    self, SPLASH_HEIGHT, SPLASH_RANGE, SPLASH_RANGE_SQ, box_distance_sqr, living_in_box,
+};
+use crate::item::potion::{PotionContents, PotionEffect};
 use crate::{
     entity::{Entity, EntityBase, projectile::ThrownItemEntity},
     server::Server,
 };
 use pumpkin_data::item_stack::ItemStack;
-use pumpkin_data::{Block, BlockId};
-use pumpkin_protocol::java::client::play::CWorldEvent;
-use pumpkin_util::math::vector3::Vector3;
-use pumpkin_util::math::{boundingbox::BoundingBox, vector2::Vector2};
-use pumpkin_util::math::{position::BlockPos, vector2::to_chunk_pos};
-use pumpkin_world::world::BlockFlags;
+use pumpkin_nbt::compound::NbtCompound;
+use pumpkin_util::math::position::BlockPos;
 
 const GRAVITY: f64 = 0.05;
 
@@ -23,7 +27,6 @@ pub struct SplashPotionEntity {
 
 impl SplashPotionEntity {
     pub fn new(entity: Entity) -> Self {
-        entity.set_velocity(Vector3::new(0.0, 0.1, 0.0));
         let thrown = ThrownItemEntity {
             entity,
             owner: ProjectileOwner::none(),
@@ -40,7 +43,6 @@ impl SplashPotionEntity {
 
     pub fn new_shot(entity: Entity, shooter: &Entity) -> Self {
         let thrown = ThrownItemEntity::new(entity, shooter, GRAVITY);
-        thrown.entity.set_velocity(Vector3::new(0.0, 0.1, 0.0));
         Self {
             thrown,
             item_stack: RwLock::new(ItemStack::new(1, &pumpkin_data::item::Item::SPLASH_POTION)),
@@ -54,68 +56,66 @@ impl SplashPotionEntity {
             .unwrap_or_else(std::sync::PoisonError::into_inner);
         *write = item_stack;
     }
-}
 
-fn is_water_potion(stack: &ItemStack) -> bool {
-    stack
-        .get_data_component::<pumpkin_data::data_component_impl::PotionContentsImpl>()
-        .and_then(|pc| pc.potion_id)
-        == Some(pumpkin_data::potion::Potion::WATER.id as i32)
-}
+    /// Vanilla `ThrownSplashPotion.onHitAsPotion`; the plugin event can cancel the effects or
+    /// narrow who gets them.
+    fn on_hit_as_potion(&self, stack: &ItemStack, effects: &[PotionEffect], hit: &ProjectileHit) {
+        let entity = self.get_entity();
+        let world = entity.world.load_full();
+        let potion_box = entity.bounding_box.load();
+        let margin = compute_margin(entity);
+        let area = potion_box.expand(SPLASH_RANGE, SPLASH_HEIGHT, SPLASH_RANGE);
 
-/// Extinguishes fire (including soul fire) at the hit position and its four horizontal neighbors.
-fn extinguish_fire(world: &Arc<crate::world::World>, hit_pos: Vector3<f64>) {
-    let air_state_id = Block::AIR.default_state.id;
+        let mut affected: Vec<(Arc<dyn EntityBase>, f64)> = living_in_box(&world, &area)
+            .into_iter()
+            .filter_map(|target| {
+                if !target.get_living_entity()?.is_affected_by_potions() {
+                    return None;
+                }
+                let target_box = target.get_entity().bounding_box.load().expand_all(margin);
+                let dist = box_distance_sqr(&potion_box, &target_box);
+                let scale = 1.0 - dist.sqrt() / SPLASH_RANGE;
+                (dist < SPLASH_RANGE_SQ).then_some((target, scale))
+            })
+            .collect();
 
-    let neighbors = [
-        hit_pos,
-        Vector3::new(hit_pos.x + 1.0, hit_pos.y, hit_pos.z),
-        Vector3::new(hit_pos.x - 1.0, hit_pos.y, hit_pos.z),
-        Vector3::new(hit_pos.x, hit_pos.y, hit_pos.z + 1.0),
-        Vector3::new(hit_pos.x, hit_pos.y, hit_pos.z - 1.0),
-    ];
-
-    for p in neighbors {
-        let pos = BlockPos(Vector3::new(
-            p.x.floor() as i32,
-            p.y.floor() as i32,
-            p.z.floor() as i32,
-        ));
-        let state_id = world.get_block_state_id(&pos);
-        let raw_block_id = state_id.to_block_id();
-        if raw_block_id == BlockId::FIRE || raw_block_id == BlockId::SOUL_FIRE {
-            world.set_block_state(&pos, air_state_id, BlockFlags::NOTIFY_ALL);
+        if let Some(server) = world.server.upgrade() {
+            let mut event =
+                crate::plugin::api::events::entity::potion_splash::PotionSplashEvent::new(
+                    entity.entity_id,
+                    BlockPos::floored_v(hit.hit_pos()),
+                    stack.item.registry_key.to_string(),
+                    affected
+                        .iter()
+                        .map(|(target, _)| target.get_entity().entity_id)
+                        .collect(),
+                );
+            server.plugin_manager.fire_blocking(&server, &mut event);
+            if event.cancelled {
+                return;
+            }
+            affected.retain(|(target, _)| {
+                event
+                    .affected_entities
+                    .contains(&target.get_entity().entity_id)
+            });
         }
-    }
-}
 
-pub(crate) fn extinguish_fire_if_water_potion(
-    world: &Arc<crate::world::World>,
-    hit_pos: Vector3<f64>,
-    stack: &ItemStack,
-) {
-    if is_water_potion(stack) {
-        extinguish_fire(world, hit_pos);
-    }
-}
-
-/// The end of vanilla `AbstractThrownPotion.affectEntitiesAround`: a water bottle wets the
-/// axolotls around it.
-pub(crate) fn rehydrate_axolotls_if_water_potion(
-    world: &Arc<crate::world::World>,
-    potion: &Entity,
-    stack: &ItemStack,
-) {
-    if !is_water_potion(stack) {
-        return;
-    }
-    let area = potion.bounding_box.load().expand(4.0, 2.0, 4.0);
-    for entity in world.get_entities_at_box(&area) {
-        if let Some(axolotl) = entity
-            .cast_any()
-            .downcast_ref::<crate::entity::passive::axolotl::AxolotlEntity>()
-        {
-            axolotl.rehydrate();
+        let duration_scale = PotionContents::duration_scale(stack);
+        let owner = self.thrown.owner.get(&world);
+        for (target, scale) in affected {
+            if let Some(living) = target.get_living_entity() {
+                PotionContents::apply_splash_effects(
+                    living,
+                    effects,
+                    scale,
+                    duration_scale,
+                    EffectSource {
+                        direct: self,
+                        owner: owner.as_deref(),
+                    },
+                );
+            }
         }
     }
 }
@@ -148,8 +148,8 @@ impl EntityBase for SplashPotionEntity {
         );
     }
 
-    fn tick(&self, caller: &dyn EntityBase, _server: &Server) {
-        self.thrown.process_tick(caller);
+    fn tick(&self, caller: &dyn EntityBase, server: &Server) {
+        self.thrown.process_throwable_tick(caller, server);
     }
 
     fn get_entity(&self) -> &Entity {
@@ -163,152 +163,22 @@ impl EntityBase for SplashPotionEntity {
         self
     }
 
-    #[allow(clippy::too_many_lines)]
-    fn on_hit(&self, hit: crate::entity::projectile::ProjectileHit) {
-        let world = self.get_entity().world.load();
-        let hit_pos = hit.hit_pos();
+    fn write_custom_nbt(&self, nbt: &mut NbtCompound) {
+        write_thrown_item(&self.item_stack, nbt);
+    }
 
-        // Extinguish fire if it's a water potion
+    fn read_custom_nbt(&self, nbt: &NbtCompound) {
+        read_thrown_item(&self.item_stack, nbt);
+    }
+
+    fn on_hit(&self, hit: ProjectileHit) {
         let stack = self
             .item_stack
             .read()
             .unwrap_or_else(std::sync::PoisonError::into_inner)
             .clone();
-        extinguish_fire_if_water_potion(&world, hit_pos, &stack);
-        rehydrate_axolotls_if_water_potion(&world, self.get_entity(), &stack);
-
-        // Send impact entity status (plays break particles)
-        world.send_entity_status(
-            self.get_entity(),
-            pumpkin_data::entity::EntityStatus::Death,
-            pumpkin_protocol::bedrock::server::actor_event::ActorEventID::Death,
-        );
-
-        let effects = crate::item::potion::PotionContents::read_potion_effects(&stack);
-
-        // Calculate color: custom_color if present, else blend of effects, else default water color
-        let mut color = 0x385dc6; // default water-like color
-        if let Some(pc) =
-            stack.get_data_component::<pumpkin_data::data_component_impl::PotionContentsImpl>()
-        {
-            if let Some(c) = pc.custom_color {
-                color = c;
-            } else if !effects.is_empty() {
-                let mut r_sum = 0.0;
-                let mut g_sum = 0.0;
-                let mut b_sum = 0.0;
-                let count = effects.len() as f32;
-                for (eff, _, _, _, _, _) in &effects {
-                    let c = eff.color;
-                    r_sum += ((c >> 16) & 0xFF) as f32;
-                    g_sum += ((c >> 8) & 0xFF) as f32;
-                    b_sum += (c & 0xFF) as f32;
-                }
-                let r = (r_sum / count) as i32;
-                let g = (g_sum / count) as i32;
-                let b = (b_sum / count) as i32;
-                color = (r << 16) | (g << 8) | b;
-            }
-        } else if !effects.is_empty() {
-            let mut r_sum = 0.0;
-            let mut g_sum = 0.0;
-            let mut b_sum = 0.0;
-            let count = effects.len() as f32;
-            for (eff, _, _, _, _, _) in &effects {
-                let c = eff.color;
-                r_sum += ((c >> 16) & 0xFF) as f32;
-                g_sum += ((c >> 8) & 0xFF) as f32;
-                b_sum += (c & 0xFF) as f32;
-            }
-            let r = (r_sum / count) as i32;
-            let g = (g_sum / count) as i32;
-            let b = (b_sum / count) as i32;
-            color = (r << 16) | (g << 8) | b;
-        }
-
-        // Play splash particles
-        let has_instant = effects.iter().any(|(e, _, _, _, _, _)| {
-            e.id == pumpkin_data::effect::StatusEffect::INSTANT_DAMAGE.id
-                || e.id == pumpkin_data::effect::StatusEffect::INSTANT_HEALTH.id
+        thrown_potion::on_hit(self, &stack, &hit, |effects| {
+            self.on_hit_as_potion(&stack, effects, &hit);
         });
-        let event_id = if has_instant { 2007 } else { 2002 };
-
-        // Convert hit_pos to BlockPos
-        let block_pos = BlockPos(Vector3::new(
-            hit_pos.x.floor() as i32,
-            hit_pos.y.floor() as i32,
-            hit_pos.z.floor() as i32,
-        ));
-        world.broadcast_to_chunk(
-            to_chunk_pos(&Vector2::new(block_pos.0.x, block_pos.0.z)),
-            &CWorldEvent::new(event_id, block_pos, color, false),
-        );
-
-        // If no effects, just splash (like water bottles)
-        if effects.is_empty() {
-            return;
-        }
-
-        let radius = 4.0f64;
-        let min = Vector3::new(hit_pos.x - radius, hit_pos.y - radius, hit_pos.z - radius);
-        let max = Vector3::new(hit_pos.x + radius, hit_pos.y + radius, hit_pos.z + radius);
-        let aabb = BoundingBox::new(min, max);
-
-        // Gather entity and player candidates
-        let mut candidates = world.get_entities_at_box(&aabb);
-        let players = world.get_players_at_box(&aabb);
-        for p in players {
-            candidates.push(p.clone() as Arc<dyn EntityBase>);
-        }
-
-        let mut affected: Vec<(Arc<dyn EntityBase>, f32)> = Vec::new();
-        for cand in candidates {
-            if cand.get_living_entity().is_some() {
-                let pos = cand.get_entity().pos.load();
-                let dx = pos.x - hit_pos.x;
-                let dy = pos.y - hit_pos.y;
-                let dz = pos.z - hit_pos.z;
-                let dist = (dx * dx + dy * dy + dz * dz).sqrt();
-                if dist <= radius {
-                    let scale = (1.0f32 - (dist as f32 / radius as f32)).max(0.0);
-                    affected.push((cand, scale));
-                }
-            }
-        }
-
-        let affected_ids: Vec<i32> = affected
-            .iter()
-            .map(|(c, _)| c.get_entity().entity_id)
-            .collect();
-        if let Some(server) = world.server.upgrade() {
-            let mut event =
-                crate::plugin::api::events::entity::potion_splash::PotionSplashEvent::new(
-                    self.get_entity().entity_id,
-                    block_pos,
-                    stack.item.registry_key.to_string(),
-                    affected_ids,
-                );
-            server.plugin_manager.fire_blocking(&server, &mut event);
-            if event.cancelled {
-                return;
-            }
-            affected.retain(|(c, _)| event.affected_entities.contains(&c.get_entity().entity_id));
-        }
-
-        let owner = self.thrown.owner.get(&world);
-        for (cand, scale) in affected {
-            if let Some(living) = cand.get_living_entity() {
-                crate::item::potion::PotionContents::apply_effects_to(
-                    living,
-                    effects.clone(),
-                    scale,
-                    crate::item::potion::PotionApplicationSource::Normal,
-                    Some(crate::entity::living::EffectSource {
-                        direct: self,
-                        owner: owner.as_deref(),
-                    }),
-                );
-            }
-        }
     }
 }

@@ -24,7 +24,7 @@ use rand::rngs::ThreadRng;
 
 use crate::entity::living::LivingEntity;
 use crate::entity::projectile::owner::{EntityReference, ProjectileOwner};
-use crate::entity::projectile::{ProjectileHit, ThrownItemEntity};
+use crate::entity::projectile::{ProjectileHit, ThrownItemEntity, hurting};
 use crate::entity::{Entity, EntityBase};
 use crate::server::Server;
 use crate::world::World;
@@ -44,6 +44,8 @@ const DIRECT_FLIGHT_DISTANCE_SQ: f64 = 4.0;
 const DEFAULT_Y_OFFSET: f64 = 0.5;
 /// Tries for a random free direction when no step leads towards the target.
 const RANDOM_DIRECTION_ATTEMPTS: i32 = 5;
+/// Vanilla `ShulkerBullet.tick`: how fast it turns to its heading.
+const ROTATION_SPEED: f32 = 0.5;
 const HIT_DAMAGE: f32 = 4.0;
 const LEVITATION_TICKS: i32 = 200;
 const PARTICLE_SPREAD: f32 = 0.2;
@@ -206,16 +208,19 @@ impl ShulkerBulletEntity {
             Some(self),
             living_owner,
         );
-        if hurt && let Some(living) = target.get_living_entity() {
-            living.add_effect(Effect {
-                effect_type: &StatusEffect::LEVITATION,
-                duration: LEVITATION_TICKS,
-                amplifier: 0,
-                ambient: false,
-                show_particles: true,
-                show_icon: true,
-                blend: false,
-            });
+        if hurt {
+            hurting::add_effect(
+                target,
+                Effect {
+                    effect_type: &StatusEffect::LEVITATION,
+                    duration: LEVITATION_TICKS,
+                    amplifier: 0,
+                    ambient: false,
+                    show_particles: true,
+                    show_icon: true,
+                    blend: false,
+                },
+            );
         }
     }
 
@@ -326,10 +331,7 @@ fn can_stand_on(world: &World, pos: BlockPos) -> bool {
 
 /// Vanilla's `isAlive` check of the target, which spectators fail as well.
 fn is_live_target(target: &Arc<dyn EntityBase>) -> bool {
-    let alive = target
-        .get_living_entity()
-        .map_or_else(|| target.get_entity().is_alive(), LivingEntity::is_alive);
-    alive && !target.is_spectator()
+    hurting::is_alive(target.as_ref()) && !target.is_spectator()
 }
 
 impl EntityBase for ShulkerBulletEntity {
@@ -376,12 +378,16 @@ impl EntityBase for ShulkerBulletEntity {
         true
     }
 
-    fn tick(&self, caller: &dyn EntityBase, _server: &Server) {
+    fn tick(&self, caller: &dyn EntityBase, server: &Server) {
         let entity = &self.thrown.entity;
         let world = entity.world.load_full();
         // Vanilla `checkDespawn`.
         if world.level_info.load().difficulty == Difficulty::Peaceful {
             entity.remove();
+            return;
+        }
+        entity.tick(caller, server);
+        if entity.is_removed() {
             return;
         }
 
@@ -394,9 +400,16 @@ impl EntityBase for ShulkerBulletEntity {
         if entity.is_removed() {
             return;
         }
+        entity.tick_block_collisions(caller);
+        hurting::rotate_towards_movement(entity, ROTATION_SPEED);
         if let Some(target) = target {
             self.update_path(&world, target.get_entity());
         }
+    }
+
+    /// Vanilla `ShulkerBullet.canHitEntity`.
+    fn projectile_can_hit(&self, target: &dyn EntityBase) -> bool {
+        hurting::can_hit_with_physics(target)
     }
 
     /// Vanilla `onHitEntity` and `onHitBlock`; the projectile step removes the bullet after.

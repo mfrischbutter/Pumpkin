@@ -1,21 +1,22 @@
 use std::any::Any;
 use std::sync::Arc;
-use std::sync::atomic::Ordering;
 
 use crate::block::registry::BlockActionResult;
-use crate::entity::Entity;
+use crate::entity::EntityBase;
+use crate::entity::decoration::block_attached::{BlockAttached, emit_game_event};
 use crate::entity::decoration::item_frame::ItemFrameEntity;
 use crate::entity::decoration::painting::PaintingEntity;
 use crate::entity::player::Player;
+use crate::item::items::spawn_egg::apply_entity_variant;
 use crate::item::{ItemBehaviour, ItemMetadata};
 use crate::server::Server;
+use crate::world::World;
 use pumpkin_data::data_component_impl::PaintingVariantImpl;
 use pumpkin_data::entity::EntityType;
 use pumpkin_data::game_event::GameEvent;
 use pumpkin_data::item::Item;
 use pumpkin_data::item_stack::ItemStack;
-use pumpkin_data::painting_variant::PaintingVariant;
-use pumpkin_data::sound::{Sound, SoundCategory};
+use pumpkin_data::sound::Sound;
 use pumpkin_data::{Block, BlockDirection};
 use pumpkin_util::math::position::BlockPos;
 use pumpkin_util::math::vector3::Vector3;
@@ -33,7 +34,26 @@ impl ItemMetadata for HangingEntityItem {
     }
 }
 
+/// The end of vanilla `HangingEntityItem.useOn`: a candidate that survives enters the world.
+fn place_if_survives<T: BlockAttached>(
+    entity: T,
+    place_sound: Sound,
+    world: &Arc<World>,
+    item: &mut ItemStack,
+    player: &Player,
+) -> BlockActionResult {
+    if !entity.survives() {
+        return BlockActionResult::Consume;
+    }
+    entity.play_entity_sound(place_sound, 1.0, 1.0);
+    emit_game_event(entity.get_entity(), GameEvent::EntityPlace, Some(player));
+    world.spawn_entity(Arc::new(entity));
+    item.decrement_unless_creative(player.gamemode.load(), 1);
+    BlockActionResult::Success
+}
+
 impl ItemBehaviour for HangingEntityItem {
+    /// Vanilla `HangingEntityItem.useOn` and the `mayPlace` of `ItemFrameItem`.
     fn use_on_block(
         &self,
         item: &mut ItemStack,
@@ -46,85 +66,36 @@ impl ItemBehaviour for HangingEntityItem {
     ) -> BlockActionResult {
         let world = player.world();
         let target_pos = location.offset(face.to_offset());
-        let pos = Vector3::new(
-            f64::from(target_pos.0.x) + 0.5,
-            f64::from(target_pos.0.y) + 0.5,
-            f64::from(target_pos.0.z) + 0.5,
-        );
 
         if item.item.id == Item::PAINTING.id {
-            if face == BlockDirection::Up || face == BlockDirection::Down {
+            if !face.is_horizontal() {
                 return BlockActionResult::Fail;
             }
-
-            let variant = if let Some(comp) = item.get_data_component::<PaintingVariantImpl>() {
-                if let Some(v) = PaintingVariant::from_name(&comp.value) {
-                    if !PaintingEntity::painting_fits(&world, location, face, v) {
-                        return BlockActionResult::Consume;
-                    }
-                    v
-                } else {
-                    return BlockActionResult::Consume;
-                }
-            } else {
-                let Some(v) = PaintingEntity::choose_variant(&world, location, face) else {
-                    return BlockActionResult::Consume;
-                };
-                v
-            };
-
-            let spawn_pos = PaintingEntity::calculate_center_pos(
-                location,
-                face,
-                variant.width(),
-                variant.height(),
-            );
-            let entity = Entity::new(world.clone(), spawn_pos, &EntityType::PAINTING);
-            entity
-                .data
-                .store(i32::from(face.to_index()), Ordering::Relaxed);
-            let painting = Arc::new(PaintingEntity::new_with_variant(entity, variant));
-            world.play_sound(
-                Sound::EntityPaintingPlace,
-                SoundCategory::Blocks,
-                &spawn_pos,
-            );
-            world.emit_game_event(GameEvent::EntityPlace.name(), spawn_pos);
-            world.spawn_entity(painting);
-        } else {
-            if !world.is_in_build_limit(target_pos) {
-                return BlockActionResult::Fail;
-            }
-            let (support_block, support_state) = world.get_block_and_state(&location);
-            let is_diode = face.is_horizontal()
-                && (support_block == &Block::REPEATER || support_block == &Block::COMPARATOR);
-            if !support_state.is_side_solid(face) && !support_state.is_solid() && !is_diode {
+            let Some(variant) = PaintingEntity::choose_variant(&world, target_pos, face) else {
                 return BlockActionResult::Consume;
-            }
-
-            let entity_type = if item.item.id == Item::GLOW_ITEM_FRAME.id {
-                &EntityType::GLOW_ITEM_FRAME
-            } else {
-                &EntityType::ITEM_FRAME
             };
-
-            let frame_pos = pos.sub(
-                &face
-                    .to_offset()
-                    .to_f64()
-                    .multiply(0.46875, 0.46875, 0.46875),
-            );
-            let entity = Entity::new(world.clone(), frame_pos, entity_type);
-            let frame = ItemFrameEntity::new(entity);
-            frame.set_facing(face);
-            let sound = frame.get_place_sound();
-            let frame_arc = Arc::new(frame);
-            world.play_sound(sound, SoundCategory::Blocks, &frame_pos);
-            world.emit_game_event(GameEvent::EntityPlace.name(), frame_pos);
-            world.spawn_entity(frame_arc);
+            let painting = PaintingEntity::create(&world, target_pos, face, variant);
+            // Vanilla `EntityType.createDefaultStackConfig`: the item's components come last,
+            // and a variant they name still has to survive on this wall.
+            if let Some(component) = item.get_data_component::<PaintingVariantImpl>() {
+                painting.set_variant_name(&component.value);
+            }
+            apply_entity_variant(item, &painting, Some(player));
+            return place_if_survives(painting, Sound::EntityPaintingPlace, &world, item, player);
         }
-        item.decrement_unless_creative(player.gamemode.load(), 1);
-        BlockActionResult::Success
+
+        if !world.is_in_build_limit(target_pos) {
+            return BlockActionResult::Fail;
+        }
+        let entity_type = if item.item.id == Item::GLOW_ITEM_FRAME.id {
+            &EntityType::GLOW_ITEM_FRAME
+        } else {
+            &EntityType::ITEM_FRAME
+        };
+        let frame = ItemFrameEntity::create(&world, entity_type, target_pos, face);
+        apply_entity_variant(item, &frame, Some(player));
+        let place_sound = frame.get_place_sound();
+        place_if_survives(frame, place_sound, &world, item, player)
     }
 
     fn as_any(&self) -> &dyn Any {

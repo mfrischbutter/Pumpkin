@@ -60,7 +60,8 @@ impl ItemBehaviour for EggItem {
         // Propagate the item stack so clients show correct variant
         egg.set_item_stack(stack.copy_with_count(1));
 
-        egg.thrown.set_velocity_from(pitch, yaw, 0.0, POWER, 1.0);
+        egg.thrown
+            .shoot_item_from_rotation(player, &stack, pitch, yaw, 0.0, POWER, 1.0);
         world.spawn_entity(Arc::new(egg));
 
         let item_id = stack.item.id;

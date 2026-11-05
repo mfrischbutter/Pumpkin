@@ -316,6 +316,11 @@ impl CustomSound for CamelEntity {
 }
 
 impl Mob for CamelEntity {
+    /// Vanilla `CamelHusk.chargeSpeedModifier`.
+    fn charge_speed_modifier(&self) -> f32 {
+        if self.is_husk() { 4.0f32 } else { 1.0f32 }
+    }
+
     /// Vanilla `AbstractHorse.isPushable`.
     fn mob_is_pushable(&self) -> bool {
         !self.get_entity().has_passengers()

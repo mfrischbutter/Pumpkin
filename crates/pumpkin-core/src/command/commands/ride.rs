@@ -25,6 +25,10 @@ static ERROR_LOOP: CommandErrorType<0> = CommandErrorType::new(
     translation::java::COMMANDS_RIDE_MOUNT_FAILURE_LOOP,
     "Cannot ride recursively",
 );
+static ERROR_MOUNT_FAILED: CommandErrorType<2> = CommandErrorType::new(
+    translation::java::COMMANDS_RIDE_MOUNT_FAILURE_GENERIC,
+    "Failed to mount",
+);
 static ERROR_ALREADY_RIDING: CommandErrorType<2> = CommandErrorType::new(
     translation::java::COMMANDS_RIDE_ALREADY_RIDING,
     "Already riding",
@@ -88,6 +92,12 @@ impl CommandExecutor for RideMountExecutor {
         let vehicle_world = vehicle.get_entity().world.load();
         if target_world.dimension.minecraft_name != vehicle_world.dimension.minecraft_name {
             return Err(ERROR_WRONG_DIMENSION.create_without_context());
+        }
+
+        // Vanilla `Marker.couldAcceptPassenger`.
+        if vehicle.get_entity().entity_type == &pumpkin_data::entity::EntityType::MARKER {
+            return Err(ERROR_MOUNT_FAILED
+                .create_without_context(target.get_display_name(), vehicle.get_display_name()));
         }
 
         vehicle

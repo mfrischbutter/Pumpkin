@@ -12,7 +12,6 @@ use pumpkin_data::item::Item;
 use pumpkin_data::item_stack::ItemStack;
 use pumpkin_data::sound::{Sound, SoundCategory};
 use pumpkin_data::statistic::StatisticCategory;
-use pumpkin_util::math::vector3::Vector3;
 use pumpkin_util::{GameMode, Hand};
 
 pub struct TridentItem;
@@ -24,6 +23,13 @@ impl ItemMetadata for TridentItem {
 }
 
 impl TridentItem {
+    /// Vanilla `TridentItem.PROJECTILE_SHOOT_POWER`.
+    const PROJECTILE_SHOOT_POWER: f32 = 2.5;
+    /// The damage of vanilla's `startAutoSpinAttack(20, 8.0F, itemStack)`.
+    const SPIN_ATTACK_DAMAGE: f32 = 8.0;
+    /// The ticks of vanilla's `startAutoSpinAttack(20, 8.0F, itemStack)`.
+    const SPIN_ATTACK_TICKS: i32 = 20;
+
     fn riptide_level(stack: &ItemStack) -> u32 {
         stack
             .get_data_component::<EnchantmentsImpl>()
@@ -44,7 +50,9 @@ impl TridentItem {
                 .is_some_and(|max| stack.get_damage() >= max - 1)
     }
 
-    fn perform_riptide(player: &Player, hand: Hand, riptide_level: u32) {
+    /// The riptide half of vanilla `TridentItem.releaseUsing`. The client pushes itself by the
+    /// same amount, so the velocity is not sent back.
+    fn perform_riptide(player: &Player, hand: Hand, stack: &ItemStack, riptide_level: u32) {
         if !player.get_entity().is_in_water_or_rain() || player.get_entity().has_vehicle() {
             player.living_entity.clear_active_hand();
             return;
@@ -69,7 +77,9 @@ impl TridentItem {
 
         player.increment_stat(StatisticCategory::Used, i32::from(Item::TRIDENT.id), 1);
 
-        let riptide_strength = f64::from(0.75 * riptide_level as f32 + 0.75);
+        let riptide_strength = f64::from(
+            crate::enchantment::EnchantmentHelper::modify_trident_spin_attack_strength(stack, 0.0),
+        );
         let (yaw, pitch) = player.rotation();
         let f_yaw = f32::to_radians(yaw);
         let f_pitch = f32::to_radians(pitch);
@@ -81,13 +91,19 @@ impl TridentItem {
         let sq = (vx * vx + vy * vy + vz * vz).sqrt();
         if sq > 0.0 {
             let mult = riptide_strength / sq;
-            player.living_entity.entity.velocity.store(Vector3::new(
-                vx * mult,
-                vy * mult,
-                vz * mult,
-            ));
-            player.get_entity().send_velocity();
+            let entity = player.get_entity();
+            entity.velocity.store(
+                entity
+                    .velocity
+                    .load()
+                    .add_raw(vx * mult, vy * mult, vz * mult),
+            );
         }
+        player.start_auto_spin_attack(
+            Self::SPIN_ATTACK_TICKS,
+            Self::SPIN_ATTACK_DAMAGE,
+            stack.clone(),
+        );
 
         let sound = match riptide_level {
             1 => Sound::ItemTridentRiptide1,
@@ -154,7 +170,7 @@ impl ItemBehaviour for TridentItem {
         let riptide_level = Self::riptide_level(&stack_guard);
 
         if riptide_level > 0 {
-            Self::perform_riptide(player, hand, riptide_level);
+            Self::perform_riptide(player, hand, &stack_guard, riptide_level);
             return;
         }
 
@@ -178,7 +194,8 @@ impl ItemBehaviour for TridentItem {
             stack_guard.copy_with_count(1),
             pickup,
         );
-        trident.set_velocity_from_rotation(pitch, yaw, 0.0, 2.5, 1.0);
+        trident.set_velocity_from_rotation(pitch, yaw, 0.0, Self::PROJECTILE_SHOOT_POWER, 1.0);
+        trident.add_shooter_movement(player.get_entity());
         trident.apply_on_projectile_spawned(&stack_guard);
         // A cancelled launch keeps the trident in the player's hand.
         if !world.spawn_entity(Arc::new(trident)) {

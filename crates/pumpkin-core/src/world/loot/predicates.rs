@@ -16,7 +16,7 @@ use pumpkin_util::math::position::BlockPos;
 use pumpkin_util::random::RandomImpl;
 use serde_json::Value;
 
-use super::{EntityBase, LootContextParameters, LootEntityTarget, Taggable, World, Xoroshiro};
+use super::{EntityBase, LootContextParameters, LootEntityTarget, Taggable, Xoroshiro};
 
 pub(super) fn matches_entity(
     target: LootEntityTarget,
@@ -274,7 +274,7 @@ fn match_type_specific(
             .get("in_open_water")
             .and_then(Value::as_bool)
             .is_none_or(|exp| {
-                get_fishing_hook_in_open_water(entity, params.world).is_some_and(|open| open == exp)
+                get_fishing_hook_in_open_water(entity).is_some_and(|open| open == exp)
             }),
         "player" => {
             let Some(player) = entity.get_player() else {
@@ -356,21 +356,12 @@ fn get_raider_has_raid(entity: &dyn EntityBase) -> Option<bool> {
         .map(crate::entity::mob::raider::Raider::has_active_raid)
 }
 
-fn get_fishing_hook_in_open_water(entity: &dyn EntityBase, world: Option<&World>) -> Option<bool> {
-    if entity.get_entity().entity_type.id != pumpkin_data::entity::EntityType::FISHING_BOBBER.id {
-        return None;
-    }
-    let Some(world) = world else {
-        return Some(true);
-    };
-    let pos = BlockPos::containing(
-        entity.get_entity().pos.load().x,
-        entity.get_entity().pos.load().y,
-        entity.get_entity().pos.load().z,
-    );
-    let state = world.get_block_state(&pos);
-    let block = state.id.to_block();
-    Some(block == &pumpkin_data::Block::WATER)
+/// Vanilla `FishingHookPredicate`.
+fn get_fishing_hook_in_open_water(entity: &dyn EntityBase) -> Option<bool> {
+    entity
+        .cast_any()
+        .downcast_ref::<crate::entity::projectile::fishing_bobber::FishingBobberEntity>()
+        .map(crate::entity::projectile::fishing_bobber::FishingBobberEntity::is_open_water_fishing)
 }
 
 pub(super) fn json_to_nbt(value: &Value) -> Option<NbtTag> {

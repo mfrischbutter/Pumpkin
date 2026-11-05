@@ -3,7 +3,7 @@
 use std::sync::Arc;
 use std::sync::atomic::Ordering;
 
-use pumpkin_data::data_component_impl::{BlocksAttacksImpl, EquipmentSlot};
+use pumpkin_data::data_component_impl::{BlocksAttacksImpl, EquipmentSlot, KineticWeaponImpl};
 use pumpkin_data::entity::EntityType;
 use pumpkin_data::item::Item;
 use pumpkin_data::item_stack::ItemStack;
@@ -37,6 +37,18 @@ impl PiglinEntity {
     pub fn is_holding_crossbow(&self) -> bool {
         self.main_hand_item().item.id == Item::CROSSBOW.id
             || self.off_hand_item().item.id == Item::CROSSBOW.id
+    }
+
+    /// Whether either hand holds a spear, the other weapon `canUseNonMeleeWeapon` allows.
+    #[must_use]
+    pub fn is_holding_kinetic_weapon(&self) -> bool {
+        self.main_hand_item()
+            .get_data_component::<KineticWeaponImpl>()
+            .is_some()
+            || self
+                .off_hand_item()
+                .get_data_component::<KineticWeaponImpl>()
+                .is_some()
     }
 
     pub fn start_charging_crossbow(&self) {

@@ -7,10 +7,12 @@ use crate::entity::projectile::eye_of_ender::EyeOfEnder;
 use crate::item::{ItemBehaviour, ItemMetadata};
 use crate::server::Server;
 use crate::world::World;
+use crate::world::game_event::GameEventContext;
 use crate::world::portal::end::EndPortal;
 use pumpkin_data::BlockId;
 use pumpkin_data::block_properties::EndPortalFrameLikeProperties;
 use pumpkin_data::entity::EntityType;
+use pumpkin_data::game_event::GameEvent;
 use pumpkin_data::item::Item;
 use pumpkin_data::item_stack::ItemStack;
 use pumpkin_data::sound::{Sound, SoundCategory};
@@ -104,6 +106,7 @@ impl ItemBehaviour for EnderEyeItem {
 
         let entity = Entity::new(world.clone(), spawn_pos, &EntityType::EYE_OF_ENDER);
         let eye = Arc::new(EyeOfEnder::new(entity));
+        eye.set_item_stack(&player.inventory.get_stack_in_hand(hand));
 
         let target_vec = Vector3::new(
             f64::from(target.0.x),
@@ -112,6 +115,13 @@ impl ItemBehaviour for EnderEyeItem {
         );
         eye.signal_to(target_vec);
 
+        world.emit_game_event_with_context(
+            GameEvent::ProjectileShoot.name(),
+            spawn_pos,
+            &GameEventContext {
+                source_entity: Some(player),
+            },
+        );
         world.spawn_entity(eye);
 
         let sound_pitch = 0.33f32 + rand::random::<f32>() * (0.5 - 0.33);

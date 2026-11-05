@@ -33,11 +33,15 @@ impl DynamicLightEngine {
 impl DynamicLightEngine {
     /// Checks if there is an open sky above the given position (no opaque blocks blocking sky light).
     fn has_open_sky_above(&self, level: &Arc<Level>, pos: &BlockPos) -> bool {
-        let max_y = self.max_y - 1;
+        Self::is_clear_up_to(level, pos, self.max_y - 1)
+    }
+
+    /// Checks that no block above `pos`, up to and including `top_y`, blocks sky light.
+    fn is_clear_up_to(level: &Arc<Level>, pos: &BlockPos, top_y: i32) -> bool {
         let mut current_pos = *pos;
 
-        // Scan upward until we hit sky or an opaque block
-        while current_pos.0.y < max_y {
+        // Scan upward until we hit the top or an opaque block
+        while current_pos.0.y < top_y {
             current_pos.0.y += 1;
 
             let state = level.get_block_state(&current_pos).to_state();
@@ -59,6 +63,38 @@ impl DynamicLightEngine {
         // Sky Light
         self.check_sky_light_updates(level, pos);
         self.perform_sky_light_updates(level);
+    }
+
+    /// [`Self::update_lighting_at`] for many blocks changed in one go: all checks run before
+    /// light spreads, so a big change spreads it once instead of once per block.
+    pub fn update_lighting_batch(&self, level: &Arc<Level>, positions: &[BlockPos]) {
+        for pos in positions {
+            self.check_block_light_updates(level, *pos);
+        }
+        self.perform_block_light_updates(level);
+
+        self.check_sky_light_batch(level, positions);
+        self.perform_sky_light_updates(level);
+    }
+
+    /// The sky light checks of a batch, top down per column: a scan for open sky only has to
+    /// reach the block the last scan of that column started from.
+    fn check_sky_light_batch(&self, level: &Arc<Level>, positions: &[BlockPos]) {
+        let mut sorted = positions.to_vec();
+        sorted.sort_unstable_by_key(|pos| (pos.0.x, pos.0.z, std::cmp::Reverse(pos.0.y)));
+        let mut last_scan: Option<(BlockPos, bool)> = None;
+        for pos in sorted {
+            let same_column =
+                last_scan.filter(|(above, _)| above.0.x == pos.0.x && above.0.z == pos.0.z);
+            self.check_sky_light_updates_with(level, pos, || {
+                let open = match same_column {
+                    Some((above, open)) => open && Self::is_clear_up_to(level, &pos, above.0.y),
+                    None => self.has_open_sky_above(level, &pos),
+                };
+                last_scan = Some((pos, open));
+                open
+            });
+        }
     }
 
     pub fn queue_block_light_decrease(&self, pos: BlockPos, level: u8) {
@@ -387,6 +423,16 @@ impl DynamicLightEngine {
     }
 
     pub fn check_sky_light_updates(&self, level: &Arc<Level>, pos: BlockPos) {
+        self.check_sky_light_updates_with(level, pos, || self.has_open_sky_above(level, &pos));
+    }
+
+    /// [`Self::check_sky_light_updates`], with the scan for open sky left to the caller.
+    fn check_sky_light_updates_with(
+        &self,
+        level: &Arc<Level>,
+        pos: BlockPos,
+        has_open_sky: impl FnOnce() -> bool,
+    ) {
         match level.lighting_config {
             LightingEngineConfig::Full => {
                 self.set_sky_light_level(level, &pos, 15).ok();
@@ -417,7 +463,7 @@ impl DynamicLightEngine {
             0
         } else {
             // Check if there's open sky above
-            let has_sky = self.has_open_sky_above(level, &pos);
+            let has_sky = has_open_sky();
 
             if has_sky {
                 // Direct sunlight, reduced by opacity

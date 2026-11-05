@@ -40,10 +40,31 @@ pub(super) fn can_place_rail_at(world: &dyn BlockAccessor, pos: &BlockPos) -> bo
     state.is_side_solid(BlockDirection::Up)
 }
 
+/// Vanilla `BaseRailBlock.onPlace` for a straight rail: it connects to the rails around it,
+/// without any it keeps its shape. Returns the state it ends up with.
+pub(super) fn reshape_placed_straight_rail(
+    world: &Arc<World>,
+    block: &Block,
+    state_id: BlockStateId,
+    block_pos: &BlockPos,
+) -> BlockStateId {
+    let RailProperties::StraightRail(mut properties) = RailProperties::new(state_id, block) else {
+        return state_id;
+    };
+    let shape = compute_placed_rail_shape(world, block_pos, properties.shape);
+    if shape == properties.shape {
+        return state_id;
+    }
+    properties.shape = shape;
+    let new_state_id = properties.to_state_id(block);
+    world.set_block_state(block_pos, new_state_id, BlockFlags::NOTIFY_ALL);
+    new_state_id
+}
+
 pub(super) fn compute_placed_rail_shape(
     world: &World,
     block_pos: &BlockPos,
-    player_facing: HorizontalFacing,
+    default_shape: RailShapeStraight,
 ) -> RailShapeStraight {
     let north = Rail::find_if_unlocked(world, block_pos, HorizontalFacing::North);
     let south = Rail::find_if_unlocked(world, block_pos, HorizontalFacing::South);
@@ -58,7 +79,7 @@ pub(super) fn compute_placed_rail_shape(
     } else if has_east_or_west && !has_north_or_south {
         RailShapeStraight::EastWest
     } else {
-        player_facing.to_rail_shape_flat()
+        default_shape
     };
 
     if shape == RailShapeStraight::NorthSouth {

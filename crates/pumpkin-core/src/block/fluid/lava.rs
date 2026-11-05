@@ -8,6 +8,7 @@ use pumpkin_data::{
     Block, BlockDirection, BlockState, BlockStateId,
     damage::DamageType,
     fluid::{Fluid, FluidProperties},
+    sound::Sound,
     tag::Taggable,
     world::WorldEvent,
 };
@@ -26,25 +27,6 @@ impl FluidMetadata for FlowingLava {
 }
 
 impl FlowingLava {
-    fn can_spread_fire_around(world: &Arc<World>, pos: &BlockPos) -> bool {
-        let spread_radius = world
-            .level_info
-            .load()
-            .game_rules
-            .fire_spread_radius_around_player;
-
-        if spread_radius == 0 {
-            return false;
-        }
-        if spread_radius == -1 {
-            return true;
-        }
-
-        world
-            .get_closest_player(pos.to_centered_f64(), spread_radius as f64)
-            .is_some()
-    }
-
     fn is_flammable_state(block_state: &BlockState) -> bool {
         let block = Block::from_state_id(block_state.id);
         if block.is_waterlogged(block_state.id) {
@@ -185,13 +167,21 @@ impl FluidBehaviour for FlowingLava {
         if !base_entity.is_fire_immune() {
             entity.set_on_fire_for(15.0);
 
-            // Also apply lava damage
-            base_entity.damage(entity, 4.0, DamageType::LAVA);
+            // Vanilla `Entity.lavaHurt`: the damage, and the burn sound when it hurt.
+            if base_entity.damage(entity, 4.0, DamageType::LAVA)
+                && entity.should_play_lava_hurt_sound()
+            {
+                entity.play_entity_sound(
+                    Sound::EntityGenericBurn,
+                    0.4,
+                    rand::random::<f32>().mul_add(0.4, 2.0),
+                );
+            }
         }
     }
 
     fn random_tick(&self, _fluid: &Fluid, world: &Arc<World>, block_pos: &BlockPos) {
-        if !Self::can_spread_fire_around(world, block_pos) {
+        if !world.can_spread_fire_around(block_pos) {
             return;
         }
 

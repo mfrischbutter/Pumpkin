@@ -367,6 +367,11 @@ pub fn build() -> TokenStream {
         // let full_name = format!("minecraft:{name}");
         let format_name = format_ident!("{}", name.to_shouty_snake_case());
         let has_precipitation = biome.has_precipitation;
+        let snow_golem_melts = biome
+            .attributes
+            .get("minecraft:gameplay/snow_golem_melts")
+            .and_then(Value::as_bool)
+            .unwrap_or(false);
         let temperature = biome.temperature;
         let downfall = biome.downfall;
         let carvers: Vec<TokenStream> = biome
@@ -493,6 +498,7 @@ pub fn build() -> TokenStream {
                 spawn_costs: phf::phf_map! {
                     #(#spawn_costs),*
                 },
+                snow_golem_melts: #snow_golem_melts,
             };
         }]);
 
@@ -523,6 +529,8 @@ pub fn build() -> TokenStream {
             pub creature_spawn_probability: f32,
             pub spawners: SpawnGroups,
             pub spawn_costs: phf::Map<&'static str, SpawnCosts>,
+            /// Vanilla `EnvironmentAttributes.SNOW_GOLEM_MELTS` of this biome.
+            pub snow_golem_melts: bool,
         }
 
         impl PartialEq<u8> for Biome {

@@ -1,7 +1,10 @@
 pub mod armor_stand;
+pub mod armor_stand_pose;
+pub mod block_attached;
 pub mod cushion;
 pub mod display;
 pub mod end_crystal;
 pub mod item_frame;
 pub mod leash_knot;
+pub mod mannequin;
 pub mod painting;

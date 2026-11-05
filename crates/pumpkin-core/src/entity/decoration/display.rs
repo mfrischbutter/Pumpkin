@@ -1,21 +1,45 @@
+//! Vanilla `Display`: the state and save data the three display entities share.
+
 use std::sync::{
-    Arc, Mutex,
-    atomic::{AtomicI8, AtomicI32, AtomicU8, Ordering},
+    Mutex,
+    atomic::{AtomicI32, AtomicU8, Ordering},
 };
 
-use pumpkin_data::{damage::DamageType, item_stack::ItemStack};
+use pumpkin_data::tracked_data::display as tracked;
 use pumpkin_nbt::{compound::NbtCompound, tag::NbtTag};
 use pumpkin_protocol::{
-    codec::{item_stack_seralizer::ItemStackSerializer, var_int::VarInt},
+    codec::var_int::VarInt,
     java::client::play::MetadataSerializer,
     ser::{NetworkWriteExt, WritingError},
 };
-use pumpkin_util::{math::vector3::Vector3, text::TextComponent};
+use pumpkin_util::math::vector3::Vector3;
 
-use crate::{
-    entity::{Entity, EntityBase, living::LivingEntity},
-    server::Server,
-};
+use crate::entity::Entity;
+
+mod block;
+mod item;
+mod text;
+mod transformation;
+
+pub use block::BlockDisplayEntity;
+pub use item::ItemDisplayEntity;
+pub use text::TextDisplayEntity;
+use transformation::Transformation;
+
+/// Vanilla `Display.NO_BRIGHTNESS_OVERRIDE`.
+pub const NO_BRIGHTNESS_OVERRIDE: i32 = -1;
+const NO_GLOW_COLOR_OVERRIDE: i32 = -1;
+const INITIAL_SHADOW_RADIUS: f32 = 0.0;
+const INITIAL_SHADOW_STRENGTH: f32 = 1.0;
+const INITIAL_VIEW_RANGE: f32 = 1.0;
+const INITIAL_WIDTH: f32 = 0.0;
+const INITIAL_HEIGHT: f32 = 0.0;
+/// The largest `teleport_duration` vanilla's `readAdditionalSaveData` keeps.
+const MAX_POS_ROT_INTERPOLATION_DURATION: i32 = 59;
+const MAX_LIGHT_LEVEL: i32 = 15;
+
+/// Vanilla `BillboardConstraints`, by id.
+const BILLBOARD_CONSTRAINTS: [&str; 4] = ["fixed", "vertical", "horizontal", "center"];
 
 #[derive(Clone, Copy, Debug)]
 pub struct Vector3fSerializer(pub f32, pub f32, pub f32);
@@ -48,6 +72,51 @@ impl MetadataSerializer for QuaternionfSerializer {
     }
 }
 
+fn load<T: Copy>(value: &Mutex<T>) -> T {
+    *value
+        .lock()
+        .unwrap_or_else(std::sync::PoisonError::into_inner)
+}
+
+fn store<T>(slot: &Mutex<T>, value: T) {
+    *slot
+        .lock()
+        .unwrap_or_else(std::sync::PoisonError::into_inner) = value;
+}
+
+/// Vanilla `TagValueInput.getIntOr`: any number counts.
+fn int_or(nbt: &NbtCompound, name: &str, default: i32) -> i32 {
+    nbt.get(name)
+        .and_then(NbtTag::as_numeric_double)
+        .map_or(default, |value| value as i32)
+}
+
+/// Vanilla `LightCoordsUtil.pack`.
+const fn pack_brightness(block: i32, sky: i32) -> i32 {
+    block << 4 | sky << 20
+}
+
+/// Vanilla `Brightness.CODEC`: both light levels are required and between 0 and 15.
+fn brightness_from_nbt(compound: &NbtCompound) -> Option<i32> {
+    let level = |name: &str| {
+        compound
+            .get(name)
+            .and_then(NbtTag::as_numeric_double)
+            .map(|value| value as i32)
+            .filter(|value| (0..=MAX_LIGHT_LEVEL).contains(value))
+    };
+    Some(pack_brightness(level("block")?, level("sky")?))
+}
+
+/// Vanilla `Brightness.unpack` as the save data.
+fn brightness_to_nbt(packed: i32) -> NbtCompound {
+    let mut compound = NbtCompound::new();
+    compound.put_int("block", (packed >> 4) & MAX_LIGHT_LEVEL);
+    compound.put_int("sky", (packed >> 20) & MAX_LIGHT_LEVEL);
+    compound
+}
+
+/// Vanilla `Display`. `brightness` holds the packed `LightCoordsUtil` value of the synced data.
 pub struct DisplayEntity {
     pub entity: Entity,
     pub interpolation_start_delta_ticks: AtomicI32,
@@ -70,40 +139,75 @@ pub struct DisplayEntity {
 impl DisplayEntity {
     pub fn new(entity: Entity) -> Self {
         entity.no_physics.store(true, Ordering::Relaxed);
+        Self::define_synched_data(&entity);
         Self {
             entity,
             interpolation_start_delta_ticks: AtomicI32::new(0),
             interpolation_duration: AtomicI32::new(0),
             teleport_duration: AtomicI32::new(0),
-            view_range: Mutex::new(1.0),
-            shadow_radius: Mutex::new(0.0),
-            shadow_strength: Mutex::new(1.0),
-            width: Mutex::new(0.0),
-            height: Mutex::new(0.0),
-            glow_color_override: AtomicI32::new(-1),
+            view_range: Mutex::new(INITIAL_VIEW_RANGE),
+            shadow_radius: Mutex::new(INITIAL_SHADOW_RADIUS),
+            shadow_strength: Mutex::new(INITIAL_SHADOW_STRENGTH),
+            width: Mutex::new(INITIAL_WIDTH),
+            height: Mutex::new(INITIAL_HEIGHT),
+            glow_color_override: AtomicI32::new(NO_GLOW_COLOR_OVERRIDE),
             billboard: AtomicU8::new(0),
-            brightness: AtomicI32::new(-1),
+            brightness: AtomicI32::new(NO_BRIGHTNESS_OVERRIDE),
             translation: Mutex::new(Vector3::new(0.0, 0.0, 0.0)),
             scale: Mutex::new(Vector3::new(1.0, 1.0, 1.0)),
-            left_rotation: Mutex::new([0.0, 0.0, 0.0, 1.0]),
-            right_rotation: Mutex::new([0.0, 0.0, 0.0, 1.0]),
+            left_rotation: Mutex::new(Transformation::IDENTITY.left_rotation),
+            right_rotation: Mutex::new(Transformation::IDENTITY.right_rotation),
         }
     }
 
+    /// Vanilla `Display.defineSynchedData`: a client assumes these, so only changes are sent.
+    fn define_synched_data(entity: &Entity) {
+        let data = &entity.synched_data;
+        data.define(tracked::TELEPORT_DURATION, VarInt(0));
+        data.define(tracked::START_INTERPOLATION, VarInt(0));
+        data.define(tracked::INTERPOLATION_DURATION, VarInt(0));
+        data.define(tracked::TRANSLATION, Vector3fSerializer(0.0, 0.0, 0.0));
+        data.define(tracked::SCALE, Vector3fSerializer(1.0, 1.0, 1.0));
+        let identity = QuaternionfSerializer(0.0, 0.0, 0.0, 1.0);
+        data.define(tracked::RIGHT_ROTATION, identity);
+        data.define(tracked::LEFT_ROTATION, identity);
+        data.define(tracked::BILLBOARD, 0u8);
+        data.define(tracked::BRIGHTNESS, VarInt(NO_BRIGHTNESS_OVERRIDE));
+        data.define(tracked::VIEW_RANGE, INITIAL_VIEW_RANGE);
+        data.define(tracked::SHADOW_RADIUS, INITIAL_SHADOW_RADIUS);
+        data.define(tracked::SHADOW_STRENGTH, INITIAL_SHADOW_STRENGTH);
+        data.define(tracked::WIDTH, INITIAL_WIDTH);
+        data.define(tracked::HEIGHT, INITIAL_HEIGHT);
+        data.define(tracked::GLOW_COLOR_OVERRIDE, VarInt(NO_GLOW_COLOR_OVERRIDE));
+    }
+
+    /// Vanilla `Display.tick`: nothing but leaving a vehicle that is gone. A display has no base
+    /// tick, so it neither falls nor burns. It leaves in place, only living riders dismount.
+    pub fn tick_display(&self) {
+        if let Some(vehicle) = self.entity.get_vehicle()
+            && vehicle.get_entity().is_removed()
+        {
+            vehicle
+                .get_entity()
+                .remove_passenger_before_teleport(self.entity.entity_id);
+        }
+    }
+
+    #[must_use]
     pub fn get_interpolation_start_delta_ticks(&self) -> i32 {
         self.interpolation_start_delta_ticks.load(Ordering::Relaxed)
     }
 
+    /// Vanilla `setTransformationInterpolationDelay`: forced, every write restarts the client's
+    /// interpolation.
     pub fn set_interpolation_start_delta_ticks(&self, ticks: i32) {
         self.interpolation_start_delta_ticks
             .store(ticks, Ordering::Relaxed);
-        // Vanilla forces this one: every update restarts the client's interpolation.
-        self.entity.force_synced_data(
-            pumpkin_data::tracked_data::display::START_INTERPOLATION,
-            VarInt(ticks),
-        );
+        self.entity
+            .force_synced_data(tracked::START_INTERPOLATION, VarInt(ticks));
     }
 
+    #[must_use]
     pub fn get_interpolation_duration(&self) -> i32 {
         self.interpolation_duration.load(Ordering::Relaxed)
     }
@@ -111,1079 +215,266 @@ impl DisplayEntity {
     pub fn set_interpolation_duration(&self, duration: i32) {
         self.interpolation_duration
             .store(duration, Ordering::Relaxed);
-        self.entity.set_synced_data(
-            pumpkin_data::tracked_data::display::INTERPOLATION_DURATION,
-            VarInt(duration),
-        );
+        self.entity
+            .set_synced_data(tracked::INTERPOLATION_DURATION, VarInt(duration));
     }
 
+    #[must_use]
     pub fn get_teleport_duration(&self) -> i32 {
         self.teleport_duration.load(Ordering::Relaxed)
     }
 
     pub fn set_teleport_duration(&self, duration: i32) {
         self.teleport_duration.store(duration, Ordering::Relaxed);
-        self.entity.set_synced_data(
-            pumpkin_data::tracked_data::display::TELEPORT_DURATION,
-            VarInt(duration),
-        );
+        self.entity
+            .set_synced_data(tracked::TELEPORT_DURATION, VarInt(duration));
     }
 
+    #[must_use]
     pub fn get_translation(&self) -> Vector3<f32> {
-        *self
-            .translation
-            .lock()
-            .unwrap_or_else(std::sync::PoisonError::into_inner)
+        load(&self.translation)
     }
 
     pub fn set_translation(&self, translation: Vector3<f32>) {
-        *self
-            .translation
-            .lock()
-            .unwrap_or_else(std::sync::PoisonError::into_inner) = translation;
+        store(&self.translation, translation);
         self.entity.set_synced_data(
-            pumpkin_data::tracked_data::display::TRANSLATION,
+            tracked::TRANSLATION,
             Vector3fSerializer(translation.x, translation.y, translation.z),
         );
     }
 
+    #[must_use]
     pub fn get_scale(&self) -> Vector3<f32> {
-        *self
-            .scale
-            .lock()
-            .unwrap_or_else(std::sync::PoisonError::into_inner)
+        load(&self.scale)
     }
 
     pub fn set_scale(&self, scale: Vector3<f32>) {
-        *self
-            .scale
-            .lock()
-            .unwrap_or_else(std::sync::PoisonError::into_inner) = scale;
+        store(&self.scale, scale);
         self.entity.set_synced_data(
-            pumpkin_data::tracked_data::display::SCALE,
+            tracked::SCALE,
             Vector3fSerializer(scale.x, scale.y, scale.z),
         );
     }
 
+    #[must_use]
     pub fn get_left_rotation(&self) -> [f32; 4] {
-        *self
-            .left_rotation
-            .lock()
-            .unwrap_or_else(std::sync::PoisonError::into_inner)
+        load(&self.left_rotation)
     }
 
-    pub fn set_left_rotation(&self, left_rotation: [f32; 4]) {
-        *self
-            .left_rotation
-            .lock()
-            .unwrap_or_else(std::sync::PoisonError::into_inner) = left_rotation;
-        self.entity.set_synced_data(
-            pumpkin_data::tracked_data::display::LEFT_ROTATION,
-            QuaternionfSerializer(
-                left_rotation[0],
-                left_rotation[1],
-                left_rotation[2],
-                left_rotation[3],
-            ),
-        );
+    pub fn set_left_rotation(&self, rotation: [f32; 4]) {
+        store(&self.left_rotation, rotation);
+        let [x, y, z, w] = rotation;
+        self.entity
+            .set_synced_data(tracked::LEFT_ROTATION, QuaternionfSerializer(x, y, z, w));
     }
 
+    #[must_use]
     pub fn get_right_rotation(&self) -> [f32; 4] {
-        *self
-            .right_rotation
-            .lock()
-            .unwrap_or_else(std::sync::PoisonError::into_inner)
+        load(&self.right_rotation)
     }
 
-    pub fn set_right_rotation(&self, right_rotation: [f32; 4]) {
-        *self
-            .right_rotation
-            .lock()
-            .unwrap_or_else(std::sync::PoisonError::into_inner) = right_rotation;
-        self.entity.set_synced_data(
-            pumpkin_data::tracked_data::display::RIGHT_ROTATION,
-            QuaternionfSerializer(
-                right_rotation[0],
-                right_rotation[1],
-                right_rotation[2],
-                right_rotation[3],
-            ),
-        );
+    pub fn set_right_rotation(&self, rotation: [f32; 4]) {
+        store(&self.right_rotation, rotation);
+        let [x, y, z, w] = rotation;
+        self.entity
+            .set_synced_data(tracked::RIGHT_ROTATION, QuaternionfSerializer(x, y, z, w));
     }
 
+    #[must_use]
     pub fn get_billboard(&self) -> u8 {
         self.billboard.load(Ordering::Relaxed)
     }
 
     pub fn set_billboard(&self, billboard: u8) {
         self.billboard.store(billboard, Ordering::Relaxed);
-        self.entity
-            .set_synced_data(pumpkin_data::tracked_data::display::BILLBOARD, billboard);
+        self.entity.set_synced_data(tracked::BILLBOARD, billboard);
     }
 
+    /// The packed `LightCoordsUtil` value (`block << 4 | sky << 20`), or
+    /// [`NO_BRIGHTNESS_OVERRIDE`].
+    #[must_use]
     pub fn get_brightness(&self) -> i32 {
         self.brightness.load(Ordering::Relaxed)
     }
 
+    /// Takes the packed `LightCoordsUtil` value (`block << 4 | sky << 20`), or
+    /// [`NO_BRIGHTNESS_OVERRIDE`].
     pub fn set_brightness(&self, brightness: i32) {
         self.brightness.store(brightness, Ordering::Relaxed);
-        self.entity.set_synced_data(
-            pumpkin_data::tracked_data::display::BRIGHTNESS,
-            VarInt(brightness),
-        );
+        self.entity
+            .set_synced_data(tracked::BRIGHTNESS, VarInt(brightness));
     }
 
+    #[must_use]
     pub fn get_view_range(&self) -> f32 {
-        *self
-            .view_range
-            .lock()
-            .unwrap_or_else(std::sync::PoisonError::into_inner)
+        load(&self.view_range)
     }
 
     pub fn set_view_range(&self, view_range: f32) {
-        *self
-            .view_range
-            .lock()
-            .unwrap_or_else(std::sync::PoisonError::into_inner) = view_range;
-        self.entity
-            .set_synced_data(pumpkin_data::tracked_data::display::VIEW_RANGE, view_range);
+        store(&self.view_range, view_range);
+        self.entity.set_synced_data(tracked::VIEW_RANGE, view_range);
     }
 
+    #[must_use]
     pub fn get_shadow_radius(&self) -> f32 {
-        *self
-            .shadow_radius
-            .lock()
-            .unwrap_or_else(std::sync::PoisonError::into_inner)
+        load(&self.shadow_radius)
     }
 
     pub fn set_shadow_radius(&self, shadow_radius: f32) {
-        *self
-            .shadow_radius
-            .lock()
-            .unwrap_or_else(std::sync::PoisonError::into_inner) = shadow_radius;
-        self.entity.set_synced_data(
-            pumpkin_data::tracked_data::display::SHADOW_RADIUS,
-            shadow_radius,
-        );
+        store(&self.shadow_radius, shadow_radius);
+        self.entity
+            .set_synced_data(tracked::SHADOW_RADIUS, shadow_radius);
     }
 
+    #[must_use]
     pub fn get_shadow_strength(&self) -> f32 {
-        *self
-            .shadow_strength
-            .lock()
-            .unwrap_or_else(std::sync::PoisonError::into_inner)
+        load(&self.shadow_strength)
     }
 
     pub fn set_shadow_strength(&self, shadow_strength: f32) {
-        *self
-            .shadow_strength
-            .lock()
-            .unwrap_or_else(std::sync::PoisonError::into_inner) = shadow_strength;
-        self.entity.set_synced_data(
-            pumpkin_data::tracked_data::display::SHADOW_STRENGTH,
-            shadow_strength,
-        );
+        store(&self.shadow_strength, shadow_strength);
+        self.entity
+            .set_synced_data(tracked::SHADOW_STRENGTH, shadow_strength);
     }
 
+    #[must_use]
     pub fn get_display_width(&self) -> f32 {
-        *self
-            .width
-            .lock()
-            .unwrap_or_else(std::sync::PoisonError::into_inner)
+        load(&self.width)
     }
 
     pub fn set_display_width(&self, width: f32) {
-        *self
-            .width
-            .lock()
-            .unwrap_or_else(std::sync::PoisonError::into_inner) = width;
-        self.entity
-            .set_synced_data(pumpkin_data::tracked_data::display::WIDTH, width);
+        store(&self.width, width);
+        self.entity.set_synced_data(tracked::WIDTH, width);
     }
 
+    #[must_use]
     pub fn get_display_height(&self) -> f32 {
-        *self
-            .height
-            .lock()
-            .unwrap_or_else(std::sync::PoisonError::into_inner)
+        load(&self.height)
     }
 
     pub fn set_display_height(&self, height: f32) {
-        *self
-            .height
-            .lock()
-            .unwrap_or_else(std::sync::PoisonError::into_inner) = height;
-        self.entity
-            .set_synced_data(pumpkin_data::tracked_data::display::HEIGHT, height);
+        store(&self.height, height);
+        self.entity.set_synced_data(tracked::HEIGHT, height);
     }
 
+    #[must_use]
     pub fn get_glow_color_override(&self) -> i32 {
         self.glow_color_override.load(Ordering::Relaxed)
     }
 
     pub fn set_glow_color_override(&self, color: i32) {
         self.glow_color_override.store(color, Ordering::Relaxed);
-        self.entity.set_synced_data(
-            pumpkin_data::tracked_data::display::GLOW_COLOR_OVERRIDE,
-            VarInt(color),
-        );
+        self.entity
+            .set_synced_data(tracked::GLOW_COLOR_OVERRIDE, VarInt(color));
     }
 
-    #[allow(clippy::too_many_lines)]
-    pub fn init_display_data_tracker(&self) {
-        let view_range = *self
-            .view_range
-            .lock()
-            .unwrap_or_else(std::sync::PoisonError::into_inner);
-        let shadow_radius = *self
-            .shadow_radius
-            .lock()
-            .unwrap_or_else(std::sync::PoisonError::into_inner);
-        let shadow_strength = *self
-            .shadow_strength
-            .lock()
-            .unwrap_or_else(std::sync::PoisonError::into_inner);
-        let width = *self
-            .width
-            .lock()
-            .unwrap_or_else(std::sync::PoisonError::into_inner);
-        let height = *self
-            .height
-            .lock()
-            .unwrap_or_else(std::sync::PoisonError::into_inner);
-        let translation = *self
-            .translation
-            .lock()
-            .unwrap_or_else(std::sync::PoisonError::into_inner);
-        let scale = *self
-            .scale
-            .lock()
-            .unwrap_or_else(std::sync::PoisonError::into_inner);
-        let left_rotation = *self
-            .left_rotation
-            .lock()
-            .unwrap_or_else(std::sync::PoisonError::into_inner);
-        let right_rotation = *self
-            .right_rotation
-            .lock()
-            .unwrap_or_else(std::sync::PoisonError::into_inner);
-
-        self.entity.set_synced_data(
-            pumpkin_data::tracked_data::display::START_INTERPOLATION,
-            VarInt(self.interpolation_start_delta_ticks.load(Ordering::Relaxed)),
-        );
-        self.entity.set_synced_data(
-            pumpkin_data::tracked_data::display::INTERPOLATION_DURATION,
-            VarInt(self.interpolation_duration.load(Ordering::Relaxed)),
-        );
-        self.entity.set_synced_data(
-            pumpkin_data::tracked_data::display::TRANSLATION,
-            Vector3fSerializer(translation.x, translation.y, translation.z),
-        );
-        self.entity.set_synced_data(
-            pumpkin_data::tracked_data::display::SCALE,
-            Vector3fSerializer(scale.x, scale.y, scale.z),
-        );
-        self.entity.set_synced_data(
-            pumpkin_data::tracked_data::display::LEFT_ROTATION,
-            QuaternionfSerializer(
-                left_rotation[0],
-                left_rotation[1],
-                left_rotation[2],
-                left_rotation[3],
-            ),
-        );
-        self.entity.set_synced_data(
-            pumpkin_data::tracked_data::display::RIGHT_ROTATION,
-            QuaternionfSerializer(
-                right_rotation[0],
-                right_rotation[1],
-                right_rotation[2],
-                right_rotation[3],
-            ),
-        );
-        self.entity.set_synced_data(
-            pumpkin_data::tracked_data::display::BILLBOARD,
-            self.billboard.load(Ordering::Relaxed),
-        );
-        self.entity.set_synced_data(
-            pumpkin_data::tracked_data::display::BRIGHTNESS,
-            VarInt(self.brightness.load(Ordering::Relaxed)),
-        );
-        self.entity
-            .set_synced_data(pumpkin_data::tracked_data::display::VIEW_RANGE, view_range);
-        self.entity.set_synced_data(
-            pumpkin_data::tracked_data::display::SHADOW_RADIUS,
-            shadow_radius,
-        );
-        self.entity.set_synced_data(
-            pumpkin_data::tracked_data::display::SHADOW_STRENGTH,
-            shadow_strength,
-        );
-        self.entity
-            .set_synced_data(pumpkin_data::tracked_data::display::WIDTH, width);
-        self.entity
-            .set_synced_data(pumpkin_data::tracked_data::display::HEIGHT, height);
-        self.entity.set_synced_data(
-            pumpkin_data::tracked_data::display::TELEPORT_DURATION,
-            VarInt(self.teleport_duration.load(Ordering::Relaxed)),
-        );
-        self.entity.set_synced_data(
-            pumpkin_data::tracked_data::display::GLOW_COLOR_OVERRIDE,
-            VarInt(self.glow_color_override.load(Ordering::Relaxed)),
-        );
+    fn transformation(&self) -> Transformation {
+        let translation = self.get_translation();
+        let scale = self.get_scale();
+        Transformation {
+            translation: [translation.x, translation.y, translation.z],
+            left_rotation: self.get_left_rotation(),
+            scale: [scale.x, scale.y, scale.z],
+            right_rotation: self.get_right_rotation(),
+        }
     }
 
-    #[expect(clippy::too_many_lines)]
+    /// Vanilla `Display.setTransformation`.
+    fn set_transformation(&self, transformation: &Transformation) {
+        let [x, y, z] = transformation.translation;
+        self.set_translation(Vector3::new(x, y, z));
+        self.set_left_rotation(transformation.left_rotation);
+        let [x, y, z] = transformation.scale;
+        self.set_scale(Vector3::new(x, y, z));
+        self.set_right_rotation(transformation.right_rotation);
+    }
+
+    /// Vanilla `Display.addAdditionalSaveData`; `start_interpolation` is not saved.
     pub fn write_display_nbt(&self, nbt: &mut NbtCompound) {
-        nbt.put_int(
-            "interpolation_duration",
-            self.interpolation_duration.load(Ordering::Relaxed),
-        );
-        nbt.put_int(
-            "start_interpolation",
-            self.interpolation_start_delta_ticks.load(Ordering::Relaxed),
-        );
-        nbt.put_float(
-            "view_range",
-            *self
-                .view_range
-                .lock()
-                .unwrap_or_else(std::sync::PoisonError::into_inner),
-        );
-        nbt.put_float(
-            "shadow_radius",
-            *self
-                .shadow_radius
-                .lock()
-                .unwrap_or_else(std::sync::PoisonError::into_inner),
-        );
-        nbt.put_float(
-            "shadow_strength",
-            *self
-                .shadow_strength
-                .lock()
-                .unwrap_or_else(std::sync::PoisonError::into_inner),
-        );
-        nbt.put_float(
-            "width",
-            *self
-                .width
-                .lock()
-                .unwrap_or_else(std::sync::PoisonError::into_inner),
-        );
-        nbt.put_float(
-            "height",
-            *self
-                .height
-                .lock()
-                .unwrap_or_else(std::sync::PoisonError::into_inner),
-        );
-        nbt.put_int(
-            "teleport_duration",
-            self.teleport_duration.load(Ordering::Relaxed),
-        );
-
-        let billboard_str = match self.billboard.load(Ordering::Relaxed) {
-            1 => "vertical",
-            2 => "horizontal",
-            3 => "center",
-            _ => "fixed",
-        };
-        nbt.put_string("billboard", billboard_str.into());
-
-        let brightness = self.brightness.load(Ordering::Relaxed);
-        if brightness != -1 {
-            let block = brightness & 0xF;
-            let sky = (brightness >> 4) & 0xF;
-            let mut b_compound = NbtCompound::new();
-            b_compound.put_int("block", block);
-            b_compound.put_int("sky", sky);
-            nbt.put("brightness", NbtTag::Compound(b_compound));
+        nbt.put_compound("transformation", self.transformation().write_nbt());
+        let billboard = BILLBOARD_CONSTRAINTS
+            .get(usize::from(self.get_billboard()))
+            .copied()
+            .unwrap_or(BILLBOARD_CONSTRAINTS[0]);
+        nbt.put_string("billboard", billboard.to_string());
+        nbt.put_int("interpolation_duration", self.get_interpolation_duration());
+        nbt.put_int("teleport_duration", self.get_teleport_duration());
+        nbt.put_float("view_range", self.get_view_range());
+        nbt.put_float("shadow_radius", self.get_shadow_radius());
+        nbt.put_float("shadow_strength", self.get_shadow_strength());
+        nbt.put_float("width", self.get_display_width());
+        nbt.put_float("height", self.get_display_height());
+        nbt.put_int("glow_color_override", self.get_glow_color_override());
+        let brightness = self.get_brightness();
+        if brightness != NO_BRIGHTNESS_OVERRIDE {
+            nbt.put_compound("brightness", brightness_to_nbt(brightness));
         }
-
-        let glow_color_override = self.glow_color_override.load(Ordering::Relaxed);
-        if glow_color_override != -1 {
-            nbt.put_int("glow_color_override", glow_color_override);
-        }
-
-        let mut transform = NbtCompound::new();
-        let trans = *self
-            .translation
-            .lock()
-            .unwrap_or_else(std::sync::PoisonError::into_inner);
-        transform.put(
-            "translation",
-            NbtTag::List(vec![trans.x.into(), trans.y.into(), trans.z.into()]),
-        );
-        let scale = *self
-            .scale
-            .lock()
-            .unwrap_or_else(std::sync::PoisonError::into_inner);
-        transform.put(
-            "scale",
-            NbtTag::List(vec![scale.x.into(), scale.y.into(), scale.z.into()]),
-        );
-        let left_rot = *self
-            .left_rotation
-            .lock()
-            .unwrap_or_else(std::sync::PoisonError::into_inner);
-        transform.put(
-            "left_rotation",
-            NbtTag::List(vec![
-                left_rot[0].into(),
-                left_rot[1].into(),
-                left_rot[2].into(),
-                left_rot[3].into(),
-            ]),
-        );
-        let right_rot = *self
-            .right_rotation
-            .lock()
-            .unwrap_or_else(std::sync::PoisonError::into_inner);
-        transform.put(
-            "right_rotation",
-            NbtTag::List(vec![
-                right_rot[0].into(),
-                right_rot[1].into(),
-                right_rot[2].into(),
-                right_rot[3].into(),
-            ]),
-        );
-        nbt.put("transformation", NbtTag::Compound(transform));
     }
 
-    #[expect(clippy::too_many_lines)]
+    /// Vanilla `Display.readAdditionalSaveData`: a missing or invalid value is the default, and
+    /// each value goes through its setter so `/data` reaches the clients.
     pub fn read_display_nbt(&self, nbt: &NbtCompound) {
-        if let Some(dur) = nbt.get_int("interpolation_duration") {
-            self.interpolation_duration.store(dur, Ordering::Relaxed);
-        }
-        if let Some(start) = nbt.get_int("start_interpolation") {
-            self.interpolation_start_delta_ticks
-                .store(start, Ordering::Relaxed);
-        }
-        if let Some(vr) = nbt.get_float("view_range") {
-            *self
-                .view_range
-                .lock()
-                .unwrap_or_else(std::sync::PoisonError::into_inner) = vr;
-        }
-        if let Some(sr) = nbt.get_float("shadow_radius") {
-            *self
-                .shadow_radius
-                .lock()
-                .unwrap_or_else(std::sync::PoisonError::into_inner) = sr;
-        }
-        if let Some(ss) = nbt.get_float("shadow_strength") {
-            *self
-                .shadow_strength
-                .lock()
-                .unwrap_or_else(std::sync::PoisonError::into_inner) = ss;
-        }
-        if let Some(w) = nbt.get_float("width") {
-            *self
-                .width
-                .lock()
-                .unwrap_or_else(std::sync::PoisonError::into_inner) = w;
-        }
-        if let Some(h) = nbt.get_float("height") {
-            *self
-                .height
-                .lock()
-                .unwrap_or_else(std::sync::PoisonError::into_inner) = h;
-        }
-        if let Some(glow) = nbt.get_int("glow_color_override") {
-            self.glow_color_override.store(glow, Ordering::Relaxed);
-        }
-        if let Some(bb) = nbt.get_string("billboard") {
-            let mode = match bb {
-                "vertical" => 1,
-                "horizontal" => 2,
-                "center" => 3,
-                _ => 0,
-            };
-            self.billboard.store(mode, Ordering::Relaxed);
-        }
-
-        if let Some(b) = nbt.get_compound("brightness") {
-            let block = b.get_int("block").unwrap_or(0);
-            let sky = b.get_int("sky").unwrap_or(0);
-            self.brightness
-                .store((sky << 4) | (block & 0xF), Ordering::Relaxed);
-        }
-
-        if let Some(transform) = nbt.get_compound("transformation") {
-            if let Some(t_list) = transform.get_list("translation")
-                && t_list.len() >= 3
-            {
-                let x = t_list[0].extract_float().unwrap_or(0.0);
-                let y = t_list[1].extract_float().unwrap_or(0.0);
-                let z = t_list[2].extract_float().unwrap_or(0.0);
-                *self
-                    .translation
-                    .lock()
-                    .unwrap_or_else(std::sync::PoisonError::into_inner) = Vector3::new(x, y, z);
-            }
-            if let Some(s_list) = transform.get_list("scale")
-                && s_list.len() >= 3
-            {
-                let x = s_list[0].extract_float().unwrap_or(1.0);
-                let y = s_list[1].extract_float().unwrap_or(1.0);
-                let z = s_list[2].extract_float().unwrap_or(1.0);
-                *self
-                    .scale
-                    .lock()
-                    .unwrap_or_else(std::sync::PoisonError::into_inner) = Vector3::new(x, y, z);
-            }
-            if let Some(lr_list) = transform.get_list("left_rotation")
-                && lr_list.len() >= 4
-            {
-                let x = lr_list[0].extract_float().unwrap_or(0.0);
-                let y = lr_list[1].extract_float().unwrap_or(0.0);
-                let z = lr_list[2].extract_float().unwrap_or(0.0);
-                let w = lr_list[3].extract_float().unwrap_or(1.0);
-                *self
-                    .left_rotation
-                    .lock()
-                    .unwrap_or_else(std::sync::PoisonError::into_inner) = [x, y, z, w];
-            }
-            if let Some(rr_list) = transform.get_list("right_rotation")
-                && rr_list.len() >= 4
-            {
-                let x = rr_list[0].extract_float().unwrap_or(0.0);
-                let y = rr_list[1].extract_float().unwrap_or(0.0);
-                let z = rr_list[2].extract_float().unwrap_or(0.0);
-                let w = rr_list[3].extract_float().unwrap_or(1.0);
-                *self
-                    .right_rotation
-                    .lock()
-                    .unwrap_or_else(std::sync::PoisonError::into_inner) = [x, y, z, w];
-            }
-        }
-    }
-}
-
-pub struct BlockDisplayEntity {
-    pub display: DisplayEntity,
-    pub block_state: AtomicI32,
-}
-
-impl BlockDisplayEntity {
-    pub fn new(entity: Entity) -> Arc<Self> {
-        Arc::new(Self {
-            display: DisplayEntity::new(entity),
-            block_state: AtomicI32::new(0),
-        })
-    }
-
-    pub fn get_block_state(&self) -> i32 {
-        self.block_state.load(Ordering::Relaxed)
-    }
-
-    pub fn set_block_state(&self, block_state: i32) {
-        self.block_state.store(block_state, Ordering::Relaxed);
-        self.display.entity.set_synced_data(
-            pumpkin_data::tracked_data::block_display::BLOCK_STATE,
-            VarInt(block_state),
+        let transformation = nbt
+            .get("transformation")
+            .and_then(Transformation::from_nbt)
+            .unwrap_or(Transformation::IDENTITY);
+        self.set_transformation(&transformation);
+        self.set_interpolation_duration(int_or(nbt, "interpolation_duration", 0));
+        self.set_interpolation_start_delta_ticks(int_or(nbt, "start_interpolation", 0));
+        self.set_teleport_duration(
+            int_or(nbt, "teleport_duration", 0).clamp(0, MAX_POS_ROT_INTERPOLATION_DURATION),
+        );
+        let billboard = nbt
+            .get_string("billboard")
+            .and_then(|name| BILLBOARD_CONSTRAINTS.iter().position(|&c| c == name))
+            .unwrap_or(0);
+        self.set_billboard(billboard as u8);
+        self.set_view_range(
+            nbt.get_numeric_float("view_range")
+                .unwrap_or(INITIAL_VIEW_RANGE),
+        );
+        self.set_shadow_radius(
+            nbt.get_numeric_float("shadow_radius")
+                .unwrap_or(INITIAL_SHADOW_RADIUS),
+        );
+        self.set_shadow_strength(
+            nbt.get_numeric_float("shadow_strength")
+                .unwrap_or(INITIAL_SHADOW_STRENGTH),
+        );
+        self.set_display_width(nbt.get_numeric_float("width").unwrap_or(INITIAL_WIDTH));
+        self.set_display_height(nbt.get_numeric_float("height").unwrap_or(INITIAL_HEIGHT));
+        self.set_glow_color_override(int_or(nbt, "glow_color_override", NO_GLOW_COLOR_OVERRIDE));
+        self.set_brightness(
+            nbt.get_compound("brightness")
+                .and_then(brightness_from_nbt)
+                .unwrap_or(NO_BRIGHTNESS_OVERRIDE),
         );
     }
 }
 
-impl EntityBase for BlockDisplayEntity {
-    fn write_custom_nbt(&self, nbt: &mut NbtCompound) {
-        self.display.write_display_nbt(nbt);
-        nbt.put_int("block_state", self.block_state.load(Ordering::Relaxed));
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// Plugins and the synced data use vanilla's packed form, not two nibbles.
+    #[test]
+    fn brightness_packs_like_light_coords() {
+        let mut compound = NbtCompound::new();
+        compound.put_int("block", 15);
+        compound.put_int("sky", 7);
+        let packed = brightness_from_nbt(&compound);
+        assert_eq!(packed, Some(15 << 4 | 7 << 20));
+
+        let saved = brightness_to_nbt(15 << 4 | 7 << 20);
+        assert_eq!(saved.get_int("block"), Some(15));
+        assert_eq!(saved.get_int("sky"), Some(7));
     }
 
-    fn read_custom_nbt(&self, nbt: &NbtCompound) {
-        self.display.read_display_nbt(nbt);
-        if let Some(state) = nbt.get_int("block_state") {
-            self.block_state.store(state, Ordering::Relaxed);
-        }
-    }
-
-    fn tick(&self, _caller: &dyn EntityBase, _server: &Server) {}
-
-    fn init_data_tracker(&self) {
-        self.display.init_display_data_tracker();
-        self.display.entity.set_synced_data(
-            pumpkin_data::tracked_data::block_display::BLOCK_STATE,
-            VarInt(self.block_state.load(Ordering::Relaxed)),
-        );
-    }
-
-    fn get_entity(&self) -> &Entity {
-        &self.display.entity
-    }
-
-    fn get_living_entity(&self) -> Option<&LivingEntity> {
-        None
-    }
-
-    fn cast_any(&self) -> &dyn std::any::Any {
-        self
-    }
-
-    fn is_pushable(&self) -> bool {
-        false
-    }
-
-    fn is_pushed_by_fluids(&self) -> bool {
-        false
-    }
-
-    fn can_hit(&self) -> bool {
-        false
-    }
-
-    fn is_immune_to_explosion(&self) -> bool {
-        true
-    }
-
-    fn damage_with_context(
-        &self,
-        _caller: &dyn EntityBase,
-        _amount: f32,
-        _damage_type: DamageType,
-        _position: Option<Vector3<f64>>,
-        _source: Option<&dyn EntityBase>,
-        _cause: Option<&dyn EntityBase>,
-    ) -> bool {
-        false
-    }
-}
-
-pub struct ItemDisplayEntity {
-    pub display: DisplayEntity,
-    pub item_stack: Mutex<ItemStack>,
-    pub item_display: AtomicU8,
-}
-
-impl ItemDisplayEntity {
-    pub fn new(entity: Entity) -> Arc<Self> {
-        Arc::new(Self {
-            display: DisplayEntity::new(entity),
-            item_stack: Mutex::new(ItemStack::new(0, &pumpkin_data::item::Item::AIR)),
-            item_display: AtomicU8::new(0),
-        })
-    }
-
-    pub fn get_item(&self) -> ItemStack {
-        self.item_stack
-            .lock()
-            .unwrap_or_else(std::sync::PoisonError::into_inner)
-            .clone()
-    }
-
-    pub fn set_item(&self, item: ItemStack) {
-        *self
-            .item_stack
-            .lock()
-            .unwrap_or_else(std::sync::PoisonError::into_inner) = item.clone();
-        self.display.entity.set_synced_data(
-            pumpkin_data::tracked_data::item_display::ITEM,
-            ItemStackSerializer::from(item),
-        );
-    }
-
-    pub fn get_item_display_mode(&self) -> u8 {
-        self.item_display.load(Ordering::Relaxed)
-    }
-
-    pub fn set_item_display_mode(&self, mode: u8) {
-        self.item_display.store(mode, Ordering::Relaxed);
-        self.display
-            .entity
-            .set_synced_data(pumpkin_data::tracked_data::item_display::ITEM_DISPLAY, mode);
-    }
-}
-
-impl EntityBase for ItemDisplayEntity {
-    fn write_custom_nbt(&self, nbt: &mut NbtCompound) {
-        self.display.write_display_nbt(nbt);
-        let display_mode_str = match self.item_display.load(Ordering::Relaxed) {
-            1 => "thirdperson_lefthand",
-            2 => "thirdperson_righthand",
-            3 => "firstperson_lefthand",
-            4 => "firstperson_righthand",
-            5 => "head",
-            6 => "gui",
-            7 => "ground",
-            8 => "fixed",
-            _ => "none",
-        };
-        nbt.put_string("item_display", display_mode_str.to_string());
-    }
-
-    fn read_custom_nbt(&self, nbt: &NbtCompound) {
-        self.display.read_display_nbt(nbt);
-        if let Some(mode_str) = nbt.get_string("item_display") {
-            let mode = match mode_str {
-                "thirdperson_lefthand" => 1,
-                "thirdperson_righthand" => 2,
-                "firstperson_lefthand" => 3,
-                "firstperson_righthand" => 4,
-                "head" => 5,
-                "gui" => 6,
-                "ground" => 7,
-                "fixed" => 8,
-                _ => 0,
-            };
-            self.item_display.store(mode, Ordering::Relaxed);
-        }
-    }
-
-    fn tick(&self, _caller: &dyn EntityBase, _server: &Server) {}
-
-    fn init_data_tracker(&self) {
-        self.display.init_display_data_tracker();
-        self.display.entity.set_synced_data(
-            pumpkin_data::tracked_data::item_display::ITEM,
-            ItemStackSerializer::from(
-                self.item_stack
-                    .lock()
-                    .unwrap_or_else(std::sync::PoisonError::into_inner)
-                    .clone(),
-            ),
-        );
-        self.display.entity.set_synced_data(
-            pumpkin_data::tracked_data::item_display::ITEM_DISPLAY,
-            self.item_display.load(Ordering::Relaxed),
-        );
-    }
-
-    fn get_entity(&self) -> &Entity {
-        &self.display.entity
-    }
-
-    fn get_living_entity(&self) -> Option<&LivingEntity> {
-        None
-    }
-
-    fn cast_any(&self) -> &dyn std::any::Any {
-        self
-    }
-
-    fn is_pushable(&self) -> bool {
-        false
-    }
-
-    fn is_pushed_by_fluids(&self) -> bool {
-        false
-    }
-
-    fn can_hit(&self) -> bool {
-        false
-    }
-
-    fn is_immune_to_explosion(&self) -> bool {
-        true
-    }
-
-    fn damage_with_context(
-        &self,
-        _caller: &dyn EntityBase,
-        _amount: f32,
-        _damage_type: DamageType,
-        _position: Option<Vector3<f64>>,
-        _source: Option<&dyn EntityBase>,
-        _cause: Option<&dyn EntityBase>,
-    ) -> bool {
-        false
-    }
-}
-
-pub struct TextDisplayEntity {
-    pub display: DisplayEntity,
-    pub text: Mutex<TextComponent>,
-    pub line_width: AtomicI32,
-    pub background: AtomicI32,
-    pub text_opacity: AtomicI8,
-    pub flags: AtomicU8,
-}
-
-impl TextDisplayEntity {
-    pub fn new(entity: Entity) -> Arc<Self> {
-        Arc::new(Self {
-            display: DisplayEntity::new(entity),
-            text: Mutex::new(TextComponent::text("")),
-            line_width: AtomicI32::new(200),
-            background: AtomicI32::new(1_073_741_824),
-            text_opacity: AtomicI8::new(-1),
-            flags: AtomicU8::new(0),
-        })
-    }
-
-    pub fn get_text(&self) -> TextComponent {
-        self.text
-            .lock()
-            .unwrap_or_else(std::sync::PoisonError::into_inner)
-            .clone()
-    }
-
-    pub fn set_text(&self, text: TextComponent) {
-        *self
-            .text
-            .lock()
-            .unwrap_or_else(std::sync::PoisonError::into_inner) = text.clone();
-        self.display
-            .entity
-            .set_synced_data(pumpkin_data::tracked_data::text_display::TEXT, text);
-    }
-
-    pub fn get_line_width(&self) -> i32 {
-        self.line_width.load(Ordering::Relaxed)
-    }
-
-    pub fn set_line_width(&self, width: i32) {
-        self.line_width.store(width, Ordering::Relaxed);
-        self.display.entity.set_synced_data(
-            pumpkin_data::tracked_data::text_display::LINE_WIDTH,
-            VarInt(width),
-        );
-    }
-
-    pub fn get_background_color(&self) -> i32 {
-        self.background.load(Ordering::Relaxed)
-    }
-
-    pub fn set_background_color(&self, color: i32) {
-        self.background.store(color, Ordering::Relaxed);
-        self.display.entity.set_synced_data(
-            pumpkin_data::tracked_data::text_display::BACKGROUND,
-            VarInt(color),
-        );
-    }
-
-    pub fn get_text_opacity(&self) -> i8 {
-        self.text_opacity.load(Ordering::Relaxed)
-    }
-
-    pub fn set_text_opacity(&self, opacity: i8) {
-        self.text_opacity.store(opacity, Ordering::Relaxed);
-        self.display.entity.set_synced_data(
-            pumpkin_data::tracked_data::text_display::TEXT_OPACITY,
-            opacity as u8,
-        );
-    }
-
-    pub fn get_shadow(&self) -> bool {
-        (self.flags.load(Ordering::Relaxed) & 1) != 0
-    }
-
-    pub fn set_shadow(&self, shadow: bool) {
-        let mut flags = self.flags.load(Ordering::Relaxed);
-        if shadow {
-            flags |= 1;
-        } else {
-            flags &= !1;
-        }
-        self.flags.store(flags, Ordering::Relaxed);
-        self.display.entity.set_synced_data(
-            pumpkin_data::tracked_data::text_display::TEXT_DISPLAY_FLAGS,
-            flags,
-        );
-    }
-
-    pub fn get_see_through(&self) -> bool {
-        (self.flags.load(Ordering::Relaxed) & 2) != 0
-    }
-
-    pub fn set_see_through(&self, see_through: bool) {
-        let mut flags = self.flags.load(Ordering::Relaxed);
-        if see_through {
-            flags |= 2;
-        } else {
-            flags &= !2;
-        }
-        self.flags.store(flags, Ordering::Relaxed);
-        self.display.entity.set_synced_data(
-            pumpkin_data::tracked_data::text_display::TEXT_DISPLAY_FLAGS,
-            flags,
-        );
-    }
-
-    pub fn get_use_default_background(&self) -> bool {
-        (self.flags.load(Ordering::Relaxed) & 4) != 0
-    }
-
-    pub fn set_use_default_background(&self, default_bg: bool) {
-        let mut flags = self.flags.load(Ordering::Relaxed);
-        if default_bg {
-            flags |= 4;
-        } else {
-            flags &= !4;
-        }
-        self.flags.store(flags, Ordering::Relaxed);
-        self.display.entity.set_synced_data(
-            pumpkin_data::tracked_data::text_display::TEXT_DISPLAY_FLAGS,
-            flags,
-        );
-    }
-
-    pub fn get_alignment(&self) -> u8 {
-        let flags = self.flags.load(Ordering::Relaxed);
-        if flags & 8 != 0 {
-            1
-        } else if flags & 16 != 0 {
-            2
-        } else {
-            0
-        }
-    }
-
-    pub fn set_alignment(&self, align: u8) {
-        let mut flags = self.flags.load(Ordering::Relaxed) & !0b1_1000;
-        if align == 1 {
-            flags |= 8;
-        } else if align == 2 {
-            flags |= 16;
-        }
-        self.flags.store(flags, Ordering::Relaxed);
-        self.display.entity.set_synced_data(
-            pumpkin_data::tracked_data::text_display::TEXT_DISPLAY_FLAGS,
-            flags,
-        );
-    }
-}
-
-impl EntityBase for TextDisplayEntity {
-    fn write_custom_nbt(&self, nbt: &mut NbtCompound) {
-        self.display.write_display_nbt(nbt);
-        let text_json_res = pumpkin_util::serde_json::to_string(
-            &*self
-                .text
-                .lock()
-                .unwrap_or_else(std::sync::PoisonError::into_inner),
-        );
-        if let Ok(text_json) = text_json_res {
-            nbt.put_string("text", text_json);
-        }
-        nbt.put_int("line_width", self.line_width.load(Ordering::Relaxed));
-        nbt.put_int("background", self.background.load(Ordering::Relaxed));
-        nbt.put_byte("text_opacity", self.text_opacity.load(Ordering::Relaxed));
-
-        let flags = self.flags.load(Ordering::Relaxed);
-        nbt.put_bool("shadow", flags & 1 != 0);
-        nbt.put_bool("see_through", flags & 2 != 0);
-        nbt.put_bool("default_background", flags & 4 != 0);
-        let align_str = if flags & 8 != 0 {
-            "left"
-        } else if flags & 16 != 0 {
-            "right"
-        } else {
-            "center"
-        };
-        nbt.put_string("alignment", align_str.to_string());
-    }
-
-    fn read_custom_nbt(&self, nbt: &NbtCompound) {
-        self.display.read_display_nbt(nbt);
-        if let Some(text_json) = nbt.get_string("text")
-            && let Ok(component) = pumpkin_util::serde_json::from_str(text_json)
-        {
-            *self
-                .text
-                .lock()
-                .unwrap_or_else(std::sync::PoisonError::into_inner) = component;
-        }
-        if let Some(lw) = nbt.get_int("line_width") {
-            self.line_width.store(lw, Ordering::Relaxed);
-        }
-        if let Some(bg) = nbt.get_int("background") {
-            self.background.store(bg, Ordering::Relaxed);
-        }
-        if let Some(opacity) = nbt.get_byte("text_opacity") {
-            self.text_opacity.store(opacity, Ordering::Relaxed);
-        }
-
-        let mut flags = 0u8;
-        if nbt.get_bool("shadow").unwrap_or(false) {
-            flags |= 1;
-        }
-        if nbt.get_bool("see_through").unwrap_or(false) {
-            flags |= 2;
-        }
-        if nbt.get_bool("default_background").unwrap_or(false) {
-            flags |= 4;
-        }
-        if let Some(align) = nbt.get_string("alignment") {
-            match align {
-                "left" => flags |= 8,
-                "right" => flags |= 16,
-                _ => {}
-            }
-        }
-        self.flags.store(flags, Ordering::Relaxed);
-    }
-
-    fn tick(&self, _caller: &dyn EntityBase, _server: &Server) {}
-
-    fn init_data_tracker(&self) {
-        self.display.init_display_data_tracker();
-        let text = self
-            .text
-            .lock()
-            .unwrap_or_else(std::sync::PoisonError::into_inner)
-            .clone();
-        self.display
-            .entity
-            .set_synced_data(pumpkin_data::tracked_data::text_display::TEXT, text);
-        self.display.entity.set_synced_data(
-            pumpkin_data::tracked_data::text_display::LINE_WIDTH,
-            VarInt(self.line_width.load(Ordering::Relaxed)),
-        );
-        self.display.entity.set_synced_data(
-            pumpkin_data::tracked_data::text_display::BACKGROUND,
-            VarInt(self.background.load(Ordering::Relaxed)),
-        );
-        self.display.entity.set_synced_data(
-            pumpkin_data::tracked_data::text_display::TEXT_OPACITY,
-            self.text_opacity.load(Ordering::Relaxed) as u8,
-        );
-        self.display.entity.set_synced_data(
-            pumpkin_data::tracked_data::text_display::TEXT_DISPLAY_FLAGS,
-            self.flags.load(Ordering::Relaxed),
-        );
-    }
-
-    fn get_entity(&self) -> &Entity {
-        &self.display.entity
-    }
-
-    fn get_living_entity(&self) -> Option<&LivingEntity> {
-        None
-    }
-
-    fn cast_any(&self) -> &dyn std::any::Any {
-        self
-    }
-
-    fn is_pushable(&self) -> bool {
-        false
-    }
-
-    fn is_pushed_by_fluids(&self) -> bool {
-        false
-    }
-
-    fn can_hit(&self) -> bool {
-        false
-    }
-
-    fn is_immune_to_explosion(&self) -> bool {
-        true
-    }
-
-    fn damage_with_context(
-        &self,
-        _caller: &dyn EntityBase,
-        _amount: f32,
-        _damage_type: DamageType,
-        _position: Option<Vector3<f64>>,
-        _source: Option<&dyn EntityBase>,
-        _cause: Option<&dyn EntityBase>,
-    ) -> bool {
-        false
+    #[test]
+    fn brightness_rejects_levels_out_of_range() {
+        let mut compound = NbtCompound::new();
+        compound.put_int("block", 16);
+        compound.put_int("sky", 0);
+        assert_eq!(brightness_from_nbt(&compound), None);
     }
 }

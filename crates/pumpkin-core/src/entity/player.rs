@@ -1,4 +1,6 @@
 pub mod advancement;
+pub mod auto_spin_attack;
+mod ender_pearls;
 mod mount_screen;
 pub mod statistics;
 
@@ -794,8 +796,11 @@ pub struct Player {
     pub advancements: Arc<Mutex<PlayerAdvancement>>,
     pub enchantment_seed: AtomicI32,
     pub fishing_bobber: AtomicI32,
+    /// Riptide's spin.
+    pub auto_spin_attack: auto_spin_attack::AutoSpinAttack,
     pub bedrock_skin: arc_swap::ArcSwap<pumpkin_protocol::bedrock::client::Skin>,
     pub seen_credits: AtomicBool,
+    ender_pearls: ender_pearls::EnderPearls,
     pub warden_spawn_tracker: std::sync::Mutex<WardenSpawnTracker>,
     pub score: AtomicI32,
     pub spawn_extra_particles_on_fall: AtomicBool,
@@ -1136,8 +1141,10 @@ impl Player {
             respawn_location: AtomicCell::new(None),
             hidden_players: Mutex::new(std::collections::HashSet::new()),
             fishing_bobber: AtomicI32::new(-1),
+            auto_spin_attack: auto_spin_attack::AutoSpinAttack::default(),
             bedrock_skin: ArcSwap::new(Arc::new(bedrock_skin)),
             seen_credits: AtomicBool::new(false),
+            ender_pearls: ender_pearls::EnderPearls::default(),
             warden_spawn_tracker: std::sync::Mutex::new(WardenSpawnTracker::default()),
             score: AtomicI32::new(0),
             spawn_extra_particles_on_fall: AtomicBool::new(false),
@@ -1628,6 +1635,10 @@ impl Player {
 
     #[expect(clippy::too_many_lines)]
     pub fn attack(&self, victim: &Arc<dyn EntityBase>) {
+        // Vanilla `Player.cannotAttack`.
+        if victim.skip_attack_interaction(self) {
+            return;
+        }
         let world = self.world();
         let Some(server) = world.server.upgrade() else {
             return;
@@ -1637,7 +1648,11 @@ impl Player {
         let config = &server.advanced_config.pvp;
 
         let inventory = self.inventory();
-        let item_stack = inventory.held_item();
+        // Vanilla `Player.getWeaponItem`: a spin attacks with the trident that started it.
+        let item_stack = self
+            .auto_spin_attack
+            .weapon()
+            .unwrap_or_else(|| inventory.held_item());
         if !item_stack.is_empty() {
             self.increment_stat(
                 statistics::StatisticCategory::Used,
@@ -1646,9 +1661,13 @@ impl Player {
             );
         }
 
-        let base_damage = self
-            .living_entity
-            .get_attribute_value(&Attributes::ATTACK_DAMAGE);
+        let base_damage = self.auto_spin_attack.damage().map_or_else(
+            || {
+                self.living_entity
+                    .get_attribute_value(&Attributes::ATTACK_DAMAGE)
+            },
+            f64::from,
+        );
         let base_attack_speed = 4.0;
 
         let mut damage_multiplier = 1.0;
@@ -1711,6 +1730,10 @@ impl Player {
             self.get_attack_cooldown_progress(f64::from(server.basic_config.tps), 0.5, attack_speed)
         };
         self.last_attacked_ticks.store(0, Ordering::Relaxed);
+
+        if crate::entity::projectile::hurting::deflect_by_player(self, victim.as_ref()) {
+            return;
+        }
 
         // Only reduce attack damage if in cooldown
         // TODO: Enchantments are reduced in the same way, just without the square.
@@ -1874,8 +1897,10 @@ impl Player {
                     let knockback_z = -yaw.cos();
                     let victims = world.get_all_at_box(&search_box);
                     for other_victim in victims {
+                        // Vanilla `Player.doSweepAttack` only looks at living entities.
                         if other_victim.get_entity().entity_id != victim_entity.entity_id
                             && other_victim.get_entity().entity_id != attacker_entity.entity_id
+                            && other_victim.get_living_entity().is_some()
                         {
                             let hurt = other_victim.damage_with_context(
                                 other_victim.as_ref(),
@@ -2700,11 +2725,6 @@ impl Player {
         }
     }
 
-    const fn is_auto_spin_attack() -> bool {
-        // TODO: Track active auto-spin/riptide state and return true while it is active.
-        false
-    }
-
     fn can_fit_pose(&self, pose: EntityPose) -> bool {
         let entity = self.get_entity();
         let dimensions = entity.get_dimensions(pose);
@@ -2725,7 +2745,7 @@ impl Player {
             EntityPose::Swimming
         } else if entity.is_fall_flying() {
             EntityPose::FallFlying
-        } else if Self::is_auto_spin_attack() {
+        } else if self.auto_spin_attack.is_active() {
             EntityPose::SpinAttack
         } else if entity.is_sneaking() && !self.is_flying() {
             EntityPose::Crouching
@@ -3455,6 +3475,7 @@ impl Player {
         self.last_attacked_ticks.fetch_add(1, Ordering::Relaxed);
 
         self.living_entity.tick(self, server);
+        self.tick_auto_spin_attack();
         self.detect_armor_changes();
 
         self.breath_manager.tick(self);
@@ -5515,6 +5536,8 @@ impl Player {
 
     pub async fn respawn(self: &Arc<Self>) {
         self.world().respawn_player(self, false).await;
+        // Vanilla's respawn makes a new player, with no arrows stuck in it.
+        self.living_entity.set_arrow_count(0);
         // The client rebuilt its attribute state on respawn, so send the held
         // weapon modifiers again.
         crate::entity::attributes::send_attribute_updates_for_living(
@@ -6464,10 +6487,18 @@ impl Player {
     }
 
     pub fn apply_mending_from_xp(&self, mut xp: i32) -> i32 {
-        if xp <= 0 {
-            return xp;
+        while xp > 0 {
+            let Some(remaining) = self.mend_random_item(xp) else {
+                return xp;
+            };
+            xp = remaining;
         }
+        xp
+    }
 
+    /// One step of vanilla `ExperienceOrb.repairPlayerItems`: a random damaged mending item
+    /// takes 2 durability per point. Returns what is left, `None` when nothing was mended.
+    fn mend_random_item(&self, xp: i32) -> Option<i32> {
         let mut candidates: Vec<(usize, EquipmentSlot, ItemStack)> = Vec::new();
 
         let selected_slot = self.inventory.get_selected_slot() as usize;
@@ -6489,18 +6520,20 @@ impl Player {
         }
 
         if candidates.is_empty() {
-            return xp;
+            return None;
         }
 
         let idx = rand::random::<u32>() as usize % candidates.len();
         let (slot_index, equipment_slot, mut stack) = candidates.swap_remove(idx);
 
-        let repaired = stack.repair_item(xp.saturating_mul(2));
+        let to_repair = xp.saturating_mul(2);
+        let repaired = stack.repair_item(to_repair);
         if repaired <= 0 {
-            return xp;
+            return None;
         }
 
-        let xp_used = (repaired + 1) / 2;
+        // Java's int division, so a step that repairs 1 for 1 experience uses none of it.
+        let xp_used = (i64::from(repaired) * i64::from(xp) / i64::from(to_repair)) as i32;
 
         if let Some(player_arc) = self.world().get_player_by_uuid(self.gameprofile.id)
             && let Some(server) = self.world().server.upgrade()
@@ -6515,14 +6548,12 @@ impl Player {
                 };
             server.plugin_manager.fire_blocking(&server, &mut event);
             if event.cancelled {
-                return xp;
+                return None;
             }
         }
 
         let updated_stack = stack.clone();
         self.inventory.set_slot(slot_index, updated_stack.clone());
-
-        xp = xp.saturating_sub(xp_used);
 
         self.try_send_slot_set_packet(&CSetPlayerInventory::new(
             (slot_index as i32).into(),
@@ -6533,7 +6564,7 @@ impl Player {
         self.living_entity
             .send_equipment_changes(&[(equipment_slot, updated_stack)]);
 
-        xp
+        Some(xp.saturating_sub(xp_used))
     }
 
     pub fn increment_screen_handler_sync_id(&self) {
@@ -7922,6 +7953,7 @@ impl EntityBase for Player {
         }
 
         nbt.put_bool("seenCredits", self.seen_credits.load(Ordering::Relaxed));
+        self.save_ender_pearls(nbt);
         nbt.put_compound(
             "warden_spawn_tracker",
             self.warden_spawn_tracker
@@ -8059,6 +8091,7 @@ impl EntityBase for Player {
             nbt.get_bool("seenCredits").unwrap_or(false),
             Ordering::Relaxed,
         );
+        self.read_ender_pearls(nbt);
         *self
             .warden_spawn_tracker
             .lock()

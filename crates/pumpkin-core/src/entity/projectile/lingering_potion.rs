@@ -2,21 +2,18 @@ use crate::entity::projectile::owner::ProjectileOwner;
 use std::sync::RwLock;
 use std::sync::atomic::AtomicBool;
 
-use crate::entity::projectile::splash_potion::{
-    extinguish_fire_if_water_potion, rehydrate_axolotls_if_water_potion,
-};
+use crate::entity::area_effect_cloud::AreaEffectCloudEntity;
+use crate::entity::projectile::ProjectileHit;
+use crate::entity::projectile::thrown_item::{read_thrown_item, write_thrown_item};
+use crate::entity::projectile::thrown_potion;
 use crate::{
     entity::{Entity, EntityBase, projectile::ThrownItemEntity},
     server::Server,
 };
-use pumpkin_data::entity::EntityStatus;
+use pumpkin_data::entity::EntityType;
 use pumpkin_data::item_stack::ItemStack;
-use pumpkin_protocol::bedrock::server::actor_event::ActorEventID;
-use pumpkin_protocol::java::client::play::CWorldEvent;
+use pumpkin_nbt::compound::NbtCompound;
 use pumpkin_util::math::position::BlockPos;
-use pumpkin_util::math::vector2::{Vector2, to_chunk_pos};
-use pumpkin_util::math::vector3::Vector3;
-use uuid::Uuid;
 
 const GRAVITY: f64 = 0.05;
 
@@ -27,7 +24,6 @@ pub struct LingeringPotionEntity {
 
 impl LingeringPotionEntity {
     pub fn new(entity: Entity) -> Self {
-        entity.set_velocity(Vector3::new(0.0, 0.1, 0.0));
         let thrown = ThrownItemEntity {
             entity,
             owner: ProjectileOwner::none(),
@@ -47,7 +43,6 @@ impl LingeringPotionEntity {
 
     pub fn new_shot(entity: Entity, shooter: &Entity) -> Self {
         let thrown = ThrownItemEntity::new(entity, shooter, GRAVITY);
-        thrown.entity.set_velocity(Vector3::new(0.0, 0.1, 0.0));
         Self {
             thrown,
             item_stack: RwLock::new(ItemStack::new(
@@ -63,6 +58,40 @@ impl LingeringPotionEntity {
             .write()
             .unwrap_or_else(std::sync::PoisonError::into_inner);
         *write = item_stack;
+    }
+
+    /// Vanilla `ThrownLingeringPotion.onHitAsPotion`; the plugin event can cancel the cloud.
+    fn on_hit_as_potion(&self, stack: &ItemStack, hit: &ProjectileHit) {
+        let entity = self.get_entity();
+        let world = entity.world.load_full();
+
+        if let Some(server) = world.server.upgrade() {
+            let mut event = crate::plugin::api::events::entity::lingering_potion_splash::LingeringPotionSplashEvent::new(
+                entity.entity_id,
+                BlockPos::floored_v(hit.hit_pos()),
+                stack.item.registry_key.to_string(),
+            );
+            server.plugin_manager.fire_blocking(&server, &mut event);
+            if event.cancelled {
+                return;
+            }
+        }
+
+        let position = match hit {
+            ProjectileHit::Entity { entity: target, .. } => target.get_entity().pos.load(),
+            ProjectileHit::Block { hit_pos, .. } => *hit_pos,
+        };
+        let owner = self
+            .thrown
+            .owner
+            .get(&world)
+            .filter(|owner| owner.get_living_entity().is_some());
+        let cloud = AreaEffectCloudEntity::from_lingering_potion(
+            Entity::new(world.clone(), position, &EntityType::AREA_EFFECT_CLOUD),
+            stack,
+            owner.as_deref().map(EntityBase::get_entity),
+        );
+        world.spawn_entity(cloud);
     }
 }
 
@@ -94,8 +123,8 @@ impl EntityBase for LingeringPotionEntity {
         );
     }
 
-    fn tick(&self, caller: &dyn EntityBase, _server: &Server) {
-        self.thrown.process_tick(caller);
+    fn tick(&self, caller: &dyn EntityBase, server: &Server) {
+        self.thrown.process_throwable_tick(caller, server);
     }
 
     fn get_entity(&self) -> &Entity {
@@ -109,118 +138,22 @@ impl EntityBase for LingeringPotionEntity {
         self
     }
 
-    fn on_hit(&self, hit: crate::entity::projectile::ProjectileHit) {
-        let world = self.get_entity().world.load();
-        let hit_pos = hit.hit_pos();
+    fn write_custom_nbt(&self, nbt: &mut NbtCompound) {
+        write_thrown_item(&self.item_stack, nbt);
+    }
 
-        // Read stored item stack and compute potion effects
+    fn read_custom_nbt(&self, nbt: &NbtCompound) {
+        read_thrown_item(&self.item_stack, nbt);
+    }
+
+    fn on_hit(&self, hit: ProjectileHit) {
         let stack = self
             .item_stack
             .read()
             .unwrap_or_else(std::sync::PoisonError::into_inner)
             .clone();
-
-        // Play impact particles
-        world.send_entity_status(self.get_entity(), EntityStatus::Death, ActorEventID::Death);
-
-        let effects = crate::item::potion::PotionContents::read_potion_effects(&stack);
-
-        // If no effects, just splash (like water bottles)
-        if effects.is_empty() {
-            extinguish_fire_if_water_potion(&world, hit_pos, &stack);
-            rehydrate_axolotls_if_water_potion(&world, self.get_entity(), &stack);
-            return;
-        }
-
-        // Play splash/break particles & sound
-        let mut color = 0x385dc6; // default water-like color
-        if let Some(pc) =
-            stack.get_data_component::<pumpkin_data::data_component_impl::PotionContentsImpl>()
-        {
-            if let Some(c) = pc.custom_color {
-                color = c;
-            } else if !effects.is_empty() {
-                let mut r_sum = 0.0;
-                let mut g_sum = 0.0;
-                let mut b_sum = 0.0;
-                let count = effects.len() as f32;
-                for (eff, _, _, _, _, _) in &effects {
-                    let c = eff.color;
-                    r_sum += ((c >> 16) & 0xFF) as f32;
-                    g_sum += ((c >> 8) & 0xFF) as f32;
-                    b_sum += (c & 0xFF) as f32;
-                }
-                let r = (r_sum / count) as i32;
-                let g = (g_sum / count) as i32;
-                let b = (b_sum / count) as i32;
-                color = (r << 16) | (g << 8) | b;
-            }
-        } else if !effects.is_empty() {
-            let mut r_sum = 0.0;
-            let mut g_sum = 0.0;
-            let mut b_sum = 0.0;
-            let count = effects.len() as f32;
-            for (eff, _, _, _, _, _) in &effects {
-                let c = eff.color;
-                r_sum += ((c >> 16) & 0xFF) as f32;
-                g_sum += ((c >> 8) & 0xFF) as f32;
-                b_sum += (c & 0xFF) as f32;
-            }
-            let r = (r_sum / count) as i32;
-            let g = (g_sum / count) as i32;
-            let b = (b_sum / count) as i32;
-            color = (r << 16) | (g << 8) | b;
-        }
-
-        let has_instant = effects.iter().any(|(e, _, _, _, _, _)| {
-            e.id == pumpkin_data::effect::StatusEffect::INSTANT_DAMAGE.id
-                || e.id == pumpkin_data::effect::StatusEffect::INSTANT_HEALTH.id
+        thrown_potion::on_hit(self, &stack, &hit, |_effects| {
+            self.on_hit_as_potion(&stack, &hit);
         });
-        let event_id = if has_instant { 2007 } else { 2002 };
-        let block_pos = BlockPos(Vector3::new(
-            hit_pos.x.floor() as i32,
-            hit_pos.y.floor() as i32,
-            hit_pos.z.floor() as i32,
-        ));
-        let chunk_pos = to_chunk_pos(&Vector2::new(block_pos.0.x, block_pos.0.z));
-        world.broadcast_to_chunk(
-            chunk_pos,
-            &CWorldEvent::new(event_id, block_pos, color, false),
-        );
-
-        // Spawn and configure an `AreaEffectCloud` entity
-        extinguish_fire_if_water_potion(&world, hit_pos, &stack);
-
-        if let Some(server) = world.server.upgrade() {
-            let mut event = crate::plugin::api::events::entity::lingering_potion_splash::LingeringPotionSplashEvent::new(
-                self.get_entity().entity_id,
-                block_pos,
-                stack.item.registry_key.to_string(),
-            );
-            server.plugin_manager.fire_blocking(&server, &mut event);
-            if event.cancelled {
-                return;
-            }
-        }
-
-        let cloud_entity = crate::entity::Entity::from_uuid(
-            Uuid::new_v4(),
-            world.clone(),
-            hit_pos,
-            &pumpkin_data::entity::EntityType::AREA_EFFECT_CLOUD,
-        );
-        let cloud = crate::entity::area_effect_cloud::AreaEffectCloudEntity::create(
-            cloud_entity,
-            stack,
-            effects,
-            600,
-            3.0,
-            20,
-            20,
-            -0.5,
-            -100,
-        );
-
-        world.spawn_entity(cloud);
     }
 }

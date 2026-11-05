@@ -3,7 +3,7 @@ use std::sync::Arc;
 use pumpkin_data::dimension::Dimension;
 use pumpkin_data::tag::Taggable;
 use pumpkin_data::world::WorldEvent;
-use pumpkin_data::{Block, BlockDirection, tag};
+use pumpkin_data::{Block, BlockDirection, BlockStateId, tag};
 use pumpkin_util::math::position::BlockPos;
 use pumpkin_util::random::RandomGenerator;
 use pumpkin_util::random::xoroshiro128::Xoroshiro;
@@ -26,6 +26,13 @@ pub mod soul_fire;
 pub struct FireBlockBase;
 
 impl FireBlockBase {
+    /// Vanilla `BaseFireBlock.getState`.
+    #[must_use]
+    pub fn get_state(world: &World, pos: &BlockPos) -> BlockStateId {
+        let fire = Self::get_fire_type(world, pos);
+        FireBlock.get_state_for_position(world, &fire, pos)
+    }
+
     pub fn get_fire_type(world: &World, pos: &BlockPos) -> Block {
         let block = world.get_block(&pos.down());
         if SoulFireBlock::is_soul_base(block) {

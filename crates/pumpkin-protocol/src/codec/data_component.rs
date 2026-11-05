@@ -2934,9 +2934,10 @@ impl DataComponentCodec<Self> for ProfileImpl {
         } else {
             seq.write_bool(false)?;
         }
-        if self.model.is_some() {
+        if let Some(model) = &self.model {
             seq.write_bool(true)?;
-            seq.write_var_int(&VarInt(0))?;
+            // Vanilla `PlayerModelType.STREAM_CODEC`: a bool, true for slim.
+            seq.write_bool(model == "slim")?;
         } else {
             seq.write_bool(false)?;
         }
@@ -3004,8 +3005,7 @@ impl DataComponentCodec<Self> for ProfileImpl {
             None
         };
         let model = if seq.get_bool()? {
-            let _ = seq.get_var_int()?;
-            Some("wide".to_string())
+            Some(if seq.get_bool()? { "slim" } else { "wide" }.to_string())
         } else {
             None
         };

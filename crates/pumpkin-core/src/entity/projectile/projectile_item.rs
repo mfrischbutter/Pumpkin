@@ -149,12 +149,7 @@ pub fn shoot_projectile_item(
         Arc::new(arrow)
     } else if item.id == Item::TRIDENT.id {
         let entity = Entity::new(world.clone(), position, &EntityType::TRIDENT);
-        let mut trident = TridentEntity::new(entity, owner);
-        trident.pickup = ArrowPickup::Allowed;
-        *trident
-            .item_stack
-            .lock()
-            .unwrap_or_else(std::sync::PoisonError::into_inner) = stack.copy_with_count(1);
+        let trident = TridentEntity::new_dispensed(entity, owner, stack.copy_with_count(1));
         trident.apply_on_projectile_spawned(stack);
         trident.set_velocity(shoot.x, shoot.y, shoot.z, config.power, config.uncertainty);
         Arc::new(trident)
@@ -163,6 +158,7 @@ pub fn shoot_projectile_item(
         // shot then sets its movement.
         let entity = Entity::new(world.clone(), position, &EntityType::SMALL_FIREBALL);
         let fireball = SmallFireballEntity::new(entity);
+        fireball.set_item(stack);
         fireball.thrown.owner.set(owner);
         fireball
             .thrown

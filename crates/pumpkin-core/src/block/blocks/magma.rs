@@ -18,8 +18,8 @@ impl BlockBehaviour for MagmaBlock {
 
             let ent = args.entity.get_entity();
 
-            // Don't damage if sneaking
-            if ent.is_sneaking() {
+            // Don't damage if stepping carefully
+            if args.entity.is_stepping_carefully() {
                 return;
             }
 

@@ -2535,8 +2535,9 @@ impl World {
         let bounds = entity.bounding_box.load();
         let root_vehicle = entity.root_vehicle_id();
         let unobstructed = |other: &dyn EntityBase| {
+            let blocks_building = other.blocks_building();
             let other = other.get_entity();
-            !other.is_alive() || !other.blocks_building || other.root_vehicle_id() == root_vehicle
+            !other.is_alive() || !blocks_building || other.root_vehicle_id() == root_vehicle
         };
         self.get_entities_at_box(&bounds)
             .iter()
@@ -4321,12 +4322,35 @@ impl World {
         interaction: ExplosionInteraction,
         damage_calculator: Option<Arc<dyn ExplosionDamageCalculator>>,
     ) {
+        self.explode_with_settings(
+            source,
+            position,
+            power,
+            interaction,
+            &explosion::ExplosionSettings {
+                calculator: damage_calculator,
+                ..explosion::ExplosionSettings::default()
+            },
+        );
+    }
+
+    /// Vanilla `Level.explode` with its fire, calculator, particles and sound.
+    pub fn explode_with_settings(
+        self: &Arc<Self>,
+        source: Option<&Entity>,
+        position: Vector3<f64>,
+        power: f32,
+        interaction: ExplosionInteraction,
+        settings: &explosion::ExplosionSettings,
+    ) {
         let block_interaction = self.get_block_interaction(interaction);
-        let mut explosion = Explosion::new(power, position, block_interaction).with_source(source);
-        if let Some(calc) = damage_calculator {
+        let mut explosion = Explosion::new(power, position, block_interaction)
+            .with_source(source)
+            .with_fire(settings.fire);
+        if let Some(calc) = settings.calculator.clone() {
             explosion = explosion.with_damage_calculator(calc);
         }
-        self.run_explosion(&explosion, position, power);
+        self.run_explosion(&explosion, position, power, settings);
     }
 
     pub fn explode_tnt_minecart(
@@ -4339,7 +4363,12 @@ impl World {
         let explosion = Explosion::new(power, position, block_interaction)
             .with_source(Some(source))
             .preserving_rails();
-        self.run_explosion(&explosion, position, power);
+        self.run_explosion(
+            &explosion,
+            position,
+            power,
+            &explosion::ExplosionSettings::default(),
+        );
     }
 
     #[must_use]
@@ -4373,28 +4402,37 @@ impl World {
         }
     }
 
-    fn run_explosion(self: &Arc<Self>, explosion: &Explosion, position: Vector3<f64>, power: f32) {
-        let Some(block_count) = explosion.explode(self) else {
+    /// Vanilla `ServerLevel.explode`: the explosion, then the packet to the players near it.
+    fn run_explosion(
+        self: &Arc<Self>,
+        explosion: &Explosion,
+        position: Vector3<f64>,
+        power: f32,
+        settings: &explosion::ExplosionSettings,
+    ) {
+        let Some(outcome) = explosion.explode(self) else {
             return;
         };
-        let particle = if power < 2.0 {
-            Particle::Explosion
+        let particle = if explosion.is_small() {
+            settings.small_particle
         } else {
-            Particle::ExplosionEmitter
+            settings.large_particle
         };
-        let sound = IdOr::<SoundEvent>::Id(Sound::EntityGenericExplode as u16);
+        let sound = IdOr::<SoundEvent>::Id(settings.sound as u16);
         for player in self.players.load().iter() {
             if player.position().squared_distance_to_vec(&position) > 4096.0 {
                 continue;
             }
-            player.try_send_client_packet(&CExplosion::new(
+            let packet = CExplosion::new(
                 position,
                 power,
-                block_count as i32,
-                None,
+                outcome.block_count as i32,
+                outcome.hit_players.get(&player.entity_id()).copied(),
                 VarInt(particle as i32),
                 sound.clone(),
-            ));
+            )
+            .with_plays_sound(explosion.plays_sound());
+            player.try_send_client_packet(&packet);
         }
     }
 
@@ -5179,6 +5217,24 @@ impl World {
                     .squared_distance_to_vec(&pos)
                     .total_cmp(&b.get_entity().pos.load().squared_distance_to_vec(&pos))
             })
+    }
+
+    /// Vanilla `ServerLevel.canSpreadFireAround`: the gamerule's radius around a player, every
+    /// position at -1 and none at 0.
+    #[must_use]
+    pub fn can_spread_fire_around(&self, pos: &BlockPos) -> bool {
+        let spread_radius = self
+            .level_info
+            .load()
+            .game_rules
+            .fire_spread_radius_around_player;
+        match spread_radius {
+            0 => false,
+            -1 => true,
+            radius => self
+                .get_closest_player(pos.to_centered_f64(), radius as f64)
+                .is_some(),
+        }
     }
 
     pub fn get_closest_player(&self, pos: Vector3<f64>, radius: f64) -> Option<Arc<Player>> {
@@ -5981,6 +6037,7 @@ impl World {
                 let mut neighbour_update_flags = flags;
                 neighbour_update_flags.remove(BlockFlags::NOTIFY_NEIGHBORS);
                 neighbour_update_flags.remove(BlockFlags::SKIP_DROPS);
+                neighbour_update_flags.remove(BlockFlags::DEFER_LIGHT_UPDATE);
                 self.block_registry.prepare(
                     self,
                     position,
@@ -6008,9 +6065,11 @@ impl World {
 
         let old_state = replaced_block_state_id.to_state();
         let new_state = block_state_id.to_state();
-        if pumpkin_world::lighting::LightEngine::has_different_light_properties(
-            old_state, new_state,
-        ) {
+        if !flags.contains(BlockFlags::DEFER_LIGHT_UPDATE)
+            && pumpkin_world::lighting::LightEngine::has_different_light_properties(
+                old_state, new_state,
+            )
+        {
             self.level
                 .light_engine
                 .update_lighting_at(&self.level, *position);
@@ -6373,6 +6432,22 @@ impl World {
             position.0.y,
             position.0.z,
         );
+        self.biome_of_cell(cell)
+    }
+
+    /// Vanilla `BiomeManager.getNoiseBiomeAtPosition`: the biome of the 4x4x4 cell holding the
+    /// position, without the zoom of [`Self::get_biome`]. The height is clamped to the world's,
+    /// as in `ChunkAccess.getNoiseBiome`.
+    pub fn get_noise_biome(&self, position: &BlockPos) -> &'static Biome {
+        let top_y = self.min_y + self.dimension.height - 1;
+        self.biome_of_cell(Vector3::new(
+            position.0.x >> 2,
+            position.0.y.clamp(self.min_y, top_y) >> 2,
+            position.0.z >> 2,
+        ))
+    }
+
+    fn biome_of_cell(&self, cell: Vector3<i32>) -> &'static Biome {
         let cell_pos = BlockPos::new(cell.x << 2, cell.y << 2, cell.z << 2);
         let loaded = self
             .level
@@ -6965,7 +7040,8 @@ impl World {
     ) -> BlockStateId {
         let mut current_state_id = state_id;
         let block = Block::from_state_id(state_id);
-        for direction in BlockDirection::all() {
+        // Vanilla `Block.UPDATE_SHAPE_ORDER`.
+        for direction in BlockDirection::abstract_block_update_order() {
             let neighbor_pos = pos.offset(direction.to_offset());
             let neighbor_state_id = self.get_block_state_id(&neighbor_pos);
             current_state_id = self.block_registry.get_state_for_neighbor_update(

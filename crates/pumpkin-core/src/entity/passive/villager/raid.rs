@@ -348,15 +348,15 @@ impl Behavior for CelebrateVillagersSurvivedRaid {
                 .unwrap_or(DyeColor::White);
             let flight_duration = rng.random_range(0..3);
             let position = entity.pos.load();
-            let rocket = FireworkRocketEntity::new_shot_at_angle(
+            let rocket = FireworkRocketEntity::new_with_stack(
                 Entity::new(
                     tick.world.clone(),
                     Vector3::new(position.x, entity.get_eye_y(), position.z),
                     &EntityType::FIREWORK_ROCKET,
                 ),
-                entity,
                 Self::firework(color, flight_duration),
             );
+            rocket.entity.owner.set(Some(entity));
             tick.world.spawn_entity(Arc::new(rocket));
         }
     }

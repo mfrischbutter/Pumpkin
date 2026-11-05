@@ -1,5 +1,6 @@
 use pumpkin_util::math::position::BlockPos;
 use pumpkin_util::math::vector3::Vector3;
+use rand::RngExt;
 
 use super::{goal_utils, random_pos};
 use crate::entity::ai::pathfinder::pathfinding_context::PathfindingContext;
@@ -45,21 +46,42 @@ pub fn get_pos_away(
     vertical_dist: i32,
     avoid_pos: Vector3<f64>,
 ) -> Option<Vector3<f64>> {
-    let away = mob.get_entity().pos.load() - avoid_pos;
-    let restrict = goal_utils::mob_restricted(mob, f64::from(horizontal_dist));
+    get_pos_away_between(
+        mob,
+        0.0,
+        f64::from(horizontal_dist),
+        vertical_dist,
+        avoid_pos,
+    )
+}
+
+/// Vanilla `LandRandomPos.getPosAway` with a minimum distance.
+#[must_use]
+pub fn get_pos_away_between(
+    mob: &dyn Mob,
+    min_horizontal_dist: f64,
+    max_horizontal_dist: f64,
+    vertical_dist: i32,
+    avoid_pos: Vector3<f64>,
+) -> Option<Vector3<f64>> {
+    let mut rng = mob.get_random();
+    let mut away = mob.get_entity().pos.load() - avoid_pos;
+    if away.length() == 0.0 {
+        away = Vector3::new(rng.random::<f64>() - 0.5, 0.0, rng.random::<f64>() - 0.5);
+    }
+    let restrict = goal_utils::mob_restricted(mob, max_horizontal_dist);
     let world = mob.get_entity().world.load_full();
     let block_pos = mob.get_entity().block_pos.load();
     let mut context = PathfindingContext::new(
         Vector3::new(block_pos.0.x, block_pos.0.y, block_pos.0.z),
         world.clone(),
     );
-    let mut rng = mob.get_random();
     random_pos::generate_random_pos(
         || {
             let direction = random_pos::generate_random_direction_within_radians(
                 &mut rng,
-                0.0,
-                f64::from(horizontal_dist),
+                min_horizontal_dist,
+                max_horizontal_dist,
                 vertical_dist,
                 0,
                 away.x,
@@ -69,7 +91,7 @@ pub fn get_pos_away(
             let pos = toward_direction(
                 mob,
                 &world,
-                f64::from(horizontal_dist),
+                max_horizontal_dist,
                 restrict,
                 direction,
                 &mut rng,

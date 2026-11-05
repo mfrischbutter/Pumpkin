@@ -1,7 +1,7 @@
 use crate::{
     block::{
         BlockBehaviour, BlockMetadata, GetStateForNeighborUpdateArgs, OnPlaceArgs,
-        OnScheduledTickArgs, PlacedArgs,
+        OnScheduledTickArgs, PlacedArgs, blocks::anvil::AnvilBlock,
     },
     entity::falling::FallingEntity,
 };
@@ -140,6 +140,15 @@ impl BlockBehaviour for FallingBlock {
             return;
         }
         let state = args.world.get_block_state(args.position);
-        FallingEntity::replace_spawn(args.world, *args.position, state.id);
+        let falling = FallingEntity::replace_spawn(args.world, *args.position, state.id);
+        // Vanilla `AnvilBlock.falling`.
+        if let Some(falling) = falling
+            && args.block.has_tag(&tag::Block::MINECRAFT_ANVIL)
+        {
+            falling.set_hurts_entities(
+                AnvilBlock::FALL_DAMAGE_PER_DISTANCE,
+                AnvilBlock::MAX_FALL_DAMAGE,
+            );
+        }
     }
 }

@@ -54,6 +54,7 @@ impl ServerPlayerData {
 
         let mut nbt = NbtCompound::new();
         player.write_nbt(&mut nbt);
+        player.unload_ender_pearls();
 
         self.storage.save_player_data(&player.gameprofile.id, nbt)?;
         Ok(())

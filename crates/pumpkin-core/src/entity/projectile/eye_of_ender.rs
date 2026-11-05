@@ -9,6 +9,7 @@ use pumpkin_data::item::Item;
 use pumpkin_data::item_stack::ItemStack;
 use pumpkin_data::sound::Sound;
 use pumpkin_data::world::WorldEvent;
+use pumpkin_nbt::compound::NbtCompound;
 use pumpkin_protocol::{
     codec::item_stack_seralizer::ItemStackSerializer, java::client::play::Metadata,
 };
@@ -50,6 +51,18 @@ impl EyeOfEnder {
             life: AtomicU32::new(0),
             survive_after_death: AtomicBool::new(false),
         }
+    }
+
+    /// Vanilla `EyeOfEnder.setItem`: one of the stack, the default item for an empty one.
+    pub fn set_item_stack(&self, source: &ItemStack) {
+        *self
+            .item_stack
+            .lock()
+            .unwrap_or_else(std::sync::PoisonError::into_inner) = if source.is_empty() {
+            ItemStack::new(1, &Item::ENDER_EYE)
+        } else {
+            source.copy_with_count(1)
+        };
     }
 
     /// Aim the eye at `target`, clamping to [`TOO_FAR_DISTANCE`] if necessary,
@@ -159,7 +172,14 @@ impl EntityBase for EyeOfEnder {
                     .clone();
                 let world = entity.world.load();
                 let entity = Entity::new(world.clone(), new_pos, &EntityType::ITEM);
-                let item_entity = Arc::new(ItemEntity::new(entity, item_stack));
+                // Vanilla's plain `ItemEntity` constructor: the usual toss, no pickup delay.
+                let toss = Vector3::new(
+                    rand::random::<f64>().mul_add(0.2, -0.1),
+                    0.2,
+                    rand::random::<f64>().mul_add(0.2, -0.1),
+                );
+                let item_entity =
+                    Arc::new(ItemEntity::new_with_velocity(entity, item_stack, toss, 0));
                 world.spawn_entity(item_entity);
             } else {
                 entity.world.load().sync_world_event(
@@ -168,6 +188,25 @@ impl EntityBase for EyeOfEnder {
                     0,
                 );
             }
+        }
+    }
+
+    /// Vanilla `EyeOfEnder.addAdditionalSaveData`.
+    fn write_custom_nbt(&self, nbt: &mut NbtCompound) {
+        let mut item = NbtCompound::new();
+        self.item_stack
+            .lock()
+            .unwrap_or_else(std::sync::PoisonError::into_inner)
+            .write_item_stack(&mut item);
+        nbt.put_compound("Item", item);
+    }
+
+    /// Vanilla `EyeOfEnder.readAdditionalSaveData`, keeping the item when the key is missing.
+    fn read_custom_nbt(&self, nbt: &NbtCompound) {
+        if let Some(item) = nbt.get_compound("Item")
+            && let Some(item) = ItemStack::read_item_stack(item)
+        {
+            self.set_item_stack(&item);
         }
     }
 

@@ -3,6 +3,7 @@ use crate::entity::Entity;
 use crate::entity::projectile::arrow::ArrowEntity;
 use pumpkin_data::data_component_impl::EnchantmentsImpl;
 use pumpkin_data::enchantment::{Enchantment, EnchantmentEntityEffect, EnchantmentTarget};
+use pumpkin_data::entity::EntityType;
 use pumpkin_data::item::Item;
 use pumpkin_data::item_stack::ItemStack;
 
@@ -174,6 +175,25 @@ impl EnchantmentHelper {
                 enchantment.modify_damage(*level, &mut damage);
             }
         }
+        damage
+    }
+
+    /// Vanilla `EnchantmentHelper.modifyDamage` for what a weapon's projectile does to a victim
+    /// of `victim_type`: Power on arrows, the victim's rules for the rest (e.g. Impaling).
+    #[must_use]
+    pub fn modify_projectile_damage(
+        weapon: &ItemStack,
+        victim_type: &EntityType,
+        base_damage: f64,
+    ) -> f64 {
+        let mut damage = base_damage;
+        Self::run_iteration_on_item(weapon, |enchantment, level| {
+            if enchantment == &Enchantment::POWER {
+                enchantment.modify_damage(level, &mut damage);
+            } else {
+                enchantment.modify_damage_against(level, &mut damage, Some(victim_type));
+            }
+        });
         damage
     }
 

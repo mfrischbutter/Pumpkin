@@ -242,7 +242,7 @@ fn is_valid_vibration<U: VibrationUser>(
         .0
         .contains(&event.name());
     !source.is_spectator()
-        && (!source.get_entity().is_sneaking() || !ignored_while_sneaking)
+        && (!source.is_stepping_carefully() || !ignored_while_sneaking)
         && !source.dampens_vibrations()
 }
 

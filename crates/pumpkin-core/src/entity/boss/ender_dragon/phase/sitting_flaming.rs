@@ -61,6 +61,7 @@ impl SittingFlamingPhase {
             FLAME_DURATION,
             0.0,
             0,
+            Some(&dragon.mob_entity.living_entity.entity),
         );
         *self.flame() = Some(cloud.clone());
         world.spawn_entity(cloud);

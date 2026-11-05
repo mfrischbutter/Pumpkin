@@ -44,6 +44,7 @@ pub mod shovel;
 pub mod snowball;
 pub mod spawn_egg;
 pub mod spear;
+pub(crate) mod spear_mob;
 pub mod spyglass;
 pub mod swords;
 pub mod trident;

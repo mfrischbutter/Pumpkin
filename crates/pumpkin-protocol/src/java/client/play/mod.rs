@@ -6,6 +6,7 @@ mod add_resource_pack;
 pub use add_resource_pack::*;
 mod remove_resource_pack;
 pub use remove_resource_pack::*;
+mod add_transient_block;
 mod block_destroy_stage;
 mod block_entity_data;
 mod block_event;
@@ -115,6 +116,7 @@ mod worldevent;
 
 pub use acknowledge_block::*;
 pub use actionbar::*;
+pub use add_transient_block::*;
 pub use block_destroy_stage::*;
 pub use block_entity_data::*;
 pub use block_event::*;

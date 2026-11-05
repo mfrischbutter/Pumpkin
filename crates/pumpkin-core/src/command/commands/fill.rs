@@ -1,17 +1,20 @@
+use std::sync::Arc;
+
+use pumpkin_data::BlockStateId;
 use pumpkin_data::translation;
-use pumpkin_data::{Block, BlockStateId};
 use pumpkin_util::PermissionLvl;
 use pumpkin_util::math::position::BlockPos;
-use pumpkin_util::math::vector2::Vector2;
 use pumpkin_util::math::vector3::Vector3;
 use pumpkin_util::permission::{Permission, PermissionDefault, PermissionRegistry};
 use pumpkin_util::text::TextComponent;
+use pumpkin_world::lighting::LightEngine;
 use pumpkin_world::world::BlockFlags;
 
+use super::block_input;
 use crate::command::argument_builder::{
     ArgumentBuilder, RequiredArgumentBuilder, argument, command, literal,
 };
-use crate::command::argument_types::block::BlockArgumentType;
+use crate::command::argument_types::block::{BlockArgumentType, BlockInput};
 use crate::command::argument_types::block_predicate::{BlockPredicate, BlockPredicateArgumentType};
 use crate::command::argument_types::coordinates::block_pos::BlockPosArgumentType;
 use crate::command::context::command_context::CommandContext;
@@ -20,6 +23,7 @@ use crate::command::errors::command_syntax_error::CommandSyntaxError;
 use crate::command::errors::error_types::CommandErrorType;
 use crate::command::node::dispatcher::CommandDispatcher;
 use crate::command::node::{CommandExecutor, CommandExecutorResult};
+use crate::world::World;
 
 const DESCRIPTION: &str = "Fills all or parts of a region with a specific block.";
 const PERMISSION: &str = "minecraft:command.fill";
@@ -50,27 +54,119 @@ enum FilterMode {
     KeepAir,
 }
 
-#[expect(clippy::too_many_lines)]
+/// The box of vanilla `BoundingBox.fromCorners`.
+struct Region {
+    min: Vector3<i32>,
+    max: Vector3<i32>,
+}
+
+impl Region {
+    fn from_corners(from: BlockPos, to: BlockPos) -> Self {
+        Self {
+            min: Vector3::new(
+                from.0.x.min(to.0.x),
+                from.0.y.min(to.0.y),
+                from.0.z.min(to.0.z),
+            ),
+            max: Vector3::new(
+                from.0.x.max(to.0.x),
+                from.0.y.max(to.0.y),
+                from.0.z.max(to.0.z),
+            ),
+        }
+    }
+
+    fn area(&self) -> i64 {
+        let x_span = i64::from(self.max.x - self.min.x + 1);
+        let y_span = i64::from(self.max.y - self.min.y + 1);
+        let z_span = i64::from(self.max.z - self.min.z + 1);
+        x_span * y_span * z_span
+    }
+
+    const fn is_edge(&self, pos: &BlockPos) -> bool {
+        pos.0.x == self.min.x
+            || pos.0.x == self.max.x
+            || pos.0.y == self.min.y
+            || pos.0.y == self.max.y
+            || pos.0.z == self.min.z
+            || pos.0.z == self.max.z
+    }
+}
+
+/// One fill's fixed inputs.
+struct Fill<'a> {
+    world: &'a Arc<World>,
+    region: Region,
+    target: &'a BlockInput,
+    hollow_core: BlockInput,
+    mode: FillMode,
+    filter: Option<&'a BlockPredicate>,
+    flags: BlockFlags,
+}
+
+impl Fill<'_> {
+    fn passes_filter(&self, pos: &BlockPos, state_id: BlockStateId) -> bool {
+        if self.mode == FillMode::Keep {
+            return state_id.to_state().is_air();
+        }
+        self.filter
+            .is_none_or(|filter| filter.test(state_id, || self.world.get_block_entity_nbt(pos)))
+    }
+
+    /// Vanilla `FillCommand.Mode.filter`.
+    fn block_for(&self, pos: &BlockPos) -> Option<&BlockInput> {
+        match self.mode {
+            FillMode::Outline => self.region.is_edge(pos).then_some(self.target),
+            FillMode::Hollow => Some(if self.region.is_edge(pos) {
+                self.target
+            } else {
+                &self.hollow_core
+            }),
+            FillMode::Replace | FillMode::Destroy | FillMode::Keep => Some(self.target),
+        }
+    }
+
+    /// One position of vanilla `FillCommand.fillBlocks`. Returns whether it counts as affected.
+    fn fill_position(
+        &self,
+        pos: &BlockPos,
+        old_state_id: BlockStateId,
+        placed: &mut Vec<(BlockPos, BlockStateId)>,
+        light_changes: &mut Vec<BlockPos>,
+    ) -> bool {
+        // Vanilla `Level.destroyBlock` with its drops: no player, so a plain break.
+        let destroyed = self.mode == FillMode::Destroy
+            && self
+                .world
+                .break_block(pos, None, BlockFlags::NOTIFY_ALL)
+                .is_some();
+        let Some(block) = self.block_for(pos) else {
+            return destroyed;
+        };
+        if !block_input::place(self.world, pos, block, self.flags) {
+            return destroyed;
+        }
+        placed.push((*pos, old_state_id));
+        let state_id = self.world.get_block_state_id(pos);
+        if LightEngine::has_different_light_properties(old_state_id.to_state(), state_id.to_state())
+        {
+            light_changes.push(*pos);
+        }
+        true
+    }
+}
+
 fn fill_blocks(
     source: &CommandSource,
     from: BlockPos,
     to: BlockPos,
-    target_block: &'static Block,
+    target: &BlockInput,
     mode: FillMode,
     filter: Option<&BlockPredicate>,
     strict: bool,
 ) -> Result<i32, CommandSyntaxError> {
-    let min_x = from.0.x.min(to.0.x);
-    let min_y = from.0.y.min(to.0.y);
-    let min_z = from.0.z.min(to.0.z);
-    let max_x = from.0.x.max(to.0.x);
-    let max_y = from.0.y.max(to.0.y);
-    let max_z = from.0.z.max(to.0.z);
-
-    let x_span = i64::from(max_x - min_x + 1);
-    let y_span = i64::from(max_y - min_y + 1);
-    let z_span = i64::from(max_z - min_z + 1);
-    let area = x_span * y_span * z_span;
+    let region = Region::from_corners(from, to);
+    let area = region.area();
 
     let world = source.world().clone();
     let max_block_modifications = {
@@ -85,166 +181,54 @@ fn fill_blocks(
         ));
     }
 
-    let target_state_id = target_block.default_state.id;
-    let mut changed_positions = Vec::new();
+    let fill = Fill {
+        world: &world,
+        hollow_core: BlockInput::from_state(BlockStateId::AIR),
+        target,
+        mode,
+        filter,
+        // Light spreads once below, not after every block of a big fill.
+        flags: block_input::place_flags(strict) | BlockFlags::DEFER_LIGHT_UPDATE,
+        region,
+    };
+    let (min, max) = (fill.region.min, fill.region.max);
 
-    let min_chunk_x = min_x >> 4;
-    let max_chunk_x = max_x >> 4;
-    let min_chunk_z = min_z >> 4;
-    let max_chunk_z = max_z >> 4;
+    let mut count = 0;
+    let mut placed = Vec::new();
+    let mut light_changes = Vec::new();
 
-    for chunk_x in min_chunk_x..=max_chunk_x {
-        for chunk_z in min_chunk_z..=max_chunk_z {
-            let chunk_pos = Vector2::new(chunk_x, chunk_z);
-            let local_start_x = (min_x - (chunk_x << 4)).clamp(0, 15) as usize;
-            let local_end_x = (max_x - (chunk_x << 4)).clamp(0, 15) as usize;
-            let local_start_z = (min_z - (chunk_z << 4)).clamp(0, 15) as usize;
-            let local_end_z = (max_z - (chunk_z << 4)).clamp(0, 15) as usize;
-
-            let result = world.level.read_chunk_sync(&chunk_pos, |chunk| {
-                let mut updates_for_chunk = Vec::new();
-                let mut block_entities_to_remove = Vec::new();
-                let min_y_chunk = chunk.section.min_y;
-
+    // Vanilla's `BlockPos.betweenClosed` order: a later block sees the shapes of the earlier ones.
+    for z in min.z..=max.z {
+        for y in min.y..=max.y {
+            for x in min.x..=max.x {
+                let pos = BlockPos(Vector3::new(x, y, z));
+                let Some(old_state_id) = world.get_block_state_id_if_loaded(&pos) else {
+                    continue;
+                };
+                if fill.passes_filter(&pos, old_state_id)
+                    && fill.fill_position(&pos, old_state_id, &mut placed, &mut light_changes)
                 {
-                    let block_sections = chunk
-                        .section
-                        .block_sections
-                        .read()
-                        .unwrap_or_else(std::sync::PoisonError::into_inner);
-
-                    for y in min_y..=max_y {
-                        let y_rel = y - min_y_chunk;
-                        if y_rel < 0 {
-                            continue;
-                        }
-                        let rel_y = y_rel as usize;
-                        let section_index = rel_y / pumpkin_world::chunk::CHUNK_WIDTH;
-                        let sub_y = rel_y % pumpkin_world::chunk::CHUNK_WIDTH;
-
-                        let Some(section) = block_sections.get(section_index) else {
-                            continue;
-                        };
-
-                        for rel_z in local_start_z..=local_end_z {
-                            for rel_x in local_start_x..=local_end_x {
-                                let global_x = (chunk_x << 4) + rel_x as i32;
-                                let global_z = (chunk_z << 4) + rel_z as i32;
-                                let pos = BlockPos(Vector3::new(global_x, y, global_z));
-
-                                let current_state_id = section.get(rel_x, sub_y, rel_z);
-                                let current_block = Block::from_state_id(current_state_id);
-
-                                match mode {
-                                    FillMode::Keep => {
-                                        if !current_block.is_air() {
-                                            continue;
-                                        }
-                                    }
-                                    _ => {
-                                        if let Some(f) = filter
-                                            && !f.test(current_state_id, || {
-                                                world.get_block_entity_nbt_in_chunk(chunk, &pos)
-                                            })
-                                        {
-                                            continue;
-                                        }
-                                    }
-                                }
-
-                                let is_edge = global_x == min_x
-                                    || global_x == max_x
-                                    || y == min_y
-                                    || y == max_y
-                                    || global_z == min_z
-                                    || global_z == max_z;
-
-                                let block_to_place = match mode {
-                                    FillMode::Outline => is_edge.then_some(target_state_id),
-                                    FillMode::Hollow => {
-                                        if is_edge {
-                                            Some(target_state_id)
-                                        } else {
-                                            Some(BlockStateId::AIR)
-                                        }
-                                    }
-                                    FillMode::Destroy => {
-                                        if current_state_id != target_state_id {
-                                            world.break_block(
-                                                &pos,
-                                                None,
-                                                BlockFlags::SKIP_DROPS
-                                                    | BlockFlags::NOTIFY_ALL
-                                                    | BlockFlags::FORCE_STATE,
-                                            );
-                                        }
-                                        Some(target_state_id)
-                                    }
-                                    FillMode::Replace | FillMode::Keep => Some(target_state_id),
-                                };
-
-                                if let Some(state_id) = block_to_place {
-                                    if current_block.default_state.block_entity_type != u16::MAX {
-                                        block_entities_to_remove.push(pos);
-                                    }
-                                    updates_for_chunk.push((rel_x, y, rel_z, state_id, pos));
-                                }
-                            }
-                        }
-                    }
+                    count += 1;
                 }
-
-                if updates_for_chunk.is_empty() {
-                    return (Vec::new(), block_entities_to_remove);
-                }
-
-                let batch_inputs = updates_for_chunk
-                    .iter()
-                    .map(|&(rx, y, rz, sid, _)| (rx, y, rz, sid));
-                // One result per input, since every queued position is inside an existing section.
-                let replaced = chunk.set_blocks_batch(batch_inputs);
-
-                let chunk_changed = updates_for_chunk
-                    .into_iter()
-                    .zip(replaced)
-                    .map(|((_, _, _, new_id, pos), (_, _, _, old_id))| (pos, old_id, new_id))
-                    .collect::<Vec<_>>();
-
-                (chunk_changed, block_entities_to_remove)
-            });
-
-            if let Some((chunk_changed, be_to_remove)) = result {
-                for pos in be_to_remove {
-                    world.remove_block_entity(&pos);
-                }
-                changed_positions.extend(chunk_changed);
             }
         }
     }
 
-    let count = changed_positions.len() as i32;
-    if count == 0 {
-        return Err(ERROR_FAILED.create_without_context());
-    }
+    world
+        .level
+        .light_engine
+        .update_lighting_batch(&world.level, &light_changes);
 
-    // Queued before the callbacks so blocks they change, such as a golem clearing its
-    // pattern, reach clients in their final state.
-    let client_updates = changed_positions
-        .iter()
-        .map(|&(pos, _, new_id)| (pos, new_id))
-        .collect::<Vec<_>>();
-    world.queue_block_updates(&client_updates);
-
-    // Vanilla runs onPlace for every placed block unless strict sets UPDATE_SKIP_ON_PLACE.
     if !strict {
-        for (pos, old_id, new_id) in changed_positions {
-            let new_block = Block::from_state_id(new_id);
-            if Block::from_state_id(old_id) != new_block && world.get_block(&pos) == new_block {
-                world.on_block_placed(&pos, new_block, new_id, old_id, false);
-            }
+        for (pos, old_state_id) in placed {
+            block_input::update_neighbours_on_block_set(&world, &pos, old_state_id);
         }
     }
     world.flush_block_updates();
+
+    if count == 0 {
+        return Err(ERROR_FAILED.create_without_context());
+    }
 
     source.send_feedback(
         TextComponent::translate_cross(
@@ -280,7 +264,7 @@ impl CommandExecutor for FillExecutor {
             &context.source,
             from,
             to,
-            block,
+            &block,
             self.mode,
             filter.as_ref(),
             self.strict,

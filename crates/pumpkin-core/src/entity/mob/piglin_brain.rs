@@ -22,7 +22,9 @@ use super::piglin_behaviors::{
 };
 use crate::entity::EntityBase;
 use crate::entity::ai::brain::activity::ActivityData;
+use crate::entity::ai::brain::behavior::interact_with_door;
 use crate::entity::ai::brain::behavior::poi::{stroll_around_poi, stroll_to_poi};
+use crate::entity::ai::brain::behavior::spear::{SpearApproach, SpearAttack, SpearRetreat};
 use crate::entity::ai::brain::behavior::target_location::go_to_target_location;
 use crate::entity::ai::brain::behavior::village::{
     interact_with, set_entity_look_target, set_look_and_interact, set_walk_target_away_from_entity,
@@ -151,6 +153,7 @@ fn piglin_core_activity() -> ActivityData {
             Box::new(apply_queued_changes()),
             Box::new(Timed::new(LookAtTargetSink::new(45, 90))),
             Box::new(Timed::new(MoveToTargetSink::default())),
+            Box::new(interact_with_door::create()),
             Box::new(avoid_when(types::NEAREST_VISIBLE_NEMESIS, |tick| {
                 as_piglin(tick.mob).is_some_and(PiglinEntity::is_baby)
             })),
@@ -209,6 +212,9 @@ fn piglin_fight_activity() -> ActivityData {
             )),
             Box::new(back_up_if_too_close()),
             Box::new(set_walk_target_from_attack_target(|_| 1.0)),
+            Box::new(Timed::new(SpearApproach::new(1.0, 10.0f32))),
+            Box::new(Timed::new(SpearAttack::new(1.0, 1.0, 2.0f32))),
+            Box::new(Timed::new(SpearRetreat::new(1.0))),
             Box::new(melee_attack(MELEE_ATTACK_COOLDOWN)),
             Box::new(Timed::new(CrossbowAttack::new())),
             Box::new(remember_if_hoglin_was_killed()),
@@ -286,6 +292,7 @@ pub(super) fn brute_activities(_mob: &dyn Mob) -> Vec<ActivityData> {
                 Box::new(apply_queued_changes()),
                 Box::new(Timed::new(LookAtTargetSink::new(45, 90))),
                 Box::new(Timed::new(MoveToTargetSink::default())),
+                Box::new(interact_with_door::create()),
                 Box::new(stop_being_angry_if_target_dead()),
             ],
         ),

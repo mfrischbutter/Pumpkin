@@ -23,6 +23,7 @@ use super::work::{
 };
 use crate::entity::EntityBase;
 use crate::entity::ai::brain::activity::ActivityData;
+use crate::entity::ai::brain::behavior::interact_with_door;
 use crate::entity::ai::brain::behavior::one_shot::{sequence, trigger_one_shuffled};
 use crate::entity::ai::brain::behavior::poi::{
     AcquirePoi, BlockMemoryWalk, acquire_poi, closer_to_center_than, is_in_dimension,
@@ -176,6 +177,7 @@ fn release_memory_poi(
 fn core_package() -> ActivityData {
     let packaged: Vec<(i32, Packaged)> = vec![
         (0, Box::new(Timed::new(Swim::new(0.8)))),
+        (0, Box::new(interact_with_door::create())),
         (0, Box::new(Timed::new(LookAtTargetSink::new(45, 90)))),
         (0, Box::new(Timed::new(VillagerPanicTrigger))),
         (0, Box::new(wake_up())),

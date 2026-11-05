@@ -390,6 +390,17 @@ impl MetadataSerializer for Option<pumpkin_util::text::TextComponent> {
     }
 }
 
+/// Vanilla `EntityDataSerializers.RESOLVABLE_PROFILE`.
+impl MetadataSerializer for pumpkin_data::data_component_impl::ProfileImpl {
+    fn write_metadata(
+        &self,
+        writer: &mut impl std::io::Write,
+        _version: &JavaMinecraftVersion,
+    ) -> Result<(), WritingError> {
+        crate::codec::data_component::DataComponentCodec::<Self>::serialize(self, writer)
+    }
+}
+
 impl MetadataSerializer for crate::codec::item_stack_seralizer::ItemStackSerializer<'_> {
     fn write_metadata(
         &self,

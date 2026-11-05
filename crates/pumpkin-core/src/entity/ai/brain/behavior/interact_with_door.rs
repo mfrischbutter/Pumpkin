@@ -84,7 +84,20 @@ fn open_doors_on_path(tick: &mut BrainTick<'_>, from_node: BlockPos, to_node: Bl
             .insert(poi::global_pos(world, to_node));
     }
     if let Some(mut doors) = doors {
-        close_doors_that_i_have_opened_or_passed_through(tick, from_node, to_node, &mut doors);
+        close_doors_that_i_have_opened_or_passed_through(
+            tick,
+            Some(from_node),
+            Some(to_node),
+            &mut doors,
+        );
+        tick.state.set(types::DOORS_TO_CLOSE, doors);
+    }
+}
+
+/// What vanilla `SleepInBed.start` does with the doors a sleeper still holds open.
+pub fn close_doors_when_going_to_bed(tick: &mut BrainTick<'_>) {
+    if let Some(mut doors) = tick.state.get(types::DOORS_TO_CLOSE).cloned() {
+        close_doors_that_i_have_opened_or_passed_through(tick, None, None, &mut doors);
         tick.state.set(types::DOORS_TO_CLOSE, doors);
     }
 }
@@ -92,13 +105,13 @@ fn open_doors_on_path(tick: &mut BrainTick<'_>, from_node: BlockPos, to_node: Bl
 /// Vanilla `closeDoorsThatIHaveOpenedOrPassedThrough`.
 fn close_doors_that_i_have_opened_or_passed_through(
     tick: &BrainTick<'_>,
-    moving_from_node: BlockPos,
-    moving_to_node: BlockPos,
+    moving_from_node: Option<BlockPos>,
+    moving_to_node: Option<BlockPos>,
     doors: &mut FxHashSet<GlobalPos>,
 ) {
     let world = tick.world;
     doors.retain(|door| {
-        if door.pos == moving_from_node || door.pos == moving_to_node {
+        if Some(door.pos) == moving_from_node || Some(door.pos) == moving_to_node {
             return true;
         }
         if !is_door_too_far_away(tick, door)

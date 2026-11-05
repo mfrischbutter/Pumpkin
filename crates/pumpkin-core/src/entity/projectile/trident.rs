@@ -1,82 +1,102 @@
-use crate::entity::projectile::owner::ProjectileOwner;
-use std::sync::atomic::{AtomicBool, AtomicU8, AtomicU32, Ordering};
-use std::sync::{Arc, Mutex};
+//! Vanilla `ThrownTrident`, on [`AbstractArrow`].
 
-use crate::{
-    entity::{Entity, EntityBase, living::LivingEntity, player::Player},
-    server::Server,
-};
+use std::ops::Deref;
+use std::sync::Arc;
+use std::sync::atomic::{AtomicBool, AtomicI32, AtomicU8, Ordering};
+
 use pumpkin_data::damage::DamageType;
+use pumpkin_data::data_component_impl::EnchantmentGlintOverrideImpl;
+use pumpkin_data::enchantment::Enchantment;
 use pumpkin_data::item::Item;
 use pumpkin_data::item_stack::ItemStack;
-use pumpkin_data::sound::{Sound, SoundCategory};
-use pumpkin_protocol::IdOr;
-use pumpkin_protocol::java::client::play::{CEntityVelocity, CSoundEffect};
-use pumpkin_util::math::boundingbox::BoundingBox;
+use pumpkin_data::sound::Sound;
+use pumpkin_data::tag::{self, Taggable};
+use pumpkin_data::tracked_data::{abstract_arrow as arrow_data, trident as trident_data};
+use pumpkin_nbt::compound::NbtCompound;
 use pumpkin_util::math::position::BlockPos;
 use pumpkin_util::math::vector3::Vector3;
 
-use super::arrow::ArrowPickup;
-use super::{ProjectileHit, calculate_ray_intersection, fire_projectile_hit_event};
+use super::ProjectileHit;
+use super::arrow::{AbstractArrow, ArrowHooks, ArrowPickup};
+use super::hit_result::{self, EntityHit};
+use super::owner::ProjectileOwner;
+use crate::enchantment::EnchantmentHelper;
+use crate::enchantment::effects::EnchantmentEntityEffectExt;
+use crate::entity::living::LivingEntity;
+use crate::entity::player::Player;
+use crate::entity::projectile_deflection::ProjectileDeflectionType;
+use crate::entity::{Entity, EntityBase};
+use crate::server::Server;
+
+/// Vanilla `TridentItem.BASE_DAMAGE`.
+const BASE_DAMAGE: f64 = 8.0;
+/// Vanilla `ThrownTrident.WATER_INERTIA`: water hardly slows a trident.
+const WATER_INERTIA: f64 = 0.99;
+/// What `BlockPos.clampLocationWithin` leaves to the block's faces.
+const BLOCK_FACE_MARGIN: f64 = 1.0e-5;
 
 pub struct TridentEntity {
-    pub entity: Entity,
-    pub owner: ProjectileOwner,
-    pub item_stack: Arc<Mutex<ItemStack>>,
-    pub pickup: ArrowPickup,
-    pub in_ground: AtomicBool,
-    pub in_ground_time: AtomicU32,
-    pub life: AtomicU32,
-    pub shake_time: AtomicU8,
-    pub has_hit: AtomicBool,
-    pub last_block_pos: Arc<std::sync::RwLock<Option<BlockPos>>>,
+    pub arrow: AbstractArrow,
+    /// Vanilla `dealtDamage`: it hit, or lay in the ground for a while.
+    dealt_damage: AtomicBool,
+    /// Vanilla `ID_LOYALTY`.
+    loyalty: AtomicU8,
+    /// Vanilla `clientSideReturnTridentTickCount`, which also counts on the server: the return
+    /// sound plays once.
+    return_ticks: AtomicI32,
+}
+
+impl Deref for TridentEntity {
+    type Target = AbstractArrow;
+
+    fn deref(&self) -> &AbstractArrow {
+        &self.arrow
+    }
 }
 
 impl TridentEntity {
-    const BASE_DAMAGE: f64 = 8.0;
-    const AIR_INERTIA: f64 = 0.99;
-    const WATER_INERTIA: f64 = 0.9;
-    const GRAVITY: f64 = 0.05;
-    const DESPAWN_TIME: u32 = 1200;
-
-    pub fn new(entity: Entity, owner: Option<&Entity>) -> Self {
-        Self {
-            entity,
-            owner: ProjectileOwner::new(owner),
-            item_stack: Arc::new(Mutex::new(ItemStack::new(1, &Item::TRIDENT))),
-            pickup: ArrowPickup::Disallowed,
-            in_ground: AtomicBool::new(false),
-            in_ground_time: AtomicU32::new(0),
-            life: AtomicU32::new(0),
-            shake_time: AtomicU8::new(0),
-            has_hit: AtomicBool::new(false),
-            last_block_pos: Arc::new(std::sync::RwLock::new(None)),
-        }
+    fn from_item(
+        entity: Entity,
+        owner: Option<&Entity>,
+        item_stack: ItemStack,
+        pickup: ArrowPickup,
+    ) -> Self {
+        let trident = Self {
+            arrow: AbstractArrow::new(entity, owner, item_stack, pickup),
+            dealt_damage: AtomicBool::new(false),
+            loyalty: AtomicU8::new(0),
+            return_ticks: AtomicI32::new(0),
+        };
+        trident.update_item_data();
+        trident
     }
 
+    pub fn new(entity: Entity, owner: Option<&Entity>) -> Self {
+        Self::from_item(
+            entity,
+            owner,
+            ItemStack::new(1, &Item::TRIDENT),
+            ArrowPickup::Disallowed,
+        )
+    }
+
+    /// Vanilla's `ThrownTrident(level, owner, tridentItem)`.
     pub fn new_shot(
         entity: Entity,
         shooter: &Entity,
         item_stack: ItemStack,
         pickup: ArrowPickup,
     ) -> Self {
-        let mut owner_pos = shooter.pos.load();
-        owner_pos.y = owner_pos.y + f64::from(shooter.entity_dimension.load().eye_height) - 0.1;
-        entity.pos.store(owner_pos);
-        entity.set_velocity(Vector3::new(0.0, 0.1, 0.0));
+        AbstractArrow::move_to_shooter(&entity, shooter);
+        Self::from_item(entity, Some(shooter), item_stack, pickup)
+    }
 
-        Self {
-            entity,
-            owner: ProjectileOwner::new(Some(shooter)),
-            item_stack: Arc::new(Mutex::new(item_stack)),
-            pickup,
-            in_ground: AtomicBool::new(false),
-            in_ground_time: AtomicU32::new(0),
-            life: AtomicU32::new(0),
-            shake_time: AtomicU8::new(0),
-            has_hit: AtomicBool::new(false),
-            last_block_pos: Arc::new(std::sync::RwLock::new(None)),
-        }
+    /// Vanilla `TridentItem.asProjectile`: the item is also the weapon.
+    pub fn new_dispensed(entity: Entity, owner: Option<&Entity>, item_stack: ItemStack) -> Self {
+        let weapon = item_stack.clone();
+        let trident = Self::from_item(entity, owner, item_stack, ArrowPickup::Allowed);
+        trident.set_fired_from_weapon(&weapon);
+        trident
     }
 
     /// Applies projectile-spawned enchantment effects matching vanilla `Projectile::applyOnProjectileSpawned`.
@@ -84,79 +104,192 @@ impl TridentEntity {
         super::apply_on_projectile_spawned(self.get_entity(), pickup_item_stack, None, None);
     }
 
-    pub fn set_velocity_from_rotation(
-        &self,
-        pitch: f32,
-        yaw: f32,
-        roll: f32,
-        speed: f32,
-        divergence: f32,
-    ) {
-        let yaw_rad = yaw.to_radians();
-        let pitch_rad = pitch.to_radians();
-        let roll_rad = (pitch + roll).to_radians();
-
-        let x = -yaw_rad.sin() * pitch_rad.cos();
-        let y = -roll_rad.sin();
-        let z = yaw_rad.cos() * pitch_rad.cos();
-
-        self.set_velocity(
-            f64::from(x),
-            f64::from(y),
-            f64::from(z),
-            f64::from(speed),
-            f64::from(divergence),
-        );
+    /// Vanilla `getLoyaltyFromItem` and `hasFoil`, from the item the trident carries.
+    fn update_item_data(&self) {
+        let item_stack = self.pickup_item();
+        let loyalty = EnchantmentHelper::modify_trident_return_acceleration(&item_stack, 0.0)
+            .clamp(0.0, 127.0) as u8;
+        let foil = item_stack
+            .get_data_component::<EnchantmentGlintOverrideImpl>()
+            .map_or_else(|| item_stack.has_enchantments(), |glint| glint.glint);
+        self.loyalty.store(loyalty, Ordering::Relaxed);
+        self.entity
+            .set_synced_data(trident_data::ID_LOYALTY, loyalty);
+        self.entity.set_synced_data(trident_data::ID_FOIL, foil);
     }
 
-    pub fn set_velocity(&self, x: f64, y: f64, z: f64, power: f64, uncertainty: f64) {
-        fn next_triangular(mode: f64, deviation: f64) -> f64 {
-            deviation.mul_add(rand::random::<f64>() - rand::random::<f64>(), mode)
-        }
-
-        let velocity = Vector3::new(x, y, z)
-            .normalize()
-            .add_raw(
-                next_triangular(0.0, 0.017_227_5 * uncertainty),
-                next_triangular(0.0, 0.017_227_5 * uncertainty),
-                next_triangular(0.0, 0.017_227_5 * uncertainty),
-            )
-            .multiply(power, power, power);
-
-        self.entity.velocity.store(velocity);
-        let len = velocity.horizontal_length();
-        self.entity.set_rotation(
-            velocity.x.atan2(velocity.z) as f32 * 57.295_776,
-            velocity.y.atan2(len) as f32 * 57.295_776,
-        );
+    /// The owner check of vanilla's return flight: alive and no spectator.
+    fn is_acceptable_return_owner(owner: &dyn EntityBase) -> bool {
+        let alive = owner
+            .get_living_entity()
+            .map_or_else(|| owner.get_entity().is_alive(), LivingEntity::is_alive);
+        alive && !owner.is_spectator()
     }
 
-    fn should_skip_collision(&self, self_ent: &Entity, other: &Arc<dyn EntityBase>) -> bool {
-        let other_ent = other.get_entity();
-
-        // Don't collide with self
-        if other_ent.entity_id == self_ent.entity_id {
+    /// The start of vanilla `ThrownTrident.tick`. Returns `false` when the trident is gone.
+    fn tick_return_to_owner(&self, caller: &dyn EntityBase) -> bool {
+        let entity = &self.entity;
+        let loyalty = self.loyalty.load(Ordering::Relaxed);
+        if loyalty == 0 || !(self.dealt_damage.load(Ordering::Relaxed) || self.is_no_physics()) {
             return true;
         }
-
-        if !self.owner.can_hit(&self_ent.world.load(), other_ent) {
+        let Some(owner) = self.owner.get(&entity.world.load()) else {
             return true;
+        };
+        if !Self::is_acceptable_return_owner(&*owner) {
+            if self.pickup() == ArrowPickup::Allowed {
+                self.spawn_pickup_item();
+            }
+            entity.remove();
+            return false;
         }
 
-        if !other.can_be_hit_by_projectile() {
-            return true;
-        }
-
-        // Skip other projectiles and item entities
-        if other_ent.entity_type == &pumpkin_data::entity::EntityType::ARROW
-            || other_ent.entity_type == &pumpkin_data::entity::EntityType::TRIDENT
-            || other_ent.entity_type == &pumpkin_data::entity::EntityType::ITEM
-            || other_ent.entity_type == &pumpkin_data::entity::EntityType::FALLING_BLOCK
+        let position = entity.pos.load();
+        let owner_entity = owner.get_entity();
+        let to_owner = owner_entity.get_eye_pos().sub(&position);
+        if owner.get_player().is_none() && to_owner.length() < f64::from(owner_entity.width()) + 1.0
         {
-            return true;
+            entity.remove();
+            return false;
         }
 
-        false
+        self.set_no_physics(true);
+        let level = f64::from(loyalty);
+        entity.set_pos(Vector3::new(
+            position.x,
+            to_owner.y.mul_add(0.015 * level, position.y),
+            position.z,
+        ));
+        let acceleration = 0.05 * level;
+        entity.velocity.store(
+            entity
+                .velocity
+                .load()
+                .multiply(0.95, 0.95, 0.95)
+                .add(
+                    &to_owner
+                        .normalize()
+                        .multiply(acceleration, acceleration, acceleration),
+                ),
+        );
+        if self.return_ticks.fetch_add(1, Ordering::Relaxed) == 0 {
+            caller.play_entity_sound(Sound::ItemTridentReturn, 10.0, 1.0);
+        }
+        true
+    }
+
+    /// Vanilla `ThrownTrident.onHitEntity`.
+    fn on_hit_target(&self, target: &Arc<dyn EntityBase>, hit_pos: Vector3<f64>) {
+        let weapon = self.pickup_item();
+        let target_entity = target.get_entity();
+        let damage = EnchantmentHelper::modify_projectile_damage(
+            &weapon,
+            target_entity.entity_type,
+            BASE_DAMAGE,
+        );
+        let owner = self.owner.get(&self.entity.world.load());
+        self.dealt_damage.store(true, Ordering::Relaxed);
+        let hurt = target.damage_with_context(
+            target.as_ref(),
+            damage as f32,
+            DamageType::TRIDENT,
+            Some(hit_pos),
+            Some(self),
+            Some(owner.as_deref().unwrap_or(self)),
+        );
+        if hurt {
+            self.channeling_after_attack(target_entity, &weapon);
+            if let Some(living) = target.get_living_entity() {
+                self.do_knockback(target_entity, living);
+            }
+        }
+        if target.projectile_receives_side_effects_on_hit(hurt) {
+            self.play_entity_sound(Sound::ItemTridentHit, 1.0, 1.0);
+            ProjectileDeflectionType::reverse(self, Vector3::new(0.02, 0.2, 0.02));
+        }
+    }
+
+    /// `minecraft:post_attack` of `channeling.json`. The extracted effects leave out their
+    /// requirements, so they are spelled out here: thunder and a victim under the open sky.
+    fn channeling_after_attack(&self, target: &Entity, weapon: &ItemStack) {
+        let level = weapon.get_enchantment_level(&Enchantment::CHANNELING);
+        let world = self.entity.world.load_full();
+        let position = target.pos.load();
+        if level <= 0
+            || !world.is_thundering()
+            || !world.can_see_sky(&BlockPos::floored_v(position))
+        {
+            return;
+        }
+        let owner = self.owner.get_player(&world);
+        for effect in Enchantment::CHANNELING.effects.post_attack {
+            effect
+                .effect
+                .apply(&world, level, owner.as_ref(), Some(target), position);
+        }
+    }
+
+    /// `minecraft:hit_block` of `channeling.json` from vanilla `hitBlockEnchantmentEffects`:
+    /// thunder and a lightning rod under the open sky.
+    fn channeling_on_hit_block(&self, pos: BlockPos, hit_pos: Vector3<f64>) {
+        let level = self
+            .pickup_item()
+            .get_enchantment_level(&Enchantment::CHANNELING);
+        let world = self.entity.world.load_full();
+        if level <= 0
+            || !world.is_thundering()
+            || !world
+                .get_block(&pos)
+                .has_tag(&tag::Block::MINECRAFT_LIGHTNING_RODS)
+            || !world.can_see_sky(&pos)
+        {
+            return;
+        }
+        let corner = pos.0.to_f64();
+        let clamp = |value: f64, start: f64| {
+            value.clamp(start + BLOCK_FACE_MARGIN, start + 1.0 - BLOCK_FACE_MARGIN)
+        };
+        let position = Vector3::new(
+            clamp(hit_pos.x, corner.x),
+            clamp(hit_pos.y, corner.y),
+            clamp(hit_pos.z, corner.z),
+        );
+        let owner = self.owner.get_player(&world);
+        for effect in Enchantment::CHANNELING.effects.hit_block {
+            effect
+                .effect
+                .apply(&world, level, owner.as_ref(), Some(&self.entity), position);
+        }
+    }
+}
+
+impl ArrowHooks for TridentEntity {
+    fn water_inertia(&self) -> f64 {
+        WATER_INERTIA
+    }
+
+    /// Vanilla `ThrownTrident.findHitEntities`: the nearest one, once.
+    fn find_hit_entities(&self, from: Vector3<f64>, to: Vector3<f64>) -> Vec<EntityHit> {
+        if self.dealt_damage.load(Ordering::Relaxed) {
+            return Vec::new();
+        }
+        hit_result::nearest_entity_hit(
+            &self.entity.world.load(),
+            &self.entity,
+            (from, to),
+            &hit_result::search_area(&self.entity),
+            hit_result::compute_margin(&self.entity),
+            &|target| self.can_hit_entity(target),
+        )
+        .into_iter()
+        .collect()
+    }
+
+    /// Vanilla `ThrownTrident.tickDespawn`: a loyal one that can be picked up stays.
+    fn tick_despawn(&self) {
+        if self.pickup() != ArrowPickup::Allowed || self.loyalty.load(Ordering::Relaxed) == 0 {
+            self.arrow.tick_despawn();
+        }
     }
 }
 
@@ -166,296 +299,71 @@ impl EntityBase for TridentEntity {
     }
 
     fn get_projectile_item(&self) -> Option<ItemStack> {
-        Some(
-            self.item_stack
-                .lock()
-                .unwrap_or_else(std::sync::PoisonError::into_inner)
-                .clone(),
-        )
+        Some(self.pickup_item())
     }
 
-    fn tick(&self, caller: &dyn EntityBase, _server: &Server) {
+    fn init_data_tracker(&self) {
         let entity = self.get_entity();
-        let world = entity.world.load();
-        self.owner.check_left_owner(entity);
-
-        // Handle shake time
-        let shake = self.shake_time.load(Ordering::Relaxed);
-        if shake > 0 {
-            self.shake_time.store(shake - 1, Ordering::Relaxed);
-        }
-
-        if self.in_ground.load(Ordering::Relaxed) {
-            let _in_ground_time = self.in_ground_time.fetch_add(1, Ordering::Relaxed);
-            let life = self.life.fetch_add(1, Ordering::Relaxed);
-
-            // Despawn after enough time
-            if life >= Self::DESPAWN_TIME {
-                entity.remove();
-            }
-            return;
-        }
-
-        // Trident is flying
-        let start_pos = entity.pos.load();
-        let mut velocity = entity.velocity.load();
-
-        // Apply gravity
-        velocity.y -= Self::GRAVITY;
-
-        // Apply inertia (air resistance or water drag)
-        let inertia = if entity.touching_water.load(Ordering::Relaxed) {
-            Self::WATER_INERTIA
-        } else {
-            Self::AIR_INERTIA
-        };
-        velocity = velocity.multiply(inertia, inertia, inertia);
-
-        entity.velocity.store(velocity);
-
-        // Update rotation based on velocity
-        let len = velocity.horizontal_length();
-        entity.set_rotation(
-            velocity.x.atan2(velocity.z) as f32 * 57.295_776,
-            velocity.y.atan2(len) as f32 * 57.295_776,
-        );
-
-        // Move trident
-        let new_pos = start_pos.add(&velocity);
-        entity.set_pos(new_pos);
-
-        // Broadcast velocity update
-        let packet = CEntityVelocity::new(entity.entity_id.into(), velocity);
-        let chunk_pos = entity.chunk_pos.load();
-        world.broadcast_to_chunk(chunk_pos, &packet);
-
-        // Check for collisions using raycasting
-        let search_box = BoundingBox::new(
-            Vector3::new(
-                start_pos.x.min(new_pos.x),
-                start_pos.y.min(new_pos.y),
-                start_pos.z.min(new_pos.z),
-            ),
-            Vector3::new(
-                start_pos.x.max(new_pos.x),
-                start_pos.y.max(new_pos.y),
-                start_pos.z.max(new_pos.z),
-            ),
-        )
-        .expand(0.3, 0.3, 0.3);
-
-        let mut closest_t = 1.0f64;
-        let mut hit = None;
-
-        // Block collisions
-        let (block_cols, block_positions) =
-            world.get_block_collisions(search_box, self.get_entity());
-        for (idx, bb) in block_cols.iter().enumerate() {
-            if let Some(t) = calculate_ray_intersection(&start_pos, &velocity, bb)
-                && t < closest_t
-            {
-                closest_t = t;
-
-                // Map back to block pos
-                for (len, pos) in &block_positions {
-                    if idx < *len {
-                        let hit_pos = start_pos.add(&velocity.multiply(t, t, t));
-                        hit = Some(ProjectileHit::Block {
-                            pos: *pos,
-                            face: get_hit_face(hit_pos, *pos),
-                            hit_pos,
-                            normal: velocity.normalize().multiply(-1.0, -1.0, -1.0),
-                        });
-                        break;
-                    }
-                }
-            }
-        }
-
-        // Entity collisions
-        let candidates = world.get_all_at_box(&search_box);
-        for cand in candidates {
-            if self.should_skip_collision(entity, &cand) {
-                continue;
-            }
-
-            let ebb = cand.get_entity().bounding_box.load().expand(0.3, 0.3, 0.3);
-            if let Some(t) = calculate_ray_intersection(&start_pos, &velocity, &ebb)
-                && t < closest_t
-            {
-                closest_t = t;
-                let hit_pos = start_pos.add(&velocity.multiply(t, t, t));
-                hit = Some(ProjectileHit::Entity {
-                    entity: cand.clone(),
-                    hit_pos,
-                    normal: velocity.normalize().multiply(-1.0, -1.0, -1.0),
-                });
-            }
-        }
-
-        // Handle hit
-        if let Some(h) = hit
-            && !self.has_hit.swap(true, Ordering::SeqCst)
-        {
-            if fire_projectile_hit_event(caller, &h) {
-                caller.on_hit(h);
-            } else {
-                self.has_hit.store(false, Ordering::SeqCst);
-            }
-        }
+        entity.set_synced_data(arrow_data::ID_FLAGS, self.flags());
+        entity.set_synced_data(arrow_data::PIERCE_LEVEL, self.get_pierce_level());
+        entity.set_synced_data(arrow_data::IN_GROUND, self.is_in_ground());
+        self.update_item_data();
     }
 
-    fn get_entity(&self) -> &Entity {
-        &self.entity
+    fn write_custom_nbt(&self, nbt: &mut NbtCompound) {
+        self.write_arrow_nbt(nbt);
+        nbt.put_bool("DealtDamage", self.dealt_damage.load(Ordering::Relaxed));
     }
 
-    fn get_living_entity(&self) -> Option<&LivingEntity> {
-        None
+    fn read_custom_nbt(&self, nbt: &NbtCompound) {
+        self.read_arrow_nbt(nbt);
+        if let Some(dealt_damage) = nbt.get_bool("DealtDamage") {
+            self.dealt_damage.store(dealt_damage, Ordering::Relaxed);
+        }
+        self.update_item_data();
     }
-    fn cast_any(&self) -> &dyn std::any::Any {
-        self
+
+    fn tick(&self, caller: &dyn EntityBase, server: &Server) {
+        if self.in_ground_ticks() > 4 {
+            self.dealt_damage.store(true, Ordering::Relaxed);
+        }
+        if self.tick_return_to_owner(caller) {
+            self.arrow.tick(self, caller, server);
+        }
     }
 
     fn on_hit(&self, hit: ProjectileHit) {
-        let entity = self.get_entity();
-        let world = entity.world.load();
-
         match hit {
             ProjectileHit::Block { pos, hit_pos, .. } => {
-                self.in_ground.store(true, Ordering::Relaxed);
-                self.shake_time.store(7, Ordering::Relaxed);
-                *self
-                    .last_block_pos
-                    .write()
-                    .unwrap_or_else(std::sync::PoisonError::into_inner) = Some(pos);
-
-                let block = world.get_block(&pos);
-                let state = world.get_block_state(&pos);
-                if let Some(server) = world.server.upgrade() {
-                    world
-                        .block_registry
-                        .on_projectile_hit(block, &world, self, &pos, state, &hit_pos, &server);
-                }
-
-                // Stop the trident
-                entity.velocity.store(Vector3::new(0.0, 0.0, 0.0));
-                entity.set_pos(hit_pos);
-
-                // Play sound
-                let sound_packet = CSoundEffect::new(
-                    IdOr::Id(Sound::ItemTridentHitGround as u16),
-                    SoundCategory::Neutral,
-                    &hit_pos,
-                    1.0,
-                    1.0,
-                    0,
-                );
-                let chunk_pos = entity.chunk_pos.load();
-                world.broadcast_to_chunk(chunk_pos, &sound_packet);
+                self.arrow.on_hit_block(self, pos, hit_pos, &|| {
+                    self.channeling_on_hit_block(pos, hit_pos);
+                });
             }
             ProjectileHit::Entity {
                 entity: target,
                 hit_pos,
                 ..
-            } => {
-                let mut damage = Self::BASE_DAMAGE;
-
-                // Apply Impaling enchantment extra damage
-                if let Some(enchantments) = self
-                    .item_stack
-                    .lock()
-                    .unwrap_or_else(std::sync::PoisonError::into_inner)
-                    .get_data_component::<pumpkin_data::data_component_impl::EnchantmentsImpl>()
-                {
-                    for (enchantment, level) in enchantments.enchantment.iter() {
-                        if **enchantment == pumpkin_data::Enchantment::IMPALING {
-                            let in_water =
-                                target.get_entity().touching_water.load(Ordering::Relaxed);
-                            if in_water {
-                                damage += 1.25 * f64::from(*level);
-                            }
-                        }
-                    }
-                }
-
-                let damage_val = damage as f32;
-                target.damage(&*target, damage_val, DamageType::TRIDENT);
-
-                // Play hit sound
-                let sound_packet = CSoundEffect::new(
-                    IdOr::Id(Sound::ItemTridentHit as u16),
-                    SoundCategory::Neutral,
-                    &hit_pos,
-                    1.0,
-                    1.0,
-                    0,
-                );
-                let chunk_pos = entity.chunk_pos.load();
-                world.broadcast_to_chunk(chunk_pos, &sound_packet);
-
-                // Standard bounce/fall-back behavior
-                entity.velocity.store(Vector3::new(0.0, -0.1, 0.0));
-                self.has_hit.store(false, Ordering::Relaxed); // Let it hit the ground
-            }
+            } => self.on_hit_target(&target, hit_pos),
         }
     }
 
+    fn get_entity(&self) -> &Entity {
+        &self.arrow.entity
+    }
+
+    fn get_living_entity(&self) -> Option<&LivingEntity> {
+        None
+    }
+
+    fn cast_any(&self) -> &dyn std::any::Any {
+        self
+    }
+
+    /// Vanilla `ThrownTrident.playerTouch` and `tryPickup`.
     fn on_player_collision(&self, player: &Arc<Player>) {
-        // Can only pick up when on the ground
-        if !self.in_ground.load(Ordering::Relaxed) {
-            return;
+        let owned = self.owner.matches(player.get_entity());
+        if owned || self.owner.get(&self.entity.world.load()).is_none() {
+            self.player_touch(player, self.is_no_physics() && owned);
         }
-
-        if player.living_entity.health.load() <= 0.0 {
-            return;
-        }
-
-        match self.pickup {
-            ArrowPickup::Disallowed => return,
-            ArrowPickup::CreativeOnly if !player.is_creative() => return,
-            _ => {}
-        }
-
-        let mut stack = self
-            .item_stack
-            .lock()
-            .unwrap_or_else(std::sync::PoisonError::into_inner)
-            .clone();
-        if player.is_creative() || player.inventory.insert_stack_anywhere(&mut stack) {
-            player.increment_stat(
-                pumpkin_data::statistic::StatisticCategory::PickedUp,
-                stack.item.id as i32,
-                1,
-            );
-            let picked_up = self
-                .item_stack
-                .lock()
-                .unwrap_or_else(std::sync::PoisonError::into_inner)
-                .clone();
-            player
-                .living_entity
-                .pickup(&self.entity, Some(&picked_up), 1);
-            self.get_entity().remove();
-        }
-    }
-}
-
-/// Get the face of the block that was hit
-fn get_hit_face(hit_pos: Vector3<f64>, block_pos: BlockPos) -> pumpkin_data::BlockDirection {
-    let local = hit_pos.sub(&block_pos.0.to_f64());
-    let eps = 1.0e-4;
-
-    if local.x <= eps {
-        pumpkin_data::BlockDirection::West
-    } else if local.x >= 1.0 - eps {
-        pumpkin_data::BlockDirection::East
-    } else if local.y <= eps {
-        pumpkin_data::BlockDirection::Down
-    } else if local.y >= 1.0 - eps {
-        pumpkin_data::BlockDirection::Up
-    } else if local.z <= eps {
-        pumpkin_data::BlockDirection::North
-    } else {
-        pumpkin_data::BlockDirection::South
     }
 }

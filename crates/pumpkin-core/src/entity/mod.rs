@@ -80,6 +80,7 @@ pub mod attributes;
 pub mod boss;
 pub mod breath;
 pub mod bucketable;
+pub mod current_impulse;
 pub mod custom_sound;
 pub mod decoration;
 pub mod effect;
@@ -170,6 +171,30 @@ pub const fn equipment_break_status(slot: &EquipmentSlot) -> EntityStatus {
     }
 }
 
+/// Vanilla `ComponentSerialization.CODEC` as a tag. A literal starting with '{' stays a compound,
+/// since [`text_component_from_nbt`] would read it back as legacy JSON.
+pub(crate) fn text_component_to_nbt(text: &TextComponent) -> NbtTag {
+    let tag = text.to_nbt_tag_for_version(&pumpkin_util::version::JavaMinecraftVersion::V_26_3);
+    if let NbtTag::String(text) = &tag
+        && text.starts_with('{')
+    {
+        let mut literal = NbtCompound::new();
+        literal.put_string("text", text.to_string());
+        return NbtTag::Compound(literal);
+    }
+    tag
+}
+
+/// Vanilla stores a text component tag and a string is literal text. Older Pumpkin saves hold a
+/// JSON string (same data version, so it can't be told apart by version).
+pub(crate) fn text_component_from_nbt(tag: &NbtTag) -> TextComponent {
+    match tag {
+        NbtTag::String(json) if json.starts_with('{') => pumpkin_util::serde_json::from_str(json)
+            .unwrap_or_else(|_| TextComponent::from_nbt(tag)),
+        _ => TextComponent::from_nbt(tag),
+    }
+}
+
 /// Vanilla `Entity.push(Entity)`: moves `this` and `entity` apart, each when pushable.
 pub fn push_apart<E: EntityBase + ?Sized>(this: &E, entity: &dyn EntityBase) {
     let self_entity = this.get_entity();
@@ -241,6 +266,17 @@ impl dyn EntityBase + '_ {
                 .is_some_and(|team| team.is_allow_friendly_fire())
     }
 }
+
+/// The types overriding vanilla `Entity.isIgnoringBlockTriggers` with true.
+const IGNORES_BLOCK_TRIGGERS: [&EntityType; 7] = [
+    &EntityType::BAT,
+    &EntityType::BLOCK_DISPLAY,
+    &EntityType::INTERACTION,
+    &EntityType::ITEM_DISPLAY,
+    &EntityType::MARKER,
+    &EntityType::OMINOUS_ITEM_SPAWNER,
+    &EntityType::TEXT_DISPLAY,
+];
 
 /// Maps Java entity types to Bedrock runtime entity identifiers where the naming differs.
 #[must_use]
@@ -448,6 +484,31 @@ pub trait EntityBase: Send + Sync + std::any::Any {
         false
     }
 
+    /// Vanilla `Entity.ignoreExplosion`. `affects_blocklike_entities` is the explosion's
+    /// `shouldAffectBlocklikeEntities`, `source_in_water` whether its direct source is in water.
+    fn ignore_explosion(&self, _affects_blocklike_entities: bool, _source_in_water: bool) -> bool {
+        self.is_immune_to_explosion()
+    }
+
+    /// Vanilla `Entity.pushFromExplosion`.
+    fn push_from_explosion(&self, impulse: Vector3<f64>) {
+        self.get_entity().add_velocity(impulse);
+    }
+
+    /// Vanilla `Entity.notifyLeasheeRemoved`: a leash on this entity came off.
+    fn notify_leashee_removed(&self) {}
+
+    /// Vanilla `LivingEntity.pushEntities` for the entities overriding it. True when this entity
+    /// did its own pushing, so the common one is skipped.
+    fn push_entities_itself(&self) -> bool {
+        false
+    }
+
+    /// Vanilla `Entity.blocksBuilding`, for the entities where it changes with their state.
+    fn blocks_building(&self) -> bool {
+        self.get_entity().blocks_building
+    }
+
     fn get_gravity(&self) -> f64 {
         0.0
     }
@@ -555,22 +616,23 @@ pub trait EntityBase: Send + Sync + std::any::Any {
         caller.damage_with_context(caller, amount, damage_type, None, None, None)
     }
 
+    /// Vanilla `Entity.thunderHit`: 5 damage from no entity, and only what never burned before
+    /// (fire ticks at -1) catches fire. It runs on every tick a bolt is live.
     fn on_lightning_strike(
         &self,
         caller: &dyn EntityBase,
-        lightning: &lightning::LightningBoltEntity,
+        _lightning: &lightning::LightningBoltEntity,
     ) {
-        // Vanilla `Entity.thunderHit` hits entities with 5 damage and sets them on fire for 8 seconds.
-        self.set_on_fire_for(8.0);
-        let cause = lightning.get_cause();
-        self.damage_with_context(
-            caller,
-            5.0,
-            DamageType::LIGHTNING_BOLT,
-            None,
-            Some(lightning),
-            cause.as_deref().map(|p| p as &dyn EntityBase),
-        );
+        let fire_ticks = self.get_entity().fire_ticks.fetch_add(1, Ordering::Relaxed) + 1;
+        if fire_ticks == 0 {
+            self.set_on_fire_for(8.0);
+        }
+        self.damage_with_context(caller, 5.0, DamageType::LIGHTNING_BOLT, None, None, None);
+    }
+
+    /// Vanilla `Entity.shouldPlayLavaHurtSound`.
+    fn should_play_lava_hurt_sound(&self) -> bool {
+        true
     }
 
     /// Leashed by four points when the holder supports it (horses, sniffers).
@@ -585,6 +647,24 @@ pub trait EntityBase: Send + Sync + std::any::Any {
 
     fn is_spectator(&self) -> bool {
         false
+    }
+
+    /// Vanilla `Entity.isIgnoringBlockTriggers`: pressure plates and tripwires do not notice it.
+    fn is_ignoring_block_triggers(&self) -> bool {
+        IGNORES_BLOCK_TRIGGERS.contains(&self.get_entity().entity_type)
+            || self
+                .cast_any()
+                .downcast_ref::<decoration::armor_stand::ArmorStandEntity>()
+                .is_some_and(decoration::armor_stand::ArmorStandEntity::is_marker)
+    }
+
+    /// Vanilla `Entity.isSteppingCarefully`: sneaking, or a cat or ocelot crouching.
+    fn is_stepping_carefully(&self) -> bool {
+        let entity = self.get_entity();
+        entity.is_sneaking()
+            || ((entity.entity_type == &EntityType::CAT
+                || entity.entity_type == &EntityType::OCELOT)
+                && entity.pose.load() == EntityPose::Crouching)
     }
 
     fn can_be_seen_by_anyone(&self) -> bool {
@@ -619,6 +699,11 @@ pub trait EntityBase: Send + Sync + std::any::Any {
     fn is_immobile(&self) -> bool {
         self.get_living_entity()
             .is_some_and(LivingEntity::is_dead_or_dying)
+    }
+
+    /// Vanilla `LivingEntity.isEffectiveAi`, for what `Mob.isNoAi` does not cover.
+    fn is_effective_ai(&self) -> bool {
+        true
     }
 
     fn get_controlling_passenger(&self) -> Option<Arc<dyn EntityBase>> {
@@ -930,6 +1015,12 @@ pub trait EntityBase: Send + Sync + std::any::Any {
         false
     }
 
+    /// Vanilla `Entity.skipAttackInteraction`: `true` ends `Player.attack` before anything of it
+    /// happens.
+    fn skip_attack_interaction(&self, _source: &Player) -> bool {
+        false
+    }
+
     /// Called when a player right-clicks this entity with an item.
     /// Called when a player right-clicks this entity with an item.
     /// Returns true if the interaction was handled.
@@ -944,6 +1035,18 @@ pub trait EntityBase: Send + Sync + std::any::Any {
         _hand: pumpkin_util::Hand,
     ) -> Option<bool> {
         None
+    }
+
+    /// [`Self::interact_with_hand`] with vanilla `Entity.interact`'s `location`: the clicked
+    /// point relative to the entity, when the client sent one.
+    fn interact_at(
+        &self,
+        player: &Arc<Player>,
+        item_stack: &mut ItemStack,
+        hand: pumpkin_util::Hand,
+        _location: Option<Vector3<f64>>,
+    ) -> Option<bool> {
+        self.interact_with_hand(player, item_stack, hand)
     }
 
     fn set_on_fire_for(&self, seconds: f32) {
@@ -1002,6 +1105,19 @@ pub trait EntityBase: Send + Sync + std::any::Any {
     }
 
     fn on_hit(&self, _hit: crate::entity::projectile::ProjectileHit) {}
+
+    /// Vanilla `Projectile.onDeflection`.
+    fn on_deflection(&self, _by_attack: bool) {}
+
+    /// Vanilla `WindCharge.deflect`: whether a deflection takes effect now.
+    fn can_be_deflected(&self) -> bool {
+        true
+    }
+
+    /// Vanilla `Projectile.canHitEntity` overrides, for what this projectile rules out itself.
+    fn projectile_can_hit(&self, _target: &dyn EntityBase) -> bool {
+        true
+    }
 
     /// Returns the item stack a projectile carries, like vanilla's `ItemSupplier::getItem`.
     fn get_projectile_item(&self) -> Option<ItemStack> {
@@ -1910,7 +2026,8 @@ impl Entity {
         {
             return EntityDimensions::new(0.9, 1.0, 0.85);
         }
-        if self.entity_type == &EntityType::PLAYER {
+        // Vanilla `Avatar.POSES`.
+        if self.entity_type == &EntityType::PLAYER || self.entity_type == &EntityType::MANNEQUIN {
             match pose {
                 EntityPose::FallFlying | EntityPose::Swimming | EntityPose::SpinAttack => {
                     return EntityDimensions::new(0.6, 0.6, 0.4).scale(self.scale.load());
@@ -2008,6 +2125,17 @@ impl Entity {
         let Some(this) = world.get_entity_by_id(self.entity_id) else {
             return false;
         };
+        self.fudge_position_for(this.as_ref(), previous_dimensions)
+    }
+
+    /// Vanilla `fudgePositionAfterSizeChange` for `this`, this entity's full form, which may not
+    /// be in the world yet.
+    pub(crate) fn fudge_position_for(
+        &self,
+        this: &dyn EntityBase,
+        previous_dimensions: EntityDimensions,
+    ) -> bool {
+        let world = self.world.load();
         let new_dimensions = self.get_dimensions(self.pose.load());
         let old_center =
             self.pos
@@ -2024,7 +2152,7 @@ impl Entity {
         let allowed_centers =
             BoundingBox::of_size(old_center, width_delta, height_delta, width_delta);
         if let Some(free_position) = world.find_free_position(
-            this.as_ref(),
+            this,
             &allowed_centers,
             old_center,
             Vector3::new(new_width, new_height, new_width),
@@ -2038,7 +2166,7 @@ impl Entity {
             let allowed_centers_ignoring_y =
                 BoundingBox::of_size(old_center, width_delta, 1.0E-6, width_delta);
             if let Some(free_position) = world.find_free_position(
-                this.as_ref(),
+                this,
                 &allowed_centers_ignoring_y,
                 old_center,
                 Vector3::new(new_width, previous_height, new_width),
@@ -4549,10 +4677,11 @@ impl Entity {
             .delayed_leash
             .lock()
             .unwrap_or_else(std::sync::PoisonError::into_inner) = None;
-        *self
+        let old_holder = self
             .leashed_to
             .lock()
-            .unwrap_or_else(std::sync::PoisonError::into_inner) = Some(holder);
+            .unwrap_or_else(std::sync::PoisonError::into_inner)
+            .replace(holder);
 
         let je_packet = pumpkin_protocol::java::client::play::CSetEntityLink::new(
             self.entity_id,
@@ -4582,6 +4711,13 @@ impl Entity {
             &je_packet,
             &be_packet,
         );
+
+        // Vanilla `Leashable.setLeashedTo`.
+        if let Some(old_holder) = old_holder
+            && old_holder.get_entity().entity_id != holder_entity_id
+        {
+            old_holder.notify_leashee_removed();
+        }
     }
 
     /// Vanilla `Leashable.dropLeash`: the leash comes off and its lead falls to the ground.
@@ -4642,6 +4778,9 @@ impl Entity {
         }
 
         self.send_leash_removed();
+        if let Some(holder) = old_holder {
+            holder.notify_leashee_removed();
+        }
     }
 
     pub fn remove_leash(&self) {
@@ -4650,8 +4789,9 @@ impl Entity {
             .lock()
             .unwrap_or_else(std::sync::PoisonError::into_inner)
             .take();
-        if old_holder.is_some() {
+        if let Some(holder) = old_holder {
             self.send_leash_removed();
+            holder.notify_leashee_removed();
         }
     }
 
@@ -4768,8 +4908,13 @@ impl Entity {
         };
         let holder_entity = holder.get_entity();
 
+        // Vanilla `Leashable.tickLeash`: a broken knot or a gone holder drops the lead here.
         if !self.is_alive() || !holder_entity.is_alive() {
-            self.unleash();
+            if self.world.load().level_info.load().game_rules.entity_drops {
+                self.drop_leash();
+            } else {
+                self.remove_leash();
+            }
             return LeashTick::NotLeashed;
         }
 
@@ -5278,6 +5423,11 @@ impl Entity {
             let vehicle_box = self.bounding_box.load();
             let passenger_entity = passenger.get_entity();
 
+            // Vanilla `Cushion.removePassenger`: not when the cushion itself is going.
+            if self.entity_type == &EntityType::CUSHION && !self.is_removed() && !self.is_silent() {
+                self.play_sound(Sound::EntityCushionGetUp);
+            }
+
             // Vanilla: ridingCooldown = 60 (prevents immediate re-mount)
             passenger_entity.riding_cooldown.store(60, Relaxed);
             self.world.load().emit_game_event_with_context(
@@ -5705,17 +5855,7 @@ impl Entity {
         nbt.put_bool("Invulnerable", self.invulnerable.load(Relaxed));
         nbt.put_int("PortalCooldown", self.portal_cooldown.load(Relaxed) as i32);
         if let Some(custom_name) = &**self.custom_name.load() {
-            let mut tag = custom_name
-                .to_nbt_tag_for_version(&pumpkin_util::version::JavaMinecraftVersion::V_26_3);
-            // A literal string starting with '{' would read back as legacy JSON, so keep it a compound.
-            if let NbtTag::String(text) = &tag
-                && text.starts_with('{')
-            {
-                let mut literal = NbtCompound::new();
-                literal.put_string("text", text.to_string());
-                tag = NbtTag::Compound(literal);
-            }
-            nbt.put("CustomName", tag);
+            nbt.put("CustomName", text_component_to_nbt(custom_name));
         }
         if self.custom_name_visible.load(Relaxed) {
             nbt.put_bool("CustomNameVisible", true);
@@ -5833,18 +5973,8 @@ impl Entity {
         self.portal_cooldown
             .store(nbt.get_int("PortalCooldown").unwrap_or(0) as u32, Relaxed);
         if let Some(name) = nbt.get("CustomName") {
-            // Vanilla stores a text component tag; a string is literal text. Older
-            // Pumpkin saves hold a JSON string (same data version, so it can't be told
-            // apart by version); the writer never emits a literal starting with '{'.
-            let component = match name {
-                NbtTag::String(json) if json.starts_with('{') => {
-                    pumpkin_util::serde_json::from_str(json)
-                        .unwrap_or_else(|_| TextComponent::from_nbt(name))
-                }
-                _ => TextComponent::from_nbt(name),
-            };
             // set_custom_name also updates the synced tracked data
-            self.set_custom_name(component);
+            self.set_custom_name(text_component_from_nbt(name));
         } else {
             self.clear_custom_name();
         }

@@ -114,6 +114,10 @@ pub trait BlockBehaviour: Send + Sync {
 
     fn explode(&self, _args: ExplodeArgs<'_>) {}
 
+    /// Vanilla `BlockBehaviour.onExplosionHit` of an explosion that may trigger blocks: it
+    /// breaks nothing, only some blocks react.
+    fn on_explosion_trigger(&self, _args: ExplodeArgs<'_>) {}
+
     /// Handles the block event, which is an event specific to a block with an integer ID and data.
     ///
     /// returns whether the event was handled successfully
@@ -294,6 +298,8 @@ pub struct ExplodeArgs<'a> {
     pub world: &'a Arc<World>,
     pub block: &'a Block,
     pub position: &'a BlockPos,
+    /// Vanilla `Explosion.getIndirectSourceEntity`.
+    pub indirect_source: Option<&'a crate::entity::Entity>,
 }
 
 pub struct OnSyncedBlockEventArgs<'a> {

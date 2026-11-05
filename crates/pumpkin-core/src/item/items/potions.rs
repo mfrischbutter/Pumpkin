@@ -179,7 +179,7 @@ impl ItemBehaviour for SplashPotionItem {
 
         splash
             .thrown
-            .set_velocity_from(pitch, yaw, ROLL, POWER, DIVERGENCE);
+            .shoot_item_from_rotation(player, &stack, pitch, yaw, ROLL, POWER, DIVERGENCE);
 
         world.spawn_entity(Arc::new(splash));
 
@@ -248,7 +248,7 @@ impl ItemBehaviour for LingeringPotionItem {
         ling.set_item_stack(stack.copy_with_count(1));
 
         ling.thrown
-            .set_velocity_from(pitch, yaw, ROLL, POWER, DIVERGENCE);
+            .shoot_item_from_rotation(player, &stack, pitch, yaw, ROLL, POWER, DIVERGENCE);
 
         world.spawn_entity(Arc::new(ling));
 

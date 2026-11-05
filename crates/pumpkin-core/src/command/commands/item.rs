@@ -23,6 +23,7 @@ use crate::command::context::command_context::CommandContext;
 use crate::command::errors::error_types::CommandErrorType;
 use crate::command::node::dispatcher::CommandDispatcher;
 use crate::command::node::{CommandExecutor, CommandExecutorResult};
+use crate::entity::decoration::display::ItemDisplayEntity;
 
 const DESCRIPTION: &str = "Modifies items in block or entity inventories.";
 const PERMISSION: &str = "minecraft:command.item";
@@ -109,6 +110,9 @@ impl CommandExecutor for BlockReplaceExecutor {
 struct EntityReplaceExecutor {
     has_count: bool,
 }
+
+/// Vanilla `SlotRanges` names slot 0 `contents`.
+const ITEM_DISPLAY_CONTENTS_SLOT: usize = 0;
 
 impl CommandExecutor for EntityReplaceExecutor {
     #[expect(clippy::too_many_lines)]
@@ -224,6 +228,12 @@ impl CommandExecutor for EntityReplaceExecutor {
                     living.send_equipment_changes(&[(eq, item_stack.clone())]);
                     modified_count += 1;
                 }
+            } else if mojang_slot == ITEM_DISPLAY_CONTENTS_SLOT
+                && let Some(display) = target.cast_any().downcast_ref::<ItemDisplayEntity>()
+            {
+                // Vanilla `ItemDisplay.getSlot`.
+                display.set_item(item_stack.clone());
+                modified_count += 1;
             }
         }
 
