@@ -290,6 +290,7 @@ mod tests {
                 height: 128,
                 height_sampler: Some(&mut sampler),
                 structure_key: Some(pumpkin_data::structures::StructureKeys::NetherFossil),
+                biome_at: None,
             };
             if let Some(pos) = NetherFossilGenerator.get_structure_position(context) {
                 assert!(
@@ -319,6 +320,7 @@ mod tests {
             height: 128,
             height_sampler: Some(&mut sampler),
             structure_key: Some(pumpkin_data::structures::StructureKeys::NetherFossil),
+            biome_at: None,
         };
         assert!(
             NetherFossilGenerator

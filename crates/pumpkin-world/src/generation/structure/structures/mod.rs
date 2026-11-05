@@ -1,5 +1,6 @@
 use std::sync::{Arc, Mutex};
 
+use pumpkin_data::chunk::Biome;
 use pumpkin_data::{Block, BlockId, BlockState};
 use pumpkin_data::{Mirror, Rotation};
 use pumpkin_util::HeightMap;
@@ -1017,6 +1018,9 @@ pub struct StructureGeneratorContext<'a> {
     pub height: u16,
     pub height_sampler: Option<&'a mut dyn HeightSampler>,
     pub structure_key: Option<pumpkin_data::structures::StructureKeys>,
+    /// The generation biome at a block position, read at the block's quart cell like vanilla's
+    /// `GenerationContext.biomeResolver()`. `None` where no biome source is at hand (`/place`, tests).
+    pub biome_at: Option<&'a mut dyn FnMut(i32, i32, i32) -> &'static Biome>,
 }
 
 #[must_use]
@@ -1087,6 +1091,7 @@ mod structure_random_tests {
             height: 384,
             height_sampler,
             structure_key: None,
+            biome_at: None,
         }
     }
 

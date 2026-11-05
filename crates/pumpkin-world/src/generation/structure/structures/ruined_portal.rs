@@ -370,8 +370,16 @@ impl StructureGenerator for RuinedPortalGenerator {
         );
 
         let origin = Vector3::new(base_position.x, projected_y, base_position.z);
+        let sea_level = context.sea_level;
+        let cold = chosen_setup.can_be_cold
+            && context.biome_at.as_deref_mut().is_none_or(|biome_at| {
+                // `/place` has no biome source: keep the setup's own choice.
+                !biome_at(origin.x, origin.y, origin.z)
+                    .weather
+                    .warm_enough_to_rain(origin.x, origin.y, origin.z, sea_level)
+            });
         let properties = RuinedPortalProperties {
-            cold: chosen_setup.can_be_cold,
+            cold,
             mossiness: chosen_setup.mossiness,
             air_pocket,
             overgrown: chosen_setup.overgrown,

@@ -225,6 +225,7 @@ impl CommandExecutor for PlaceJigsawExecutor {
                     .min(world_gen.dimension().height as u16),
                 height_sampler: None,
                 structure_key: None,
+                biome_at: None,
             };
 
             let position = JigsawPlacement::add_pieces(
@@ -342,6 +343,7 @@ impl CommandExecutor for PlaceStructureExecutor {
                             .min(world_gen.dimension().height as u16),
                         height_sampler: None,
                         structure_key: Some(key),
+                        biome_at: None,
                     },
                     pool,
                     structure.start_jigsaw_name,
@@ -400,6 +402,7 @@ impl CommandExecutor for PlaceStructureExecutor {
                             .min(world_gen.dimension().height as u16),
                         height_sampler: None,
                         structure_key: Some(key),
+                        biome_at: None,
                     },
                 )
                 .ok_or_else(|| {

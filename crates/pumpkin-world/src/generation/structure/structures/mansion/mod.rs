@@ -616,6 +616,7 @@ mod tests {
                 height: 384,
                 height_sampler: Some(&mut sampler),
                 structure_key: None,
+                biome_at: None,
             })
             .unwrap();
         let x = 3 * 16 + 7;

@@ -10,7 +10,7 @@ use crate::{
         biome_coords,
         noise::router::multi_noise_sampler::MultiNoiseSampler,
         structure::structures::{
-            StructureGenerator, StructureGeneratorContext, StructurePosition,
+            HeightSampler, StructureGenerator, StructureGeneratorContext, StructurePosition,
             buried_treasure::BuriedTreasureGenerator,
             create_chunk_random,
             desert_pyramid::DesertPyramidGenerator,
@@ -50,7 +50,7 @@ pub fn generate_structure_position(
     structure: &Structure,
     context: StructureGeneratorContext<'_>,
 ) -> Option<StructurePosition> {
-    generate_structure_position_checked(*key, structure, context, |_| true)
+    generate_structure_position_checked(*key, structure, context)
 }
 
 #[must_use]
@@ -58,38 +58,27 @@ pub fn generate_structure_position(
 fn generate_structure_position_checked(
     key: StructureKeys,
     structure: &Structure,
-    context: StructureGeneratorContext<'_>,
-    is_valid_biome: impl FnOnce(pumpkin_util::math::position::BlockPos) -> bool,
+    mut context: StructureGeneratorContext<'_>,
 ) -> Option<StructurePosition> {
     match key {
         StructureKeys::BuriedTreasure => {
             BuriedTreasureGenerator::get_structure_position(&BuriedTreasureGenerator, context)
-                .filter(|pos| is_valid_biome(pos.start_pos))
         }
         StructureKeys::SwampHut => {
             SwampHutGenerator::get_structure_position(&SwampHutGenerator, context)
-                .filter(|pos| is_valid_biome(pos.start_pos))
         }
         StructureKeys::Stronghold => {
             StrongholdGenerator::get_structure_position(&StrongholdGenerator, context)
-                .filter(|pos| is_valid_biome(pos.start_pos))
         }
         StructureKeys::Fortress => {
             NetherFortressGenerator::get_structure_position(&NetherFortressGenerator, context)
-                .filter(|pos| is_valid_biome(pos.start_pos))
         }
         StructureKeys::NetherFossil => {
             NetherFossilGenerator::get_structure_position(&NetherFossilGenerator, context)
-                .filter(|pos| is_valid_biome(pos.start_pos))
         }
-        StructureKeys::Igloo => IglooGenerator::get_structure_position(&IglooGenerator, context)
-            .filter(|pos| is_valid_biome(pos.start_pos)),
-        StructureKeys::DesertPyramid => DesertPyramidGenerator
-            .get_structure_position(context)
-            .filter(|pos| is_valid_biome(pos.start_pos)),
-        StructureKeys::JunglePyramid => JungleTempleGenerator
-            .get_structure_position(context)
-            .filter(|pos| is_valid_biome(pos.start_pos)),
+        StructureKeys::Igloo => IglooGenerator::get_structure_position(&IglooGenerator, context),
+        StructureKeys::DesertPyramid => DesertPyramidGenerator.get_structure_position(context),
+        StructureKeys::JunglePyramid => JungleTempleGenerator.get_structure_position(context),
         StructureKeys::VillagePlains
         | StructureKeys::VillageDesert
         | StructureKeys::VillageSavanna
@@ -129,7 +118,19 @@ fn generate_structure_position_checked(
             if let Some(start_jigsaw_name) = structure.start_jigsaw_name {
                 generator = generator.with_start_jigsaw(start_jigsaw_name);
             }
-            generator.get_structure_position_checked(context, is_valid_biome)
+            let ids = get_tag_ids(
+                RegistryKey::WorldgenBiome,
+                structure
+                    .biomes
+                    .strip_prefix('#')
+                    .unwrap_or(structure.biomes),
+            )?;
+            let mut biome_at = context.biome_at.take();
+            generator.get_structure_position_checked(context, |pos| {
+                biome_at.as_mut().is_none_or(|biome_at| {
+                    ids.contains(&(biome_at(pos.0.x, pos.0.y, pos.0.z).id as u16))
+                })
+            })
         }
         StructureKeys::Shipwreck | StructureKeys::ShipwreckBeached => {
             let generator = ShipwreckGenerator {
@@ -137,9 +138,7 @@ fn generate_structure_position_checked(
                     .is_beached
                     .unwrap_or(key == StructureKeys::ShipwreckBeached),
             };
-            generator
-                .get_structure_position(context)
-                .filter(|pos| is_valid_biome(pos.start_pos))
+            generator.get_structure_position(context)
         }
         StructureKeys::RuinedPortal
         | StructureKeys::RuinedPortalDesert
@@ -149,9 +148,7 @@ fn generate_structure_position_checked(
         | StructureKeys::RuinedPortalOcean
         | StructureKeys::RuinedPortalNether => {
             let generator = RuinedPortalGenerator { variant: key };
-            generator
-                .get_structure_position(context)
-                .filter(|pos| is_valid_biome(pos.start_pos))
+            generator.get_structure_position(context)
         }
         StructureKeys::OceanRuinCold | StructureKeys::OceanRuinWarm => {
             let generator = OceanRuinGenerator {
@@ -159,28 +156,18 @@ fn generate_structure_position_checked(
                     .biome_temp
                     .map_or(key == StructureKeys::OceanRuinWarm, |t| t == "warm"),
             };
-            generator
-                .get_structure_position(context)
-                .filter(|pos| is_valid_biome(pos.start_pos))
+            generator.get_structure_position(context)
         }
-        StructureKeys::EndCity => EndCityGenerator
-            .get_structure_position(context)
-            .filter(|pos| is_valid_biome(pos.start_pos)),
-        StructureKeys::Mansion => MansionGenerator
-            .get_structure_position(context)
-            .filter(|pos| is_valid_biome(pos.start_pos)),
-        StructureKeys::Monument => OceanMonumentGenerator
-            .get_structure_position(context)
-            .filter(|pos| is_valid_biome(pos.start_pos)),
+        StructureKeys::EndCity => EndCityGenerator.get_structure_position(context),
+        StructureKeys::Mansion => MansionGenerator.get_structure_position(context),
+        StructureKeys::Monument => OceanMonumentGenerator.get_structure_position(context),
         StructureKeys::Mineshaft | StructureKeys::MineshaftMesa => {
             let generator = MineshaftGenerator {
                 is_mesa: structure
                     .mineshaft_type
                     .map_or(key == StructureKeys::MineshaftMesa, |t| t == "mesa"),
             };
-            generator
-                .get_structure_position(context)
-                .filter(|pos| is_valid_biome(pos.start_pos))
+            generator.get_structure_position(context)
         }
     }
 }
@@ -212,8 +199,10 @@ pub fn try_generate_structure(
         height: chunk.generation_height().min(chunk.height()),
         height_sampler,
         structure_key: Some(*key),
+        biome_at: None,
     };
-    generate_structure_position_checked(*key, structure, context, |start_pos| {
+    generate_structure_position_checked(*key, structure, context).filter(|pos| {
+        let start_pos = pos.start_pos;
         let biome_y = biome_coords::from_block(start_pos.0.y);
         let biome_height = (chunk.height() >> 2) as i32;
         let biome_bottom = biome_coords::from_block(chunk.bottom_y() as i32);
@@ -265,12 +254,30 @@ pub fn lazily_generate_structure(
         }
     }
 
-    generate_structure_position_checked(*key, structure, context, |start_pos| {
-        let biome_x = biome_coords::from_block(start_pos.0.x);
-        let biome_y = biome_coords::from_block(start_pos.0.y);
-        let biome_z = biome_coords::from_block(start_pos.0.z);
-
-        let biome = biome_supplier.biome(biome_x, biome_y, biome_z, multi_noise_sampler);
-        biomes.contains(&(biome.id as u16))
+    let mut biome_at = |x: i32, y: i32, z: i32| {
+        biome_supplier.biome(
+            biome_coords::from_block(x),
+            biome_coords::from_block(y),
+            biome_coords::from_block(z),
+            multi_noise_sampler,
+        )
+    };
+    let context = StructureGeneratorContext {
+        seed: context.seed,
+        chunk_x: context.chunk_x,
+        chunk_z: context.chunk_z,
+        random: context.random,
+        sea_level: context.sea_level,
+        min_y: context.min_y,
+        height: context.height,
+        height_sampler: context
+            .height_sampler
+            .map(|sampler| sampler as &mut dyn HeightSampler),
+        structure_key: context.structure_key,
+        biome_at: Some(&mut biome_at),
+    };
+    generate_structure_position_checked(*key, structure, context).filter(|pos| {
+        let start_pos = pos.start_pos;
+        biomes.contains(&(biome_at(start_pos.0.x, start_pos.0.y, start_pos.0.z).id as u16))
     })
 }

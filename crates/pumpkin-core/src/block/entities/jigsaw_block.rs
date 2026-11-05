@@ -103,6 +103,7 @@ impl JigsawBlockEntity {
                 height: world.dimension.height as u16,
                 height_sampler: None,
                 structure_key: None,
+                biome_at: None,
             };
 
             JigsawPlacement::add_pieces(

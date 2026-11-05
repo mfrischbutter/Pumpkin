@@ -1257,6 +1257,7 @@ mod tests {
             height: 384,
             height_sampler: None,
             structure_key: Some(pumpkin_data::structures::StructureKeys::AncientCity),
+            biome_at: None,
         };
 
         let position = generator
@@ -1369,6 +1370,7 @@ mod tests {
             height: 384,
             height_sampler: Some(&mut height_sampler),
             structure_key: Some(pumpkin_data::structures::StructureKeys::PillagerOutpost),
+            biome_at: None,
         };
 
         let position = generator

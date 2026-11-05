@@ -108,6 +108,7 @@ pub fn structure_references(
                             height,
                             height_sampler: Some(&mut height_sampler),
                             structure_key: Some(entry.structure),
+                            biome_at: None,
                         };
                         lazily_generate_structure(
                             &entry.structure,
@@ -414,6 +415,7 @@ pub fn structure_start(
                 height: shape.height.min(dimension.height as u16),
                 height_sampler: Some(height_sampler),
                 structure_key: Some(entry.structure),
+                biome_at: None,
             };
             let mut sampler = MultiNoiseSampler::generate(&generator.base_router.multi_noise);
             lazily_generate_structure(

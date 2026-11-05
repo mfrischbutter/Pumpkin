@@ -548,6 +548,7 @@ mod tests {
             height: 384,
             height_sampler: Some(&mut height_sampler),
             structure_key: None,
+            biome_at: None,
         };
 
         let position = OceanMonumentGenerator
