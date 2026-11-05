@@ -453,9 +453,6 @@ impl TreeFeature {
         let clipped_tree_height = self.get_max_free_tree_height(height, chunk, trunk_start);
         let meets_clipped_threshold =
             clipped_height.is_some_and(|min_clipped| clipped_tree_height >= min_clipped as i32);
-        if pos.0.x == -270 && pos.0.z == -396 {
-            return (vec![], vec![], vec![]);
-        }
         if clipped_tree_height < height as i32 && !meets_clipped_threshold {
             return (vec![], vec![], vec![]);
         }
