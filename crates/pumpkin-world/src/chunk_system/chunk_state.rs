@@ -3,6 +3,7 @@ use crate::chunk::{
     palette::{BiomePalette, BlockPalette},
 };
 use crate::generation::biome_coords;
+use crate::generation::structure::references::reference_map;
 use crate::tick::scheduler::ChunkTickScheduler;
 use pumpkin_config::lighting::LightingEngineConfig;
 use pumpkin_data::BlockStateId;
@@ -293,6 +294,7 @@ impl Chunk {
                 inhabited_time: AtomicU64::new(0),
                 custom_data: Mutex::new(NbtCompound::new()),
                 post_processing: Mutex::default(),
+                structure_references: Mutex::default(),
             })),
         ) {
             Self::Proto(proto) => proto,
@@ -325,6 +327,14 @@ impl Chunk {
             }
         }
 
+        let structure_references = reference_map(
+            &proto_chunk
+                .structure_references
+                .iter()
+                .map(|(key, start_chunk, _)| (*key, *start_chunk))
+                .collect::<Vec<_>>(),
+        );
+
         let chunk = ChunkData {
             light_engine: Mutex::new(light_data),
             light_populated: AtomicBool::new(is_lit),
@@ -341,6 +351,7 @@ impl Chunk {
             inhabited_time: AtomicU64::new(0),
             custom_data: Mutex::new(NbtCompound::new()),
             post_processing: Mutex::new(proto_chunk.post_processing),
+            structure_references: Mutex::new(structure_references),
         };
 
         *self = Self::Level(Arc::new(chunk));

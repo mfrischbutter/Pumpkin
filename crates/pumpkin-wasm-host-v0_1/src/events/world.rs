@@ -118,6 +118,7 @@ impl ToFromWasmEvent for ChunkSave {
                     inhabited_time: std::sync::atomic::AtomicU64::new(0),
                     custom_data: std::sync::Mutex::new(pumpkin_nbt::compound::NbtCompound::new()),
                     post_processing: std::sync::Mutex::default(),
+                    structure_references: std::sync::Mutex::default(),
                 };
                 Self {
                     world,
@@ -168,6 +169,7 @@ impl ToFromWasmEvent for ChunkSend {
                     inhabited_time: std::sync::atomic::AtomicU64::new(0),
                     custom_data: std::sync::Mutex::new(pumpkin_nbt::compound::NbtCompound::new()),
                     post_processing: std::sync::Mutex::default(),
+                    structure_references: std::sync::Mutex::default(),
                 };
                 Self {
                     world,

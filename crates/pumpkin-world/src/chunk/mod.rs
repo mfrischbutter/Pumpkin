@@ -87,7 +87,16 @@ pub struct ChunkData {
     /// Blocks generation marked for post-processing, per section from the bottom, packed like
     /// vanilla (`x | y << 4 | z << 8` within the section); run when the chunk starts ticking.
     pub post_processing: std::sync::Mutex<Vec<Vec<u16>>>,
+    /// Vanilla's `structures.References`: per structure id, the packed start chunks of the
+    /// structures whose bounding box reaches into this chunk. Saved so chunks carry the same
+    /// structure data as vanilla's; Pumpkin recomputes structures from placement and does not
+    /// read it.
+    pub structure_references: std::sync::Mutex<StructureReferenceMap>,
 }
+
+/// Structure references of a chunk: full structure id (`minecraft:village_plains`) to the
+/// start chunks, packed like vanilla `ChunkPos.pack`, in vanilla's order.
+pub type StructureReferenceMap = std::collections::BTreeMap<String, Vec<i64>>;
 
 pub struct ChunkEntityData {
     /// Chunk X
@@ -775,6 +784,7 @@ impl ChunkData {
             inhabited_time: std::sync::atomic::AtomicU64::new(0),
             custom_data: std::sync::Mutex::new(NbtCompound::new()),
             post_processing: std::sync::Mutex::default(),
+            structure_references: std::sync::Mutex::default(),
         }
     }
 

@@ -4,6 +4,7 @@
 //! them at its `structure_references` stage; a loaded chunk recomputes them from the
 //! placement when natural spawning asks which structure a position lies in.
 
+use std::collections::BTreeMap;
 use std::sync::{Arc, Mutex};
 
 use pumpkin_data::structures::{
@@ -13,6 +14,7 @@ use pumpkin_util::math::floor_div;
 use pumpkin_util::random::{RandomImpl, get_large_feature_seed, legacy_rand::LegacyRand};
 
 use crate::biome::BiomeSupplier;
+use crate::chunk::StructureReferenceMap;
 use crate::generation::blender::{Blender, BlenderImpl};
 use crate::generation::generator::VanillaGenerator;
 use crate::generation::noise::router::multi_noise_sampler::MultiNoiseSampler;
@@ -167,6 +169,33 @@ pub fn vanilla_reference_order(start_chunks: &[(i32, i32)]) -> Vec<usize> {
             start_chunks
                 .iter()
                 .position(|&chunk| pack_chunk_pos(chunk) == key)
+        })
+        .collect()
+}
+
+/// The references a chunk saves, vanilla's `structures.References`.
+///
+/// Per full structure id, the distinct start chunks of `references` (key, start chunk x, z)
+/// in [`vanilla_reference_order`], packed like `ChunkPos.pack`.
+#[must_use]
+pub fn reference_map(references: &[(StructureKeys, (i32, i32))]) -> StructureReferenceMap {
+    let mut start_chunks: BTreeMap<String, Vec<(i32, i32)>> = BTreeMap::new();
+    for &(key, start_chunk) in references {
+        let chunks = start_chunks
+            .entry(format!("minecraft:{}", key.to_name()))
+            .or_default();
+        if !chunks.contains(&start_chunk) {
+            chunks.push(start_chunk);
+        }
+    }
+    start_chunks
+        .into_iter()
+        .map(|(id, chunks)| {
+            let packed = vanilla_reference_order(&chunks)
+                .into_iter()
+                .map(|index| pack_chunk_pos(chunks[index]) as i64)
+                .collect();
+            (id, packed)
         })
         .collect()
 }
@@ -451,7 +480,8 @@ pub fn claiming_structure_start(
 
 #[cfg(test)]
 mod tests {
-    use super::vanilla_reference_order;
+    use super::{reference_map, vanilla_reference_order};
+    use pumpkin_data::structures::StructureKeys;
 
     /// The start chunks in the order `vanilla_reference_order` visits them.
     fn ordered(start_chunks: &[(i32, i32)]) -> Vec<(i32, i32)> {
@@ -496,5 +526,45 @@ mod tests {
             ordered(&[(4, -1), (0, 0), (-3, 2)]),
             [(0, 0), (4, -1), (-3, 2)]
         );
+    }
+
+    #[test]
+    fn reference_map_packs_like_chunk_pos_pack() {
+        let map = reference_map(&[(StructureKeys::Mineshaft, (1, -1))]);
+        assert_eq!(map["minecraft:mineshaft"], [-4_294_967_295]);
+        assert_eq!(-4_294_967_295, 0xFFFF_FFFF_0000_0001u64 as i64);
+
+        let map = reference_map(&[(StructureKeys::Mineshaft, (-3, 2))]);
+        let packed = (2i64 << 32) | i64::from(-3i32 as u32);
+        assert_eq!(packed, 12_884_901_885);
+        assert_eq!(map["minecraft:mineshaft"], [packed]);
+    }
+
+    #[test]
+    fn reference_map_collapses_duplicates_in_vanilla_order() {
+        let map = reference_map(&[
+            (StructureKeys::Mineshaft, (4, -1)),
+            (StructureKeys::Mineshaft, (0, 0)),
+            (StructureKeys::Mineshaft, (4, -1)),
+            (StructureKeys::Mineshaft, (-3, 2)),
+        ]);
+        let pack = |(x, z): (i32, i32)| i64::from(x as u32) | (i64::from(z) << 32);
+        assert_eq!(
+            map["minecraft:mineshaft"],
+            [pack((0, 0)), pack((4, -1)), pack((-3, 2))]
+        );
+    }
+
+    #[test]
+    fn reference_map_keys_each_structure_with_its_namespace() {
+        let map = reference_map(&[
+            (StructureKeys::Mineshaft, (0, 0)),
+            (StructureKeys::VillagePlains, (1, 1)),
+        ]);
+        assert_eq!(
+            map.keys().map(String::as_str).collect::<Vec<_>>(),
+            ["minecraft:mineshaft", "minecraft:village_plains"]
+        );
+        assert!(reference_map(&[]).is_empty());
     }
 }

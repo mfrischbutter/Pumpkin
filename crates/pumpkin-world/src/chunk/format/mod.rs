@@ -29,6 +29,7 @@ use pumpkin_util::math::vector2::Vector2;
 
 use super::{
     ChunkData, ChunkHeightmaps, ChunkLight, ChunkParsingError, ChunkSections,
+    StructureReferenceMap,
     palette::{BiomePalette, BlockPalette},
 };
 pub mod anvil;
@@ -265,6 +266,142 @@ fn read_pump_post_processing(
         post_processing.push((0..count).map(|_| buf.get_u16()).collect());
     }
     Ok(post_processing)
+}
+
+/// How far (chessboard distance, in chunks) a referenced start chunk may lie from the chunk;
+/// vanilla drops farther ones when it reads a chunk.
+const MAX_REFERENCE_DISTANCE: i64 = 8;
+
+/// Whether the packed start chunk `packed` (`ChunkPos.pack`) lies within
+/// [`MAX_REFERENCE_DISTANCE`] of the chunk (`chunk_x`, `chunk_z`).
+fn reference_in_range(packed: i64, chunk_x: i32, chunk_z: i32) -> bool {
+    let start_x = i64::from(packed as i32);
+    let start_z = i64::from((packed >> 32) as i32);
+    (start_x - i64::from(chunk_x)).abs() <= MAX_REFERENCE_DISTANCE
+        && (start_z - i64::from(chunk_z)).abs() <= MAX_REFERENCE_DISTANCE
+}
+
+/// Whether `id` parses as a vanilla `Identifier` (`[namespace:]path`).
+fn is_valid_identifier(id: &str) -> bool {
+    let (namespace, path) = id.split_once(':').unwrap_or(("", id));
+    namespace
+        .bytes()
+        .all(|b| matches!(b, b'a'..=b'z' | b'0'..=b'9' | b'_' | b'.' | b'-'))
+        && path
+            .bytes()
+            .all(|b| matches!(b, b'a'..=b'z' | b'0'..=b'9' | b'_' | b'.' | b'-' | b'/'))
+}
+
+/// Vanilla's `structures.References`: per structure id the packed start chunks; ids that do
+/// not parse and start chunks more than [`MAX_REFERENCE_DISTANCE`] away are dropped.
+fn read_structure_references(
+    root_tag: &NbtCompound,
+    chunk_x: i32,
+    chunk_z: i32,
+) -> StructureReferenceMap {
+    let Some(references) = root_tag
+        .get_compound("structures")
+        .and_then(|structures| structures.get_compound("References"))
+    else {
+        return StructureReferenceMap::new();
+    };
+    references
+        .child_tags
+        .iter()
+        .filter(|(id, _)| is_valid_identifier(id))
+        .filter_map(|(id, tag)| match tag {
+            pumpkin_nbt::tag::NbtTag::LongArray(start_chunks) => {
+                let start_chunks: Vec<i64> = start_chunks
+                    .iter()
+                    .copied()
+                    .filter(|&packed| reference_in_range(packed, chunk_x, chunk_z))
+                    .collect();
+                (!start_chunks.is_empty()).then(|| (id.to_string(), start_chunks))
+            }
+            _ => None,
+        })
+        .collect()
+}
+
+/// Vanilla's `structures` compound: `starts` stays empty (Pumpkin does not write vanilla's
+/// structure piece data), `References` holds every non-empty list of start chunks.
+fn write_structure_references(references: &StructureReferenceMap) -> NbtCompound {
+    let mut references_compound = NbtCompound::new();
+    for (id, start_chunks) in references {
+        if !start_chunks.is_empty() {
+            references_compound.put(
+                id,
+                pumpkin_nbt::tag::NbtTag::LongArray(start_chunks.clone()),
+            );
+        }
+    }
+    let mut structures = NbtCompound::new();
+    structures.put_compound("starts", NbtCompound::new());
+    structures.put_compound("References", references_compound);
+    structures
+}
+
+/// The structure reference block of a pump chunk: id count, then per id its length, bytes,
+/// start chunk count and packed start chunks; every length bounded before it is read.
+fn read_pump_structure_references(
+    buf: &mut &[u8],
+    chunk_x: i32,
+    chunk_z: i32,
+) -> Result<StructureReferenceMap, ChunkParsingError> {
+    const MAX_IDS: usize = 64;
+    const MAX_ID_LEN: usize = 256;
+    // A chunk can reference at most 17 x 17 start chunks of one structure.
+    const MAX_START_CHUNKS: usize = 289;
+    let eof = || {
+        ChunkParsingError::ErrorDeserializingChunk(
+            "Unexpected EOF reading structure references".into(),
+        )
+    };
+    let invalid = |what: &str| {
+        ChunkParsingError::ErrorDeserializingChunk(format!("Invalid structure reference {what}"))
+    };
+    if buf.remaining() < 4 {
+        return Err(eof());
+    }
+    let ids = buf.get_u32() as usize;
+    if ids > MAX_IDS {
+        return Err(invalid("id count"));
+    }
+    let mut references = StructureReferenceMap::new();
+    for _ in 0..ids {
+        if buf.remaining() < 2 {
+            return Err(eof());
+        }
+        let id_len = buf.get_u16() as usize;
+        if id_len > MAX_ID_LEN {
+            return Err(invalid("id length"));
+        }
+        if buf.remaining() < id_len {
+            return Err(eof());
+        }
+        let id = std::str::from_utf8(&buf[..id_len])
+            .map_err(|_| invalid("id"))?
+            .to_string();
+        buf.advance(id_len);
+        if buf.remaining() < 4 {
+            return Err(eof());
+        }
+        let count = buf.get_u32() as usize;
+        if count > MAX_START_CHUNKS {
+            return Err(invalid("start chunk count"));
+        }
+        if buf.remaining() < count * 8 {
+            return Err(eof());
+        }
+        let start_chunks: Vec<i64> = (0..count)
+            .map(|_| buf.get_i64())
+            .filter(|&packed| reference_in_range(packed, chunk_x, chunk_z))
+            .collect();
+        if is_valid_identifier(&id) && !start_chunks.is_empty() {
+            references.insert(id, start_chunks);
+        }
+    }
+    Ok(references)
 }
 
 fn parse_scheduled_tick<T>(nbt: &pumpkin_nbt::compound::NbtCompound) -> Option<ScheduledTick<T>>
@@ -512,6 +649,7 @@ impl ChunkData {
         }
 
         let post_processing = read_post_processing(&root_tag);
+        let structure_references = read_structure_references(&root_tag, position.x, position.y);
 
         let mut block_entities = FxHashMap::default();
         if let Some(list) = root_tag.get_list("block_entities") {
@@ -567,6 +705,7 @@ impl ChunkData {
             inhabited_time: AtomicU64::new(root_tag.get_long("InhabitedTime").unwrap_or(0) as u64),
             custom_data: std::sync::Mutex::new(custom_data),
             post_processing: std::sync::Mutex::new(post_processing),
+            structure_references: std::sync::Mutex::new(structure_references),
         })
     }
 
@@ -760,6 +899,15 @@ impl ChunkData {
         if let Some(post_processing) = post_processing {
             root_compound.put_list("PostProcessing", post_processing);
         }
+        root_compound.put_compound(
+            "structures",
+            write_structure_references(
+                &self
+                    .structure_references
+                    .lock()
+                    .unwrap_or_else(std::sync::PoisonError::into_inner),
+            ),
+        );
 
         let mut block_entities_list = Vec::new();
         for entity_comp in block_entities_nbt {
@@ -856,6 +1004,18 @@ impl ChunkData {
         let has_post_processing = post_processing.iter().any(|offsets| !offsets.is_empty());
         if has_post_processing {
             flags |= 1 << 5;
+        }
+        let structure_references: Vec<(String, Vec<i64>)> = self
+            .structure_references
+            .lock()
+            .unwrap_or_else(std::sync::PoisonError::into_inner)
+            .iter()
+            .filter(|(_, start_chunks)| !start_chunks.is_empty())
+            .map(|(id, start_chunks)| (id.clone(), start_chunks.clone()))
+            .collect();
+        let has_structure_references = !structure_references.is_empty();
+        if has_structure_references {
+            flags |= 1 << 6;
         }
 
         let status_u8 = match self.status {
@@ -962,6 +1122,18 @@ impl ChunkData {
                 out.put_u32(offsets.len() as u32);
                 for &packed in offsets {
                     out.put_u16(packed);
+                }
+            }
+        }
+
+        if has_structure_references {
+            out.put_u32(structure_references.len() as u32);
+            for (id, start_chunks) in &structure_references {
+                out.put_u16(id.len() as u16);
+                out.extend_from_slice(id.as_bytes());
+                out.put_u32(start_chunks.len() as u32);
+                for &packed in start_chunks {
+                    out.put_i64(packed);
                 }
             }
         }
@@ -1244,6 +1416,11 @@ impl ChunkData {
         } else {
             Vec::new()
         };
+        let structure_references = if (flags & (1 << 6)) != 0 {
+            read_pump_structure_references(&mut buf, position.x, position.y)?
+        } else {
+            StructureReferenceMap::new()
+        };
 
         Ok(Self {
             section,
@@ -1261,6 +1438,7 @@ impl ChunkData {
             inhabited_time: AtomicU64::new(inhabited_time),
             custom_data: std::sync::Mutex::new(custom_data),
             post_processing: std::sync::Mutex::new(post_processing),
+            structure_references: std::sync::Mutex::new(structure_references),
         })
     }
 
@@ -1802,5 +1980,118 @@ mod tests {
                 .unwrap()
                 .id
         );
+    }
+
+    /// `ChunkPos.pack` of the start chunk (`x`, `z`).
+    fn pack(x: i32, z: i32) -> i64 {
+        i64::from(x as u32) | (i64::from(z) << 32)
+    }
+
+    fn chunk_with_references(x: i32, z: i32) -> crate::chunk::ChunkData {
+        let mut references = crate::chunk::StructureReferenceMap::new();
+        references.insert(
+            "minecraft:mineshaft".to_string(),
+            vec![pack(x, z), pack(x - 3, z + 2)],
+        );
+        references.insert(
+            "minecraft:village_plains".to_string(),
+            vec![pack(x + 8, z - 8)],
+        );
+        let chunk = crate::chunk::ChunkData::empty(x, z);
+        *chunk.structure_references.lock().unwrap() = references;
+        chunk
+    }
+
+    fn read_root(bytes: &[u8]) -> NbtCompound {
+        let mut cursor = std::io::Cursor::new(bytes);
+        let mut reader = pumpkin_nbt::deserializer::NbtReadHelperJava::new(&mut cursor);
+        pumpkin_nbt::Nbt::read(&mut reader).unwrap().root_tag
+    }
+
+    #[test]
+    fn nbt_round_trip_keeps_structure_references() {
+        use crate::chunk::ChunkData;
+        use pumpkin_util::math::vector2::Vector2;
+
+        let chunk = chunk_with_references(2, -5);
+        let expected = chunk.structure_references.lock().unwrap().clone();
+        let bytes = chunk.internal_to_bytes();
+
+        let root = read_root(&bytes);
+        let structures = root.get_compound("structures").expect("structures written");
+        assert!(structures.get_compound("starts").unwrap().is_empty());
+        let references = structures.get_compound("References").unwrap();
+        assert_eq!(
+            references.get_long_array("minecraft:mineshaft"),
+            Some(&expected["minecraft:mineshaft"][..])
+        );
+        assert!(matches!(
+            references.get("minecraft:village_plains"),
+            Some(NbtTag::LongArray(_))
+        ));
+
+        let read = ChunkData::internal_from_bytes(&bytes, Vector2::new(2, -5)).unwrap();
+        assert_eq!(*read.structure_references.lock().unwrap(), expected);
+    }
+
+    #[test]
+    fn nbt_without_references_writes_empty_structures() {
+        let bytes = crate::chunk::ChunkData::empty(0, 0).internal_to_bytes();
+        let root = read_root(&bytes);
+        let structures = root.get_compound("structures").expect("structures written");
+        assert!(structures.get_compound("starts").unwrap().is_empty());
+        assert!(structures.get_compound("References").unwrap().is_empty());
+    }
+
+    #[test]
+    fn reading_drops_references_farther_than_eight_chunks() {
+        let mut references = NbtCompound::new();
+        references.put(
+            "minecraft:mineshaft",
+            NbtTag::LongArray(vec![pack(8, -8), pack(9, 0), pack(0, -9), pack(-8, 8)]),
+        );
+        references.put("minecraft:igloo", NbtTag::LongArray(vec![pack(20, 0)]));
+        references.put("Not An Id", NbtTag::LongArray(vec![pack(0, 0)]));
+        references.put("cubeattack:camp", NbtTag::LongArray(vec![pack(1, 1)]));
+        let mut structures = NbtCompound::new();
+        structures.put_compound("References", references);
+        let mut root = NbtCompound::new();
+        root.put_compound("structures", structures);
+
+        let read = read_structure_references(&root, 0, 0);
+        assert_eq!(
+            read.keys().map(String::as_str).collect::<Vec<_>>(),
+            ["cubeattack:camp", "minecraft:mineshaft"]
+        );
+        assert_eq!(read["minecraft:mineshaft"], [pack(8, -8), pack(-8, 8)]);
+        assert!(read_structure_references(&NbtCompound::new(), 0, 0).is_empty());
+    }
+
+    #[test]
+    fn pump_round_trip_keeps_structure_references() {
+        use crate::chunk::ChunkData;
+        use pumpkin_util::math::vector2::Vector2;
+
+        let chunk = chunk_with_references(-7, 3);
+        let expected = chunk.structure_references.lock().unwrap().clone();
+        let bytes = chunk.internal_to_pump_bytes();
+        let read = ChunkData::internal_from_pump_bytes(&bytes, Vector2::new(-7, 3)).unwrap();
+        assert_eq!(*read.structure_references.lock().unwrap(), expected);
+    }
+
+    #[test]
+    fn pump_chunk_without_references_leaves_flag_bit_six_clear() {
+        use crate::chunk::ChunkData;
+        use pumpkin_util::math::vector2::Vector2;
+
+        let bytes = ChunkData::empty(0, 0).internal_to_pump_bytes();
+        // Magic, version, data version, x, z, min y, status, then the flags.
+        let flags = bytes[4 + 1 + 4 + 4 + 4 + 4 + 1];
+        assert_eq!(flags & (1 << 6), 0);
+        let read = ChunkData::internal_from_pump_bytes(&bytes, Vector2::new(0, 0)).unwrap();
+        assert!(read.structure_references.lock().unwrap().is_empty());
+
+        let bytes = chunk_with_references(0, 0).internal_to_pump_bytes();
+        assert_ne!(bytes[4 + 1 + 4 + 4 + 4 + 4 + 1] & (1 << 6), 0);
     }
 }
