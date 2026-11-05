@@ -10,7 +10,7 @@ use pumpkin_data::{
     },
 };
 use pumpkin_util::{
-    BlockDirection, HeightMap,
+    BlockDirection,
     math::{block_box::BlockBox, position::BlockPos},
     random::{RandomGenerator, RandomImpl},
 };
@@ -21,6 +21,7 @@ use crate::{
         positions::chunk_pos::{start_block_x, start_block_z},
         structure::{
             piece::StructurePieceType,
+            shiftable_piece::{DEFAULT_H_POS, average_ground_height},
             structures::{
                 StructureGenerator, StructureGeneratorContext, StructurePiece, StructurePieceBase,
                 StructurePiecesCollector, StructurePosition, WorldPortalExt,
@@ -55,7 +56,7 @@ impl StructureGenerator for JungleTempleGenerator {
         let mut collector = StructurePiecesCollector::default();
         collector.add_piece(Box::new(JungleTemplePiece {
             piece,
-            height_adjusted: false,
+            height_position: DEFAULT_H_POS,
             placed_main_chest: false,
             placed_hidden_chest: false,
             placed_trap_1: false,
@@ -71,7 +72,8 @@ impl StructureGenerator for JungleTempleGenerator {
 pub struct JungleTemplePiece {
     // Composition: Rust uses a base struct to mimic the ScatteredFeaturePiece inheritance
     piece: StructurePiece,
-    height_adjusted: bool,
+    /// Vanilla's `heightPosition`: the average ground height once the piece was moved onto it.
+    height_position: i32,
     placed_main_chest: bool,
     placed_hidden_chest: bool,
     placed_trap_1: bool,
@@ -98,7 +100,7 @@ impl StructurePieceBase for JungleTemplePiece {
         _seed: i64,
         chunk_box: &BlockBox,
     ) {
-        if !self.adjust_height(chunk, random) {
+        if !self.adjust_height(chunk, chunk_box) {
             return;
         }
         let bb = chunk_box;
@@ -767,29 +769,21 @@ const fn set_side_dir(props: &mut RedstoneWireLikeProperties, facing: Horizontal
     }
 }
 impl JungleTemplePiece {
-    fn adjust_height(&mut self, chunk: &ProtoChunk, random: &mut RandomGenerator) -> bool {
-        if self.height_adjusted {
+    /// Vanilla's `updateAverageGroundHeight(level, chunkBB, 0)`, which draws no random number.
+    fn adjust_height(&mut self, chunk: &ProtoChunk, chunk_box: &BlockBox) -> bool {
+        if self.height_position >= 0 {
             return true;
         }
 
-        let ground_offset = -(random.next_bounded_i32(3));
-        let bb = self.piece.bounding_box;
-        let mut lowest = i32::MAX;
-
-        for z in bb.min.z..=bb.max.z {
-            for x in bb.min.x..=bb.max.x {
-                let y = chunk.get_top_y(&HeightMap::MotionBlockingNoLeaves, x, z);
-                lowest = lowest.min(y);
-            }
-        }
-
-        if lowest == i32::MAX {
+        let Some(height_position) =
+            average_ground_height(chunk, &self.piece.bounding_box, chunk_box)
+        else {
             return false;
-        }
+        };
+        self.height_position = height_position;
 
-        let shift_y = lowest - self.piece.bounding_box.min.y + ground_offset;
+        let shift_y = self.height_position - self.piece.bounding_box.min.y;
         self.piece.bounding_box.move_pos(0, shift_y, 0);
-        self.height_adjusted = true;
         true
     }
     // This allows you to call MossStoneSelector::next(random) SS is stoneselector

@@ -139,7 +139,7 @@ impl StructurePieceBase for SwampHutPiece {
     ) {
         if !self
             .shiftable_structure_piece
-            .adjust_to_average_height(chunk)
+            .adjust_to_average_height(chunk, chunk_box, 0)
         {
             return;
         }
