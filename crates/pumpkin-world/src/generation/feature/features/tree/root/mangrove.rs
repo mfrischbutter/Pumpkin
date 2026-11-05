@@ -1,4 +1,8 @@
-use pumpkin_data::{BlockDirection, BlockState, block_properties::HorizontalFacing, fluid::Fluid};
+use pumpkin_data::{
+    BlockDirection, BlockState,
+    block_properties::HorizontalFacing,
+    tag::{self, Taggable},
+};
 use pumpkin_util::{
     math::{int_provider::IntProvider, position::BlockPos},
     random::{RandomGenerator, RandomImpl},
@@ -189,18 +193,45 @@ impl MangroveRootPlacer {
         }
     }
 
+    /// Vanilla's `RootPlacer.getPotentiallyWaterloggedState`: a state with the property is
+    /// waterlogged exactly where the fluid is in the `water` tag, flowing water included.
     fn apply_waterlogging<T: GenerationCache>(
         chunk: &T,
         pos: BlockPos,
         state: &'static BlockState,
     ) -> &'static BlockState {
-        if state.is_waterlogged() {
-            return state;
-        }
         let (fluid, _) = GenerationCache::get_fluid_and_fluid_state(chunk, &pos.0);
-        if fluid != Fluid::WATER {
-            return state;
-        }
-        state.set_waterlogged(true).unwrap_or(state)
+        let waterlogged = fluid.has_tag(&tag::Fluid::MINECRAFT_WATER);
+        state.set_waterlogged(waterlogged).unwrap_or(state)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use pumpkin_data::Block;
+    use pumpkin_data::block_properties::WaterLikeProperties;
+
+    use super::*;
+    use crate::generation::feature::features::sculk::test_utils::{empty_chunk, set};
+
+    #[test]
+    fn roots_in_flowing_water_are_waterlogged() {
+        let mut chunk = empty_chunk();
+        let pos = BlockPos::new(3, 64, 3);
+        let mut flowing = WaterLikeProperties::default(&Block::WATER);
+        flowing.level = 3;
+        set(
+            &mut chunk,
+            pos,
+            BlockState::from_id(flowing.to_state_id(&Block::WATER)),
+        );
+
+        let roots = Block::MANGROVE_ROOTS.default_state;
+        assert!(
+            !roots.is_waterlogged(),
+            "test setup is wrong: dry roots expected"
+        );
+        let placed = MangroveRootPlacer::apply_waterlogging(&chunk, pos, roots);
+        assert!(placed.is_waterlogged());
     }
 }
