@@ -165,6 +165,43 @@ fn structure_references_are_rebuilt_when_resuming_generation() {
 }
 
 #[test]
+fn structure_references_survive_resuming_after_features() {
+    use crate::chunk_system::chunk_state::Chunk;
+    use pumpkin_config::lighting::LightingEngineConfig;
+
+    let seed = Seed(1_782_124_772_053_846_960);
+    let world_gen = get_world_gen(seed, Dimension::OVERWORLD, false, Vec::new(), String::new());
+    let WorldGenerator::Noise(generator) = &*world_gen else {
+        unreachable!()
+    };
+
+    // This chunk contains the far edge of a monument starting at (-553, 173).
+    let mut proto = ProtoChunk::new(-553, 174, &world_gen);
+    proto.step_to_biomes(generator);
+    proto.set_structure_starts(generator);
+    proto.set_structure_references(generator);
+    // Saved after its features: a resume does not recompute the references.
+    proto.stage = StagedChunkEnum::Features;
+
+    let mut staged = Chunk::Proto(Box::new(proto));
+    staged.upgrade_to_level_chunk(&Dimension::OVERWORLD, &LightingEngineConfig::Default);
+    let Chunk::Level(chunk_data) = staged else {
+        unreachable!()
+    };
+    let saved = chunk_data.structure_references.lock().unwrap().clone();
+    assert!(saved.contains_key("minecraft:monument"));
+
+    let resumed = ProtoChunk::from_chunk_data(&chunk_data, &world_gen);
+    assert_eq!(resumed.stage, StagedChunkEnum::Features);
+    let mut staged_again = Chunk::Proto(Box::new(resumed));
+    staged_again.upgrade_to_level_chunk(&Dimension::OVERWORLD, &LightingEngineConfig::Default);
+    let Chunk::Level(chunk_again) = staged_again else {
+        unreachable!()
+    };
+    assert_eq!(*chunk_again.structure_references.lock().unwrap(), saved);
+}
+
+#[test]
 fn block_entities_survive_chunk_data_resume() {
     use crate::chunk_system::chunk_state::Chunk;
     use pumpkin_config::lighting::LightingEngineConfig;

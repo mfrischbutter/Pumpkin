@@ -327,13 +327,23 @@ impl Chunk {
             }
         }
 
-        let structure_references = reference_map(
+        let mut structure_references = reference_map(
             &proto_chunk
                 .structure_references
                 .iter()
                 .map(|(key, start_chunk, _)| (*key, *start_chunk))
                 .collect::<Vec<_>>(),
         );
+        // Keep the references the chunk was saved with: a proto chunk resumed at or after
+        // its features has not recomputed them.
+        for (id, loaded) in proto_chunk.loaded_structure_references {
+            let starts = structure_references.entry(id).or_default();
+            for packed in loaded {
+                if !starts.contains(&packed) {
+                    starts.push(packed);
+                }
+            }
+        }
 
         let chunk = ChunkData {
             light_engine: Mutex::new(light_data),

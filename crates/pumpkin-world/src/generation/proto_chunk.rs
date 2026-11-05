@@ -32,7 +32,7 @@ use super::{
 use crate::biome::BiomeSupplier;
 use crate::chunk::format::LightContainer;
 use crate::chunk::palette::BlockPalette;
-use crate::chunk::{ChunkData, ChunkHeightmapType, ChunkLight};
+use crate::chunk::{ChunkData, ChunkHeightmapType, ChunkLight, StructureReferenceMap};
 use crate::chunk_system::{StagedChunkEnum, generation_cache::SurfaceBiomeNeighborhood};
 use crate::generation::height_limit::HeightLimitView;
 use crate::generation::noise::aquifer_sampler::{FluidLevel, FluidLevelSamplerImpl};
@@ -205,6 +205,9 @@ pub struct ProtoChunk {
     pub flat_motion_blocking_no_leaves_height_map: [i16; CHUNK_AREA],
     pub(crate) structure_starts: FxHashMap<StructureKeys, StructureInstance>,
     pub(crate) structure_references: Vec<StructureReference>,
+    /// The `References` this chunk was saved with: kept across a reload, since a chunk
+    /// resumed at or after its features does not recompute its references.
+    pub(crate) loaded_structure_references: StructureReferenceMap,
 
     height: u16,
     bottom_y: i8,
@@ -394,6 +397,7 @@ impl ProtoChunk {
             flat_motion_blocking_no_leaves_height_map: default_heightmap,
             structure_starts: FxHashMap::default(),
             structure_references: Vec::new(),
+            loaded_structure_references: StructureReferenceMap::new(),
             height,
             bottom_y,
             generation_height,
@@ -554,6 +558,11 @@ impl ProtoChunk {
 
         let saved_stage = StagedChunkEnum::from(chunk_data.status);
         proto_chunk.stage = saved_stage;
+        proto_chunk.loaded_structure_references = chunk_data
+            .structure_references
+            .lock()
+            .unwrap_or_else(std::sync::PoisonError::into_inner)
+            .clone();
         if let super::generator::WorldGenerator::Noise(generator) = generator
             && (StagedChunkEnum::StructureStart..StagedChunkEnum::Features).contains(&saved_stage)
         {
