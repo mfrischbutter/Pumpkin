@@ -81,7 +81,7 @@ fn build_configured_features()
     };
     use crate::generation::feature::placed_features::{
         BiomePlacementModifier, BlockFilterPlacementModifier, CountOnEveryLayerPlacementModifier,
-        CountPlacementModifier, EnvironmentScanPlacementModifier, Feature,
+        CountPlacementModifier, CuboidPlacementModifier, EnvironmentScanPlacementModifier, Feature,
         HeightRangePlacementModifier, HeightmapPlacementModifier, NoiseBasedCountPlacementModifier,
         NoiseThresholdCountPlacementModifier, OffsetPlacementModifier, PlacedFeature,
         PlacedFeatureWrapper, PlacementModifier, RandomChancePlacementModifier,
@@ -5108,7 +5108,22 @@ fn build_configured_features()
                             )),
                             z: IntProvider::Constant(0i32),
                         }),
-                        PlacementModifier::Biome(BiomePlacementModifier),
+                        PlacementModifier::Cuboid(CuboidPlacementModifier {
+                            xz_size: IntProvider::Object(NormalIntProvider::Uniform(
+                                UniformIntProvider {
+                                    min_inclusive: 3i32,
+                                    max_inclusive: 5i32,
+                                },
+                            )),
+                            y_size: IntProvider::Object(NormalIntProvider::Uniform(
+                                UniformIntProvider {
+                                    min_inclusive: 3i32,
+                                    max_inclusive: 5i32,
+                                },
+                            )),
+                            include_edges: false,
+                            include_interior: false,
+                        }),
                         PlacementModifier::RandomChance(RandomChancePlacementModifier {
                             chance: 0.9f32,
                         }),
@@ -5177,7 +5192,22 @@ fn build_configured_features()
                             )),
                             z: IntProvider::Constant(0i32),
                         }),
-                        PlacementModifier::Biome(BiomePlacementModifier),
+                        PlacementModifier::Cuboid(CuboidPlacementModifier {
+                            xz_size: IntProvider::Object(NormalIntProvider::Uniform(
+                                UniformIntProvider {
+                                    min_inclusive: 3i32,
+                                    max_inclusive: 5i32,
+                                },
+                            )),
+                            y_size: IntProvider::Object(NormalIntProvider::Uniform(
+                                UniformIntProvider {
+                                    min_inclusive: 3i32,
+                                    max_inclusive: 5i32,
+                                },
+                            )),
+                            include_edges: false,
+                            include_interior: false,
+                        }),
                         PlacementModifier::RandomChance(RandomChancePlacementModifier {
                             chance: 0.9f32,
                         }),
@@ -5246,7 +5276,22 @@ fn build_configured_features()
                             )),
                             z: IntProvider::Constant(0i32),
                         }),
-                        PlacementModifier::Biome(BiomePlacementModifier),
+                        PlacementModifier::Cuboid(CuboidPlacementModifier {
+                            xz_size: IntProvider::Object(NormalIntProvider::Uniform(
+                                UniformIntProvider {
+                                    min_inclusive: 3i32,
+                                    max_inclusive: 5i32,
+                                },
+                            )),
+                            y_size: IntProvider::Object(NormalIntProvider::Uniform(
+                                UniformIntProvider {
+                                    min_inclusive: 3i32,
+                                    max_inclusive: 5i32,
+                                },
+                            )),
+                            include_edges: false,
+                            include_interior: false,
+                        }),
                         PlacementModifier::RandomChance(RandomChancePlacementModifier {
                             chance: 0.9f32,
                         }),
@@ -5315,7 +5360,22 @@ fn build_configured_features()
                             )),
                             z: IntProvider::Constant(0i32),
                         }),
-                        PlacementModifier::Biome(BiomePlacementModifier),
+                        PlacementModifier::Cuboid(CuboidPlacementModifier {
+                            xz_size: IntProvider::Object(NormalIntProvider::Uniform(
+                                UniformIntProvider {
+                                    min_inclusive: 3i32,
+                                    max_inclusive: 5i32,
+                                },
+                            )),
+                            y_size: IntProvider::Object(NormalIntProvider::Uniform(
+                                UniformIntProvider {
+                                    min_inclusive: 3i32,
+                                    max_inclusive: 5i32,
+                                },
+                            )),
+                            include_edges: false,
+                            include_interior: false,
+                        }),
                         PlacementModifier::RandomChance(RandomChancePlacementModifier {
                             chance: 0.9f32,
                         }),
@@ -5384,7 +5444,22 @@ fn build_configured_features()
                             )),
                             z: IntProvider::Constant(0i32),
                         }),
-                        PlacementModifier::Biome(BiomePlacementModifier),
+                        PlacementModifier::Cuboid(CuboidPlacementModifier {
+                            xz_size: IntProvider::Object(NormalIntProvider::Uniform(
+                                UniformIntProvider {
+                                    min_inclusive: 3i32,
+                                    max_inclusive: 5i32,
+                                },
+                            )),
+                            y_size: IntProvider::Object(NormalIntProvider::Uniform(
+                                UniformIntProvider {
+                                    min_inclusive: 3i32,
+                                    max_inclusive: 5i32,
+                                },
+                            )),
+                            include_edges: false,
+                            include_interior: false,
+                        }),
                         PlacementModifier::RandomChance(RandomChancePlacementModifier {
                             chance: 0.9f32,
                         }),

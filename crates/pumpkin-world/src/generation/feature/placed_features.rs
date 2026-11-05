@@ -151,6 +151,7 @@ pub enum PlacementModifier {
     InSquare(SquarePlacementModifier),
     RandomOffset(RandomOffsetPlacementModifier),
     Offset(OffsetPlacementModifier),
+    Cuboid(CuboidPlacementModifier),
     FixedPlacement(Vec<BlockPos>),
     RandomlySelected(Vec<Self>),
 }
@@ -196,6 +197,7 @@ impl PlacementModifier {
             Self::InSquare(_) => SquarePlacementModifier::get_positions(random, pos),
             Self::RandomOffset(modifier) => modifier.get_positions(random, pos),
             Self::Offset(modifier) => modifier.get_positions(random, pos),
+            Self::Cuboid(modifier) => modifier.get_positions(random, pos),
             Self::FixedPlacement(positions) => Box::new(positions.clone().into_iter()),
             // Vanilla's `RandomlySelectedPlacement`: one of the placements, drawn before it runs.
             Self::RandomlySelected(placements) => {
@@ -313,6 +315,47 @@ impl RandomOffsetPlacementModifier {
         let y = pos.0.y + self.y_spread.get(random);
         let z = pos.0.z + self.xz_spread.get(random);
         Box::new(iter::once(BlockPos(Vector3::new(x, y, z))))
+    }
+}
+
+/// Vanilla's `CuboidPlacement`: every block of a box from the origin, its size drawn once per
+/// origin; without its edges or its inside when the placement leaves them out.
+pub struct CuboidPlacementModifier {
+    pub xz_size: IntProvider,
+    pub y_size: IntProvider,
+    pub include_edges: bool,
+    pub include_interior: bool,
+}
+
+impl CuboidPlacementModifier {
+    pub fn get_positions(
+        &self,
+        random: &mut RandomGenerator,
+        pos: BlockPos,
+    ) -> Box<dyn Iterator<Item = BlockPos>> {
+        let height = self.y_size.get(random);
+        let width = self.xz_size.get(random);
+        let length = self.xz_size.get(random);
+        let mut positions = Vec::new();
+        for x in 0..=width {
+            for y in 0..=height {
+                for z in 0..=length {
+                    // A block on two or three faces of the box is on an edge, one on none is
+                    // inside.
+                    let faces = u8::from(x == 0 || x == width)
+                        + u8::from(y == 0 || y == height)
+                        + u8::from(z == 0 || z == length);
+                    if (self.include_edges || faces < 2) && (self.include_interior || faces > 0) {
+                        positions.push(BlockPos(Vector3::new(
+                            pos.0.x + x,
+                            pos.0.y + y,
+                            pos.0.z + z,
+                        )));
+                    }
+                }
+            }
+        }
+        Box::new(positions.into_iter())
     }
 }
 
@@ -637,6 +680,39 @@ mod tests {
     use super::*;
     use crate::generation::feature::features::sculk::test_utils::{empty_region, set};
     use crate::generation::proto_chunk_test::stage_parity::TestBlockRegistry;
+
+    #[test]
+    fn cuboids_leave_out_edges_and_inside_like_vanilla() {
+        // A 4 by 3 by 4 box (sizes are the far corner's offsets): without edges and inside only
+        // the faces' middles stay.
+        let cuboid = CuboidPlacementModifier {
+            xz_size: IntProvider::Constant(3),
+            y_size: IntProvider::Constant(2),
+            include_edges: false,
+            include_interior: false,
+        };
+        let mut random = RandomGenerator::Xoroshiro(Xoroshiro::from_seed(5));
+        let origin = BlockPos::new(10, 60, 10);
+        let positions: Vec<BlockPos> = cuboid.get_positions(&mut random, origin).collect();
+        // Top and bottom: 2 by 2 each; four sides: 2 wide by 1 high each.
+        assert_eq!(positions.len(), 2 * 4 + 4 * 2);
+        for pos in &positions {
+            let (x, y, z) = (pos.0.x - 10, pos.0.y - 60, pos.0.z - 10);
+            let sides = [x == 0 || x == 3, y == 0 || y == 2, z == 0 || z == 3];
+            assert_eq!(
+                sides.iter().filter(|side| **side).count(),
+                1,
+                "{pos:?} lies on one face"
+            );
+        }
+
+        let full = CuboidPlacementModifier {
+            include_edges: true,
+            include_interior: true,
+            ..cuboid
+        };
+        assert_eq!(full.get_positions(&mut random, origin).count(), 4 * 3 * 4);
+    }
 
     #[test]
     fn desert_wells_stand_on_ground() {

@@ -155,7 +155,7 @@ pub fn build() -> TokenStream {
                 CountOnEveryLayerPlacementModifier, CountPlacementModifier,
                 EnvironmentScanPlacementModifier, HeightRangePlacementModifier,
                 HeightmapPlacementModifier, NoiseBasedCountPlacementModifier,
-                NoiseThresholdCountPlacementModifier, OffsetPlacementModifier,
+                NoiseThresholdCountPlacementModifier, OffsetPlacementModifier, CuboidPlacementModifier,
                 RandomChancePlacementModifier, RandomOffsetPlacementModifier,
                 RarityFilterPlacementModifier, SquarePlacementModifier,
                 SurfaceThresholdFilterPlacementModifier, SurfaceWaterDepthFilterPlacementModifier,
@@ -2341,6 +2341,16 @@ fn value_to_placement_modifier_cf(v: &Value) -> TokenStream {
             let steps = v["max_steps"].as_i64().unwrap_or(1) as i32;
             quote! { PlacementModifier::EnvironmentScan(EnvironmentScanPlacementModifier { direction_of_search: #dir, target_condition: #tc, allowed_search_condition: #asc, max_steps: #steps }) }
         }
-        _ => quote! { PlacementModifier::Biome(BiomePlacementModifier) },
+        "minecraft:cuboid" => {
+            let xz_size = value_to_int_provider(&v["xz_size"]);
+            let y_size = value_to_int_provider(&v["y_size"]);
+            let include_edges = v["include_edges"].as_bool().unwrap_or(true);
+            let include_interior = v["include_interior"].as_bool().unwrap_or(true);
+            quote! { PlacementModifier::Cuboid(CuboidPlacementModifier { xz_size: #xz_size, y_size: #y_size, include_edges: #include_edges, include_interior: #include_interior }) }
+        }
+        other => {
+            let msg = format!("unknown placement modifier: {other}");
+            quote! { compile_error!(#msg) }
+        }
     }
 }
