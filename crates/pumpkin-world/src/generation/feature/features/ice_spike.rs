@@ -1,19 +1,23 @@
-use pumpkin_data::{Block, BlockId, block_properties::is_air, tag};
+use pumpkin_data::{BlockState, block_properties::is_air};
 use pumpkin_util::{
     math::{position::BlockPos, vector3::Vector3},
     random::{RandomGenerator, RandomImpl},
 };
 
-use crate::generation::proto_chunk::GenerationCache;
+use crate::generation::{block_predicate::BlockPredicate, proto_chunk::GenerationCache};
+use crate::world::WorldPortalExt;
 
-pub struct IceSpikeFeature;
+pub struct IceSpikeFeature {
+    pub state: &'static BlockState,
+    pub can_place_on: BlockPredicate,
+    pub can_replace: BlockPredicate,
+}
 
 impl IceSpikeFeature {
     pub fn generate<T: GenerationCache>(
+        &self,
         chunk: &mut T,
-        _min_y: i8,
-        _height: u16,
-        _feature: pumpkin_data::placed_feature::PlacedFeature,
+        block_registry: &dyn WorldPortalExt,
         random: &mut RandomGenerator,
         pos: BlockPos,
     ) -> bool {
@@ -24,9 +28,10 @@ impl IceSpikeFeature {
             origin.y -= 1;
         }
 
-        // Only place on snow blocks
-        let block_id = GenerationCache::get_block_state(chunk, &origin).to_block_id();
-        if block_id != Block::SNOW_BLOCK.id {
+        if !self
+            .can_place_on
+            .test(block_registry, chunk, &BlockPos(origin))
+        {
             return false;
         }
 
@@ -49,45 +54,31 @@ impl IceSpikeFeature {
                 for zo in -new_width..=new_width {
                     let dz = zo.abs() as f32 - 0.25f32;
 
-                    let in_sphere = (xo == 0 && zo == 0) || (dx * dx + dz * dz <= scale * scale);
-                    let edge_ok = (xo != -new_width
-                        && xo != new_width
-                        && zo != -new_width
-                        && zo != new_width)
-                        || (random.next_f32() <= 0.75f32);
+                    // The edge draw happens only inside the circle, as in vanilla's `&&`.
+                    let in_circle = (xo == 0 && zo == 0) || (dx * dx + dz * dz <= scale * scale);
+                    let placed = in_circle
+                        && ((xo != -new_width
+                            && xo != new_width
+                            && zo != -new_width
+                            && zo != new_width)
+                            || (random.next_f32() <= 0.75f32));
 
-                    if in_sphere && edge_ok {
-                        // Place packed ice upward
+                    if placed {
+                        // Place upward
                         let place_pos = origin.add(&Vector3::new(xo, y_off, zo));
-                        let state_id = GenerationCache::get_block_state(chunk, &place_pos);
-                        let bid = state_id.to_block_id();
-                        if is_air(state_id)
-                            || bid.has_tag(tag::Block::MINECRAFT_DIRT)
-                            || bid == BlockId::SNOW_BLOCK
-                            || bid == BlockId::ICE
-                        {
-                            chunk.set_block_state(&place_pos, Block::PACKED_ICE.default_state);
-                        }
+                        self.place_if_replaceable(chunk, block_registry, place_pos);
 
                         // Mirror downward
                         if y_off != 0 && new_width > 1 {
                             let neg_pos = origin.add(&Vector3::new(xo, -y_off, zo));
-                            let state_id2 = GenerationCache::get_block_state(chunk, &neg_pos);
-                            let bid2 = state_id2.to_block_id();
-                            if is_air(state_id2)
-                                || bid2.has_tag(tag::Block::MINECRAFT_DIRT)
-                                || bid2 == BlockId::SNOW_BLOCK
-                                || bid2 == BlockId::ICE
-                            {
-                                chunk.set_block_state(&neg_pos, Block::PACKED_ICE.default_state);
-                            }
+                            self.place_if_replaceable(chunk, block_registry, neg_pos);
                         }
                     }
                 }
             }
         }
 
-        // Build packed-ice roots downward from the spike base
+        // Build roots downward from the spike base
         let pillar_width = (width - 1).clamp(0, 1);
 
         for xo in -pillar_width..=pillar_width {
@@ -102,17 +93,16 @@ impl IceSpikeFeature {
 
                 while ice_block.y > 50 {
                     let state_id = GenerationCache::get_block_state(chunk, &ice_block);
-                    let bid = state_id.to_block_id();
                     if !is_air(state_id)
-                        && !bid.has_tag(tag::Block::MINECRAFT_DIRT)
-                        && bid != BlockId::SNOW_BLOCK
-                        && bid != BlockId::ICE
-                        && bid != BlockId::PACKED_ICE
+                        && !self
+                            .can_replace
+                            .test(block_registry, chunk, &BlockPos(ice_block))
+                        && state_id != self.state.id
                     {
                         break;
                     }
 
-                    chunk.set_block_state(&ice_block, Block::PACKED_ICE.default_state);
+                    chunk.set_block_state(&ice_block, self.state);
                     ice_block.y -= 1;
                     run_length -= 1;
                     if run_length <= 0 {
@@ -124,5 +114,18 @@ impl IceSpikeFeature {
         }
 
         true
+    }
+    /// Vanilla's placement test: air, or a block `can_replace` accepts.
+    fn place_if_replaceable<T: GenerationCache>(
+        &self,
+        chunk: &mut T,
+        block_registry: &dyn WorldPortalExt,
+        pos: Vector3<i32>,
+    ) {
+        if is_air(GenerationCache::get_block_state(chunk, &pos))
+            || self.can_replace.test(block_registry, chunk, &BlockPos(pos))
+        {
+            chunk.set_block_state(&pos, self.state);
+        }
     }
 }

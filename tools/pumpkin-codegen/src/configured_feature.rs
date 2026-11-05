@@ -767,11 +767,17 @@ pub fn value_to_configured_feature(v: &Value) -> TokenStream {
         "minecraft:freeze_top_layer" => {
             quote! { ConfiguredFeature::FreezeTopLayer(crate::generation::feature::features::freeze_top_layer::FreezeTopLayerFeature {}) }
         }
-        "minecraft:ice_spike" => {
-            quote! { ConfiguredFeature::IceSpike(crate::generation::feature::features::ice_spike::IceSpikeFeature {}) }
-        }
-        "minecraft:spike" => {
-            quote! { ConfiguredFeature::IceSpike(crate::generation::feature::features::ice_spike::IceSpikeFeature {}) }
+        "minecraft:spike" | "minecraft:ice_spike" => {
+            let state = value_to_block_state(&config["state"]);
+            let can_place_on = value_to_block_predicate(&config["can_place_on"]);
+            let can_replace = value_to_block_predicate(&config["can_replace"]);
+            quote! {
+                ConfiguredFeature::IceSpike(crate::generation::feature::features::ice_spike::IceSpikeFeature {
+                    state: #state,
+                    can_place_on: #can_place_on,
+                    can_replace: #can_replace,
+                })
+            }
         }
         "minecraft:iceberg" => {
             let state = value_to_block_state_codec(&config["state"]);

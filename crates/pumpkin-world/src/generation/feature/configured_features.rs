@@ -427,9 +427,7 @@ impl ConfiguredFeature {
             Self::FreezeTopLayer(_feature) => {
                 FreezeTopLayerFeature::generate(chunk, min_y, height, feature_name, random, pos)
             }
-            Self::IceSpike(_feature) => {
-                IceSpikeFeature::generate(chunk, min_y, height, feature_name, random, pos)
-            }
+            Self::IceSpike(feature) => feature.generate(chunk, block_registry, random, pos),
             Self::Iceberg(feature) => {
                 feature.generate(chunk, min_y, height, feature_name, random, pos)
             }

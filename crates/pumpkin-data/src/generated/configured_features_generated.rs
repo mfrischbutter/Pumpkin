@@ -2639,7 +2639,17 @@ fn build_configured_features()
     map.insert(
         pumpkin_data::configured_feature::ConfiguredFeature::IceSpike,
         ConfiguredFeature::IceSpike(
-            crate::generation::feature::features::ice_spike::IceSpikeFeature {},
+            crate::generation::feature::features::ice_spike::IceSpikeFeature {
+                state: pumpkin_data::Block::PACKED_ICE.default_state,
+                can_place_on: BlockPredicate::MatchingBlocks(MatchingBlocksBlockPredicate {
+                    offset: OffsetBlocksBlockPredicate { offset: None },
+                    blocks: MatchingBlocksWrapper::Single("minecraft:snow_block".to_string()),
+                }),
+                can_replace: BlockPredicate::MatchingBlockTag(MatchingBlockTagPredicate {
+                    offset: OffsetBlocksBlockPredicate { offset: None },
+                    tag: pumpkin_data::tag::Block::MINECRAFT_ICE_SPIKE_REPLACEABLE,
+                }),
+            },
         ),
     );
     map.insert(
