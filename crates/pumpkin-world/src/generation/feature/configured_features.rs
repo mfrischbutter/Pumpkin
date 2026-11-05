@@ -289,7 +289,9 @@ impl ConfiguredFeature {
             Self::DesertWell(_feature) => {
                 DesertWellFeature::generate(chunk, min_y, height, feature_name, random, pos)
             }
-            Self::Fossil(feature) => feature.generate(chunk, min_y, height, random, pos),
+            Self::Fossil(feature) => {
+                feature.generate(chunk, block_registry, min_y, height, random, pos)
+            }
             Self::Bamboo(feature) => feature.generate(
                 chunk,
                 block_registry,
