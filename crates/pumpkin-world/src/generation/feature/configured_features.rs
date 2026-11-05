@@ -555,7 +555,8 @@ impl ConfiguredFeature {
                 feature.generate(chunk, block_registry, random, pos)
             }
             Self::Template(feature) => feature.generate(chunk, block_registry, random, pos),
-            Self::NoOp => false,
+            // Vanilla's `NoOpFeature.place` places nothing and returns true.
+            Self::NoOp => true,
         }
     }
 }
