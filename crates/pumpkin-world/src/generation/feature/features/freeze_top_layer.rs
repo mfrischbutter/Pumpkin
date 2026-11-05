@@ -3,6 +3,7 @@ use crate::lighting::engine::{BlockLightProvider, LightProvider};
 use pumpkin_data::block_properties::{
     BlockProperties, GrassBlockLikeProperties, SnowLikeProperties,
 };
+use pumpkin_data::chunk::Biome;
 use pumpkin_data::tag;
 use pumpkin_data::{Block, BlockId, BlockState, BlockStateId};
 use pumpkin_util::math::position::BlockPos;
@@ -35,10 +36,9 @@ impl FreezeTopLayerFeature {
                 let below = GenerationCache::get_block_state(chunk, &below_vec);
                 let below_block = below.to_block_id();
 
+                // Vanilla reads the biome at the top and freezes the block below it.
                 let biome = chunk.get_biome_for_terrain_gen(x, y, z);
-
-                // Freeze check
-                if biome.weather.base_temperature() <= 0.15 && below_block == BlockId::WATER {
+                if should_freeze(chunk, biome, &BlockPos(below_vec)) {
                     chunk.set_block_state(&below_vec, Block::ICE.default_state);
                     continue;
                 }
@@ -125,6 +125,18 @@ fn is_full_snow_layer(state: BlockStateId) -> bool {
 
 /// Block light at a world position during generation. Sections without
 /// computed light read as 0, matching vanilla worldgen behavior.
+/// Vanilla's `Biome.shouldFreeze` without the neighbour check: a water source in the dark, where
+/// the biome is too cold for rain.
+pub(crate) fn should_freeze<T: GenerationCache>(chunk: &T, biome: &Biome, pos: &BlockPos) -> bool {
+    let (x, y, z) = (pos.0.x, pos.0.y, pos.0.z);
+    !biome
+        .weather
+        .warm_enough_to_rain(x, y, z, chunk.get_sea_level())
+        && !chunk.out_of_height(y as i16)
+        && block_light_at(chunk, x, y, z) < 10
+        && GenerationCache::get_block_state(chunk, &pos.0) == Block::WATER.default_state.id
+}
+
 pub(crate) fn block_light_at<T: GenerationCache>(chunk: &T, x: i32, y: i32, z: i32) -> u8 {
     let Some(proto) = chunk.get_chunk(x >> 4, z >> 4) else {
         return 0;
@@ -156,6 +168,35 @@ mod tests {
 
     const GROUND_Y: i32 = 63;
     const TOP_Y: i32 = GROUND_Y + 1;
+
+    #[test]
+    fn only_cold_water_sources_freeze_like_vanilla() {
+        use crate::generation::feature::features::sculk::test_utils::{empty_region, set};
+
+        let mut level = empty_region();
+        let sea_level = level.get_sea_level();
+        let mut frozen = 0;
+        for x in 16..32 {
+            for z in 16..32 {
+                let pos = BlockPos::new(x, 62, z);
+                set(&mut level, pos, Block::WATER.default_state);
+                // A frozen ocean's frost noise leaves patches warm enough for rain open.
+                let warm = Biome::FROZEN_OCEAN
+                    .weather
+                    .warm_enough_to_rain(x, 62, z, sea_level);
+                assert_eq!(should_freeze(&level, &Biome::FROZEN_OCEAN, &pos), !warm);
+                assert!(should_freeze(&level, &Biome::SNOWY_PLAINS, &pos));
+                assert!(!should_freeze(&level, &Biome::PLAINS, &pos));
+                frozen += i32::from(!warm);
+            }
+        }
+        assert!(frozen > 0);
+
+        // Flowing water stays water.
+        let pos = BlockPos::new(20, 62, 20);
+        set(&mut level, pos, &Block::WATER.states[1]);
+        assert!(!should_freeze(&level, &Biome::SNOWY_PLAINS, &pos));
+    }
 
     fn snowy_test_chunk() -> ProtoChunk {
         let world_gen = WorldGenerator::Noise(Box::new(VanillaGenerator::new(

@@ -6,7 +6,7 @@ use pumpkin_util::{
 
 use crate::generation::{
     block_predicate::BlockPredicate, block_state_provider::BlockStateProvider,
-    feature::features::freeze_top_layer::block_light_at, proto_chunk::GenerationCache,
+    feature::features::freeze_top_layer::should_freeze, proto_chunk::GenerationCache,
 };
 use crate::world::WorldPortalExt;
 
@@ -163,7 +163,12 @@ impl LakeFeature {
             for xx in 0..16 {
                 for zz in 0..16 {
                     let freeze_pos = origin.add(xx, 4, zz);
-                    if should_freeze(chunk, &freeze_pos)
+                    let biome = chunk.get_biome_for_terrain_gen(
+                        freeze_pos.0.x,
+                        freeze_pos.0.y,
+                        freeze_pos.0.z,
+                    );
+                    if should_freeze(chunk, biome, &freeze_pos)
                         && self.can_replace_with_air_or_fluid.test(
                             block_registry,
                             chunk,
@@ -178,19 +183,6 @@ impl LakeFeature {
 
         true
     }
-}
-
-/// Vanilla's `Biome.shouldFreeze` without the neighbour check: a water source in the dark, where
-/// the biome is too cold for rain.
-fn should_freeze<T: GenerationCache>(chunk: &T, pos: &BlockPos) -> bool {
-    let (x, y, z) = (pos.0.x, pos.0.y, pos.0.z);
-    !chunk
-        .get_biome_for_terrain_gen(x, y, z)
-        .weather
-        .warm_enough_to_rain(x, y, z, chunk.get_sea_level())
-        && !chunk.out_of_height(y as i16)
-        && block_light_at(chunk, x, y, z) < 10
-        && GenerationCache::get_block_state(chunk, &pos.0) == Block::WATER.default_state.id
 }
 
 #[cfg(test)]
