@@ -137,8 +137,45 @@ impl BlockBehaviour for SeaPickleBlock {
 
 impl PlantBlockBase for SeaPickleBlock {
     fn can_plant_on_top(&self, block_accessor: &dyn BlockAccessor, pos: &BlockPos) -> bool {
-        block_accessor
-            .get_block_state(pos)
-            .is_center_solid(BlockDirection::Up)
+        may_place_on(block_accessor.get_block_state(pos), pos)
+    }
+}
+
+/// Vanilla's `SeaPickleBlock.mayPlaceOn`: the collision shape has a top face, or the top face is
+/// sturdy.
+fn may_place_on(state: &BlockState, pos: &BlockPos) -> bool {
+    has_top_collision_face(state, pos) || state.is_side_solid(BlockDirection::Up)
+}
+
+/// `getCollisionShape(..).getFaceShape(Direction.UP)` is not empty: a box covers the slice just
+/// below the top of the block.
+fn has_top_collision_face(state: &BlockState, pos: &BlockPos) -> bool {
+    const TOP_SLICE: f64 = 1.0 - 1.0e-7;
+    state
+        .get_block_collision_shapes_at(pos)
+        .any(|shape| shape.min.y <= TOP_SLICE && shape.max.y > TOP_SLICE)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn supports(block: &Block) -> bool {
+        may_place_on(block.default_state, &BlockPos::new(0, 64, 0))
+    }
+
+    #[test]
+    fn stands_on_any_top_face_of_the_collision_shape() {
+        assert!(supports(&Block::SAND));
+        assert!(supports(&Block::OAK_STAIRS));
+        assert!(supports(&Block::OAK_FENCE));
+    }
+
+    #[test]
+    fn does_not_stand_on_low_or_missing_shapes() {
+        assert!(!supports(&Block::OAK_SLAB));
+        assert!(!supports(&Block::SEA_PICKLE));
+        assert!(!supports(&Block::WATER));
+        assert!(!supports(&Block::SEAGRASS));
     }
 }
