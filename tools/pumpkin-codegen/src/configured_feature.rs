@@ -227,6 +227,7 @@ pub fn build() -> TokenStream {
                     leave_vine::LeavesVineTreeDecorator,
                     pale_moss::PaleMossTreeDecorator,
                     place_on_ground::PlaceOnGroundTreeDecorator,
+                    shelf_mushroom::ShelfMushroomTreeDecorator,
                     trunk_vine::TrunkVineTreeDecorator,
                 },
                 tree::root::{
@@ -2135,7 +2136,10 @@ fn value_to_tree_decorator(v: &Value) -> Option<TokenStream> {
                 })
             }
         }
-        "minecraft:shelf_mushroom" => return None,
+        "minecraft:shelf_mushroom" => {
+            let prob = v["probability"].as_f64().unwrap_or(0.0) as f32;
+            quote! { TreeDecorator::ShelfMushroom(ShelfMushroomTreeDecorator { probability: #prob }) }
+        }
         other => {
             let msg = format!("unknown tree decorator: {other}");
             quote! { compile_error!(#msg) }
