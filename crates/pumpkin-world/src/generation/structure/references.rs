@@ -478,6 +478,41 @@ pub fn claiming_structure_start(
         })
 }
 
+/// The structure starts chunk generation creates in a chunk (vanilla
+/// `ChunkGenerator.createStructures`).
+///
+/// For every structure set of the dimension whose placement picks the chunk, the set's
+/// structure that claims it, in set order.
+///
+/// `ProtoChunk::set_structure_starts` stores exactly these, and the `structure_census`
+/// example counts them over an area, so the two cannot drift apart.
+#[must_use]
+pub fn chunk_structure_starts(
+    generator: &VanillaGenerator,
+    chunk_x: i32,
+    chunk_z: i32,
+) -> Vec<(StructureKeys, StructurePosition)> {
+    let mut height_sampler = NoiseHeightSampler::new(generator);
+    StructureSet::ALL
+        .iter()
+        .enumerate()
+        .filter(|&(i, _)| {
+            generator.enabled_structure_sets.contains(&i)
+                && should_generate_structure(
+                    i,
+                    &generator.structure_calculator,
+                    &generator.structure_salts,
+                    chunk_x,
+                    chunk_z,
+                    &generator.global_structure_cache,
+                )
+        })
+        .filter_map(|(_, set)| {
+            claiming_structure_start(generator, set, chunk_x, chunk_z, &mut height_sampler)
+        })
+        .collect()
+}
+
 #[cfg(test)]
 mod tests {
     use super::{reference_map, vanilla_reference_order};
@@ -489,6 +524,41 @@ mod tests {
             .into_iter()
             .map(|index| start_chunks[index])
             .collect()
+    }
+
+    /// The names of the structures starting in a chunk of seed 1657324430's overworld.
+    fn overworld_starts(
+        generator: &crate::generation::generator::VanillaGenerator,
+        chunk_x: i32,
+        chunk_z: i32,
+    ) -> Vec<&'static str> {
+        let mut names: Vec<_> = super::chunk_structure_starts(generator, chunk_x, chunk_z)
+            .into_iter()
+            .map(|(key, _)| key.to_name())
+            .collect();
+        names.sort_unstable();
+        names
+    }
+
+    // The starts vanilla 26.3 saved for seed 1657324430 in these chunks.
+    #[test]
+    fn chunk_starts_match_vanilla() {
+        use crate::generation::generator::VanillaGenerator;
+        use crate::generation::secret::GenerationSecret;
+        use pumpkin_data::dimension::Dimension;
+        use pumpkin_util::world_seed::Seed;
+
+        let generator = VanillaGenerator::new_with_all_settings(
+            Seed(1_657_324_430),
+            Dimension::OVERWORLD,
+            None,
+            None,
+            None,
+            GenerationSecret::NONE,
+        );
+        assert_eq!(overworld_starts(&generator, -15, -20), ["monument"]);
+        assert_eq!(overworld_starts(&generator, 5, -14), ["mineshaft"]);
+        assert!(overworld_starts(&generator, 0, 0).is_empty());
     }
 
     // The expected orders a-d are reference arrays vanilla 26.3 saved for

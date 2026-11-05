@@ -44,9 +44,8 @@ use crate::generation::noise::router::{
 };
 use crate::generation::noise::{CHUNK_DIM, ChunkNoiseGenerator, LAVA_BLOCK, WATER_BLOCK};
 use crate::generation::section_coords::section_to_block;
-use crate::generation::structure::placement::should_generate_structure;
 use crate::generation::structure::references::{
-    StructureReference, claiming_structure_start, structure_references, vanilla_reference_order,
+    StructureReference, chunk_structure_starts, structure_references, vanilla_reference_order,
 };
 use crate::generation::structure::structures::{StructureInstance, StructurePiecesCollector};
 use crate::generation::surface::rule::try_apply_material_rule;
@@ -1807,28 +1806,9 @@ impl ProtoChunk {
     /// Creates the structure starts owned by this chunk.
     pub fn set_structure_starts(&mut self, generator: &super::generator::VanillaGenerator) {
         debug_assert_eq!(self.stage, StagedChunkEnum::Biomes);
-        let mut height_sampler =
-            crate::generation::structure::height_sampler::NoiseHeightSampler::new(generator);
-
-        for (i, set) in StructureSet::ALL.iter().enumerate() {
-            if !generator.enabled_structure_sets.contains(&i)
-                || !should_generate_structure(
-                    i,
-                    &generator.structure_calculator,
-                    &generator.structure_salts,
-                    self.x,
-                    self.z,
-                    &generator.global_structure_cache,
-                )
-            {
-                continue;
-            }
-            if let Some((key, start)) =
-                claiming_structure_start(generator, set, self.x, self.z, &mut height_sampler)
-            {
-                self.structure_starts
-                    .insert(key, StructureInstance::Start(start));
-            }
+        for (key, start) in chunk_structure_starts(generator, self.x, self.z) {
+            self.structure_starts
+                .insert(key, StructureInstance::Start(start));
         }
         self.stage = StagedChunkEnum::StructureStart;
     }
