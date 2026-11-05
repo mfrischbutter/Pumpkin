@@ -40,6 +40,25 @@ pub enum RandomGenerator {
     Legacy(LegacyRand),
 }
 
+impl RandomGenerator {
+    /// Reseeds a `Worldgen` generator like vanilla `WorldgenRandom.setSeed`, keeping its
+    /// cached Gaussian (see [`WorldgenRandom::set_seed`]).
+    ///
+    /// Only chunk decoration calls this, and it always holds a `Worldgen` generator; any other
+    /// variant is replaced by a fresh `Worldgen` one.
+    pub fn set_worldgen_seed(&mut self, seed: u64) {
+        debug_assert!(
+            matches!(self, Self::Worldgen(_)),
+            "set_worldgen_seed needs a Worldgen generator"
+        );
+        if let Self::Worldgen(random) = self {
+            random.set_seed(seed);
+        } else {
+            *self = Self::Worldgen(WorldgenRandom::from_seed(seed));
+        }
+    }
+}
+
 /// Unified random number deriver enum for creating child RNGs.
 pub enum RandomDeriver {
     /// Xoroshiro splitter implementation.

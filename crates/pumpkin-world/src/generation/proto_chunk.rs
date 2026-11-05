@@ -1630,6 +1630,11 @@ impl ProtoChunk {
             }
         }
 
+        // Vanilla `applyBiomeDecoration` decorates the chunk with one `WorldgenRandom` and
+        // reseeds it before every structure and feature; the reseed keeps the Gaussian the last
+        // `nextGaussian` cached, so it carries over into the next structure or feature. The 0
+        // seed is never drawn from: every use reseeds first.
+        let mut random = RandomGenerator::Worldgen(WorldgenRandom::from_seed(0));
         for step in 0..11 {
             Self::generate_structure_step(
                 cache,
@@ -1637,6 +1642,7 @@ impl ProtoChunk {
                 step,
                 population_seed,
                 random_config.structure_seed as i64,
+                &mut random,
             );
 
             let selected = select_features(&possible_biomes, step);
@@ -1645,8 +1651,7 @@ impl ProtoChunk {
                 if let Some(feature) = PLACED_FEATURES.get(&feature_enum) {
                     let decorator_seed =
                         get_decorator_seed(population_seed, global_index as u64, step as u64);
-                    let mut random =
-                        RandomGenerator::Worldgen(WorldgenRandom::from_seed(decorator_seed));
+                    random.set_worldgen_seed(decorator_seed);
 
                     feature.generate(
                         cache,
@@ -1672,6 +1677,7 @@ impl ProtoChunk {
         step: usize,
         population_seed: u64,
         world_seed: i64,
+        random: &mut RandomGenerator,
     ) {
         static STRUCTURES_PER_STEP: LazyLock<[Vec<StructureKeys>; 11]> = LazyLock::new(|| {
             let mut steps: [Vec<StructureKeys>; 11] = Default::default();
@@ -1757,7 +1763,7 @@ impl ProtoChunk {
             let start_chunks: Vec<(i32, i32)> =
                 tasks.iter().map(|(start_chunk, _)| *start_chunk).collect();
             let decorator_seed = get_decorator_seed(population_seed, index as u64, step as u64);
-            let mut random = RandomGenerator::Worldgen(WorldgenRandom::from_seed(decorator_seed));
+            random.set_worldgen_seed(decorator_seed);
 
             for task_index in vanilla_reference_order(&start_chunks) {
                 let collector_arc = &tasks[task_index].1;
@@ -1768,7 +1774,7 @@ impl ProtoChunk {
                 let mut collector = collector_arc
                     .lock()
                     .unwrap_or_else(std::sync::PoisonError::into_inner);
-                collector.generate_in_chunk(cache, block_registry, &mut random, world_seed);
+                collector.generate_in_chunk(cache, block_registry, random, world_seed);
                 cache.get_center_chunk_mut().region_heights = None;
             }
         }

@@ -22,6 +22,14 @@ impl WorldgenRandom {
         }
     }
 
+    /// Reseeds the wrapped source and keeps the cached Gaussian.
+    ///
+    /// Vanilla `WorldgenRandom.setSeed` reseeds only the wrapped source, so a Gaussian cached
+    /// by `nextGaussian` survives `setFeatureSeed`.
+    pub const fn set_seed(&mut self, seed: u64) {
+        self.source = Xoroshiro::from_seed(seed);
+    }
+
     const fn next(&mut self, bits: u64) -> u64 {
         self.source.next(bits)
     }
@@ -130,5 +138,30 @@ mod tests {
 
         let mut chunk_87 = WorldgenRandom::from_seed(0xcdc9_553d_e86b_c146);
         assert_eq!(chunk_87.next_f32().to_bits(), 0x3f64_187a);
+    }
+
+    #[test]
+    fn set_seed_keeps_cached_gaussian() {
+        let mut reseeded = WorldgenRandom::from_seed(SEED);
+        reseeded.next_gaussian();
+        reseeded.set_seed(0x1234_5678);
+
+        let mut twin = WorldgenRandom::from_seed(SEED);
+        twin.next_gaussian();
+        assert_eq!(
+            reseeded.next_gaussian().to_bits(),
+            twin.next_gaussian().to_bits()
+        );
+    }
+
+    #[test]
+    fn set_seed_reseeds_source_like_from_seed() {
+        let mut reseeded = WorldgenRandom::from_seed(SEED);
+        reseeded.next_i64();
+        reseeded.set_seed(0x1234_5678);
+        assert_eq!(
+            reseeded.next_i64(),
+            WorldgenRandom::from_seed(0x1234_5678).next_i64()
+        );
     }
 }
