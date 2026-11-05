@@ -62,6 +62,29 @@ impl ScatteredOreFeature {
     fn get_random_offset(random: &mut RandomGenerator, max_dist: i32) -> i32 {
         let f1 = random.next_f32();
         let f2 = random.next_f32();
-        ((f1 - f2) * max_dist as f32).round() as i32
+        java_round((f1 - f2) * max_dist as f32)
+    }
+}
+
+/// Java's `Math.round(float)`: the nearest integer, halves rounded up (toward positive infinity),
+/// where Rust's `round` rounds them away from zero. Added in `f64`, where the sum is exact.
+fn java_round(value: f32) -> i32 {
+    (f64::from(value) + 0.5).floor() as i32
+}
+
+#[cfg(test)]
+mod tests {
+    use super::java_round;
+
+    #[test]
+    fn rounds_halves_up_like_java() {
+        assert_eq!(java_round(-0.5), 0);
+        assert_eq!(java_round(-1.5), -1);
+        assert_eq!(java_round(-2.5), -2);
+        assert_eq!(java_round(0.5), 1);
+        assert_eq!(java_round(2.5), 3);
+        assert_eq!(java_round(0.499_999_97), 0);
+        assert_eq!(java_round(-0.6), -1);
+        assert_eq!(java_round(6.4), 6);
     }
 }
