@@ -229,11 +229,12 @@ pub struct NoiseBasedCountPlacementModifier {
 
 impl CountPlacementModifierBase for NoiseBasedCountPlacementModifier {
     fn get_count(&self, _random: &mut RandomGenerator, pos: BlockPos) -> i32 {
-        let noise = FOLIAGE_NOISE.sample(
+        // Vanilla's `Biome.BIOME_INFO_NOISE.get` returns a float, widened back to a double.
+        let noise = f64::from(FOLIAGE_NOISE.sample(
             pos.0.x as f64 / self.factor,
             pos.0.z as f64 / self.factor,
             false,
-        );
+        ) as f32);
         ((noise + self.offset) * self.to_count_ratio as f64).ceil() as i32
     }
 }
