@@ -163,17 +163,17 @@ impl IcebergFeature {
         let random_sign_x: i32 = if random.next_bool() { -1 } else { 1 };
         let random_sign_z: i32 = if random.next_bool() { -1 } else { 1 };
 
-        let mut x_off = if random.next_bool() {
-            width / 2 + 1 - random.next_bounded_i32((width - width / 2 - 1).max(1))
-        } else {
-            random.next_bounded_i32((width / 2 - 2).max(1))
-        };
+        // Vanilla always draws the near offset first, then the boolean, then
+        // maybe the far offset.
+        let mut x_off = random.next_bounded_i32((width / 2 - 2).max(1));
+        if random.next_bool() {
+            x_off = width / 2 + 1 - random.next_bounded_i32((width - width / 2 - 1).max(1));
+        }
 
-        let mut z_off = if random.next_bool() {
-            width / 2 + 1 - random.next_bounded_i32((width - width / 2 - 1).max(1))
-        } else {
-            random.next_bounded_i32((width / 2 - 2).max(1))
-        };
+        let mut z_off = random.next_bounded_i32((width / 2 - 2).max(1));
+        if random.next_bool() {
+            z_off = width / 2 + 1 - random.next_bounded_i32((width - width / 2 - 1).max(1));
+        }
         if is_ellipse {
             let v = random.next_bounded_i32((shape_ellipse_a - 5).max(1));
             x_off = v;
@@ -328,7 +328,7 @@ impl IcebergFeature {
     }
 
     #[expect(clippy::too_many_arguments)]
-    fn set_iceberg_block<T: GenerationCache>(
+    pub(crate) fn set_iceberg_block<T: GenerationCache>(
         chunk: &mut T,
         random: &mut RandomGenerator,
         pos: &Vector3<i32>,
@@ -347,9 +347,15 @@ impl IcebergFeature {
         {
             let randomness = !is_ellipse || random.next_f64() > 0.05;
             let divisor = if is_ellipse { 3 } else { 2 };
-            let threshold =
-                random.next_bounded_i32((height / divisor).max(1)) as f64 + height as f64 * 0.6;
-            if snow_on_top && bid != Block::WATER.id && h_diff as f64 <= threshold && randomness {
+            // Short-circuits like vanilla: the threshold is drawn only for
+            // snow-topped icebergs on non-water blocks.
+            if snow_on_top
+                && bid != Block::WATER.id
+                && f64::from(h_diff)
+                    <= f64::from(random.next_bounded_i32((height / divisor).max(1)))
+                        + f64::from(height) * 0.6
+                && randomness
+            {
                 chunk.set_block_state(pos, Block::SNOW_BLOCK.default_state);
             } else {
                 chunk.set_block_state(pos, main_block);
@@ -489,5 +495,48 @@ impl IcebergFeature {
             id,
             BlockId::PACKED_ICE | BlockId::SNOW_BLOCK | BlockId::BLUE_ICE
         )
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::generation::generator::{GeneratorInit, VanillaGenerator, WorldGenerator};
+    use crate::generation::proto_chunk::ProtoChunk;
+    use pumpkin_data::dimension::Dimension;
+    use pumpkin_util::random::legacy_rand::LegacyRand;
+    use pumpkin_util::world_seed::Seed;
+
+    #[test]
+    fn snow_threshold_is_drawn_only_for_snow_topped_icebergs() {
+        let world_gen = WorldGenerator::Noise(Box::new(VanillaGenerator::new(
+            Seed(42),
+            Dimension::OVERWORLD,
+        )));
+        let mut chunk = ProtoChunk::new(0, 0, &world_gen);
+        let pos = Vector3::new(5, 100, 5);
+        assert!(
+            is_air(GenerationCache::get_block_state(&chunk, &pos)),
+            "test setup is wrong: expected air at {pos:?}",
+        );
+
+        let mut random = RandomGenerator::Legacy(LegacyRand::from_seed(1));
+        let mut fresh = RandomGenerator::Legacy(LegacyRand::from_seed(1));
+        IcebergFeature::set_iceberg_block(
+            &mut chunk,
+            &mut random,
+            &pos,
+            1,
+            10,
+            false,
+            false,
+            Block::PACKED_ICE.default_state,
+        );
+
+        assert_eq!(
+            GenerationCache::get_block_state(&chunk, &pos).to_block_id(),
+            Block::PACKED_ICE.id,
+        );
+        assert_eq!(random.next_i32(), fresh.next_i32());
     }
 }
