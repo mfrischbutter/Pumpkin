@@ -166,7 +166,15 @@ impl FoliagePlacer {
         let mut block_state = foliage_provider
             .get_for_bonemeal(random, pos)
             .unwrap_or(pumpkin_data::Block::AIR.default_state);
-        if block == pumpkin_data::Block::WATER.default_state.id || block.is_waterlogged() {
+        // Vanilla waterlogs the leaf where the fluid is a water source: still water, a
+        // waterlogged block, or seagrass, which holds water without the property.
+        if block == pumpkin_data::Block::WATER.default_state.id
+            || block.is_waterlogged()
+            || matches!(
+                block.to_block_id(),
+                pumpkin_data::BlockId::SEAGRASS | pumpkin_data::BlockId::TALL_SEAGRASS
+            )
+        {
             block_state = block_state.set_waterlogged(true).unwrap_or(block_state);
         }
         chunk.set_block_state(&pos.0, block_state);
@@ -438,6 +446,48 @@ impl FoliageType {
             Self::RandomSpread(random_spread) => random_spread.get_random_height(random),
             Self::Cherry(cherry) => cherry.get_random_height(random),
             Self::Poplar(poplar) => poplar.get_random_height(random),
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::generation::block_state_provider::SimpleStateProvider;
+    use crate::generation::generator::{GeneratorInit, VanillaGenerator, WorldGenerator};
+    use crate::generation::proto_chunk::ProtoChunk;
+    use pumpkin_data::{Block, dimension::Dimension};
+    use pumpkin_util::random::legacy_rand::LegacyRand;
+    use pumpkin_util::world_seed::Seed;
+
+    #[test]
+    fn leaves_placed_into_seagrass_are_waterlogged() {
+        let world_gen = WorldGenerator::Noise(Box::new(VanillaGenerator::new(
+            Seed(42),
+            Dimension::OVERWORLD,
+        )));
+        let mut chunk = ProtoChunk::new(0, 0, &world_gen);
+        let provider = BlockStateProvider::Simple(SimpleStateProvider {
+            state: Block::SPRUCE_LEAVES.default_state,
+        });
+        let mut random = RandomGenerator::Legacy(LegacyRand::from_seed(1));
+
+        for (x, under) in [(5, &Block::SEAGRASS), (6, &Block::TALL_SEAGRASS)] {
+            let pos = BlockPos::new(x, 100, 5);
+            GenerationCache::set_block_state(&mut chunk, &pos.0, under.default_state);
+            assert!(FoliagePlacer::place_foliage_block(
+                &mut chunk,
+                &mut random,
+                pos,
+                &provider
+            ));
+            let placed = GenerationCache::get_block_state(&chunk, &pos.0);
+            assert_eq!(placed.to_block_id(), Block::SPRUCE_LEAVES.id);
+            assert!(
+                OakLeavesLikeProperties::from_state_id(placed).waterlogged,
+                "leaves in {} are not waterlogged",
+                under.name,
+            );
         }
     }
 }
