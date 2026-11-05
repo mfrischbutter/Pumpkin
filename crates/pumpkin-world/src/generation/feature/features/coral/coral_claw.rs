@@ -64,11 +64,7 @@ impl CoralClawFeature {
                 (claw_dir, random.next_bounded_i32(3) + 2)
             } else {
                 mut_pos = mut_pos.up();
-                let seg_dir = if random.next_bool() {
-                    branch_direction
-                } else {
-                    BlockDirection::Up
-                };
+                let seg_dir = segment_direction(branch_direction, random);
                 (seg_dir, random.next_bounded_i32(3) + 3)
             };
 
@@ -93,5 +89,40 @@ impl CoralClawFeature {
             }
         }
         true
+    }
+}
+
+/// The direction a side branch grows in: vanilla's
+/// `Util.getRandom(new Direction[]{branchDirection, Direction.UP}, random)`.
+fn segment_direction(
+    branch_direction: BlockDirection,
+    random: &mut RandomGenerator,
+) -> BlockDirection {
+    [branch_direction, BlockDirection::Up][random.next_bounded_i32(2) as usize]
+}
+
+#[cfg(test)]
+mod tests {
+    use pumpkin_util::random::xoroshiro128::Xoroshiro;
+
+    use super::*;
+
+    #[test]
+    fn side_branch_direction_indexes_like_util_get_random() {
+        let mut saw_up = false;
+        for seed in 0..16 {
+            let mut random = RandomGenerator::Xoroshiro(Xoroshiro::from_seed(seed));
+            let mut expected = RandomGenerator::Xoroshiro(Xoroshiro::from_seed(seed));
+            let index = expected.next_bounded_i32(2);
+            let direction = segment_direction(BlockDirection::North, &mut random);
+            let wanted = if index == 1 {
+                BlockDirection::Up
+            } else {
+                BlockDirection::North
+            };
+            assert_eq!(direction, wanted, "seed {seed}");
+            saw_up |= index == 1;
+        }
+        assert!(saw_up);
     }
 }
