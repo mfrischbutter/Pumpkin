@@ -45,7 +45,9 @@ use crate::generation::noise::router::{
 use crate::generation::noise::{CHUNK_DIM, ChunkNoiseGenerator, LAVA_BLOCK, WATER_BLOCK};
 use crate::generation::section_coords::section_to_block;
 use crate::generation::structure::placement::should_generate_structure;
-use crate::generation::structure::references::{claiming_structure_start, structure_references};
+use crate::generation::structure::references::{
+    StructureReference, claiming_structure_start, structure_references, vanilla_reference_order,
+};
 use crate::generation::structure::structures::{StructureInstance, StructurePiecesCollector};
 use crate::generation::surface::rule::try_apply_material_rule;
 use crate::{
@@ -203,7 +205,7 @@ pub struct ProtoChunk {
     pub flat_motion_blocking_height_map: [i16; CHUNK_AREA],
     pub flat_motion_blocking_no_leaves_height_map: [i16; CHUNK_AREA],
     pub(crate) structure_starts: FxHashMap<StructureKeys, StructureInstance>,
-    pub(crate) structure_references: Vec<(StructureKeys, Arc<Mutex<StructurePiecesCollector>>)>,
+    pub(crate) structure_references: Vec<StructureReference>,
 
     height: u16,
     bottom_y: i8,
@@ -335,7 +337,7 @@ impl ProtoChunk {
     #[cfg(test)]
     pub(crate) fn has_structure(&self, key: StructureKeys) -> bool {
         self.structure_starts.contains_key(&key)
-            || self.structure_references.iter().any(|(k, _)| *k == key)
+            || self.structure_references.iter().any(|(k, _, _)| *k == key)
     }
 
     #[must_use]
@@ -1045,7 +1047,7 @@ impl ProtoChunk {
                 };
                 (k, col)
             })
-            .chain(self.structure_references.iter().map(|(k, col)| (k, col)))
+            .chain(self.structure_references.iter().map(|(k, _, col)| (k, col)))
         {
             if seen_collectors
                 .iter()
@@ -1689,28 +1691,28 @@ impl ProtoChunk {
 
         let structures = &STRUCTURES_PER_STEP[step];
         for (index, &structure_key) in structures.iter().enumerate() {
-            let mut tasks = Vec::new();
+            let mut tasks: Vec<((i32, i32), Arc<_>)> = Vec::new();
+            let mut add_task =
+                |start_chunk: (i32, i32), collector_arc: &Arc<Mutex<StructurePiecesCollector>>| {
+                    if !tasks.iter().any(|(_, t)| Arc::ptr_eq(t, collector_arc)) {
+                        tasks.push((start_chunk, collector_arc.clone()));
+                    }
+                };
             {
                 let center_chunk = cache.get_center_chunk();
 
+                // A `Reference` is in `structure_references` too, with its start chunk.
                 for (id, instance) in &center_chunk.structure_starts {
-                    if *id == structure_key {
-                        match instance {
-                            StructureInstance::Start(pos) => tasks.push(pos.collector.clone()),
-                            StructureInstance::Reference(collector) => {
-                                let collector_arc = collector.clone();
-                                if !tasks.iter().any(|t| Arc::ptr_eq(t, &collector_arc)) {
-                                    tasks.push(collector_arc);
-                                }
-                            }
-                        }
+                    if *id == structure_key
+                        && let StructureInstance::Start(pos) = instance
+                    {
+                        add_task((center_x, center_z), &pos.collector);
                     }
                 }
 
-                for (id, collector_arc) in &center_chunk.structure_references {
-                    if *id == structure_key && !tasks.iter().any(|t| Arc::ptr_eq(t, collector_arc))
-                    {
-                        tasks.push(collector_arc.clone());
+                for (id, start_chunk, collector_arc) in &center_chunk.structure_references {
+                    if *id == structure_key {
+                        add_task(*start_chunk, collector_arc);
                     }
                 }
 
@@ -1737,10 +1739,7 @@ impl ProtoChunk {
                                         .get_bounding_box()
                                         .intersects_raw_xz(start_x, start_z, end_x, end_z)
                                 {
-                                    let collector_arc = pos.collector.clone();
-                                    if !tasks.iter().any(|t| Arc::ptr_eq(t, &collector_arc)) {
-                                        tasks.push(collector_arc);
-                                    }
+                                    add_task((neighbor_x, neighbor_z), &pos.collector);
                                 }
                             }
                         }
@@ -1752,10 +1751,16 @@ impl ProtoChunk {
                 continue;
             }
 
+            // Vanilla seeds one random per structure and step and runs the chunk's starts of
+            // that structure in its reference set's order with it, so the order decides every
+            // later draw.
+            let start_chunks: Vec<(i32, i32)> =
+                tasks.iter().map(|(start_chunk, _)| *start_chunk).collect();
             let decorator_seed = get_decorator_seed(population_seed, index as u64, step as u64);
             let mut random = RandomGenerator::Worldgen(WorldgenRandom::from_seed(decorator_seed));
 
-            for collector_arc in tasks {
+            for task_index in vanilla_reference_order(&start_chunks) {
+                let collector_arc = &tasks[task_index].1;
                 // The neighbours change only through the features of jigsaw pieces, so a fresh
                 // snapshot of their heights per structure follows them closely enough.
                 cache.get_center_chunk_mut().region_heights =
@@ -1841,11 +1846,11 @@ impl ProtoChunk {
             enabled_sets,
         );
 
-        for (key, pos) in references {
+        for (key, start_chunk, pos) in references {
             self.structure_starts
                 .entry(key)
                 .or_insert_with(|| StructureInstance::Reference(pos.clone()));
-            self.structure_references.push((key, pos));
+            self.structure_references.push((key, start_chunk, pos));
         }
 
         self.stage = StagedChunkEnum::StructureReferences;

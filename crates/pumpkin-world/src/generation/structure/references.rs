@@ -28,8 +28,12 @@ use crate::generation::structure::structures::{
     create_chunk_random,
 };
 
-/// A structure start a chunk references: its key and its pieces.
-pub type StructureReference = (StructureKeys, Arc<Mutex<StructurePiecesCollector>>);
+/// A structure start a chunk references: the key, the start chunk and the pieces.
+pub type StructureReference = (
+    StructureKeys,
+    (i32, i32),
+    Arc<Mutex<StructurePiecesCollector>>,
+);
 
 /// A start this many chunks away can still reach into a chunk (vanilla searches the
 /// 17 x 17 chunks around it).
@@ -120,7 +124,11 @@ pub fn structure_references(
                         .get_adjusted_bounding_box(&entry.structure)
                         .intersects_raw_xz(start_x, start_z, end_x, end_z)
                     {
-                        references.push((entry.structure, start_data.collector.clone()));
+                        references.push((
+                            entry.structure,
+                            (candidate_chunk_x, candidate_chunk_z),
+                            start_data.collector.clone(),
+                        ));
                     }
                     break;
                 }
@@ -128,6 +136,141 @@ pub fn structure_references(
         }
     }
     references
+}
+
+/// The order in which vanilla visits a chunk's starts of one structure: indices into
+/// `start_chunks`, the start chunks (x, z) of those starts.
+///
+/// Vanilla `StructureManager.startsForStructure` walks the chunk's reference set of the
+/// structure, a fastutil `LongOpenHashSet` of packed start chunks that
+/// `ChunkGenerator.createReferences` filled with x as the outer and z as the inner loop,
+/// both ascending. Its hash order decides which start draws from the shared random first.
+#[must_use]
+pub fn vanilla_reference_order(start_chunks: &[(i32, i32)]) -> Vec<usize> {
+    debug_assert!(
+        start_chunks
+            .iter()
+            .enumerate()
+            .all(|(index, chunk)| !start_chunks[..index].contains(chunk)),
+        "a structure has at most one start per chunk"
+    );
+    let mut insertion_order: Vec<usize> = (0..start_chunks.len()).collect();
+    insertion_order.sort_by_key(|&index| start_chunks[index]);
+
+    let mut set = FastutilLongSet::new();
+    for &index in &insertion_order {
+        set.add(pack_chunk_pos(start_chunks[index]));
+    }
+    set.iter()
+        .filter_map(|key| {
+            start_chunks
+                .iter()
+                .position(|&chunk| pack_chunk_pos(chunk) == key)
+        })
+        .collect()
+}
+
+/// Vanilla `ChunkPos.pack`: x in the low and z in the high 32 bits.
+const fn pack_chunk_pos((x, z): (i32, i32)) -> u64 {
+    (x as u32 as u64) | ((z as u32 as u64) << 32)
+}
+
+/// fastutil `HashCommon.LONG_PHI`, the golden ratio multiplier of `HashCommon.mix`.
+const LONG_PHI: u64 = 0x9E37_79B9_7F4A_7C15;
+/// The table size of fastutil's default `LongOpenHashSet()`: `Hash.DEFAULT_INITIAL_SIZE`
+/// (16) at `Hash.DEFAULT_LOAD_FACTOR`.
+const DEFAULT_TABLE_SIZE: usize = 32;
+/// fastutil `Hash.DEFAULT_LOAD_FACTOR` (0.75) as a fraction, which keeps the ceilings exact.
+const LOAD_FACTOR_NUMERATOR: usize = 3;
+const LOAD_FACTOR_DENOMINATOR: usize = 4;
+
+/// The insertion and iteration order of fastutil's `LongOpenHashSet` (open addressing with
+/// linear probing; 0 marks an empty slot, so the key 0 is kept aside).
+struct FastutilLongSet {
+    slots: Vec<u64>,
+    contains_null: bool,
+    size: usize,
+    max_fill: usize,
+}
+
+impl FastutilLongSet {
+    fn new() -> Self {
+        Self {
+            slots: vec![0; DEFAULT_TABLE_SIZE],
+            contains_null: false,
+            size: 0,
+            max_fill: Self::max_fill(DEFAULT_TABLE_SIZE),
+        }
+    }
+
+    /// fastutil `HashCommon.maxFill`: `min(ceil(n * f), n - 1)`.
+    const fn max_fill(table_size: usize) -> usize {
+        let filled = (table_size * LOAD_FACTOR_NUMERATOR).div_ceil(LOAD_FACTOR_DENOMINATOR);
+        if filled < table_size - 1 {
+            filled
+        } else {
+            table_size - 1
+        }
+    }
+
+    /// fastutil `HashCommon.arraySize`: `max(2, nextPowerOfTwo(ceil(expected / f)))`.
+    fn array_size(expected: usize) -> usize {
+        (expected * LOAD_FACTOR_DENOMINATOR)
+            .div_ceil(LOAD_FACTOR_NUMERATOR)
+            .next_power_of_two()
+            .max(2)
+    }
+
+    /// fastutil `HashCommon.mix`, cut to the start slot like `(int) mix(k) & mask`.
+    const fn start_slot(key: u64, mask: usize) -> usize {
+        let mut hash = key.wrapping_mul(LONG_PHI);
+        hash ^= hash >> 32;
+        hash ^= hash >> 16;
+        (hash as u32 as usize) & mask
+    }
+
+    /// Stores `key` (not 0) in the first empty slot from its start slot on.
+    const fn insert_into(slots: &mut [u64], key: u64) {
+        let mask = slots.len() - 1;
+        let mut pos = Self::start_slot(key, mask);
+        while slots[pos] != 0 {
+            pos = (pos + 1) & mask;
+        }
+        slots[pos] = key;
+    }
+
+    /// `LongOpenHashSet.add` for a key not in the set yet.
+    fn add(&mut self, key: u64) {
+        if key == 0 {
+            self.contains_null = true;
+        } else {
+            Self::insert_into(&mut self.slots, key);
+        }
+        let old_size = self.size;
+        self.size += 1;
+        if old_size >= self.max_fill {
+            self.rehash(Self::array_size(self.size + 1));
+        }
+    }
+
+    /// `LongOpenHashSet.rehash`: the old table's keys from the last slot down into a new
+    /// table of `table_size` slots.
+    fn rehash(&mut self, table_size: usize) {
+        let mut slots = vec![0; table_size];
+        for &key in self.slots.iter().rev().filter(|&&key| key != 0) {
+            Self::insert_into(&mut slots, key);
+        }
+        self.slots = slots;
+        self.max_fill = Self::max_fill(table_size);
+    }
+
+    /// The iterator's order: the key 0 first, then the slots from the last down.
+    fn iter(&self) -> impl Iterator<Item = u64> + '_ {
+        self.contains_null
+            .then_some(0)
+            .into_iter()
+            .chain(self.slots.iter().rev().copied().filter(|&key| key != 0))
+    }
 }
 
 /// The start chunks of structure set `set_index` within reach of the chunk
@@ -302,4 +445,54 @@ pub fn claiming_structure_start(
             structure_start(generator, entry, chunk_x, chunk_z, height_sampler)
                 .map(|start| (entry.structure, start))
         })
+}
+
+#[cfg(test)]
+mod tests {
+    use super::vanilla_reference_order;
+
+    /// The start chunks in the order `vanilla_reference_order` visits them.
+    fn ordered(start_chunks: &[(i32, i32)]) -> Vec<(i32, i32)> {
+        vanilla_reference_order(start_chunks)
+            .into_iter()
+            .map(|index| start_chunks[index])
+            .collect()
+    }
+
+    // The expected orders a-d are reference arrays vanilla 26.3 saved for
+    // `minecraft:mineshaft` (seed -4172144997902289642).
+
+    #[test]
+    fn two_starts_in_one_column() {
+        assert_eq!(ordered(&[(-32, -30), (-32, -21)]), [(-32, -30), (-32, -21)]);
+    }
+
+    #[test]
+    fn two_starts_against_insertion_order() {
+        assert_eq!(ordered(&[(-36, 0), (-32, 7)]), [(-32, 7), (-36, 0)]);
+    }
+
+    #[test]
+    fn three_starts_scrambled() {
+        assert_eq!(
+            ordered(&[(16, 22), (9, 27), (13, 27)]),
+            [(13, 27), (9, 27), (16, 22)]
+        );
+    }
+
+    #[test]
+    fn three_starts_reversed() {
+        assert_eq!(
+            ordered(&[(-31, 13), (-33, 9), (-32, 7)]),
+            [(-31, 13), (-32, 7), (-33, 9)]
+        );
+    }
+
+    #[test]
+    fn origin_chunk_comes_first() {
+        assert_eq!(
+            ordered(&[(4, -1), (0, 0), (-3, 2)]),
+            [(0, 0), (4, -1), (-3, 2)]
+        );
+    }
 }

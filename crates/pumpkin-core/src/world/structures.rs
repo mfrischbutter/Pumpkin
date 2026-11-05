@@ -71,7 +71,7 @@ impl World {
         pos: &BlockPos,
     ) -> Option<&'static [SpawnEntry]> {
         let references = self.structure_references(pos.chunk_position());
-        for (key, collector) in references.iter() {
+        for (key, _, collector) in references.iter() {
             let Some(spawn_override) = Structure::get(key)
                 .spawn_overrides
                 .iter()
@@ -103,8 +103,8 @@ impl World {
     pub fn structure_with_piece_at(&self, keys: &[StructureKeys], pos: &BlockPos) -> bool {
         self.structure_references(pos.chunk_position())
             .iter()
-            .filter(|(reference, _)| keys.contains(reference))
-            .any(|(_, collector)| {
+            .filter(|(reference, _, _)| keys.contains(reference))
+            .any(|(_, _, collector)| {
                 collector
                     .lock()
                     .unwrap_or_else(std::sync::PoisonError::into_inner)
@@ -119,8 +119,8 @@ impl World {
     pub fn is_inside_structure(&self, key: StructureKeys, pos: &BlockPos) -> bool {
         self.structure_references(pos.chunk_position())
             .iter()
-            .filter(|(reference, _)| *reference == key)
-            .any(|(_, collector)| {
+            .filter(|(reference, _, _)| *reference == key)
+            .any(|(_, _, collector)| {
                 collector
                     .lock()
                     .unwrap_or_else(std::sync::PoisonError::into_inner)
