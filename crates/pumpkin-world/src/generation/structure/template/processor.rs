@@ -86,7 +86,8 @@ impl BlockTagFilter {
     #[must_use]
     pub fn matches(&self, block_id: BlockId) -> bool {
         match self {
-            Self::Static(ids) => ids.binary_search(&block_id.as_u16()).is_ok(),
+            // The generated tag lists keep the tag file's order, so they are not sorted.
+            Self::Static(ids) => ids.contains(&block_id.as_u16()),
             Self::Dynamic(tag) => check_block_has_tag(block_id, tag),
         }
     }
@@ -1367,6 +1368,30 @@ pub fn inline_processor_list(json: &str) -> Arc<[StructureProcessor]> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    /// Generated tag lists keep the tag file's order: every block of the tag matches, so
+    /// `block_rot` rots all of `ancient_city_replaceable` (gray wool and deepslate bricks too)
+    /// and `protected_blocks` keeps every block of `features_cannot_replace`, like vanilla.
+    #[test]
+    fn a_static_tag_filter_matches_every_block_of_its_tag() {
+        for tag in [
+            "minecraft:ancient_city_replaceable",
+            "minecraft:features_cannot_replace",
+        ] {
+            let filter = BlockTagFilter::from_tag_str(tag);
+            assert!(matches!(filter, BlockTagFilter::Static(_)), "{tag}");
+            let ids = pumpkin_data::tag::get_tag_ids(pumpkin_data::tag::RegistryKey::Block, tag)
+                .expect("a block tag");
+            for &id in ids {
+                let block = BlockId::new(id).expect("a block id");
+                assert!(filter.matches(block), "{tag} must match block id {id}");
+            }
+        }
+        let rottable = BlockTagFilter::from_tag_str("#minecraft:ancient_city_replaceable");
+        assert!(rottable.matches(BlockId::GRAY_WOOL));
+        assert!(rottable.matches(BlockId::DEEPSLATE_BRICKS));
+        assert!(!rottable.matches(BlockId::CHISELED_DEEPSLATE));
+    }
 
     #[test]
     fn parses_ancient_city_processor_lists() {
