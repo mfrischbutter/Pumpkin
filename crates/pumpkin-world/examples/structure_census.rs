@@ -8,7 +8,9 @@
 //! cargo run --release -p pumpkin-world --example structure_census -- \
 //!     --seed <i64> --dimension <overworld|the_nether|the_end> --radius <chunks> \
 //!     [--center <cx> <cz>] [--secret <i64> | --random-secret] [--list]
-//! cargo run --release -p pumpkin-world --example structure_census -- //!     --seed <i64> --dimension <overworld|the_nether|the_end> --pieces <cx> <cz> //!     [--secret <i64> | --random-secret]
+//! cargo run --release -p pumpkin-world --example structure_census -- \
+//!     --seed <i64> --dimension <overworld|the_nether|the_end> --pieces <cx> <cz> \
+//!     [--secret <i64> | --random-secret]
 //! ```
 //!
 //! Prints one JSON object on stdout: the starts per structure, and with `--list` the
