@@ -46,6 +46,13 @@ impl CorridorStairsPiece {
     }
 }
 
+/// The floor and ceiling heights of slice `step` (0..=9): vanilla's
+/// `CastleCorridorStairsPiece.postProcess`.
+fn floor_and_roof(step: i32) -> (i32, i32) {
+    let floor = 1.max(7 - step);
+    (floor, (floor + 5).max(14 - step).min(13))
+}
+
 impl StructurePieceBase for CorridorStairsPiece {
     fn as_any(&self) -> &dyn std::any::Any {
         self
@@ -86,8 +93,7 @@ impl StructurePieceBase for CorridorStairsPiece {
         let f_ns = fence(true, true);
 
         for i in 0..=9i32 {
-            let j = 1.max(7 - i);
-            let k = (j + 5).min(14 - i).min(13);
+            let (j, k) = floor_and_roof(i);
             let l = i;
 
             // Solid base
@@ -121,5 +127,18 @@ impl StructurePieceBase for CorridorStairsPiece {
                 p.fill_downwards(chunk, nb, m, -1, l, &bb);
             }
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::floor_and_roof;
+
+    #[test]
+    fn floor_and_roof_follow_vanilla() {
+        let floors: Vec<i32> = (0..=9).map(|step| floor_and_roof(step).0).collect();
+        let roofs: Vec<i32> = (0..=9).map(|step| floor_and_roof(step).1).collect();
+        assert_eq!(floors, [7, 6, 5, 4, 3, 2, 1, 1, 1, 1]);
+        assert_eq!(roofs, [13, 13, 12, 11, 10, 9, 8, 7, 6, 6]);
     }
 }
