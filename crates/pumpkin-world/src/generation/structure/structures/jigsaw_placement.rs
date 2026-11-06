@@ -42,11 +42,14 @@ pub struct MaxDistance {
 }
 
 impl MaxDistance {
+    /// The integer form of `max_distance_from_center`: like vanilla's `MaxDistance(int)`, it
+    /// bounds pieces vertically by the same distance as horizontally. (Only vanilla's object
+    /// form `{horizontal, vertical}` defaults the vertical distance to the world height.)
     #[must_use]
-    pub const fn new(horizontal: i32) -> Self {
+    pub const fn new(value: i32) -> Self {
         Self {
-            horizontal,
-            vertical: 384, // Default Y_SIZE (min_y to max_y)
+            horizontal: value,
+            vertical: value,
         }
     }
 }
@@ -894,6 +897,13 @@ mod tests {
         );
         assert!(can_attach(&source, &feature));
         assert!(!can_attach(&source, &bottom));
+    }
+
+    #[test]
+    fn integer_max_distance_bounds_vertically_like_horizontally() {
+        let distance = MaxDistance::new(80);
+        assert_eq!(distance.horizontal, 80);
+        assert_eq!(distance.vertical, 80);
     }
 
     #[test]
