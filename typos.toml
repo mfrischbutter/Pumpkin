@@ -14,3 +14,5 @@ convertable = "convertable"
 # Vanilla method names
 areMergable = "areMergable"
 isMergable = "isMergable"
+# Vanilla constant names
+FLOWING_UPDATE_SIMULARITY = "FLOWING_UPDATE_SIMULARITY"
