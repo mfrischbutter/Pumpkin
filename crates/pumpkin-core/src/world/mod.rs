@@ -2453,44 +2453,33 @@ impl World {
         };
         let tick_data = self.level.get_tick_data(&ticking_chunks, random_tick_speed);
 
-        // 1. Parallel Block Ticks via Rayon
-        let world = self.clone();
-        tick_data
-            .block_ticks
-            .par_chunks(BATCH_SIZE)
-            .for_each(|batch| {
-                let world = world.clone();
-                for scheduled_tick in batch {
-                    let pos = scheduled_tick.position;
-                    let (block, state_id) = world.get_block_and_state_id(&pos);
-                    if world.fire_block_scheduled_tick(&pos, state_id) {
-                        continue;
-                    }
-                    if let Some(pumpkin_block) = world.block_registry.get_pumpkin_block(block.id) {
-                        pumpkin_block.on_scheduled_tick(OnScheduledTickArgs {
-                            world: &world,
-                            block,
-                            position: &pos,
-                        });
-                    }
-                }
-            });
+        // 1. Block ticks, one after another in their order like vanilla
+        // `LevelTicks.runCollectedTicks`: a tick sees what the ticks before it changed, and
+        // a burst of ticks that change blocks in a few chunks does not stall on the chunk
+        // locks the way parallel batches did.
+        for scheduled_tick in &tick_data.block_ticks {
+            let pos = scheduled_tick.position;
+            let (block, state_id) = self.get_block_and_state_id(&pos);
+            if self.fire_block_scheduled_tick(&pos, state_id) {
+                continue;
+            }
+            if let Some(pumpkin_block) = self.block_registry.get_pumpkin_block(block.id) {
+                pumpkin_block.on_scheduled_tick(OnScheduledTickArgs {
+                    world: self,
+                    block,
+                    position: &pos,
+                });
+            }
+        }
 
-        // 2. Parallel Fluid Ticks via Rayon
-        let world = self.clone();
-        tick_data
-            .fluid_ticks
-            .par_chunks(BATCH_SIZE)
-            .for_each(|batch| {
-                let world = world.clone();
-                for scheduled_tick in batch {
-                    let pos = scheduled_tick.position;
-                    let fluid = world.get_fluid(&pos);
-                    if let Some(pumpkin_fluid) = world.block_registry.get_pumpkin_fluid(fluid.id) {
-                        pumpkin_fluid.on_scheduled_tick(&world, fluid, &pos);
-                    }
-                }
-            });
+        // 2. Fluid ticks, in order as well
+        for scheduled_tick in &tick_data.fluid_ticks {
+            let pos = scheduled_tick.position;
+            let fluid = self.get_fluid(&pos);
+            if let Some(pumpkin_fluid) = self.block_registry.get_pumpkin_fluid(fluid.id) {
+                pumpkin_fluid.on_scheduled_tick(self, fluid, &pos);
+            }
+        }
 
         // 3. Parallel Random Ticks via Rayon
         let random_ticks = self.fire_block_random_ticks(tick_data.random_ticks);
