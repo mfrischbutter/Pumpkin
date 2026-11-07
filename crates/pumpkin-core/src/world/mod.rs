@@ -7071,23 +7071,28 @@ impl World {
         source_block: &Block,
         include_fluid: bool,
     ) {
-        let (block, fluid) = if include_fluid {
-            let (block, fluid) = self.get_block_and_fluid(position);
-            (block, Some(fluid))
-        } else {
-            (self.get_block(position), None)
-        };
+        let (block, state_id) = self.get_block_and_state_id(position);
+        let fluid = include_fluid.then(|| Self::get_fluid_from_state_id(state_id));
 
-        let mut event = crate::plugin::api::events::block::block_physics::BlockPhysicsEvent::new(
-            self.clone(),
-            *position,
-            *source_position,
-        );
-        if let Some(server) = self.server.upgrade() {
+        // Plugins hear of a neighbour update only for the states they watch
+        // (`watch-block-states`), like shape updates: a plugin call for every update
+        // made the leaf and water updates of a fresh area cost milliseconds each.
+        if self
+            .block_registry
+            .plugin_hooks
+            .contains(BlockStateHook::ShapeUpdate, state_id)
+            && let Some(server) = self.server.upgrade()
+        {
+            let mut event =
+                crate::plugin::api::events::block::block_physics::BlockPhysicsEvent::new(
+                    self.clone(),
+                    *position,
+                    *source_position,
+                );
             server.plugin_manager.fire_blocking(&server, &mut event);
-        }
-        if event.cancelled {
-            return;
+            if event.cancelled {
+                return;
+            }
         }
 
         if let Some(pumpkin_block) = self.block_registry.get_pumpkin_block(block.id) {

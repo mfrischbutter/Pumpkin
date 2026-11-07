@@ -1402,6 +1402,8 @@ interface event {
         cancelled: bool
     }
 
+    /// A neighbour update of a block whose state the plugin watches
+    /// (`context.watch-block-states`); other blocks' updates are not reported.
     record block-physics-event-data {
         block-pos: block-pos,
         changed-pos: block-pos,

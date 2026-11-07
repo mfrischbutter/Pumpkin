@@ -13,7 +13,8 @@ use rustc_hash::FxHashMap;
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 #[repr(u8)]
 pub enum BlockStateHook {
-    /// Fire `BlockShapeUpdateEvent` before a shape update changes the state.
+    /// Fire `BlockShapeUpdateEvent` before a shape update changes the state, and
+    /// `BlockPhysicsEvent` for a neighbour update of the state.
     ShapeUpdate = 1 << 0,
     /// Fire `BlockScheduledTickEvent` before a scheduled tick of the state runs.
     ScheduledTick = 1 << 1,
