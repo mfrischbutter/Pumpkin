@@ -12,6 +12,8 @@ pub mod resume;
 pub mod stage_parity;
 #[cfg(test)]
 pub mod structure_starts;
+#[cfg(test)]
+pub mod tree_edges;
 
 #[cfg(test)]
 pub(crate) fn surface_biomes(
