@@ -610,7 +610,7 @@ impl World {
                     ring_candidates.push(pos.add_raw(dx, dz));
                 }
             }
-            if self.level.is_chunk_loaded(&pos) && tracker.loaded_active_chunks.insert(pos) {
+            if self.level.is_chunk_ready_to_tick(&pos) && tracker.loaded_active_chunks.insert(pos) {
                 migrations.push(pos);
             }
         }
@@ -625,7 +625,7 @@ impl World {
             pending_migrations.insert(pos);
         }
         for pos in pending_migrations {
-            if active_chunks.contains(&pos) && self.level.is_chunk_loaded(&pos) {
+            if tracker.loaded_active_chunks.contains(&pos) {
                 migrations.push(pos);
             }
         }
@@ -649,8 +649,11 @@ impl World {
             )));
     }
 
-    /// Chunks loaded, generated or unloaded since the last tick: a loaded active chunk migrates, a
-    /// loaded chunk may join the ticking ring, an unloaded one leaves both.
+    /// Chunks loaded, generated or unloaded since the last tick. A chunk starts ticking once it
+    /// and its eight neighbours are loaded (vanilla `ChunkMap.prepareTickingChunk`), so a load
+    /// is a chance for the chunk and the eight around it: an active one migrates, one next to
+    /// the active set may join the ticking ring. An unload takes the chunk and its neighbours
+    /// out of both; they come back with the next load around them.
     fn apply_loaded_chunk_changes(
         &self,
         tracker: &mut ActiveChunkTracker,
@@ -662,28 +665,38 @@ impl World {
             match change {
                 pumpkin_world::level::LoadedChunkChange::Loaded(pos)
                 | pumpkin_world::level::LoadedChunkChange::Generated(pos) => {
-                    if active_chunks.contains(&pos)
-                        && self.level.is_chunk_loaded(&pos)
-                        && tracker.loaded_active_chunks.insert(pos)
-                    {
-                        migrations.push(pos);
+                    for candidate in Self::chunk_neighbourhood(pos) {
+                        if active_chunks.contains(&candidate)
+                            && self.level.is_chunk_ready_to_tick(&candidate)
+                            && tracker.loaded_active_chunks.insert(candidate)
+                        {
+                            migrations.push(candidate);
+                        }
+                        ring_candidates.push(candidate);
                     }
-                    ring_candidates.push(pos);
                 }
                 pumpkin_world::level::LoadedChunkChange::Unloaded(pos) => {
                     self.forget_structure_references(pos);
                     if !self.level.is_chunk_loaded(&pos) {
-                        tracker.loaded_active_chunks.remove(&pos);
-                        tracker.ticking_ring.remove(&pos);
+                        for neighbour in Self::chunk_neighbourhood(pos) {
+                            tracker.loaded_active_chunks.remove(&neighbour);
+                            tracker.ticking_ring.remove(&neighbour);
+                        }
                     }
                 }
             }
         }
     }
 
-    /// The loaded chunks among `candidates` that join the ring of block-ticking chunks around the
-    /// active ones. Vanilla block-ticks that ring as well: a chunk there post-processes and runs
-    /// the ticks it brought along (`ChunkMap.prepareTickingChunk`).
+    /// `pos` and the eight chunks around it.
+    fn chunk_neighbourhood(pos: Vector2<i32>) -> impl Iterator<Item = Vector2<i32>> {
+        (-1..=1).flat_map(move |dx| (-1..=1).map(move |dz| pos.add_raw(dx, dz)))
+    }
+
+    /// The chunks among `candidates` that join the ring of block-ticking chunks around the
+    /// active ones: loaded, with loaded neighbours, next to an active chunk. Vanilla block-ticks
+    /// that ring as well: a chunk there post-processes and runs the ticks it brought along
+    /// (`ChunkMap.prepareTickingChunk`).
     fn join_ticking_ring(
         &self,
         tracker: &mut ActiveChunkTracker,
@@ -692,7 +705,7 @@ impl World {
     ) -> Vec<Vector2<i32>> {
         let mut joined = Vec::new();
         for pos in candidates {
-            if active_chunks.contains(&pos) || !self.level.is_chunk_loaded(&pos) {
+            if active_chunks.contains(&pos) || !self.level.is_chunk_ready_to_tick(&pos) {
                 continue;
             }
             let next_to_active =
@@ -2426,12 +2439,18 @@ impl World {
         const BATCH_SIZE: usize = 32;
         let random_tick_speed = self.level_info.load().game_rules.random_tick_speed;
 
-        let active_chunks = self
-            .active_chunks
-            .read()
-            .unwrap_or_else(std::sync::PoisonError::into_inner)
-            .clone();
-        let tick_data = self.level.get_tick_data(&active_chunks, random_tick_speed);
+        // The block-ticking chunks: the active ones that started ticking and the ring around
+        // them, like vanilla's `ServerChunkCache.isPositionTicking`.
+        let ticking_chunks = {
+            let tracker = self
+                .active_chunk_tracker
+                .lock()
+                .unwrap_or_else(std::sync::PoisonError::into_inner);
+            let mut ticking = tracker.loaded_active_chunks.clone();
+            ticking.extend(tracker.ticking_ring.iter().copied());
+            ticking
+        };
+        let tick_data = self.level.get_tick_data(&ticking_chunks, random_tick_speed);
 
         // 1. Parallel Block Ticks via Rayon
         let world = self.clone();

@@ -601,9 +601,12 @@ impl Level {
         });
     }
 
+    /// The ticks due this tick. Like vanilla (`ServerChunkCache.isPositionTicking`, the
+    /// check behind `LevelTicks`), only `ticking_chunks` sample random ticks and run their
+    /// scheduled ticks; every other chunk keeps its ticks until it ticks.
     pub fn get_tick_data(
         &self,
-        active_chunks: &FxHashSet<Vector2<i32>>,
+        ticking_chunks: &FxHashSet<Vector2<i32>>,
         random_tick_speed: i64,
     ) -> TickData {
         let samples_per_section = random_tick_speed.max(0);
@@ -611,11 +614,11 @@ impl Level {
         let mut ticks = TickData {
             block_ticks: Vec::new(),
             fluid_ticks: Vec::new(),
-            random_ticks: Vec::with_capacity(active_chunks.len() * 3),
+            random_ticks: Vec::with_capacity(ticking_chunks.len() * 3),
         };
 
-        // 1. Process active chunks (random ticks, block entities)
-        for pos in active_chunks {
+        // 1. Process ticking chunks (random ticks, block entities)
+        for pos in ticking_chunks {
             if let Some(chunk) = self.loaded_chunks.get(pos) {
                 let chunk = chunk.value();
                 let chunk_x_base = chunk.x * 16;
@@ -672,6 +675,9 @@ impl Level {
             .map(|p| *p)
             .collect();
         for pos in scheduled_chunk_pos {
+            if !ticking_chunks.contains(&pos) {
+                continue;
+            }
             if let Some(chunk) = self.loaded_chunks.get(&pos) {
                 let chunk = chunk.value();
                 ticks.block_ticks.append(&mut chunk.block_ticks.step_tick());
@@ -988,6 +994,18 @@ impl Level {
 
     pub fn is_chunk_loaded(&self, coordinates: &Vector2<i32>) -> bool {
         self.loaded_chunks.contains_key(coordinates)
+    }
+
+    /// Whether `coordinates` and the eight chunks around it are loaded: what vanilla's
+    /// `ChunkMap.prepareTickingChunk` waits for before a chunk post-processes and ticks, so
+    /// a block tick at a chunk border never reads an unloaded neighbour as air.
+    pub fn is_chunk_ready_to_tick(&self, coordinates: &Vector2<i32>) -> bool {
+        (-1..=1).all(|dx| {
+            (-1..=1).all(|dz| {
+                self.loaded_chunks
+                    .contains_key(&coordinates.add_raw(dx, dz))
+            })
+        })
     }
 
     pub fn read_chunk_sync<R, F: Fn(&SyncChunk) -> R>(
