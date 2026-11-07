@@ -130,6 +130,10 @@ pub struct Level {
     pub chunk_listener: Arc<ChunkListener>,
 }
 
+/// Vanilla `ServerLevel.tick` runs at most this many block ticks and this many fluid ticks
+/// per tick and leaves the rest for the next one.
+const MAX_TICKS_PER_TICK: usize = 65536;
+
 pub struct TickData {
     pub block_ticks: Vec<OrderedTick<&'static Block>>,
     pub fluid_ticks: Vec<OrderedTick<&'static Fluid>>,
@@ -674,7 +678,14 @@ impl Level {
             .iter()
             .map(|p| *p)
             .collect();
+        // Chunks are stepped whole, so a chunk's due ticks wait together once the budget
+        // is spent.
         for pos in scheduled_chunk_pos {
+            if ticks.block_ticks.len() >= MAX_TICKS_PER_TICK
+                || ticks.fluid_ticks.len() >= MAX_TICKS_PER_TICK
+            {
+                break;
+            }
             if !ticking_chunks.contains(&pos) {
                 continue;
             }
