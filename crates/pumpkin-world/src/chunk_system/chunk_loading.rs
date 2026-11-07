@@ -173,20 +173,41 @@ impl ChunkLoading {
         }
     }
 
+    /// Vanilla's `TicketType.FORCED` sits at the entity-ticking level (`ChunkLevel`): the
+    /// forced chunk ticks, the ring around it ticks blocks and the ring beyond is loaded. Two
+    /// levels below a full chunk, so both rings load with the forced chunk.
+    pub const FORCED_CHUNK_LEVEL: i8 = Self::FULL_CHUNK_LEVEL - 2;
+
+    /// A full-chunk ticket that loads `pos` first.
     pub fn add_force_ticket(&mut self, pos: ChunkPos) {
-        // debug!("add force ticket at {pos:?}");
-        self.high_priority.push(pos);
-        self.is_priority_dirty = true;
-        self.add_ticket(pos, Self::FULL_CHUNK_LEVEL);
+        self.add_priority_ticket(pos, Self::FULL_CHUNK_LEVEL);
     }
 
     pub fn remove_force_ticket(&mut self, pos: ChunkPos) {
-        // debug!("remove force ticket at {pos:?}");
+        self.remove_priority_ticket(pos, Self::FULL_CHUNK_LEVEL);
+    }
+
+    /// The ticket of a forced chunk (`/forceload`, `ServerLevel.setChunkForced`).
+    pub fn add_forced_chunk_ticket(&mut self, pos: ChunkPos) {
+        self.add_priority_ticket(pos, Self::FORCED_CHUNK_LEVEL);
+    }
+
+    pub fn remove_forced_chunk_ticket(&mut self, pos: ChunkPos) {
+        self.remove_priority_ticket(pos, Self::FORCED_CHUNK_LEVEL);
+    }
+
+    fn add_priority_ticket(&mut self, pos: ChunkPos, level: i8) {
+        self.high_priority.push(pos);
+        self.is_priority_dirty = true;
+        self.add_ticket(pos, level);
+    }
+
+    fn remove_priority_ticket(&mut self, pos: ChunkPos, level: i8) {
         if let Some(index) = self.high_priority.iter().position(|x| *x == pos) {
             self.high_priority.remove(index);
         }
         self.is_priority_dirty = true;
-        self.remove_ticket(pos, Self::FULL_CHUNK_LEVEL);
+        self.remove_ticket(pos, level);
     }
 
     pub fn add_ticket(&mut self, pos: ChunkPos, level: i8) {

@@ -718,8 +718,9 @@ impl World {
     }
 
     /// Adds or removes force tickets for `chunks`, mirroring vanilla
-    /// `ServerLevel.setChunkForced`: the chunks stay loaded, their entities are
-    /// kept live through the watch counts, and they join the active set.
+    /// `ServerLevel.setChunkForced`: the chunks stay loaded with the two rings around
+    /// them (vanilla's forced ticket level), their entities are kept live through the
+    /// watch counts, and they join the active set.
     pub fn set_chunks_forced(self: &Arc<Self>, chunks: &[Vector2<i32>], forced: bool) {
         let changed: Vec<Vector2<i32>> = {
             let mut guard = self
@@ -750,9 +751,9 @@ impl World {
             .unwrap_or_else(std::sync::PoisonError::into_inner);
         for &chunk in &changed {
             if forced {
-                lock.add_force_ticket(chunk);
+                lock.add_forced_chunk_ticket(chunk);
             } else {
-                lock.remove_force_ticket(chunk);
+                lock.remove_forced_chunk_ticket(chunk);
             }
         }
         lock.send_change();
