@@ -338,11 +338,11 @@ fn is_in_invalid_location(piece_bb: &BlockBox, chunk: &ProtoChunk, chunk_box: &B
             if chunk
                 .get_block_state(&Vector3::new(x, y0, z))
                 .to_state()
-                .is_liquid()
+                .liquid()
                 || chunk
                     .get_block_state(&Vector3::new(x, y1, z))
                     .to_state()
-                    .is_liquid()
+                    .liquid()
             {
                 return true;
             }
@@ -353,11 +353,11 @@ fn is_in_invalid_location(piece_bb: &BlockBox, chunk: &ProtoChunk, chunk_box: &B
             if chunk
                 .get_block_state(&Vector3::new(x, y, z0))
                 .to_state()
-                .is_liquid()
+                .liquid()
                 || chunk
                     .get_block_state(&Vector3::new(x, y, z1))
                     .to_state()
-                    .is_liquid()
+                    .liquid()
             {
                 return true;
             }
@@ -368,11 +368,11 @@ fn is_in_invalid_location(piece_bb: &BlockBox, chunk: &ProtoChunk, chunk_box: &B
             if chunk
                 .get_block_state(&Vector3::new(x0, y, z))
                 .to_state()
-                .is_liquid()
+                .liquid()
                 || chunk
                     .get_block_state(&Vector3::new(x1, y, z))
                     .to_state()
-                    .is_liquid()
+                    .liquid()
             {
                 return true;
             }
