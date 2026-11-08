@@ -1,6 +1,7 @@
 //! Single values read from vanilla 26.3 that a past difference got wrong.
 
 use pumpkin_data::Block;
+use pumpkin_data::chunk::Biome;
 use pumpkin_data::dimension::Dimension;
 use pumpkin_util::math::vector3::Vector3;
 use pumpkin_util::world_seed::Seed;
@@ -8,6 +9,7 @@ use pumpkin_util::world_seed::Seed;
 use super::surface_biomes;
 use crate::generation::generator::WorldGenerator;
 use crate::generation::get_world_gen;
+use crate::generation::noise::router::multi_noise_sampler::MultiNoiseSampler;
 use crate::generation::proto_chunk::ProtoChunk;
 
 const SEED: u64 = 1_657_324_430;
@@ -55,4 +57,50 @@ fn aquifer_borders_stay_solid() {
             expected.name, block.name
         );
     }
+}
+
+/// Vanilla 26.3's climate sampler, seed 1657324430: the quantized depth parameter at block
+/// (-384, -60, 564) is 7428. Evaluating the cubic splines with another formula than
+/// vanilla's float steps gave 7427.
+#[test]
+fn climate_depth_matches_vanilla_splines() {
+    let world_gen = get_world_gen(
+        Seed(SEED),
+        Dimension::OVERWORLD,
+        false,
+        Vec::new(),
+        String::new(),
+    );
+    let WorldGenerator::Noise(generator) = &*world_gen else {
+        unreachable!()
+    };
+    let mut sampler = MultiNoiseSampler::generate(&generator.base_router.multi_noise);
+    let (x, y, z) = (-384, -60, 564);
+    assert_eq!(sampler.sample(x >> 2, y >> 2, z >> 2).depth, 7428);
+}
+
+/// Vanilla 26.3's saved terrain-stage chunk of seed 1657324430: the biome at block
+/// (-384, -20, 568) is lush caves, where a spline result off in the last bit gave deep ocean.
+#[test]
+fn cave_biome_matches_vanilla_splines() {
+    let world_gen = get_world_gen(
+        Seed(SEED),
+        Dimension::OVERWORLD,
+        false,
+        Vec::new(),
+        String::new(),
+    );
+    let WorldGenerator::Noise(generator) = &*world_gen else {
+        unreachable!()
+    };
+    let (x, y, z) = (-384, -20, 568);
+    let mut chunk = ProtoChunk::new(x >> 4, z >> 4, &world_gen);
+    chunk.step_to_biomes(generator);
+    let biome = chunk.get_biome(x >> 2 & 3, y >> 2, z >> 2 & 3);
+    assert_eq!(
+        biome.id,
+        Biome::LUSH_CAVES.id,
+        "expected lush_caves, got {}",
+        biome.registry_id
+    );
 }
