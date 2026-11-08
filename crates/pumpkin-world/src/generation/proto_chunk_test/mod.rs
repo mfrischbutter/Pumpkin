@@ -37,3 +37,5 @@ pub(crate) fn surface_biomes(
     assert!(neighborhood.is_complete());
     neighborhood
 }
+#[cfg(test)]
+pub mod vanilla_values;

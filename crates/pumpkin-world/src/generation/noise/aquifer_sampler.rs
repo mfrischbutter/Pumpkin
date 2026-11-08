@@ -383,14 +383,14 @@ impl WorldAquiferSampler {
         Some([
             p[i11 + 2],
             p[i10 + 2],
-            p[i01 + 2],
-            p[i00 + 2],
             p[i11 + 1],
             p[i10 + 1],
-            p[i01 + 1],
-            p[i00 + 1],
             p[i11],
             p[i10],
+            p[i01 + 2],
+            p[i00 + 2],
+            p[i01 + 1],
+            p[i00 + 1],
             p[i01],
             p[i00],
         ])
@@ -398,20 +398,20 @@ impl WorldAquiferSampler {
 
     /// Vanilla's `FLOWING_UPDATE_SIMULARITY`, the similarity of the squared distances 10² and 12²:
     /// aquifers this alike or closer may flow into each other.
-    const FLOWING_UPDATE_SIMILARITY: f32 = 1.0 - (12 * 12 - 10 * 10) as f32 / 25.0;
+    const FLOWING_UPDATE_SIMILARITY: f64 = 1.0 - (12 * 12 - 10 * 10) as f64 / 25.0;
 
     #[inline]
-    fn max_distance(i: i32, a: i32) -> f32 {
-        1.0 - ((a - i).abs() as f32) / 25.0
+    fn max_distance(i: i32, a: i32) -> f64 {
+        1.0 - f64::from(a - i) / 25.0
     }
 
     fn calculate_density(
-        barrier_sample: &mut Option<f32>,
+        barrier_sample: &mut Option<f64>,
         pos: &Vector3<i32>,
         router: &mut ChunkNoiseRouter,
         level_1: &FluidLevel,
         level_2: &FluidLevel,
-    ) -> f32 {
+    ) -> f64 {
         let y = pos.y;
         let block_state1 = level_1.get_block(y);
         let block_state2 = level_2.get_block(y);
@@ -423,9 +423,9 @@ impl WorldAquiferSampler {
             if level_diff == 0 {
                 0.0
             } else {
-                let avg_level = 0.5 * (level_1.max_y + level_2.max_y) as f32;
-                let scaled_level = y as f32 + 0.5 - avg_level;
-                let halved_diff = level_diff as f32 / 2.0;
+                let avg_level = 0.5 * f64::from(level_1.max_y + level_2.max_y);
+                let scaled_level = f64::from(y) + 0.5 - avg_level;
+                let halved_diff = f64::from(level_diff) / 2.0;
 
                 let o = halved_diff - scaled_level.abs();
                 let q = if scaled_level > 0.0 {
@@ -436,7 +436,7 @@ impl WorldAquiferSampler {
                 };
 
                 let r = if (-2.0..=2.0).contains(&q) {
-                    *barrier_sample.get_or_insert_with(|| router.barrier_noise(pos))
+                    *barrier_sample.get_or_insert_with(|| f64::from(router.barrier_noise(pos)))
                 } else {
                     0.0
                 };
@@ -641,6 +641,7 @@ impl WorldAquiferSampler {
         if density > 0.0 {
             return (None, false);
         }
+        let density = f64::from(density);
 
         let sample_x = pos.x;
         let sample_y = pos.y;
@@ -1881,7 +1882,7 @@ mod random_positions_and_hypot {
                 &level2,
             );
             assert!(
-                (calculated - result as f32).abs() < 1e-4,
+                (calculated - result).abs() < 1e-4,
                 "Failed at pos={pos:?}: got {calculated}, expected {result}"
             );
         }
