@@ -1448,7 +1448,7 @@ impl StructurePieceBase for MineShaftCorridor {
                 } else {
                     Block::AIR.default_state.id
                 };
-                if !floor.to_state().is_air() && floor.to_state().is_full_cube() {
+                if !floor.to_state().is_air() && floor.to_state().is_solid_render() {
                     let prob = if self.is_interior(chunk, 1, 0, z3, chunk_box) {
                         0.7
                     } else {
