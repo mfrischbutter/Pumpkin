@@ -116,9 +116,22 @@ impl BlockState {
         self.state_flags & REPLACEABLE != 0
     }
 
+    /// True for every state that holds a fluid (vanilla `!getFluidState().isEmpty()`), not vanilla's `liquid()`.
     #[must_use]
     pub const fn is_liquid(&self) -> bool {
         self.state_flags & IS_LIQUID != 0
+    }
+
+    /// Vanilla `BlockState.liquid()`: the state is water, lava or a bubble column.
+    ///
+    /// Unlike [`Self::is_liquid`], it is false for blocks that only hold a fluid
+    /// (waterlogged blocks, seagrass, kelp).
+    #[must_use]
+    pub const fn liquid(&self) -> bool {
+        matches!(
+            self.id.to_block_id(),
+            BlockId::WATER | BlockId::LAVA | BlockId::BUBBLE_COLUMN
+        )
     }
 
     /// Vanilla `BlockState.isSignalSource`: a redstone component that emits a signal.
@@ -476,5 +489,30 @@ mod tests {
         assert_close(shifted_shape.max.x, 0.84375);
         assert_close(shifted_shape.min.z, 0.65625);
         assert_close(shifted_shape.max.z, 0.84375);
+    }
+
+    #[test]
+    fn liquid_is_only_water_lava_and_bubble_column() {
+        let liquids = [&Block::WATER, &Block::LAVA, &Block::BUBBLE_COLUMN];
+        for block in liquids {
+            for state in block.states {
+                assert!(state.liquid(), "{} state {:?}", block.name, state.id);
+            }
+        }
+
+        // The waterlogged oak slab states are the ones that hold a fluid.
+        let waterlogged_slab = Block::OAK_SLAB
+            .states
+            .iter()
+            .find(|s| s.is_liquid())
+            .unwrap();
+        for state in [
+            waterlogged_slab,
+            Block::SEAGRASS.default_state,
+            Block::KELP.default_state,
+        ] {
+            assert!(state.is_liquid(), "{:?} holds a fluid", state.id);
+            assert!(!state.liquid(), "{:?} is not a liquid", state.id);
+        }
     }
 }

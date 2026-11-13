@@ -3,6 +3,7 @@ use crate::world::World;
 use pumpkin_data::{
     Block, BlockDirection, BlockStateId,
     fluid::{EnumVariants, Falling, Fluid, FluidProperties, Level},
+    world::WorldEvent,
 };
 use pumpkin_util::math::position::BlockPos;
 use pumpkin_world::{tick::TickPriority, world::BlockFlags};
@@ -422,7 +423,13 @@ pub trait FlowingFluid: Send + Sync {
         // Break only the block we observed, after the event (vanilla's beforeDestroyingBlock
         // order): a handler may have replaced it during dispatch.
         if replace_block && world.get_block_state_id(pos) == current_state_id {
-            world.break_block(pos, None, BlockFlags::NOTIFY_ALL);
+            if block == &Block::LAVA {
+                // Vanilla `LavaFluid.beforeDestroyingBlock`: the lava fizzes, nothing drops.
+                world.sync_world_event(WorldEvent::LavaFizz, *pos, 0);
+                world.break_block(pos, None, BlockFlags::NOTIFY_ALL | BlockFlags::SKIP_DROPS);
+            } else {
+                world.break_block(pos, None, BlockFlags::NOTIFY_ALL);
+            }
         }
 
         world.set_block_state(pos, state_id, BlockFlags::NOTIFY_ALL);

@@ -31,6 +31,13 @@ pub(crate) struct TaskPriority {
     z: i32,
 }
 
+/// Where a chunk's features come in the order of `GenerationSchedule::features_order_key`.
+pub(crate) type FeaturesOrderKey = (i8, i32, i32, i32, i32);
+
+/// How far around a full chunk vanilla generates the terrain for it:
+/// `ChunkPyramid.GENERATION_PYRAMID.getStepTo(FULL).getAccumulatedRadiusOf(TERRAIN)`.
+const FULL_TERRAIN_RADIUS: i32 = 2;
+
 pub(crate) struct TaskHeapNode(TaskPriority, NodeKey);
 impl PartialEq for TaskHeapNode {
     fn eq(&self, other: &Self) -> bool {
@@ -73,6 +80,8 @@ pub struct GenerationSchedule {
     /// one or more of their required neighbor chunks haven't been delivered yet.
     /// Parked here and re-queued by `check_waiting_tasks()` as chunk data arrives.
     waiting_for_chunks: HashSetType<NodeKey>,
+    /// The order keys the features checks computed, kept until the levels change.
+    features_order_keys: HashMapType<ChunkPos, FeaturesOrderKey>,
 
     io_lock: IOLock,
     running_task_count: u16,
@@ -176,6 +185,7 @@ impl GenerationSchedule {
                     chunk_lifecycle_changes: level_sched.chunk_lifecycle_changes.clone(),
                     unload_chunks: HashSetType::default(),
                     waiting_for_chunks: HashSetType::default(),
+                    features_order_keys: HashMapType::default(),
                     io_lock,
                     running_task_count: 0,
                     running_gen_count: 0,
@@ -524,15 +534,57 @@ impl GenerationSchedule {
         newly_created
     }
 
-    /// Features of neighbours overlap, and what they write decides what the next one finds. This
-    /// order keeps a seed's world the same however the chunks get scheduled.
+    /// When vanilla's generation gets to a chunk's terrain: a full chunk's `ChunkGenerationTask`
+    /// generates the terrain `FULL_TERRAIN_RADIUS` around it, and the tasks nearer the loading
+    /// tickets run first (`ChunkTaskPriorityQueue` orders by ticket level), so the terrain comes
+    /// with the lowest level within that radius.
+    fn terrain_wave(last_level: &ChunkLevel, pos: ChunkPos) -> i8 {
+        let mut wave = ChunkLoading::MAX_LEVEL;
+        for dx in -FULL_TERRAIN_RADIUS..=FULL_TERRAIN_RADIUS {
+            for dz in -FULL_TERRAIN_RADIUS..=FULL_TERRAIN_RADIUS {
+                let level = *last_level
+                    .get(&pos.add_raw(dx, dz))
+                    .unwrap_or(&ChunkLoading::MAX_LEVEL);
+                wave = wave.min(level);
+            }
+        }
+        wave
+    }
+
+    /// A model of when vanilla decorates a chunk relative to the chunks around it: once the last
+    /// chunk of its 3x3 has its terrain (`ChunkPyramid.GENERATION_PYRAMID`), the terrain coming in
+    /// `terrain_wave`s. Within a wave vanilla's order follows thread timing, apart from each task
+    /// decorating its 3x3 x first; x, then z keeps the model the same for a seed's tickets.
+    fn features_order_key(last_level: &ChunkLevel, pos: ChunkPos) -> FeaturesOrderKey {
+        let mut last_terrain = (i8::MIN, i32::MIN, i32::MIN);
+        for dx in -1..=1 {
+            for dz in -1..=1 {
+                let terrain_pos = pos.add_raw(dx, dz);
+                let wave = Self::terrain_wave(last_level, terrain_pos);
+                last_terrain = last_terrain.max((wave, terrain_pos.x, terrain_pos.y));
+            }
+        }
+        (last_terrain.0, last_terrain.1, last_terrain.2, pos.x, pos.y)
+    }
+
+    /// Features of chunks within two of each other overlap, so they are decorated in the order
+    /// `features_order_key` models on vanilla's, which keeps a seed's world the same for the same
+    /// tickets however the tasks get scheduled.
     pub(crate) fn is_features_order_ready(
         chunk_map: &HashMap<ChunkPos, ChunkHolder>,
+        last_level: &ChunkLevel,
+        order_keys: &mut HashMapType<ChunkPos, FeaturesOrderKey>,
         pos: ChunkPos,
     ) -> bool {
+        let mut key = |chunk: ChunkPos| {
+            *order_keys
+                .entry(chunk)
+                .or_insert_with(|| Self::features_order_key(last_level, chunk))
+        };
+        let own_key = key(pos);
         for dx in -2..=2 {
             for dz in -2..=2 {
-                if dx > 0 || (dx == 0 && dz >= 0) {
+                if dx == 0 && dz == 0 {
                     continue;
                 }
                 let neighbor_pos = pos.add_raw(dx, dz);
@@ -540,6 +592,7 @@ impl GenerationSchedule {
                     let effective_target = holder.target_stage.max(holder.dependency_stage);
                     if effective_target >= StagedChunkEnum::Features
                         && holder.current_stage < StagedChunkEnum::Features
+                        && key(neighbor_pos) < own_key
                     {
                         return false;
                     }
@@ -549,7 +602,7 @@ impl GenerationSchedule {
         true
     }
 
-    fn is_task_ready(&self, pos: ChunkPos, stage: StagedChunkEnum) -> bool {
+    fn is_task_ready(&mut self, pos: ChunkPos, stage: StagedChunkEnum) -> bool {
         let read_radius = stage.get_read_radius();
         let chunks_present = (-read_radius..=read_radius).all(|dx| {
             (-read_radius..=read_radius).all(|dy| {
@@ -561,7 +614,13 @@ impl GenerationSchedule {
         if !chunks_present {
             return false;
         }
-        stage != StagedChunkEnum::Features || Self::is_features_order_ready(&self.chunk_map, pos)
+        stage != StagedChunkEnum::Features
+            || Self::is_features_order_ready(
+                &self.chunk_map,
+                &self.last_level,
+                &mut self.features_order_keys,
+                pos,
+            )
     }
 
     /// Check if any tasks parked in `waiting_for_chunks` now have all their neighbor
@@ -598,7 +657,8 @@ impl GenerationSchedule {
                 continue;
             }
 
-            if self.is_task_ready(node.pos, node.stage) && node.in_degree == 0 {
+            let (pos, stage, in_degree) = (node.pos, node.stage, node.in_degree);
+            if self.is_task_ready(pos, stage) && in_degree == 0 {
                 self.waiting_for_chunks.remove(&node_key);
                 now_ready.push(node_key);
             }
@@ -634,6 +694,7 @@ impl GenerationSchedule {
             return false;
         };
         self.last_level = new_level.1;
+        self.features_order_keys.clear();
         let mut worklist: std::collections::VecDeque<(ChunkPos, StagedChunkEnum, NodeKey)> =
             std::collections::VecDeque::new();
 
@@ -847,8 +908,12 @@ impl GenerationSchedule {
             holder.dependency_stage = new_dependency;
 
             let effective_target = holder.target_stage.max(new_dependency);
-            for i in (effective_target as usize + 1)..StagedChunkEnum::COUNT {
-                let task = holder.tasks[i];
+            for (i, &task) in holder
+                .tasks
+                .iter()
+                .enumerate()
+                .skip(effective_target as usize + 1)
+            {
                 if !task.is_null() {
                     nodes_to_drop.push((*pos, i, task));
                 }
@@ -1101,11 +1166,11 @@ impl GenerationSchedule {
         // A neighboring generation cache may already have advanced this holder past the
         // returning task's stage. Drop every scheduled task satisfied by the returned data,
         // including that task's stale in-flight node.
-        for task_idx in (StagedChunkEnum::None as usize + 1)..=(stage as usize) {
-            if !holder.tasks[task_idx].is_null() {
-                self.waiting_for_chunks.remove(&holder.tasks[task_idx]);
-                self.drop_node(holder.tasks[task_idx]);
-                holder.tasks[task_idx] = NodeKey::null();
+        for task in &mut holder.tasks[(StagedChunkEnum::None as usize + 1)..=(stage as usize)] {
+            if !task.is_null() {
+                self.waiting_for_chunks.remove(task);
+                self.drop_node(*task);
+                *task = NodeKey::null();
             }
         }
     }
@@ -1506,8 +1571,10 @@ impl GenerationSchedule {
                             StagedChunkEnum::None,
                         ));
                         let effective_target = holder.target_stage.max(holder.dependency_stage);
-                        for i in (holder.current_stage as usize + 1)..=(effective_target as usize) {
-                            self.graph.add_edge(occupy, holder.tasks[i]);
+                        for &task in &holder.tasks
+                            [(holder.current_stage as usize + 1)..=(effective_target as usize)]
+                        {
+                            self.graph.add_edge(occupy, task);
                         }
                         holder.occupied = occupy;
 

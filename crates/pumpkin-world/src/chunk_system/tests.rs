@@ -40,8 +40,7 @@ fn ensure_dependency_chain_builds_multistage_chain() {
     let end = StagedChunkEnum::Surface as u8 as usize;
 
     // Ensure tasks were created, present in the DAG, and correctly chained
-    for idx in start..=end {
-        let key = holder.tasks[idx];
+    for (idx, &key) in holder.tasks.iter().enumerate().take(end + 1).skip(start) {
         assert!(!key.is_null(), "task {idx} was not created");
 
         let node = graph.nodes.get(key).expect("graph missing node");
@@ -249,8 +248,14 @@ fn completed_proto_stage_drops_all_satisfied_tasks() {
         ..Default::default()
     };
 
-    for stage in StagedChunkEnum::Empty as usize..=StagedChunkEnum::StructureStart as usize {
-        holder.tasks[stage] = graph.nodes.insert(Node::new(
+    for (stage, task) in holder
+        .tasks
+        .iter_mut()
+        .enumerate()
+        .take(StagedChunkEnum::StructureStart as usize + 1)
+        .skip(StagedChunkEnum::Empty as usize)
+    {
+        *task = graph.nodes.insert(Node::new(
             ChunkPos::new(0, 0),
             StagedChunkEnum::from(stage as u8),
         ));
@@ -544,17 +549,156 @@ fn features_task_waits_for_higher_priority_overlapping_features_neighbor() {
     later_holder.tasks[StagedChunkEnum::Features as usize] = later_key;
     chunk_map.insert(later_pos, later_holder);
 
+    let last_level = ChunkLevel::default();
     assert!(GenerationSchedule::is_features_order_ready(
         &chunk_map,
+        &last_level,
+        &mut HashMapType::default(),
         earlier_pos,
     ));
     assert!(!GenerationSchedule::is_features_order_ready(
-        &chunk_map, later_pos,
+        &chunk_map,
+        &last_level,
+        &mut HashMapType::default(),
+        later_pos,
     ));
 
     chunk_map.get_mut(&earlier_pos).unwrap().current_stage = StagedChunkEnum::Features;
 
     assert!(GenerationSchedule::is_features_order_ready(
-        &chunk_map, later_pos,
+        &chunk_map,
+        &last_level,
+        &mut HashMapType::default(),
+        later_pos,
+    ));
+}
+
+/// The levels `ChunkLoading` gives the chunks around a forced rectangle: the forced level inside,
+/// one more per chunk of distance, until the unloaded level.
+fn forced_area_levels(x0: i32, x1: i32, z0: i32, z1: i32) -> ChunkLevel {
+    let reach = i32::from(ChunkLoading::MAX_LEVEL - ChunkLoading::FORCED_CHUNK_LEVEL - 1);
+    let mut levels = ChunkLevel::default();
+    for x in (x0 - reach)..=(x1 + reach) {
+        for z in (z0 - reach)..=(z1 + reach) {
+            let distance = (x0 - x).max(x - x1).max(z0 - z).max(z - z1).max(0);
+            levels.insert(
+                ChunkPos::new(x, z),
+                ChunkLoading::FORCED_CHUNK_LEVEL + distance as i8,
+            );
+        }
+    }
+    levels
+}
+
+fn waiting_for_features() -> ChunkHolder {
+    ChunkHolder {
+        current_stage: StagedChunkEnum::Carvers,
+        target_stage: StagedChunkEnum::Full,
+        ..Default::default()
+    }
+}
+
+#[test]
+fn features_wait_for_the_overlapping_neighbour_nearer_the_tickets() {
+    let last_level = forced_area_levels(0, 15, 0, 15);
+    let nearer = ChunkPos::new(-2, 5);
+    let farther = ChunkPos::new(-3, 5);
+    let mut chunk_map = HashMap::new();
+    chunk_map.insert(nearer, waiting_for_features());
+    chunk_map.insert(farther, waiting_for_features());
+
+    // x, then z alone would decorate the farther chunk first.
+    assert!(GenerationSchedule::is_features_order_ready(
+        &chunk_map,
+        &last_level,
+        &mut HashMapType::default(),
+        nearer,
+    ));
+    assert!(!GenerationSchedule::is_features_order_ready(
+        &chunk_map,
+        &last_level,
+        &mut HashMapType::default(),
+        farther,
+    ));
+
+    chunk_map.get_mut(&nearer).unwrap().current_stage = StagedChunkEnum::Features;
+
+    assert!(GenerationSchedule::is_features_order_ready(
+        &chunk_map,
+        &last_level,
+        &mut HashMapType::default(),
+        farther,
+    ));
+}
+
+/// Vanilla's forced chunks generate the terrain two chunks around them and decorate their 3x3 x
+/// first, so the chunks on a forced area's edge and just outside it come in x, then z like the
+/// inside, not after it.
+#[test]
+fn features_at_a_forced_edge_come_in_x_then_z() {
+    let last_level = forced_area_levels(0, 15, 0, 15);
+    let outside = ChunkPos::new(-1, 5);
+    let edge = ChunkPos::new(0, 5);
+    let inside = ChunkPos::new(1, 5);
+    let mut chunk_map = HashMap::new();
+    for pos in [outside, edge, inside] {
+        chunk_map.insert(pos, waiting_for_features());
+    }
+
+    for (pos, ready) in [(outside, true), (edge, false), (inside, false)] {
+        assert_eq!(
+            GenerationSchedule::is_features_order_ready(
+                &chunk_map,
+                &last_level,
+                &mut HashMapType::default(),
+                pos,
+            ),
+            ready,
+            "{pos:?}"
+        );
+    }
+
+    chunk_map.get_mut(&outside).unwrap().current_stage = StagedChunkEnum::Features;
+
+    assert!(GenerationSchedule::is_features_order_ready(
+        &chunk_map,
+        &last_level,
+        &mut HashMapType::default(),
+        edge,
+    ));
+}
+
+/// Vanilla decorated (-89, -131) before the corner (-89, -132) of the ring around seed
+/// -4172144997902289642's village area: their two geodes overlap, and only that order gives
+/// vanilla's blocks.
+#[test]
+fn features_follow_vanillas_order_at_a_ring_corner() {
+    let last_level = forced_area_levels(-86, -70, -129, -113);
+    let first = ChunkPos::new(-89, -131);
+    let corner = ChunkPos::new(-89, -132);
+    let mut chunk_map = HashMap::new();
+    chunk_map.insert(first, waiting_for_features());
+    chunk_map.insert(corner, waiting_for_features());
+
+    assert!(GenerationSchedule::is_features_order_ready(
+        &chunk_map,
+        &last_level,
+        &mut HashMapType::default(),
+        first,
+    ));
+    assert!(!GenerationSchedule::is_features_order_ready(
+        &chunk_map,
+        &last_level,
+        &mut HashMapType::default(),
+        corner,
+    ));
+
+    chunk_map.get_mut(&first).unwrap().current_stage = StagedChunkEnum::Features;
+
+    assert!(GenerationSchedule::is_features_order_ready(
+        &chunk_map,
+        &last_level,
+        &mut HashMapType::default(),
+        corner,
     ));
 }

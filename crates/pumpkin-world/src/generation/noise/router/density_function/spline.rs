@@ -143,20 +143,14 @@ fn sample_spline_with(spline: &SplineRepr, location_of: &mut impl FnMut(usize) -
             let start_derivative = previous.derivative;
             let end_derivative = current.derivative;
 
-            let t = (location - start_x) / (end_x - start_x);
-
-            let h00 = (1.0 + 2.0 * t) * (1.0 - t) * (1.0 - t);
-            let h10 = t * (1.0 - t) * (1.0 - t);
-            let h01 = t * t * (3.0 - 2.0 * t);
-            let h11 = t * t * (t - 1.0);
-
-            h00.mul_add(
-                start_value,
-                h10.mul_add(
-                    start_derivative * (end_x - start_x),
-                    h01.mul_add(end_value, h11 * (end_derivative * (end_x - start_x))),
-                ),
-            )
+            // Vanilla's `CubicSpline.Multipoint.sample` in plain f32 steps (no fused
+            // multiply-add), so the result matches it to the last bit.
+            let width = end_x - start_x;
+            let t = (location - start_x) / width;
+            let a = start_derivative * width - (end_value - start_value);
+            let b = -end_derivative * width + (end_value - start_value);
+            let lerp = |delta: f32, start: f32, end: f32| start + delta * (end - start);
+            lerp(t, start_value, end_value) + t * (1.0 - t) * lerp(t, a, b)
         }
     }
 }

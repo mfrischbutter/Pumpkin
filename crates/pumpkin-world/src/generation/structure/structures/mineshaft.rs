@@ -338,11 +338,11 @@ fn is_in_invalid_location(piece_bb: &BlockBox, chunk: &ProtoChunk, chunk_box: &B
             if chunk
                 .get_block_state(&Vector3::new(x, y0, z))
                 .to_state()
-                .is_liquid()
+                .liquid()
                 || chunk
                     .get_block_state(&Vector3::new(x, y1, z))
                     .to_state()
-                    .is_liquid()
+                    .liquid()
             {
                 return true;
             }
@@ -353,11 +353,11 @@ fn is_in_invalid_location(piece_bb: &BlockBox, chunk: &ProtoChunk, chunk_box: &B
             if chunk
                 .get_block_state(&Vector3::new(x, y, z0))
                 .to_state()
-                .is_liquid()
+                .liquid()
                 || chunk
                     .get_block_state(&Vector3::new(x, y, z1))
                     .to_state()
-                    .is_liquid()
+                    .liquid()
             {
                 return true;
             }
@@ -368,11 +368,11 @@ fn is_in_invalid_location(piece_bb: &BlockBox, chunk: &ProtoChunk, chunk_box: &B
             if chunk
                 .get_block_state(&Vector3::new(x0, y, z))
                 .to_state()
-                .is_liquid()
+                .liquid()
                 || chunk
                     .get_block_state(&Vector3::new(x1, y, z))
                     .to_state()
-                    .is_liquid()
+                    .liquid()
             {
                 return true;
             }
@@ -1448,7 +1448,7 @@ impl StructurePieceBase for MineShaftCorridor {
                 } else {
                     Block::AIR.default_state.id
                 };
-                if !floor.to_state().is_air() && floor.to_state().is_full_cube() {
+                if !floor.to_state().is_air() && floor.to_state().is_solid_render() {
                     let prob = if self.is_interior(chunk, 1, 0, z3, chunk_box) {
                         0.7
                     } else {
@@ -2014,6 +2014,7 @@ impl StructurePieceBase for MineShaftStairs {
 mod tests {
     use super::*;
     use crate::generation::get_world_gen;
+    use crate::generation::proto_chunk_test::stage_parity::TestBlockRegistry;
     use pumpkin_data::dimension::Dimension;
     use pumpkin_util::random::legacy_rand::LegacyRand;
     use pumpkin_util::world_seed::Seed;
@@ -2070,5 +2071,50 @@ mod tests {
         assert_eq!(pos_list[0].extract_double(), Some(2.5));
         assert_eq!(pos_list[1].extract_double(), Some(64.5));
         assert_eq!(pos_list[2].extract_double(), Some(2.5));
+    }
+
+    /// Vanilla's `MineShaftCorridor.postProcess` lays a rail only on a floor that `isSolidRender`:
+    /// ice has a full collision box but is not solid render, so a corridor over ice gets no rail.
+    #[test]
+    fn mineshaft_corridor_lays_no_rail_on_an_ice_floor() {
+        let world_gen = get_world_gen(
+            Seed(0),
+            Dimension::OVERWORLD,
+            false,
+            Vec::new(),
+            String::new(),
+        );
+        let mut chunk = ProtoChunk::new(0, 0, &world_gen);
+        let chunk_box = BlockBox::new(0, -64, 0, 15, 319, 15);
+
+        for x in 0..=2 {
+            for z in 0..=9 {
+                chunk.set_block_state(x, 63, z, Block::ICE.default_state);
+            }
+        }
+
+        let mut random = RandomGenerator::Legacy(LegacyRand::from_seed(42));
+        let mut corridor = MineShaftCorridor::new(
+            0,
+            &mut random,
+            BlockBox::new(0, 64, 0, 2, 66, 9),
+            BlockDirection::South,
+            MineshaftType::Normal,
+        );
+        corridor.has_rails = true;
+        corridor.spider_corridor = false;
+        corridor.num_sections = 2;
+
+        corridor.place(&mut chunk, &TestBlockRegistry, &mut random, 0, &chunk_box);
+
+        for x in 0..=2 {
+            for z in 0..=9 {
+                assert_ne!(
+                    chunk.get_block_state(&Vector3::new(x, 64, z)).to_block_id(),
+                    Block::RAIL.id,
+                    "rail at ({x}, 64, {z})"
+                );
+            }
+        }
     }
 }
