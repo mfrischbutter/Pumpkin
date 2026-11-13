@@ -1,3 +1,8 @@
+#![allow(
+    clippy::empty_enums,
+    reason = "wasmtime's bindgen declares each WIT resource as an enum without variants"
+)]
+
 use wasmtime::component::bindgen;
 
 bindgen!({

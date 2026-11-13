@@ -61,13 +61,9 @@ impl BatEntity {
             return false;
         }
         let below_pos = BlockPos::new(pos.0.x, pos.0.y - 1, pos.0.z);
-        if !level
+        level
             .get_block(&below_pos)
             .has_tag(&tag::Block::MINECRAFT_BATS_SPAWNABLE_ON)
-        {
-            return false;
-        }
-        true
     }
 
     #[must_use]

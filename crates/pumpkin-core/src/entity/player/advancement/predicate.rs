@@ -423,10 +423,7 @@ impl LocationPredicate {
         }
         // Vanilla `StructureManager.getStructureWithPieceAt`; without it the position is in no
         // structure, so "Eye Spy" and the other structure advancements are not granted anywhere.
-        if self.structure.is_some() {
-            return false;
-        }
-        true
+        self.structure.is_none()
     }
 
     #[must_use]
