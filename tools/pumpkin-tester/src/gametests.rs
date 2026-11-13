@@ -189,7 +189,9 @@ fn force_load_surroundings_chunks(
         for cz in min_cz..=max_cz {
             let chunk = Vector2::new(cx, cz);
             forced.insert(chunk);
-            chunk_loading.add_force_ticket(chunk);
+            // Forced like `/forceload`: the two rings around load too, so every arena chunk has
+            // the neighbours it needs before it ticks.
+            chunk_loading.add_forced_chunk_ticket(chunk);
         }
     }
     chunk_loading.send_change();
