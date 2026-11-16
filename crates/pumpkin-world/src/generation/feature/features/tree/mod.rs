@@ -1,9 +1,12 @@
 use decorator::TreeDecorator;
 use foliage::FoliagePlacer;
 use pumpkin_data::BlockState;
-use pumpkin_data::block_properties::{BlockProperties, OakLeavesLikeProperties};
+use pumpkin_data::block_properties::{
+    BlockProperties, DoubleBlockHalf, OakLeavesLikeProperties, SmallDripleafLikeProperties,
+    TallSeagrassLikeProperties,
+};
 use pumpkin_data::tag::Taggable;
-use pumpkin_data::{BlockId, tag};
+use pumpkin_data::{BlockId, BlockStateId, tag};
 use pumpkin_util::{math::position::BlockPos, random::RandomGenerator};
 use root::RootPlacer;
 
@@ -348,13 +351,63 @@ impl TreeFeature {
         pos: BlockPos,
         dir_to_neighbor: pumpkin_data::BlockDirection,
     ) -> Option<&'static BlockState> {
+        let state_id = GenerationCache::get_block_state(chunk, &pos.0);
+        let block_id = BlockId::from_state_id(state_id);
+        if block_id == BlockId::SMALL_DRIPLEAF
+            || TallSeagrassLikeProperties::handles_block_id(block_id)
+        {
+            Self::get_updated_double_plant_state(chunk, pos, state_id, dir_to_neighbor)
+        } else if block_id == BlockId::VINE {
+            Self::get_updated_vine_state(chunk, pos, state_id, dir_to_neighbor)
+        } else {
+            None
+        }
+    }
+
+    /// Vanilla's `DoublePlantBlock.updateShape`: a half whose other half is gone becomes air.
+    /// The `canSurvive` checks are left out: a tree never replaces the ground under a plant.
+    fn get_updated_double_plant_state<T: GenerationCache>(
+        chunk: &T,
+        pos: BlockPos,
+        state_id: BlockStateId,
+        dir_to_neighbor: pumpkin_data::BlockDirection,
+    ) -> Option<&'static BlockState> {
+        use pumpkin_data::{Block, BlockDirection};
+
+        let half_of = |id: BlockStateId| {
+            if BlockId::from_state_id(id) == BlockId::SMALL_DRIPLEAF {
+                SmallDripleafLikeProperties::from_state_id(id).half
+            } else {
+                TallSeagrassLikeProperties::from_state_id(id).half
+            }
+        };
+        let half = half_of(state_id);
+        let other_half = match (half, dir_to_neighbor) {
+            (DoubleBlockHalf::Lower, BlockDirection::Up) => DoubleBlockHalf::Upper,
+            (DoubleBlockHalf::Upper, BlockDirection::Down) => DoubleBlockHalf::Lower,
+            _ => return None,
+        };
+        let neighbor_id =
+            GenerationCache::get_block_state(chunk, &pos.offset(dir_to_neighbor.to_offset()).0);
+        if BlockId::from_state_id(neighbor_id) == BlockId::from_state_id(state_id)
+            && half_of(neighbor_id) == other_half
+        {
+            None
+        } else {
+            Some(Block::AIR.default_state)
+        }
+    }
+
+    fn get_updated_vine_state<T: GenerationCache>(
+        chunk: &T,
+        pos: BlockPos,
+        state_id: BlockStateId,
+        dir_to_neighbor: pumpkin_data::BlockDirection,
+    ) -> Option<&'static BlockState> {
         use pumpkin_data::block_properties::VineLikeProperties;
         use pumpkin_data::{Block, BlockDirection};
 
-        let state_id = GenerationCache::get_block_state(chunk, &pos.0);
-        if BlockId::from_state_id(state_id) != BlockId::VINE
-            || dir_to_neighbor == BlockDirection::Down
-        {
+        if dir_to_neighbor == BlockDirection::Down {
             return None;
         }
 

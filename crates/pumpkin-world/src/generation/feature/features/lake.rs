@@ -78,7 +78,7 @@ impl LakeFeature {
                         let block_state =
                             GenerationCache::get_block_state(chunk, &check_pos.0).to_state();
 
-                        if yyx >= 4 && block_state.is_liquid() {
+                        if yyx >= 4 && block_state.liquid() {
                             return false;
                         }
 

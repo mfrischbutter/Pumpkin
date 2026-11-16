@@ -472,7 +472,7 @@ pub fn after_place(
             }
             for y in (min_y + 1..y_start).rev() {
                 let state = chunk.get_block_state(&Vector3::new(x, y, z)).to_state();
-                if !state.is_air() && !state.is_liquid() {
+                if !state.is_air() && !state.liquid() {
                     break;
                 }
                 chunk.set_block_state(x, y, z, Block::COBBLESTONE.default_state);

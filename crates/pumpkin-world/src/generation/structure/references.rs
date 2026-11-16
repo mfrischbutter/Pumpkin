@@ -130,7 +130,7 @@ pub fn structure_references(
                         references.push((
                             entry.structure,
                             (candidate_chunk_x, candidate_chunk_z),
-                            start_data.collector.clone(),
+                            start_data.collector,
                         ));
                     }
                     break;

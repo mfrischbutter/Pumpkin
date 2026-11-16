@@ -161,7 +161,7 @@ impl BlockEntity for CampfireBlockEntity {
                 let mut event = crate::plugin::api::events::block::block_cook::BlockCookEvent::new(
                     self.position,
                     world.clone(),
-                    stack.clone(),
+                    stack,
                     result.clone(),
                 );
                 server.plugin_manager.fire_blocking(&server, &mut event);

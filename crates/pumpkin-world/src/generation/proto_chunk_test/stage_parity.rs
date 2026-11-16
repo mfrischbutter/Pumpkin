@@ -647,84 +647,97 @@ fn assert_stage_hashes(
     assert_eq!(actual_hash, expected.hash);
 }
 
-fn verify_stage_parity(seed: u64, stage_dumps: &[ChunkStageDump]) {
+/// Generates the chunk `(cx, cz)` up to its features the way the chunk system does.
+///
+/// Builds the 17x17 neighbourhood with biomes, structure starts and references, steps
+/// the centre through noise, surface and carvers (calling `after_stage` with the stage
+/// name and the centre after each), steps the 3x3 neighbours to carvers and decorates
+/// the centre. Returns the grid with the decorated centre at `(cx, cz)`.
+pub(super) fn decorate_chunk(
+    seed: u64,
+    dimension: Dimension,
+    cx: i32,
+    cz: i32,
+    mut after_stage: impl FnMut(&str, &ProtoChunk),
+) -> TestGridCache {
     let block_registry = TestBlockRegistry;
+    let world_gen = get_world_gen(Seed(seed), dimension, false, Vec::new(), String::new());
+    let WorldGenerator::Noise(generator) = &*world_gen else {
+        unreachable!()
+    };
 
+    // Pre-populate neighborhood around (cx, cz)
+    // Note: vanilla requires structure starts in radius 8
+    let mut chunks_3x3 = std::collections::HashMap::new();
+    for nx in (cx - 8)..=(cx + 8) {
+        for nz in (cz - 8)..=(cz + 8) {
+            let mut nchunk = ProtoChunk::new(nx, nz, &world_gen);
+            nchunk.step_to_biomes(generator);
+            nchunk.set_structure_starts(generator);
+            nchunk.set_structure_references(generator);
+            chunks_3x3.insert((nx, nz), nchunk);
+        }
+    }
+
+    // Prepare center chunk
+    let center = chunks_3x3.get_mut(&(cx, cz)).unwrap();
+
+    // Stage 1: Noise
+    center.step_to_noise(generator);
+    after_stage("noise", center);
+
+    // Stage 2: Surface
+    let center_surface_biomes = surface_biomes(&world_gen, cx, cz);
+    center.step_to_surface(generator, &center_surface_biomes);
+    after_stage("surface", center);
+
+    // Stage 3: Carvers
+    center.step_to_carvers(generator);
+    after_stage("carvers", center);
+
+    // Stage 4: Features
+    // Advance 3x3 neighbors to carvers for feature decoration context
+    for (&(nx, nz), nchunk) in &mut chunks_3x3 {
+        if (nx, nz) == (cx, cz) || (nx - cx).abs() > 1 || (nz - cz).abs() > 1 {
+            continue;
+        }
+        nchunk.step_to_noise(generator);
+        let n_surface_biomes = surface_biomes(&world_gen, nx, nz);
+        nchunk.step_to_surface(generator, &n_surface_biomes);
+        nchunk.step_to_carvers(generator);
+    }
+
+    let mut grid_cache = TestGridCache {
+        center_pos: (cx, cz),
+        chunks: chunks_3x3,
+    };
+
+    ProtoChunk::generate_features_and_structure(
+        &mut grid_cache,
+        &block_registry,
+        &generator.random_config,
+    );
+
+    grid_cache
+}
+
+fn verify_stage_parity(seed: u64, stage_dumps: &[ChunkStageDump]) {
     for chunk_dump in stage_dumps {
         let dim = match chunk_dump.dimension.as_str() {
             "nether" => Dimension::THE_NETHER,
             "end" => Dimension::THE_END,
             _ => Dimension::OVERWORLD,
         };
-        let seed = Seed(seed);
-        let world_gen = get_world_gen(seed, dim.clone(), false, Vec::new(), String::new());
-        let WorldGenerator::Noise(generator) = &*world_gen else {
-            unreachable!()
-        };
 
         let cx = chunk_dump.x;
         let cz = chunk_dump.z;
 
-        // Pre-populate neighborhood around (cx, cz)
-        // Note: vanilla requires structure starts in radius 8
-        let mut chunks_3x3 = std::collections::HashMap::new();
-        for nx in (cx - 8)..=(cx + 8) {
-            for nz in (cz - 8)..=(cz + 8) {
-                let mut nchunk = ProtoChunk::new(nx, nz, &world_gen);
-                nchunk.step_to_biomes(generator);
-                nchunk.set_structure_starts(generator);
-                nchunk.set_structure_references(generator);
-                chunks_3x3.insert((nx, nz), nchunk);
+        let grid_cache = decorate_chunk(seed, dim, cx, cz, |stage_name, center| {
+            if let Some(expected) = chunk_dump.stages.get(&format!("minecraft:{stage_name}")) {
+                let (actual_hash, actual_sections) = compute_chunk_stage_hashes(center);
+                assert_stage_hashes(stage_name, cx, cz, &actual_hash, &actual_sections, expected);
             }
-        }
-
-        // Prepare center chunk
-        let center = chunks_3x3.get_mut(&(cx, cz)).unwrap();
-
-        // Stage 1: Noise
-        center.step_to_noise(generator);
-        if let Some(expected) = chunk_dump.stages.get("minecraft:noise") {
-            let (actual_hash, actual_sections) = compute_chunk_stage_hashes(center);
-            assert_stage_hashes("noise", cx, cz, &actual_hash, &actual_sections, expected);
-        }
-
-        // Stage 2: Surface
-        let center_surface_biomes = surface_biomes(&world_gen, cx, cz);
-        center.step_to_surface(generator, &center_surface_biomes);
-        if let Some(expected) = chunk_dump.stages.get("minecraft:surface") {
-            let (actual_hash, actual_sections) = compute_chunk_stage_hashes(center);
-            assert_stage_hashes("surface", cx, cz, &actual_hash, &actual_sections, expected);
-        }
-
-        // Stage 3: Carvers
-        center.step_to_carvers(generator);
-        if let Some(expected) = chunk_dump.stages.get("minecraft:carvers") {
-            let (actual_hash, actual_sections) = compute_chunk_stage_hashes(center);
-            assert_stage_hashes("carvers", cx, cz, &actual_hash, &actual_sections, expected);
-        }
-
-        // Stage 4: Features
-        // Advance 3x3 neighbors to carvers for feature decoration context
-        for (&(nx, nz), nchunk) in &mut chunks_3x3 {
-            if (nx, nz) == (cx, cz) || (nx - cx).abs() > 1 || (nz - cz).abs() > 1 {
-                continue;
-            }
-            nchunk.step_to_noise(generator);
-            let n_surface_biomes = surface_biomes(&world_gen, nx, nz);
-            nchunk.step_to_surface(generator, &n_surface_biomes);
-            nchunk.step_to_carvers(generator);
-        }
-
-        let mut grid_cache = TestGridCache {
-            center_pos: (cx, cz),
-            chunks: chunks_3x3,
-        };
-
-        ProtoChunk::generate_features_and_structure(
-            &mut grid_cache,
-            &block_registry,
-            &generator.random_config,
-        );
+        });
 
         let center = grid_cache.chunks.get(&(cx, cz)).unwrap();
         if let Some(expected) = chunk_dump.stages.get("minecraft:features") {

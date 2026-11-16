@@ -1,11 +1,10 @@
 use std::sync::Arc;
 
-use pumpkin_data::Block;
-use pumpkin_nbt::compound::NbtCompound;
+use pumpkin_data::{Block, BlockState};
 use pumpkin_util::{
     BlockDirection, HeightMap,
     math::{block_box::BlockBox, vector3::Vector3},
-    random::{RandomGenerator, RandomImpl, hash_block_pos, legacy_rand::LegacyRand},
+    random::RandomGenerator,
 };
 
 use crate::{
@@ -47,6 +46,12 @@ pub struct BuriedTreasurePiece {
     piece: StructurePiece,
 }
 
+/// Vanilla `BuriedTreasurePiece.isLiquid`: the block is water or lava.
+fn is_liquid(state: &BlockState) -> bool {
+    let block = Block::from_state_id(state.id);
+    *block == Block::WATER || *block == Block::LAVA
+}
+
 impl StructurePieceBase for BuriedTreasurePiece {
     fn as_any(&self) -> &dyn std::any::Any {
         self
@@ -64,7 +69,7 @@ impl StructurePieceBase for BuriedTreasurePiece {
         &mut self,
         chunk: &mut ProtoChunk,
         _block_registry: &dyn WorldPortalExt,
-        _random: &mut RandomGenerator,
+        random: &mut RandomGenerator,
         _seed: i64,
         chunk_box: &BlockBox,
     ) {
@@ -87,7 +92,7 @@ impl StructurePieceBase for BuriedTreasurePiece {
                 || *below_block == Block::GRANITE
                 || *below_block == Block::DIORITE
             {
-                let soft_state = if !current_state.is_air() && !current_state.is_liquid() {
+                let soft_state = if !current_state.is_air() && !is_liquid(current_state) {
                     current_state
                 } else {
                     Block::SAND.default_state
@@ -105,11 +110,11 @@ impl StructurePieceBase for BuriedTreasurePiece {
                     let rel_pos = pos + offset;
                     let rel_state = chunk.get_block_state(&rel_pos).to_state();
 
-                    if rel_state.is_air() || rel_state.is_liquid() {
+                    if rel_state.is_air() || is_liquid(rel_state) {
                         let below_rel_pos = rel_pos - Vector3::new(0, 1, 0);
                         let below_rel_state = chunk.get_block_state(&below_rel_pos).to_state();
 
-                        if (below_rel_state.is_air() || below_rel_state.is_liquid())
+                        if (below_rel_state.is_air() || is_liquid(below_rel_state))
                             && dir != BlockDirection::Up
                         {
                             chunk.set_block_state(rel_pos.x, rel_pos.y, rel_pos.z, below_state);
@@ -121,26 +126,17 @@ impl StructurePieceBase for BuriedTreasurePiece {
 
                 self.piece.bounding_box = BlockBox::new(pos.x, pos.y, pos.z, pos.x, pos.y, pos.z);
 
-                if chunk_box.contains_pos(&pos) {
-                    let chest_state =
-                        StructurePiece::reorient(&pos, Block::CHEST.default_state, |p| {
-                            chunk.get_block_state(p)
-                        });
-                    chunk.set_block_state(pos.x, pos.y, pos.z, chest_state);
-
-                    let mut nbt = NbtCompound::new();
-                    nbt.put_string("id", "minecraft:chest".to_string());
-                    nbt.put_int("x", pos.x);
-                    nbt.put_int("y", pos.y);
-                    nbt.put_int("z", pos.z);
-                    nbt.put_string("LootTable", "minecraft:chests/buried_treasure".to_string());
-
-                    let mut random =
-                        LegacyRand::from_seed(hash_block_pos(pos.x, pos.y, pos.z) as u64);
-                    nbt.put_long("LootTableSeed", random.next_i64());
-
-                    chunk.add_block_entity(nbt);
-                }
+                // The piece has no facing, so its local coordinates are world coordinates.
+                self.piece.create_chest(
+                    chunk,
+                    chunk_box,
+                    random,
+                    pos.x,
+                    pos.y,
+                    pos.z,
+                    "minecraft:chests/buried_treasure",
+                    None,
+                );
                 return;
             }
 

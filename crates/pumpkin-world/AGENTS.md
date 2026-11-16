@@ -11,6 +11,7 @@ Chunk loading uses a ticket and level system modelled on vanilla, in `src/chunk_
 - Compare output with vanilla, not only with the previous Pumpkin build. `src/generation/proto_chunk_test/` checks generation against vanilla chunk dumps in `assets/tests/`. Keep those tests passing, and use the same approach for new stages.
 - Worldgen values come from the vanilla datapack in `assets/` through codegen: noise settings, density functions, features, structures. Don't copy numbers from decompiled code when the datapack defines them.
 - Read heights and limits from the generation context or the dimension, never from a guess like 256 or 384. Datapacks change them.
+- Where this fork stands against vanilla's world generation, how to measure it without a local Rust toolchain, and the open work in order: [WORLDGEN-HANDOFF.md](WORLDGEN-HANDOFF.md).
 
 ## Performance
 

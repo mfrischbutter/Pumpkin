@@ -11,7 +11,6 @@ use pumpkin_data::item_stack::ItemStack;
 use pumpkin_data::particle::Particle;
 use pumpkin_data::potion::Potion;
 use pumpkin_nbt::compound::NbtCompound;
-use pumpkin_nbt::tag::NbtTag;
 use pumpkin_protocol::codec::var_int::VarInt;
 
 use crate::entity::living::EffectSource;

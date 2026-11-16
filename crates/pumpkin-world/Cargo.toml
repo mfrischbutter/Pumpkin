@@ -72,6 +72,10 @@ name = "chunk_gen_concurrent"
 harness = false
 
 [[bench]]
+name = "chunk_schedule"
+harness = false
+
+[[bench]]
 name = "jigsaw"
 harness = false
 

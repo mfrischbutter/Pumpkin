@@ -5,11 +5,15 @@ pub mod biome_hashes;
 #[cfg(test)]
 pub mod dumps;
 #[cfg(test)]
+pub mod loot_seeds;
+#[cfg(test)]
 pub mod resume;
 #[cfg(test)]
 pub mod stage_parity;
 #[cfg(test)]
 pub mod structure_starts;
+#[cfg(test)]
+pub mod tree_edges;
 
 #[cfg(test)]
 pub(crate) fn surface_biomes(
@@ -33,3 +37,5 @@ pub(crate) fn surface_biomes(
     assert!(neighborhood.is_complete());
     neighborhood
 }
+#[cfg(test)]
+pub mod vanilla_values;

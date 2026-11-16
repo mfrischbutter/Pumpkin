@@ -1674,3 +1674,23 @@ mod replacement_tests {
         }
     }
 }
+
+#[cfg(test)]
+mod behaviour_tests {
+    use std::sync::Arc;
+
+    use pumpkin_data::BlockId;
+
+    use super::default_registry;
+
+    /// A later `register` overwrites an earlier one: the suspicious blocks once fell like gravel
+    /// and landed, where vanilla's `BrushableBlock` breaks them on landing.
+    #[test]
+    fn suspicious_blocks_are_brushable_not_plain_falling() {
+        let registry = default_registry();
+        let behaviour = |id| registry.get_pumpkin_block(id).expect("registered");
+        let brushable = behaviour(BlockId::SUSPICIOUS_GRAVEL);
+        assert!(Arc::ptr_eq(brushable, behaviour(BlockId::SUSPICIOUS_SAND)));
+        assert!(!Arc::ptr_eq(brushable, behaviour(BlockId::GRAVEL)));
+    }
+}
