@@ -1,23 +1,22 @@
 # World generation: hand-off for the next run toward 100 % vanilla
 
 For the next worker on this fork (`mfrischbutter/Pumpkin`, branch `cubeattack`) who continues the
-vanilla parity of world generation. Written at the end of job F-9 (pull request #1, November 2026). It
-supersedes "Where it stands" and "Open work" of CubeAttack's `docs/worldgen-handoff.md` (F-7); that file
+vanilla parity of world generation. Written with pull request #1 (2026-11-16). It supersedes "Where it
+stands" and "Open work" of CubeAttack's `docs/worldgen-handoff.md` (2026-11-10); that file
 and `docs/worldgen-next-steps.md` keep the older evidence. The goal stays the same: for the same seed
 the fork generates what the vanilla 26.3 server generates; with the generation secret, the same
 terrain and biomes and the same distributions of everything else.
 
 ## Read first
 
-- CubeAttack, which holds the tools and the measurement history. The job's repository notes name its
-  checkout on the runner machine; that checkout may lag behind its `main`, so clone its `origin` into a
-  scratch folder for the current one. In it: `docs/worldgen-compare.md` (the verification and every
+- CubeAttack, which holds the tools and the measurement history; work from a current clone of its
+  `main`. In it: `docs/worldgen-compare.md` (the verification and every
   round's results),
-  `docs/worldgen-next-steps.md` (evidence per item), `docs/worldgen-handoff.md` (F-7: the decoration
+  `docs/worldgen-next-steps.md` (evidence per item), `docs/worldgen-handoff.md` (2026-11-10: the decoration
   order findings, the clay pool, the proto chunk tools), `docs/seed-cracking-check.md` and
   `docs/deployment.md` "World seed and generation secret".
-- Vanilla's source: Lantern (`docs/lantern.md` in CubeAttack). The decompiled 26.3 server is on the
-  runner machine under `%APPDATA%\lantern\versions\26.3\src`.
+- Vanilla's source: Lantern (`docs/lantern.md` in CubeAttack), which keeps the decompiled 26.3 server
+  outside every repository.
 - This fork's rules: `AGENTS.md`, `crates/pumpkin-world/AGENTS.md`.
 
 ## Where it stands
@@ -36,10 +35,10 @@ per kind, and in structure references by no more than the control.
 | pin `cubeattack-2026-11-07-2` (0ec654806) | 91 (42 %) | | | |
 | f-4-worldgen (5bc40b886) | 99 (46 %) | 97 | 21 | 5,253,074 |
 | f-5-worldgen (26184f72d) | 104 (48 %) | 92 | 21 | 5,218,005 |
-| F-9, pull request #1 (image of 112d7482c) | 112 (52 %) | 80 | 25 | 4,628,550 |
+| pull request #1 (image of 112d7482c) | 112 (52 %) | 80 | 25 | 4,628,550 |
 | vanilla-3, the control | | | | 5,203,150 |
 
-After F-9:
+After pull request #1:
 
 - Exact: biomes (0 differing cells), structure placement (every chunk's structure references are
   vanilla's: 0 missing, 0 extra), the End (8 of 8 areas).
@@ -53,11 +52,11 @@ After F-9:
   5.20 M). Seed 7853492499715517705's census area alone has 1.01 M (vanilla-3: 0.83 M), with terrain
   99,821 against vanilla-3's 32,315, ore 48,989 against 14,700 and sculk 14,173 against 6,821. Run on
   their own, seeds 8095405736471581734 and 7853492499715517705 fail the category totals on terrain
-  (233,479 against an allowed 218,172) and sculk (75,346 against 72,132). F-9 lowered all four census
+  (233,479 against an allowed 218,172) and sculk (75,346 against 72,132). Pull request #1 lowered all four census
   areas (that one from 1,145,729 on f-5-worldgen).
 - Per area 112 of 217 pass, give or take a few between runs (areas near the threshold flip on wandering
   cats or items). 25 of the 105 failing areas fail only on fluids, items or mobs. 24 of them count as
-  runtime, not generation, by F-7's attribution (not traced per area); the 25th misses vanilla's 4
+  runtime, not generation, by the attribution of 2026-11-10 (not traced per area); the 25th misses vanilla's 4
   generated cows. Without the 24, 136 of 217 (63 %) are within vanilla's noise.
 - Block entities, at the positions where vanilla-1 and vanilla-2 agree (what the verification compares):
   chests 3,691 against vanilla-1's 3,691, spawners 2,110 against 2,114, trial spawners 903 against 903,
@@ -68,7 +67,7 @@ After F-9:
 - Decorated proto chunks (no ticks, 480 sampled from vanilla's runs), with proto_parity's model of the
   order (not the scheduler itself): 253 identical to vanilla block for block in the order the scheduler
   now builds in (f-5-worldgen's x-then-z order: 127); 316 with the chunks two away decorated too (150).
-- Seed-cracking check of F-9's build: passed, see "Seed-cracking check" below.
+- Seed-cracking check of this build: passed, see "Seed-cracking check" below.
 
 "100 %" block for block is not reachable even between two vanilla runs: vanilla's decoration order
 follows thread timing (vanilla-1 and vanilla-2 disagree at 0.167 % of the positions). The reachable goal
@@ -77,11 +76,11 @@ chunks load around moving players and no fixed order matches vanilla block for b
 With the generation secret, terrain and biomes stay the seed's; structures, caves and features can only
 match vanilla in distribution. The verification checks that distribution for structures and dungeons
 (with the secret, the census of their starts, chests and spawners and the starts in the census areas
-are within placement noise), not for caves or the other features. F-9's run also lacked the large-area
+are within placement noise), not for caves or the other features. This round's run also lacked the large-area
 start census, which needs the census tool (a native build); it passed on f-5-worldgen, whose placement
-code F-9 carries unchanged.
+code this build carries unchanged.
 
-## What F-9 changed, and what it taught
+## What pull request #1 changed, and what it taught
 
 - Landed f-5-worldgen's seven fixes (vanilla's `liquid()`, the buried treasure loot seed, brushable
   blocks, double plants at tree edges, lava without drops, the aquifer, the splines).
@@ -92,7 +91,7 @@ code F-9 carries unchanged.
   `ChunkGenerationTask`s generate the terrain two chunks around them, and the dispatcher runs lower
   levels first); ties go by x, then z. Keys are cached until the levels change.
 - Lesson: the proto chunk measurement samples only the ring of decorated chunks around vanilla's
-  areas. F-9's first model (each terrain chunk's own ticket level) scored the same there (253 and 316)
+  areas. The first model (each terrain chunk's own ticket level) scored the same there (253 and 316)
   and failed the server verification (86 of 108 areas on two seeds, against f-5-worldgen's 56 and the
   final model's 52): inside a force-loaded area every chunk has the same level, so it put the area's
   edge rows after the inside, while vanilla's forced tasks decorate their 3x3 x first. Always verify an
@@ -105,7 +104,7 @@ code F-9 carries unchanged.
 - Mineshaft rails only on floors that are solid render (`MineShaftCorridor.postProcess`).
 - A Criterion bench of the scheduler, `crates/pumpkin-world/benches/chunk_schedule.rs` (a player's view
   of 8 and a forced 16x16 area through `Level`'s tickets). Run before and after any scheduler change; the
-  machine drifts, so run both back to back. F-9: the player's view unchanged (+0.4 %, p = 0.65), the
+  machine drifts, so run both back to back. Pull request #1: the player's view unchanged (+0.4 %, p = 0.65), the
   forced area 24 % faster.
 - CI: GitHub CI builds with the current Rust stable and `RUSTFLAGS=-Dwarnings`; CubeAttack's check image
   pins 1.99.1. When stable moved to 1.100 (2026-11-12) the PR had to take rustfmt's and clippy's new
@@ -113,7 +112,7 @@ code F-9 carries unchanged.
   (`add_forced_chunk_ticket`). With the full-chunk ticket its edge chunks never ticked, since chunks
   tick only with their eight neighbours loaded, and 57 of 200 GameTests failed, on `cubeattack` too.
 
-## How to measure (there is no local Rust toolchain)
+## How to measure (in Docker, no local Rust toolchain)
 
 Every cargo run happens in Docker through CubeAttack's scripts, with `PUMPKIN_SRC` set to the worktree.
 
@@ -124,7 +123,7 @@ Every cargo run happens in Docker through CubeAttack's scripts, with `PUMPKIN_SR
 2. **CI's toolchain:** before reporting, run what CI runs with the current stable in a separate target
    volume: `cargo fmt --check`, `cargo clippy --workspace --all-targets --all-features`,
    `cargo nextest run --workspace`, `cargo test --doc` on the affected crates and `cargo run -p
-   pumpkin-tester`, all with `RUSTFLAGS=-Dwarnings`. F-9 did it with a small script that sources
+   pumpkin-tester`, all with `RUSTFLAGS=-Dwarnings`. One way: a small script that sources
    CubeAttack's `scripts/rust-image.sh` and `scripts/heavy-lock.sh`, takes the build lock and calls
    `rust_docker_run` with `-e RUSTUP_TOOLCHAIN=<stable version> -e RUSTFLAGS=-Dwarnings` and its own target
    volume (`rustup toolchain install <version> --profile minimal -c rustfmt,clippy` inside). The
@@ -137,11 +136,10 @@ Every cargo run happens in Docker through CubeAttack's scripts, with `PUMPKIN_SR
    pumpkin-world --lib --no-run`, then copy `target/release/deps/pumpkin_world-<hash>` out of the target
    volume), and restore the worktree before anything is committed. The binary is a Linux build, so run
    `proto_parity.py` in a Linux container too (`python:3.13-slim-trixie`) with the CubeAttack clone, the
-   verification data, the binary and an output folder mounted. The vanilla runs on the runner machine
-   are junctions into another folder (below); mount the junctions' target at the path they resolve to
-   inside Docker Desktop (`/mnt/host/d/...`). F-9's order models are in
-   `D:\factory-work\_evidence\F-9\a2\proto_parity-waves-order.patch` (`waves2` is the order the
-   scheduler builds in); land it in CubeAttack.
+   verification data, the binary and an output folder mounted. If the vanilla runs are junctions, mount
+   their target at the path they resolve to inside Docker Desktop (`/mnt/host/d/...`). The models of
+   the decoration order are `proto_parity.py`'s `--order` values (`waves2` is the order the scheduler
+   builds in, `features --help` lists them).
 4. **The server verification:** build an image (`--image`), then in a CubeAttack checkout with the kept
    vanilla runs: `PUMPKIN_IMAGE=cubeattack/pumpkin-local PUMPKIN_TAG=<tag> WORLDGEN_ACCEPT_EULA=true
    WORLDGEN_VANILLA_JAR=<server-26.3.jar> bash scripts/worldgen-compare.sh verify --seeds <seeds>`, about
@@ -155,23 +153,18 @@ Every cargo run happens in Docker through CubeAttack's scripts, with `PUMPKIN_SR
 5. **Seed-cracking check** (deployment rule 7, `docs/seed-cracking-check.md`): after every change to
    generation, as below.
 
-### Where the data is on the runner machine
+### Where the data is
 
-- Vanilla runs of the four seeds: `D:\factory-work\_scratch-F-5\root\data\worldgen\verify\<seed>\vanilla-1..3`,
-  junctions into `D:\factory-work\_scratch-F-4\root\data\worldgen\verify\<seed>\`; the blocks report and
-  the server jar under `D:\factory-work\_scratch-F-5\root\data\worldgen\reports` and `...\jars`.
-- F-9's verification root (the same junctions, F-9's Pumpkin runs, the reports):
-  `D:\factory-work\_scratch-F-9\cubeattack-main\data\worldgen\verify`; the JSON of the run above is
-  `report-20261113T022632Z.json` there.
-- F-9's evidence: `D:\factory-work\_evidence\F-9\a2` (`status-after-merge.md` has the full status with its
-  sources, `seedcheck\` the seed-cracking check).
-- These are scratch folders and can be cleaned up; ask the owner before relying on them. Without them,
-  `scripts/worldgen-compare.sh verify --vanilla-only` makes new vanilla runs (about five hours, 8 GB).
+The vanilla runs of the four seeds (with their `plan.json`), the blocks report, the server jar and the
+Pumpkin runs of this build (with the report's JSON) are kept on the owner's machine, outside every
+repository: ask the owner where, and check them with `kept` (step 4) before relying on them. Without
+them, `scripts/worldgen-compare.sh verify --vanilla-only` makes new vanilla runs (about five hours,
+8 GB).
 
 ## Seed-cracking check
 
 CubeAttack's deployment rule 7: after a change to generation, the control world must crack, the secret
-world must not, and the Nether bedrock must follow the derived seed. F-9 ran it on 2026-11-15 and 16 on
+world must not, and the Nether bedrock must follow the derived seed. It ran on 2026-11-15 and 16 on
 an image of its last code commit (1f0ef4d0b):
 
 - **Offline** (`scripts/seedcrack_check.py` on worlds made by `scripts/worldgen-compare.sh generate
@@ -198,7 +191,7 @@ an image of its last code commit (1f0ef4d0b):
     the world seed puts them and 5 where the derived salts put them. The mod lifted with 5 and printed
     "Finished search with no results" at once.
 
-Repeating it on the runner machine:
+Repeating it:
 
 - Run the play stack from a scratch clone of CubeAttack, never from the main checkout: `play.sh start
   --fresh` replaces the play world.
@@ -212,10 +205,8 @@ Repeating it on the runner machine:
   drives the client touches a `data/play/heartbeat-<name>` file every 30 seconds instead.
 - The client can be dropped on joining with "Network Protocol Error": Pumpkin ticks a joining player
   while plugins handle its spawn location event, before it sends the login packet, so a velocity packet
-  can arrive first (a race outside generation, seen once in three joins). Check `connected` in the
-  client's `/state` before hunting and reconnect with `POST /connect {"address": "server:25565"}`.
-- F-9's scripts: `D:\factory-work\_scratch-F-9\seedcheck.sh` (offline) and `seedhunt2.sh` (live); the
-  results: `D:\factory-work\_evidence\F-9\a2\seedcheck`.
+  can arrive first (a race outside generation, seen once in three joins). `scripts/seedcrack_hunt.py`
+  joins again by itself; by hand, check `connected` in the client's `/state` and `POST /connect`.
 
 ## Open work, in order
 
@@ -228,7 +219,7 @@ deepslate 9, andesite 8, and clay, lava, gravel, diorite and copper ore 7 each.
    decorated too). For each, find out whether some decoration order explains it (more orders and
    `--radius 2` in proto_parity) or a feature differs. Most failing areas fail on decoration (ore and
    stone blobs, trees, vegetation, dripstone, sculk, lush caves), and only this split says which of
-   them code can fix. F-7 found one real difference this way (item 3). Start with the census areas,
+   them code can fix. The work of 2026-11-10 found one real difference this way (item 3). Start with the census areas,
    where the fork is furthest from vanilla's noise (seed 7853492499715517705's terrain and ore three
    times vanilla-3's, see "Where it stands").
 2. **The decoration ring:** the fork decorates three rings past the full chunks (`chunk_state.rs`:
@@ -247,7 +238,7 @@ deepslate 9, andesite 8, and clay, lava, gravel, diorite and copper ore 7 each.
    agent logging the environment scans).
 4. **Fluids** (32 areas fail on the fluid category or on lava or water by name, 9 of them on nothing
    else): find which come from generation (lakes, springs, the aquifer, lava a feature opens) and which
-   from the settle ticks. F-7 counted fluids as runtime without tracing them per area.
+   from the settle ticks. The hand-off of 2026-11-10 counted fluids as runtime without tracing them per area.
 5. **Structure pieces:** mineshaft rails, cobwebs and planks in the census areas of seeds
    -4172144997902289642 and 8095405736471581734 (rails 173 and 187 against a control of 14), where the
    floors under the differing rails are the same in both worlds, so the corridor's random diverges
